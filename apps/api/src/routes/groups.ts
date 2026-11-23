@@ -7,6 +7,7 @@ import type { SessionUser } from '../auth';
 import type { Db } from '../db/client';
 import { groups, members } from '../db/schema';
 import type { AuthEnv } from '../middleware/require-user';
+import { groupLinkRoutes } from './group-links';
 
 type GroupRow = typeof groups.$inferSelect;
 type MemberRow = typeof members.$inferSelect;
@@ -59,6 +60,8 @@ export const groupsRoutes = ({ db, requireUser }: { db: Db; requireUser: Middlew
   return (
     new Hono<AuthEnv>()
       .use(requireUser)
+      /** The group link (share, QR, revoke): `routes/group-links.ts`. */
+      .route('/:groupId/link', groupLinkRoutes({ db }))
       /** My groups, most recent activity first (inbox). */
       .get('/', async (c) => {
         const rows = await db

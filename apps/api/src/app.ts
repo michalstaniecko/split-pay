@@ -4,6 +4,7 @@ import { logger } from 'hono/logger';
 import type { Auth } from './auth';
 import type { Db } from './db/client';
 import { type AuthEnv, createRequireUser } from './middleware/require-user';
+import { linksRoutes } from './routes/group-links';
 import { groupsRoutes } from './routes/groups';
 
 export interface AppDeps {
@@ -35,6 +36,8 @@ export const createApp = ({ auth, db, flags = defaultFeatureFlags }: AppDeps) =>
         return c.json({ id: user.id, email: user.email, name: user.name });
       })
       .route('/groups', groupsRoutes({ db, requireUser }))
+      /** Opening a group link in the app: preview + join. */
+      .route('/links', linksRoutes({ db, requireUser }))
   );
 };
 
