@@ -6,6 +6,7 @@ import type { Auth } from './auth';
 import type { Db } from './db/client';
 import { type AuthEnv, createRequireUser } from './middleware/require-user';
 import { deleteAccount } from './routes/account';
+import { activityRoutes } from './routes/activity';
 import { linksRoutes } from './routes/group-links';
 import { groupsRoutes } from './routes/groups';
 import { openGraphRoutes } from './routes/open-graph';
@@ -52,6 +53,8 @@ export const createApp = ({ auth, db, flags = defaultFeatureFlags, webUrl }: App
       /** My payout details (Profile). */
       .route('/me/payout-details', myPayoutDetailsRoutes({ db, requireUser }))
       .route('/groups', groupsRoutes({ db, requireUser }))
+      /** Activity: changes from all my groups, newest first (#21). */
+      .route('/activity', activityRoutes({ db, requireUser }))
       /** Quick bill: group + members without an account + its expense in one step. */
       .route('/quick-bills', quickBillsRoutes({ db, requireUser }))
       /** Opening a group link in the app: preview + join. */
