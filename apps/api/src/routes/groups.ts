@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { zValidator } from '@hono/zod-validator';
-import { Id, type Member, NewGroup } from '@split-pay/shared';
+import { canRenameMember, Id, type Member, MemberRename, NewGroup, NewMember } from '@split-pay/shared';
 import { and, asc, desc, eq } from 'drizzle-orm';
 import { Hono, type MiddlewareHandler } from 'hono';
 import type { SessionUser } from '../auth';
@@ -109,6 +109,53 @@ export const groupsRoutes = ({ db, requireUser }: { db: Db; requireUser: Middlew
           .where(eq(members.groupId, group.id))
           .orderBy(asc(members.createdAt), asc(members.id));
         return c.json({ ...toGroupDto(group), members: rows.map(toMemberDto) }, 200);
+      })
+      /**
+       * Adds a member without an account (ADR-0007) — any member may. Idempotent
+       * on the client-generated id: repeating the add answers 200 with the
+       * existing member; an id used in another group → 409.
+       */
+      .post('/:groupId/members', zValidator('json', NewMember), async (c) => {
+        const groupId = c.req.param('groupId');
+        const group = Id.safeParse(groupId).success ? await findMyGroup(groupId, c.get('user').id) : undefined;
+        if (!group) return c.json({ error: 'not_found' as const }, 404);
+        const input = c.req.valid('json');
+        const [created] = await db
+          .insert(members)
+          .values({ id: input.id, groupId: group.id, displayName: input.displayName, attendance: input.attendance ?? null })
+          .onConflictDoNothing({ target: members.id })
+          .returning();
+        if (created) return c.json(toMemberDto(created), 201);
+
+        const [existing] = await db
+          .select()
+          .from(members)
+          .where(and(eq(members.id, input.id), eq(members.groupId, group.id)));
+        if (!existing) return c.json({ error: 'conflict' as const }, 409);
+        return c.json(toMemberDto(existing), 200);
+      })
+      /**
+       * Renames a member. Any member renames a member without an account
+       * (ADR-0008) or themselves; a member with an account can't be renamed by others.
+       */
+      .patch('/:groupId/members/:memberId', zValidator('json', MemberRename), async (c) => {
+        const { groupId, memberId } = c.req.param();
+        const userId = c.get('user').id;
+        const group = Id.safeParse(groupId).success ? await findMyGroup(groupId, userId) : undefined;
+        if (!group || !Id.safeParse(memberId).success) return c.json({ error: 'not_found' as const }, 404);
+        const [member] = await db
+          .select()
+          .from(members)
+          .where(and(eq(members.id, memberId), eq(members.groupId, group.id)));
+        if (!member) return c.json({ error: 'not_found' as const }, 404);
+        if (!canRenameMember(member, userId)) return c.json({ error: 'forbidden' as const }, 403);
+
+        const [renamed] = await db
+          .update(members)
+          .set({ displayName: c.req.valid('json').displayName })
+          .where(eq(members.id, member.id))
+          .returning();
+        return c.json(toMemberDto(renamed ?? member), 200);
       })
   );
 };

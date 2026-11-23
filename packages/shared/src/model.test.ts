@@ -1,6 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { type AttendanceRange, Entry, Group, Member, NewGroup, normalizeAttendance, validateEntryInGroup } from './model';
-import { ANIA, BARTEK, KASIA, expense, group, member, members, settlement, uuid } from './test-fixtures';
+import {
+  type AttendanceRange,
+  canRenameMember,
+  Entry,
+  Group,
+  Member,
+  MemberRename,
+  NewGroup,
+  NewMember,
+  normalizeAttendance,
+  validateEntryInGroup,
+} from './model';
+import { ANIA, BARTEK, KASIA, TOMEK, USER, expense, group, member, members, settlement, uuid } from './test-fixtures';
 
 describe('Entry', () => {
   const valid = expense({
@@ -158,6 +169,55 @@ describe('Member', () => {
 
   it('does not check attendance against the trip dates', () => {
     expect(withAttendance([{ from: '2025-01-01', to: '2027-12-31' }]).success).toBe(true);
+  });
+});
+
+describe('NewMember', () => {
+  it('takes a client-generated id and a trimmed name; attendance is optional', () => {
+    expect(NewMember.parse({ id: ANIA, displayName: '  Tomek ' })).toEqual({ id: ANIA, displayName: 'Tomek' });
+    const attendance = [{ from: '2026-07-10', to: '2026-07-11' }];
+    expect(NewMember.parse({ id: ANIA, displayName: 'Tomek', attendance })).toEqual({
+      id: ANIA,
+      displayName: 'Tomek',
+      attendance,
+    });
+  });
+
+  it('rejects a blank or too long name and non-canonical attendance', () => {
+    expect(NewMember.safeParse({ id: ANIA, displayName: '   ' }).success).toBe(false);
+    expect(NewMember.safeParse({ id: ANIA, displayName: 'x'.repeat(61) }).success).toBe(false);
+    expect(NewMember.safeParse({ id: 'nope', displayName: 'Tomek' }).success).toBe(false);
+    const touching = [
+      { from: '2026-07-10', to: '2026-07-11' },
+      { from: '2026-07-12', to: '2026-07-14' },
+    ];
+    expect(NewMember.safeParse({ id: ANIA, displayName: 'Tomek', attendance: touching }).success).toBe(false);
+  });
+
+  it('cannot set an account (members are added without one)', () => {
+    expect(NewMember.parse({ id: ANIA, displayName: 'Tomek', userId: BARTEK })).not.toHaveProperty('userId');
+  });
+});
+
+describe('MemberRename', () => {
+  it('validates the new name like a member name', () => {
+    expect(MemberRename.parse({ displayName: ' Tomasz ' })).toEqual({ displayName: 'Tomasz' });
+    expect(MemberRename.safeParse({ displayName: '' }).success).toBe(false);
+  });
+});
+
+describe('canRenameMember', () => {
+  const ME = uuid(201);
+  it('lets anyone rename a member without an account (ADR-0008)', () => {
+    expect(canRenameMember(member(TOMEK, 'Tomek'), ME)).toBe(true);
+  });
+
+  it('lets a user rename their own member', () => {
+    expect(canRenameMember({ ...member(ANIA, 'Ania'), userId: ME }, ME)).toBe(true);
+  });
+
+  it("does not let others rename a member with an account", () => {
+    expect(canRenameMember({ ...member(BARTEK, 'Bartek'), userId: USER }, ME)).toBe(false);
   });
 });
 
