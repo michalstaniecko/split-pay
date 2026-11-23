@@ -21,6 +21,7 @@ import {
 import { entriesQuery } from '@/features/entries/entries-query';
 import { DaySeparator, EntryBubble } from '@/features/entries/entry-bubble';
 import { type GroupDetail, groupQuery } from '@/features/groups/groups-query';
+import { SettlementSystemMessage } from '@/features/settlements/settlement-system-message';
 import { authClient } from '@/lib/auth-client';
 import { useRefreshOnFocus } from '@/lib/use-refresh-on-focus';
 
@@ -150,7 +151,7 @@ function Conversation({
       ref={listRef}
       data={items}
       keyExtractor={(item) => item.key}
-      getItemType={(item) => item.type}
+      getItemType={(item) => (item.type === 'entry' && item.entry.kind === 'settlement' ? 'settlement' : item.type)}
       stickyHeaderIndices={stickyHeaderIndices}
       extraData={highlightId}
       // Opens at the newest entry; keeps following new ones while the user is near the bottom.
@@ -164,6 +165,15 @@ function Conversation({
           <DaySeparator item={item} baseCurrency={group.baseCurrency} />
         ) : item.type === 'claim' ? (
           <ClaimMessage groupId={group.id} claim={item.claim} />
+        ) : item.entry.kind === 'settlement' ? (
+          // Settlements are system messages, not bubbles (ADR-0017).
+          <SettlementSystemMessage
+            entry={item.entry}
+            members={group.members}
+            myMemberId={me}
+            highlighted={item.entry.id === highlightId}
+            onPress={() => openEntry(item.entry.id)}
+          />
         ) : (
           <EntryBubble
             item={item}
