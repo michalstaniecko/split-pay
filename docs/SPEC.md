@@ -237,7 +237,10 @@ Expo Router, chat-style layout — no bottom tabs, no group tabs ([ADR-0017](./a
 - Days × people stats, categories
 - Receipt photo, avatar
 - View-only web
+- Chat-style layout: inbox, Conversation, Group info ([ADR-0017](./adr/0017-chat-style-navigation.md))
+- Search, unread markers, day strip
 - Fresh / Classic × light / dark themes
+- Accessibility: screen-reader labels, Dynamic Type, WCAG AA contrast
 - PL + EN
 - Offline (outbox)
 - Push
