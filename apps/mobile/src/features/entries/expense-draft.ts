@@ -2,6 +2,7 @@ import {
   type Category,
   type CurrencyCode,
   defaultEntryDate,
+  defaultParticipants,
   equalExpenseDefaults,
   type Group,
   LocalDate,
@@ -9,6 +10,7 @@ import {
   minorUnitDigits,
   type NewExpense,
   NewEntry,
+  participantsOnDateChange,
   suggestCategory,
 } from '@split-pay/shared';
 import { parseAmountInput } from './amount-input';
@@ -19,7 +21,6 @@ import {
   initialSplitForm,
   type PayersForm,
   type SplitForm,
-  withSplitDate,
 } from './split-form';
 
 /** What the group needs to provide for building an expense. */
@@ -71,9 +72,9 @@ export function composerExpense(input: {
 }
 
 /**
- * The full expense form while editing. This slice exposes payer, date and
- * category with an equal split in the base currency; later slices add their
- * fields here (split modes #12, income #13, currency #14) and to `parseExpenseForm`.
+ * The full expense form while editing: payer(s), date, category and the split
+ * in the base currency; later slices add their fields here (income #13,
+ * currency #14) and to `parseExpenseForm`.
  */
 export interface ExpenseForm {
   amount: string;
@@ -84,6 +85,15 @@ export interface ExpenseForm {
   category: Category;
   /** The user picked a category — stop suggesting it from the title. */
   categoryChosen: boolean;
+  /**
+   * Participants of an equal split (common + personal: who shares the common
+   * part). They start as the members present on the date
+   * and follow attendance when it changes, unless hand-picked (#15). Empty =
+   * nobody present that day, which saves as everyone.
+   */
+  participantIds: string[];
+  /** The last valid date `participantIds` were resolved for (`date` may be half-typed). */
+  participantsDate: LocalDate;
   /** Split mode and its values (#12). */
   split: SplitForm;
   /** Multiple payers behind an advanced option; `payerMemberId` is the single payer (#12). */
@@ -93,33 +103,50 @@ export interface ExpenseForm {
 export type ExpenseFormField = 'amount' | 'title' | 'payer' | 'payerAmounts' | 'date' | 'split';
 const FIELDS: readonly ExpenseFormField[] = ['amount', 'title', 'payer', 'payerAmounts', 'date', 'split'];
 
-/** The form opened by "+": the composer's values, me as payer, the default date, the suggested category. */
+/**
+ * The form opened by "+": the composer's values, me as payer, the default
+ * date, the members present that day, the suggested category.
+ */
 export function expenseFormFromComposer(input: {
   draft: ComposerDraft;
   group: ExpenseGroup;
+  members: readonly Member[];
   myMemberId: string | null;
   today: LocalDate;
 }): ExpenseForm {
+  const date = defaultEntryDate(input.today, input.group);
   return {
     amount: input.draft.amount,
     title: input.draft.title,
     payerMemberId: input.myMemberId ?? '',
-    date: defaultEntryDate(input.today, input.group),
+    date,
     category: suggestCategory(input.draft.title),
     categoryChosen: false,
     split: initialSplitForm,
     payers: initialPayersForm,
+    participantIds: defaultParticipants(input.members, date),
+    participantsDate: date,
+  };
+}
+
+/**
+ * Changes the date as typed. Once it is a valid date, participants follow
+ * attendance on it unless they were hand-picked (`participantsOnDateChange`).
+ */
+export function withDate(form: ExpenseForm, date: string, members: readonly Member[]): ExpenseForm {
+  const next = date.trim();
+  if (!LocalDate.safeParse(next).success || next === form.participantsDate) return { ...form, date };
+  return {
+    ...form,
+    date,
+    participantIds: participantsOnDateChange(members, form.participantIds, form.participantsDate, next),
+    participantsDate: next,
   };
 }
 
 /** Changes the title; the category follows the title until the user picks one. */
 export function withTitle(form: ExpenseForm, title: string): ExpenseForm {
   return { ...form, title, category: form.categoryChosen ? form.category : suggestCategory(title) };
-}
-
-/** Changes the date; participants follow who is present that day unless picked by hand. */
-export function withDate(form: ExpenseForm, date: string, members: readonly Member[]): ExpenseForm {
-  return { ...form, date, split: withSplitDate(form.split, members, form.date, date) };
 }
 
 export type ParsedExpenseForm = { ok: true; value: NewExpense } | { ok: false; errors: ExpenseFormField[] };
@@ -139,7 +166,7 @@ export function parseExpenseForm(
   if (form.payers.multiple && !payers.ok) errors.add('payerAmounts');
   const date = form.date.trim();
   if (!LocalDate.safeParse(date).success) errors.add('date');
-  const split = buildSplit(form.split, { amount, digits, members: context.members, date });
+  const split = buildSplit(form.split, { amount, digits, members: context.members, participantIds: form.participantIds });
   if (amount !== null && !split.ok) errors.add('split');
   if (errors.size > 0 || amount === null || !payers.ok || !split.ok) {
     return { ok: false, errors: FIELDS.filter((f) => errors.has(f)) };

@@ -1,10 +1,7 @@
 import {
   type Allocation,
-  defaultParticipants,
-  type LocalDate,
   type Member,
   type MemberAmount,
-  participantsOnDateChange,
   resolveSplit,
   type Split,
   type SplitMode,
@@ -13,15 +10,12 @@ import { parseAmountInput } from './amount-input';
 
 /**
  * The split section of the full expense form, as typed. Every mode keeps its
- * own values, so switching modes back and forth loses nothing.
+ * own values, so switching modes back and forth loses nothing. Who takes part
+ * in an equal split (and shares the common part) is the form's
+ * `participantIds`, which follow attendance on a date change (#15).
  */
 export interface SplitForm {
   mode: SplitMode;
-  /**
-   * Equal: who takes part; common + personal: who shares the common part.
-   * `null` = the members present on the entry's date (not picked by hand).
-   */
-  participants: string[] | null;
   /** Exact amounts per member id, as typed. */
   exact: Record<string, string>;
   /** Weights per member id, as typed (digits only). */
@@ -30,7 +24,7 @@ export interface SplitForm {
   personal: Record<string, string>;
 }
 
-export const initialSplitForm: SplitForm = { mode: 'equal', participants: null, exact: {}, weights: {}, personal: {} };
+export const initialSplitForm: SplitForm = { mode: 'equal', exact: {}, weights: {}, personal: {} };
 
 /** Highest weight the form accepts (the shared schema allows up to 1000). */
 export const MAX_WEIGHT_DIGITS = 3;
@@ -40,27 +34,18 @@ export function cleanWeightInput(text: string): string {
   return text.replace(/\D/g, '').slice(0, MAX_WEIGHT_DIGITS);
 }
 
-/** The participants in member order; by default those present on `date` (everyone if nobody is). */
-export function participantIds(split: SplitForm, members: readonly Member[], date: LocalDate): string[] {
-  if (split.participants !== null) {
-    const picked = new Set(split.participants);
-    return members.filter((m) => picked.has(m.id)).map((m) => m.id);
-  }
-  const present = defaultParticipants(members, date);
-  return present.length > 0 ? present : members.map((m) => m.id);
+/** Participants in member order; an empty list (nobody present that day) means everyone. */
+export function effectiveParticipants(participantIds: readonly string[], members: readonly Member[]): string[] {
+  if (participantIds.length === 0) return members.map((m) => m.id);
+  const picked = new Set(participantIds);
+  return members.filter((m) => picked.has(m.id)).map((m) => m.id);
 }
 
-/** Adds or removes a participant; from then on the list is picked by hand. */
-export function toggleParticipant(split: SplitForm, memberId: string, members: readonly Member[], date: LocalDate): SplitForm {
-  const current = participantIds(split, members, date);
-  const next = current.includes(memberId) ? current.filter((id) => id !== memberId) : [...current, memberId];
-  return { ...split, participants: participantIds({ ...split, participants: next }, members, date) };
-}
-
-/** On a date change, participants follow attendance unless picked by hand (`participantsOnDateChange`). */
-export function withSplitDate(split: SplitForm, members: readonly Member[], previousDate: string, nextDate: string): SplitForm {
-  if (split.participants === null) return split;
-  return { ...split, participants: participantsOnDateChange(members, split.participants, previousDate, nextDate) };
+/** Adds or removes a participant (member order). The last one stays — a split needs someone. */
+export function toggleParticipant(participantIds: readonly string[], memberId: string, members: readonly Member[]): string[] {
+  const current = effectiveParticipants(participantIds, members);
+  if (!current.includes(memberId)) return effectiveParticipants([...current, memberId], members);
+  return current.length > 1 ? current.filter((id) => id !== memberId) : current;
 }
 
 export type SplitProblem =
@@ -90,17 +75,17 @@ function typedAmounts(values: Record<string, string>, ids: readonly string[], di
  */
 export function buildSplit(
   split: SplitForm,
-  context: { amount: number | null; digits: number; members: readonly Member[]; date: LocalDate },
+  context: { amount: number | null; digits: number; members: readonly Member[]; participantIds: readonly string[] },
 ): SplitResult {
-  const { amount, digits, members, date } = context;
+  const { amount, digits, members } = context;
+  const participants = effectiveParticipants(context.participantIds, members);
   if (amount === null) return { ok: false, problem: { kind: 'noAmount' } };
   const ids = members.map((m) => m.id);
   let result: Split;
   switch (split.mode) {
     case 'equal': {
-      const memberIds = participantIds(split, members, date);
-      if (memberIds.length === 0) return { ok: false, problem: { kind: 'noParticipants' } };
-      result = { mode: 'equal', memberIds };
+      if (participants.length === 0) return { ok: false, problem: { kind: 'noParticipants' } };
+      result = { mode: 'equal', memberIds: participants };
       break;
     }
     case 'exact': {
@@ -124,11 +109,10 @@ export function buildSplit(
       const personal = typedAmounts(split.personal, ids, digits);
       if (personal.length === 0) return { ok: false, problem: { kind: 'noPersonal' } };
       if (sum(personal) > amount) return { ok: false, problem: { kind: 'personalExceeds', sum: sum(personal), amount } };
-      const commonMemberIds = participantIds(split, members, date);
-      if (sum(personal) < amount && commonMemberIds.length === 0) {
+      if (sum(personal) < amount && participants.length === 0) {
         return { ok: false, problem: { kind: 'noCommonMembers' } };
       }
-      result = { mode: 'commonPlusPersonal', commonMemberIds, personal };
+      result = { mode: 'commonPlusPersonal', commonMemberIds: participants, personal };
       break;
     }
   }

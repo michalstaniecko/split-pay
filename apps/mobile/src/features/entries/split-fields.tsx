@@ -10,7 +10,7 @@ import {
   cleanWeightInput,
   type PayersForm,
   type PayersProblem,
-  participantIds,
+  effectiveParticipants,
   type SplitForm,
   type SplitProblem,
   toggleParticipant,
@@ -136,31 +136,34 @@ export function SplitField({
   members,
   myMemberId,
   split,
-  date,
+  participantIds,
   amount,
   digits,
   currency,
   showErrors,
   onChange,
+  onChangeParticipants,
 }: {
   members: readonly Member[];
   myMemberId: string | null;
   split: SplitForm;
-  date: string;
+  /** Equal split / common part participants (the form's `participantIds`, empty = everyone). */
+  participantIds: readonly string[];
   amount: number | null;
   digits: number;
   currency: string;
   showErrors: boolean;
   onChange: (split: SplitForm) => void;
+  onChangeParticipants: (participantIds: string[]) => void;
 }) {
   const { t } = useLingui();
   const labels = useEntryLabels();
   const format = useFormatters();
   const problemMessage = useProblemMessage(currency);
   const name = (m: Member) => (m.id === myMemberId ? t`Ty` : m.displayName);
-  const result = buildSplit(split, { amount, digits, members, date });
+  const result = buildSplit(split, { amount, digits, members, participantIds });
   const message = result.ok ? null : problemMessage(result.problem);
-  const participants = participantIds(split, members, date);
+  const participants = effectiveParticipants(participantIds, members);
 
   const participantChips = (
     <View style={styles.chips}>
@@ -170,7 +173,7 @@ export function SplitField({
           role="checkbox"
           label={name(m)}
           selected={participants.includes(m.id)}
-          onPress={() => onChange(toggleParticipant(split, m.id, members, date))}
+          onPress={() => onChangeParticipants(toggleParticipant(participantIds, m.id, members))}
         />
       ))}
     </View>

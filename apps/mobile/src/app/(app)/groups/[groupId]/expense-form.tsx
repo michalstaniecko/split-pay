@@ -53,7 +53,13 @@ function ExpenseFormView({ group }: { group: GroupDetail }) {
   // One id per form: a retry after a lost response can't add the expense twice.
   const [id] = useState(() => randomUUID());
   const [form, setForm] = useState<ExpenseForm>(() =>
-    expenseFormFromComposer({ draft: composerStore.get(group.id), group, myMemberId: me, today: todayLocalDate() }),
+    expenseFormFromComposer({
+      draft: composerStore.get(group.id),
+      group,
+      members: group.members,
+      myMemberId: me,
+      today: todayLocalDate(),
+    }),
   );
   const [errors, setErrors] = useState<ExpenseFormField[]>([]);
   const createEntry = useCreateEntry(group.id);
@@ -181,12 +187,13 @@ function ExpenseFormView({ group }: { group: GroupDetail }) {
           members={group.members}
           myMemberId={me}
           split={form.split}
-          date={form.date.trim()}
+          participantIds={form.participantIds}
           amount={amount}
           digits={digits}
           currency={group.baseCurrency}
           showErrors={errors.includes('split')}
           onChange={(split) => update({ ...form, split }, ['split'])}
+          onChangeParticipants={(participantIds) => update({ ...form, participantIds }, ['split'])}
         />
 
         {createEntry.isError ? <Text style={styles.error}>{t`Nie udało się dodać wydatku. Spróbuj ponownie.`}</Text> : null}

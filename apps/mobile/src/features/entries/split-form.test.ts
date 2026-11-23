@@ -3,12 +3,11 @@ import { describe, expect, it } from 'vitest';
 import {
   buildPayers,
   buildSplit,
+  effectiveParticipants,
   initialSplitForm,
-  participantIds,
   type SplitForm,
   toggleParticipant,
   withMultiplePayers,
-  withSplitDate,
 } from './split-form';
 
 const id = (n: number) => `00000000-0000-4000-8000-${n.toString().padStart(12, '0')}`;
@@ -25,35 +24,22 @@ const member = (memberId: string, displayName: string, attendance: Member['atten
 });
 // Tomek arrives on the 12th.
 const members = [member(ANIA, 'Ania'), member(BARTEK, 'Bartek'), member(TOMEK, 'Tomek', [{ from: '2026-07-12', to: '2026-07-14' }])];
-const ctx = (amount: number | null, date = '2026-07-11') => ({ amount, digits: 2, members, date });
+// Present on the 11th: Ania and Bartek.
+const ctx = (amount: number | null, participantIds: string[] = [ANIA, BARTEK]) => ({ amount, digits: 2, members, participantIds });
 const form = (overrides: Partial<SplitForm>): SplitForm => ({ ...initialSplitForm, ...overrides });
 
 describe('participants', () => {
-  it('follow who is present on the date until picked by hand', () => {
-    expect(participantIds(initialSplitForm, members, '2026-07-11')).toEqual([ANIA, BARTEK]);
-    expect(participantIds(initialSplitForm, members, '2026-07-12')).toEqual([ANIA, BARTEK, TOMEK]);
+  it('an empty list (nobody present that day) means everyone', () => {
+    expect(effectiveParticipants([], members)).toEqual([ANIA, BARTEK, TOMEK]);
+    expect(effectiveParticipants([TOMEK, ANIA], members)).toEqual([ANIA, TOMEK]);
   });
 
-  it('are everyone when nobody is present that day', () => {
-    const away = [member(ANIA, 'Ania', [{ from: '2026-07-12', to: '2026-07-12' }])];
-    expect(participantIds(initialSplitForm, away, '2026-07-20')).toEqual([ANIA]);
-  });
-
-  it('can be toggled by hand, in member order', () => {
-    const withoutAnia = toggleParticipant(initialSplitForm, ANIA, members, '2026-07-11');
-    expect(participantIds(withoutAnia, members, '2026-07-11')).toEqual([BARTEK]);
-    const withTomek = toggleParticipant(withoutAnia, TOMEK, members, '2026-07-11');
-    expect(participantIds(withTomek, members, '2026-07-11')).toEqual([BARTEK, TOMEK]);
-  });
-
-  it('follow a date change unless picked by hand', () => {
-    expect(participantIds(withSplitDate(initialSplitForm, members, '2026-07-11', '2026-07-12'), members, '2026-07-12')).toEqual([
-      ANIA,
-      BARTEK,
-      TOMEK,
-    ]);
-    const picked = toggleParticipant(initialSplitForm, ANIA, members, '2026-07-11');
-    expect(participantIds(withSplitDate(picked, members, '2026-07-11', '2026-07-12'), members, '2026-07-12')).toEqual([BARTEK]);
+  it('can be toggled by hand, in member order, but never down to nobody', () => {
+    expect(toggleParticipant([ANIA, BARTEK], ANIA, members)).toEqual([BARTEK]);
+    expect(toggleParticipant([BARTEK], TOMEK, members)).toEqual([BARTEK, TOMEK]);
+    expect(toggleParticipant([TOMEK, BARTEK], ANIA, members)).toEqual([ANIA, BARTEK, TOMEK]);
+    expect(toggleParticipant([BARTEK], BARTEK, members)).toEqual([BARTEK]);
+    expect(toggleParticipant([], TOMEK, members)).toEqual([ANIA, BARTEK]);
   });
 });
 
@@ -69,9 +55,11 @@ describe('buildSplit', () => {
     });
   });
 
-  it('equal: needs at least one participant', () => {
-    const nobody = toggleParticipant(toggleParticipant(initialSplitForm, ANIA, members, '2026-07-11'), BARTEK, members, '2026-07-11');
-    expect(buildSplit(nobody, ctx(1000))).toEqual({ ok: false, problem: { kind: 'noParticipants' } });
+  it('equal: nobody present that day means everyone', () => {
+    expect(buildSplit(initialSplitForm, ctx(900, []))).toMatchObject({
+      ok: true,
+      split: { mode: 'equal', memberIds: [ANIA, BARTEK, TOMEK] },
+    });
   });
 
   it('exact: typed amounts must add up to the amount; empty fields are left out', () => {
@@ -133,29 +121,19 @@ describe('buildSplit', () => {
     });
   });
 
-  it('common + personal: personal items may not exceed the amount and need someone for the rest', () => {
+  it('common + personal: personal items may not exceed the amount; at least one is needed', () => {
     expect(buildSplit(form({ mode: 'commonPlusPersonal', personal: { [TOMEK]: '11' } }), ctx(1000))).toEqual({
       ok: false,
       problem: { kind: 'personalExceeds', sum: 1100, amount: 1000 },
     });
-    const nobodyCommon = toggleParticipant(
-      toggleParticipant(form({ mode: 'commonPlusPersonal', personal: { [TOMEK]: '4' } }), ANIA, members, '2026-07-11'),
-      BARTEK,
-      members,
-      '2026-07-11',
-    );
-    expect(buildSplit(nobodyCommon, ctx(1000))).toEqual({ ok: false, problem: { kind: 'noCommonMembers' } });
     expect(buildSplit(form({ mode: 'commonPlusPersonal' }), ctx(1000))).toEqual({ ok: false, problem: { kind: 'noPersonal' } });
   });
 
-  it('common + personal: personal items covering the whole amount need no common members', () => {
-    const nobodyCommon = toggleParticipant(
-      toggleParticipant(form({ mode: 'commonPlusPersonal', personal: { [TOMEK]: '10' } }), ANIA, members, '2026-07-11'),
-      BARTEK,
-      members,
-      '2026-07-11',
-    );
-    expect(buildSplit(nobodyCommon, ctx(1000))).toMatchObject({ ok: true, shares: [{ memberId: TOMEK, amount: 1000 }] });
+  it('common + personal: personal items covering the whole amount leave no common part', () => {
+    expect(buildSplit(form({ mode: 'commonPlusPersonal', personal: { [TOMEK]: '10' } }), ctx(1000))).toMatchObject({
+      ok: true,
+      shares: [{ memberId: TOMEK, amount: 1000 }],
+    });
   });
 
   it('cannot be resolved without an amount', () => {
