@@ -44,6 +44,8 @@ describe('group link', () => {
       group: { id: group.id, name: 'Mazury', emoji: '⛵', color: '#1E88E5' },
       memberCount: 1,
       isMember: false,
+      claimable: [],
+      claimFor: null,
     });
   });
 

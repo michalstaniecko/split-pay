@@ -2,16 +2,20 @@ import {
   type CurrencyCode,
   Entry,
   type Expense,
-  LocalDate,
+  type Income,
+  type MemberAmount,
   type Member,
   type MinorAmount,
   minorUnitDigits,
-  participantsOnDateChange,
 } from '@split-pay/shared';
 import { DetailedError } from 'hono/client';
 import { type ExpenseForm, type ExpenseGroup, type ParsedExpenseForm, parseExpenseForm } from './expense-draft';
+import { initialPayersForm, initialSplitForm, type SplitForm } from './split-form';
 
-/** Minor units as plain decimal text ("123.45", "100"), no grouping. */
+/** An entry the full form edits (expense or income). */
+export type FormEntry = Expense | Income;
+
+/** Minor units as plain decimal text ("123.45", "100"), no grouping — what the amount fields accept. */
 function decimalText(minor: MinorAmount, digits: number, separator: string): string {
   if (digits === 0) return String(minor);
   const text = String(minor).padStart(digits + 1, '0');
@@ -20,59 +24,79 @@ function decimalText(minor: MinorAmount, digits: number, separator: string): str
   return fraction === '' ? whole : `${whole}${separator}${fraction}`;
 }
 
-/** The largest payer — the one the form's single "Zapłacił(a)" shows. */
-const mainPayer = (entry: Expense) =>
-  [...entry.payers].sort((a, b) => b.amount - a.amount || (a.memberId < b.memberId ? -1 : 1))[0]!.memberId;
+const holders = (entry: FormEntry) => (entry.kind === 'expense' ? entry.payers : entry.recipients);
 
-/** The full expense form opened by "Edytuj": the entry as entered (the category counts as chosen). */
-export function expenseFormFromEntry(entry: Expense): ExpenseForm {
+/** The largest payer (income: recipient) — the form's single person choice. */
+const mainHolder = (entry: FormEntry) =>
+  [...holders(entry)].sort((a, b) => b.amount - a.amount || (a.memberId < b.memberId ? -1 : 1))[0]!.memberId;
+
+/**
+ * The full form opened by "Edytuj" (#11): the entry as entered — kind,
+ * payers/recipients (several → the multiple-payers option), split mode with
+ * its typed values, participants; the category counts as chosen.
+ */
+export function expenseFormFromEntry(entry: FormEntry): ExpenseForm {
+  const digits = minorUnitDigits(entry.currency);
+  const typed = (list: readonly MemberAmount[]) =>
+    Object.fromEntries(list.map((x) => [x.memberId, decimalText(x.amount, digits, '.')]));
+  const split = entry.split;
+  let splitForm: SplitForm;
+  let participantIds: string[];
+  switch (split.mode) {
+    case 'equal':
+      splitForm = initialSplitForm;
+      participantIds = [...split.memberIds];
+      break;
+    case 'exact':
+      splitForm = { ...initialSplitForm, mode: 'exact', exact: typed(split.amounts) };
+      participantIds = split.amounts.map((a) => a.memberId);
+      break;
+    case 'shares':
+      splitForm = {
+        ...initialSplitForm,
+        mode: 'shares',
+        weights: Object.fromEntries(split.weights.map((w) => [w.memberId, String(w.weight)])),
+      };
+      participantIds = split.weights.map((w) => w.memberId);
+      break;
+    case 'commonPlusPersonal':
+      splitForm = { ...initialSplitForm, mode: 'commonPlusPersonal', personal: typed(split.personal) };
+      participantIds = [...split.commonMemberIds];
+      break;
+  }
+  const several = holders(entry).length > 1;
   return {
-    amount: decimalText(entry.amount, minorUnitDigits(entry.currency), '.'),
+    amount: decimalText(entry.amount, digits, '.'),
     title: entry.title,
-    payerMemberId: mainPayer(entry),
+    payerMemberId: mainHolder(entry),
     date: entry.date,
     category: entry.category,
     categoryChosen: true,
+    // The saved snapshot (ADR-0016): a new date moves them only while they are that day's defaults.
+    participantIds,
+    participantsDate: entry.date,
+    split: splitForm,
+    payers: several ? { multiple: true, amounts: typed(holders(entry)) } : initialPayersForm,
+    kind: entry.kind,
   };
 }
 
 /**
- * The edited expense from the form (sent as the whole entry, with the version
- * it was based on). Validates like a new expense, then keeps what the form
- * doesn't show: the receipt, the split participants (snapshot, ADR-0016 —
- * defaults follow a changed date via `participantsOnDateChange`, hand-picked
- * ones stay; other split modes are kept as they are) and several payers while
- * the amount and the payer are untouched.
- * TODO(#12, #13, #14): split modes, income and the entry currency in the form.
+ * The edited entry from the form — the whole entry, sent with the version it
+ * was based on. Validated like a new one; keeps the id and the receipt (not
+ * in the form yet, #26). TODO(#14): the entry currency.
  */
-export function editedExpense(
-  entry: Expense,
+export function editedEntry(
+  entry: FormEntry,
   form: ExpenseForm,
   context: { group: ExpenseGroup; members: readonly Member[] },
 ): ParsedExpenseForm {
   const parsed = parseExpenseForm(form, { id: entry.id, group: context.group, members: context.members });
   if (!parsed.ok) return parsed;
-  const value = parsed.value;
-  const split = editedSplit(entry, value.date, context.members);
-  const payersKept = value.amount === entry.amount && form.payerMemberId === mainPayer(entry);
-  return {
-    ok: true,
-    value: { ...value, receiptPhotoId: entry.receiptPhotoId, split, payers: payersKept ? entry.payers : value.payers },
-  };
+  return { ok: true, value: { ...parsed.value, receiptPhotoId: entry.receiptPhotoId } };
 }
 
-/**
- * The edited entry's split for the form's date: an equal split's participants
- * follow a new date while they are that day's defaults (hand-picked ones
- * stay); other modes are kept.
- */
-export function editedSplit(entry: Expense, date: string, members: readonly Member[]): Expense['split'] {
-  if (entry.split.mode !== 'equal') return entry.split;
-  if (date === entry.date || !LocalDate.safeParse(date).success) return entry.split;
-  return { mode: 'equal', memberIds: participantsOnDateChange(members, entry.split.memberIds, entry.date, date) };
-}
-
-/** "Kopiuj kwotę":the bare number in the locale's decimal format, no currency, no grouping. */
+/** "Kopiuj kwotę": the bare number in the locale's decimal format, no currency, no grouping. */
 export function amountForClipboard(minor: MinorAmount, currency: CurrencyCode, locale: string): string {
   const separator = new Intl.NumberFormat(locale).formatToParts(1.5).find((p) => p.type === 'decimal')?.value ?? '.';
   const digits = minorUnitDigits(currency);
@@ -95,13 +119,13 @@ export type EntryAction = 'edit' | 'delete' | 'history' | 'copyAmount';
 /**
  * A bubble's long-press actions in menu order (SPEC: Edytuj, Usuń, Historia,
  * Kopiuj kwotę). An archived group is read-only: only Historia and Kopiuj
- * kwotę. "Edytuj" only for kinds the full form can edit (expenses so far;
- * TODO(#10, #13): settlements and incomes).
+ * kwotę. "Edytuj" only for kinds the full form can edit (expenses and
+ * incomes; TODO(#10): settlements).
  */
-export function entryActions(entry: Pick<Entry, 'kind'>, group: { archivedAt: string | null }): EntryAction[] {
+export function entryActions(entry: Entry, group: { archivedAt: string | null }): EntryAction[] {
   if (group.archivedAt !== null) return ['history', 'copyAmount'];
   return [...(isEditableInForm(entry) ? (['edit'] as const) : []), 'delete', 'history', 'copyAmount'];
 }
 
 /** The full expense form can edit this entry. */
-export const isEditableInForm = (entry: Pick<Entry, 'kind'>): boolean => entry.kind === 'expense';
+export const isEditableInForm = (entry: Entry): entry is FormEntry => entry.kind !== 'settlement';

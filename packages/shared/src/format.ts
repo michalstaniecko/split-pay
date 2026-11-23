@@ -5,12 +5,20 @@ import { type CurrencyCode, type MinorAmount, minorUnitDigits } from './money';
  * Formats an amount in minor units (ADR-0003) as a localised currency string,
  * e.g. `formatAmount(1234567, 'PLN', 'pl')` → "12 345,67 zł".
  * The minor units are turned into a decimal string without float arithmetic.
+ * `currencyDisplay: 'name'` spells the currency out for screen readers
+ * ("45,50 złotego polskiego").
  */
-export function formatAmount(amount: MinorAmount, currency: CurrencyCode, locale: string): string {
+export function formatAmount(
+  amount: MinorAmount,
+  currency: CurrencyCode,
+  locale: string,
+  options: { currencyDisplay?: 'symbol' | 'name' } = {},
+): string {
   const digits = minorUnitDigits(currency);
   return new Intl.NumberFormat(locale, {
     style: 'currency',
     currency,
+    currencyDisplay: options.currencyDisplay ?? 'symbol',
     minimumFractionDigits: digits,
     maximumFractionDigits: digits,
     // Intl.NumberFormat v3 (ES2023) formats decimal strings exactly; the ES2022

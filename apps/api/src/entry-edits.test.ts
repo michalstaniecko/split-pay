@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { type Entry, type NewEntry, toNewEntry } from '@split-pay/shared';
+import { computeBalances, type Entry, type NewEntry, toNewEntry } from '@split-pay/shared';
 import { eq } from 'drizzle-orm';
 import { parseResponse } from 'hono/client';
 import { describe, expect, it } from 'vitest';
@@ -73,6 +73,16 @@ describe('editing and deleting entries', () => {
     expect(await list()).toEqual([edited]);
   });
 
+  it('an edit can turn an expense into an income', async () => {
+    const { created, edit, list } = await setup();
+    const { payers, ...fields } = toNewEntry(created) as Extract<NewEntry, { kind: 'expense' }>;
+
+    const income = await parseResponse(edit({ ...fields, kind: 'income', recipients: payers }, 1));
+    expect(income).toMatchObject({ kind: 'income', recipients: payers, version: 2 });
+    expect(income).not.toHaveProperty('payers');
+    expect(await list()).toEqual([income]);
+  });
+
   it('an edit based on a stale version is rejected with 409 and the current entry', async () => {
     const { bartek, created, edit, list } = await setup();
     const theirs = await parseResponse(edit({ ...toNewEntry(created), title: 'Kolacja' } as NewEntry, 1, bartek));
@@ -124,6 +134,18 @@ describe('editing and deleting entries', () => {
     expect(back).toMatchObject({ id: created.id, title: 'Pizza', version: 1, deletedAt: null });
     expect(back.updatedAt > deleted.updatedAt).toBe(true);
     expect(await list()).toEqual([back]);
+  });
+
+  it('a deleted entry no longer counts in balances; restoring brings it back', async () => {
+    const { me, bartekId, remove, restore, list } = await setup();
+    // TODO(#9): read these from the balances endpoint once it exists; it uses the same shared ledger.
+    expect(Object.fromEntries(computeBalances(await list(), 'PLN'))).toEqual({ [me]: 5_000, [bartekId]: -5_000 });
+
+    await parseResponse(remove(1));
+    expect(computeBalances(await list(), 'PLN').size).toBe(0);
+
+    await parseResponse(restore(1));
+    expect(Object.fromEntries(computeBalances(await list(), 'PLN'))).toEqual({ [me]: 5_000, [bartekId]: -5_000 });
   });
 
   it('delete and restore are idempotent', async () => {

@@ -1,7 +1,15 @@
-import type { Expense, Member } from '@split-pay/shared';
+import { type Expense, type Income, type Member, toNewEntry } from '@split-pay/shared';
 import { DetailedError } from 'hono/client';
 import { describe, expect, it } from 'vitest';
-import { amountForClipboard, editedExpense, entryActions, expenseFormFromEntry, versionConflictEntry } from './entry-edit';
+import {
+  amountForClipboard,
+  editedEntry,
+  entryActions,
+  expenseFormFromEntry,
+  type FormEntry,
+  versionConflictEntry,
+} from './entry-edit';
+import { withDate } from './expense-draft';
 
 const id = (n: number) => `00000000-0000-4000-8000-${n.toString().padStart(12, '0')}`;
 const GROUP = id(100);
@@ -46,6 +54,18 @@ const pizza: Expense = {
   split: { mode: 'equal', memberIds: [ANIA, BARTEK] },
 };
 
+const { payers: _payers, ...pizzaFields } = pizza;
+const refund: Income = {
+  ...pizzaFields,
+  kind: 'income',
+  id: id(501),
+  title: 'Kaucja',
+  category: 'accommodation',
+  amount: 30_000,
+  recipients: [{ memberId: KASIA, amount: 30_000 }],
+  split: { mode: 'equal', memberIds: [ANIA, BARTEK, KASIA] },
+};
+
 describe('expenseFormFromEntry', () => {
   it('opens the form with the entry as entered', () => {
     expect(expenseFormFromEntry(pizza)).toEqual({
@@ -55,21 +75,51 @@ describe('expenseFormFromEntry', () => {
       date: '2026-07-11',
       category: 'food',
       categoryChosen: true,
+      participantIds: [ANIA, BARTEK],
+      participantsDate: '2026-07-11',
+      split: { mode: 'equal', exact: {}, weights: {}, personal: {} },
+      payers: { multiple: false, amounts: {} },
+      kind: 'expense',
     });
   });
 
-  it('writes whole amounts without decimals and picks the largest payer', () => {
+  it('writes whole amounts without decimals', () => {
+    expect(expenseFormFromEntry({ ...pizza, amount: 10_000, payers: [{ memberId: BARTEK, amount: 10_000 }] }).amount).toBe('100');
+    expect(expenseFormFromEntry({ ...pizza, amount: 5, payers: [{ memberId: BARTEK, amount: 5 }] }).amount).toBe('0.05');
+  });
+
+  it('opens several payers as the multiple-payers option, the largest as the payer', () => {
     const shared = { ...pizza, amount: 10_000, payers: [{ memberId: ANIA, amount: 3_000 }, { memberId: BARTEK, amount: 7_000 }] };
-    expect(expenseFormFromEntry(shared)).toMatchObject({ amount: '100', payerMemberId: BARTEK });
-    expect(expenseFormFromEntry({ ...pizza, amount: 5, currency: 'PLN' }).amount).toBe('0.05');
+    expect(expenseFormFromEntry(shared)).toMatchObject({
+      payerMemberId: BARTEK,
+      payers: { multiple: true, amounts: { [ANIA]: '30', [BARTEK]: '70' } },
+    });
+  });
+
+  it('opens every split mode with its values', () => {
+    const exact = expenseFormFromEntry({ ...pizza, split: { mode: 'exact', amounts: [{ memberId: ANIA, amount: 2_345 }, { memberId: BARTEK, amount: 10_000 }] } });
+    expect(exact.split).toMatchObject({ mode: 'exact', exact: { [ANIA]: '23.45', [BARTEK]: '100' } });
+
+    const shares = expenseFormFromEntry({ ...pizza, split: { mode: 'shares', weights: [{ memberId: ANIA, weight: 2 }, { memberId: KASIA, weight: 1 }] } });
+    expect(shares.split).toMatchObject({ mode: 'shares', weights: { [ANIA]: '2', [KASIA]: '1' } });
+
+    const personal = expenseFormFromEntry({
+      ...pizza,
+      split: { mode: 'commonPlusPersonal', commonMemberIds: [ANIA, KASIA], personal: [{ memberId: BARTEK, amount: 2_000 }] },
+    });
+    expect(personal).toMatchObject({ participantIds: [ANIA, KASIA], split: { mode: 'commonPlusPersonal', personal: { [BARTEK]: '20' } } });
+  });
+
+  it('opens an income with its recipient as the person', () => {
+    expect(expenseFormFromEntry(refund)).toMatchObject({ kind: 'income', payerMemberId: KASIA });
   });
 });
 
-describe('editedExpense', () => {
+describe('editedEntry', () => {
   const context = { group, members };
 
-  it('keeps what the form does not show: the split participants, the receipt, the id', () => {
-    const r = editedExpense(pizza, { ...expenseFormFromEntry(pizza), title: 'Pizza i napoje', amount: '150' }, context);
+  it('saves the changed fields and keeps the id and the receipt', () => {
+    const r = editedEntry(pizza, { ...expenseFormFromEntry(pizza), title: 'Pizza i napoje', amount: '150' }, context);
     expect(r).toEqual({
       ok: true,
       value: {
@@ -88,26 +138,36 @@ describe('editedExpense', () => {
     });
   });
 
+  it('an untouched form saves the same entry (every split mode, several payers)', () => {
+    const entries: FormEntry[] = [
+      pizza,
+      { ...pizza, amount: 10_000, payers: [{ memberId: ANIA, amount: 3_000 }, { memberId: BARTEK, amount: 7_000 }], split: { mode: 'exact', amounts: [{ memberId: ANIA, amount: 4_000 }, { memberId: BARTEK, amount: 6_000 }] } },
+      { ...pizza, split: { mode: 'shares', weights: [{ memberId: ANIA, weight: 2 }, { memberId: KASIA, weight: 1 }] } },
+      { ...pizza, split: { mode: 'commonPlusPersonal', commonMemberIds: [ANIA, KASIA], personal: [{ memberId: BARTEK, amount: 2_000 }] } },
+      refund,
+    ];
+    for (const entry of entries) {
+      const r = editedEntry(entry, expenseFormFromEntry(entry), context);
+      expect(r).toEqual({ ok: true, value: toNewEntry(entry) });
+    }
+  });
+
   it('moves default participants along with a new date, hand-picked ones stay', () => {
     const defaults = { ...pizza, split: { mode: 'equal' as const, memberIds: [ANIA, BARTEK, KASIA] } };
-    const moved = editedExpense(defaults, { ...expenseFormFromEntry(defaults), date: '2026-07-12' }, context);
+    const moved = editedEntry(defaults, withDate(expenseFormFromEntry(defaults), '2026-07-12', members), context);
     expect(moved.ok && moved.value.split).toEqual({ mode: 'equal', memberIds: [ANIA, BARTEK, KASIA, TOMEK] });
 
-    const picked = editedExpense(pizza, { ...expenseFormFromEntry(pizza), date: '2026-07-12' }, context);
+    const picked = editedEntry(pizza, withDate(expenseFormFromEntry(pizza), '2026-07-12', members), context);
     expect(picked.ok && picked.value.split).toEqual({ mode: 'equal', memberIds: [ANIA, BARTEK] });
   });
 
-  it('keeps several payers while amount and payer are untouched; one payer otherwise', () => {
-    const shared = { ...pizza, amount: 10_000, payers: [{ memberId: ANIA, amount: 3_000 }, { memberId: BARTEK, amount: 7_000 }] };
-    const retitled = editedExpense(shared, { ...expenseFormFromEntry(shared), title: 'Kolacja' }, context);
-    expect(retitled.ok && retitled.value.payers).toEqual(shared.payers);
-
-    const repaid = editedExpense(shared, { ...expenseFormFromEntry(shared), payerMemberId: ANIA }, context);
-    expect(repaid.ok && repaid.value.payers).toEqual([{ memberId: ANIA, amount: 10_000 }]);
+  it('can turn an expense into an income', () => {
+    const flipped = editedEntry(pizza, { ...expenseFormFromEntry(pizza), kind: 'income' }, context);
+    expect(flipped.ok && flipped.value).toMatchObject({ kind: 'income', recipients: [{ memberId: BARTEK, amount: 12_345 }] });
   });
 
   it('reports invalid fields like the new expense form', () => {
-    const r = editedExpense(pizza, { ...expenseFormFromEntry(pizza), amount: '', title: ' ' }, context);
+    const r = editedEntry(pizza, { ...expenseFormFromEntry(pizza), amount: '', title: ' ' }, context);
     expect(r).toEqual({ ok: false, errors: ['amount', 'title'] });
   });
 });
@@ -144,7 +204,8 @@ describe('entryActions', () => {
   });
 
   it('has no Edytuj where the full form cannot edit the kind yet', () => {
-    expect(entryActions({ kind: 'settlement' }, open)).toEqual(['delete', 'history', 'copyAmount']);
+    const settlement = { ...pizza, kind: 'settlement' as const, from: ANIA, to: BARTEK };
+    expect(entryActions(settlement, open)).toEqual(['delete', 'history', 'copyAmount']);
   });
 
   it('only Historia and Kopiuj kwotę in an archived group', () => {

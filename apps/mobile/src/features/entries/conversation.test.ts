@@ -1,6 +1,6 @@
 import type { Entry, Member } from '@split-pay/shared';
 import { describe, expect, it } from 'vitest';
-import { conversationItems, myMemberId, newestAddedEntry } from './conversation';
+import { type ConversationItem, conversationItems, myMemberId, newestAddedEntry } from './conversation';
 
 const id = (n: number) => `00000000-0000-4000-8000-${n.toString().padStart(12, '0')}`;
 const GROUP = id(100);
@@ -61,7 +61,7 @@ describe('conversationItems', () => {
       myMemberId: ANIA,
       baseCurrency: 'PLN',
     });
-    expect(items.map((i) => (i.type === 'day' ? `day ${i.date} ${i.total}` : i.entry.id))).toEqual([
+    expect(items.map((i) => (i.type === 'day' ? `day ${i.date} ${i.total}` : i.type === 'entry' ? i.entry.id : i.key))).toEqual([
       'day 2026-07-10 900',
       backdated.id,
       'day 2026-07-11 1800',
@@ -82,7 +82,30 @@ describe('conversationItems', () => {
 
   it('names the largest payer and counts the others; I am a payer if I am among them', () => {
     const { items } = conversationItems([backdated], { members, myMemberId: KASIA, baseCurrency: 'PLN' });
-    expect(items[1]).toMatchObject({ type: 'entry', side: 'end', payerName: 'Ania', otherPayers: 1 });
+    expect(items[1]).toMatchObject({
+      type: 'entry',
+      side: 'end',
+      payerName: 'Ania',
+      payerId: ANIA,
+      payerNames: ['Ania', 'Kasia'],
+      otherPayers: 1,
+    });
+  });
+
+  it('with three payers lists them largest first ("Kasia + 2"), ties by member id', () => {
+    const three = expense('2026-07-10', '2026-07-10T09:00:00.000Z', [
+      { memberId: ANIA, amount: 200 },
+      { memberId: BARTEK, amount: 200 },
+      { memberId: KASIA, amount: 500 },
+    ]);
+    const { items } = conversationItems([three], { members, myMemberId: BARTEK, baseCurrency: 'PLN' });
+    expect(items[1]).toMatchObject({
+      side: 'end',
+      payerName: 'Kasia',
+      payerId: KASIA,
+      payerNames: ['Kasia', 'Ania', 'Bartek'],
+      otherPayers: 2,
+    });
   });
 
   it('marks edited entries ("edytowano")', () => {
@@ -94,6 +117,67 @@ describe('conversationItems', () => {
   it('without a member of mine every bubble is on the start edge and has no share', () => {
     const { items } = conversationItems([aniaEarly], { members, myMemberId: null, baseCurrency: 'PLN' });
     expect(items[1]).toMatchObject({ side: 'start', myShare: null });
+  });
+
+  describe('claims', () => {
+    const claim = (n: number, claimedAt: string, undoneAt: string | null = null) => ({ id: id(n), claimedAt, undoneAt });
+    // Tests run in any time zone: map timestamps to UTC dates.
+    const context = { members, myMemberId: ANIA, baseCurrency: 'PLN', localDate: (iso: string) => iso.slice(0, 10) };
+    const keys = (items: ConversationItem[]) =>
+      items.map((i) => (i.type === 'day' ? `day ${i.date} ${i.total}` : i.type === 'entry' ? i.entry.id : `claim ${i.claim.id}`));
+
+    it('are system messages among the entries of their day, ordered by claim time', () => {
+      const midday = claim(1, '2026-07-11T12:00:00.000Z');
+      const { items, stickyHeaderIndices } = conversationItems([bartekLate, aniaEarly], { ...context, claims: [midday] });
+      expect(keys(items)).toEqual(['day 2026-07-11 1800', aniaEarly.id, `claim ${midday.id}`, bartekLate.id]);
+      expect(stickyHeaderIndices).toEqual([0]);
+      expect(items[2]).toEqual({ type: 'claim', key: `claim-${midday.id}`, claim: midday });
+    });
+
+    it('open their own day when it has no entries; undone claims are not shown', () => {
+      const later = claim(2, '2026-07-20T09:00:00.000Z');
+      const earlier = claim(1, '2026-07-01T09:00:00.000Z');
+      const undone = claim(3, '2026-07-11T09:00:00.000Z', '2026-07-11T10:00:00.000Z');
+      const { items, stickyHeaderIndices } = conversationItems([aniaEarly], { ...context, claims: [later, undone, earlier] });
+      expect(keys(items)).toEqual([
+        'day 2026-07-01 0',
+        `claim ${earlier.id}`,
+        'day 2026-07-11 900',
+        aniaEarly.id,
+        'day 2026-07-20 0',
+        `claim ${later.id}`,
+      ]);
+      expect(stickyHeaderIndices).toEqual([0, 2, 4]);
+    });
+  });
+
+  describe('incomes', () => {
+    // Kasia and Bartek got the 600 deposit back; it belongs to all three.
+    const { payers: _payers, ...fields } = expense('2026-07-11', '2026-07-11T21:00:00.000Z', [], 600) as Extract<
+      Entry,
+      { kind: 'expense' }
+    >;
+    const refund: Entry = {
+      ...fields,
+      kind: 'income',
+      title: 'Zwrot kaucji',
+      recipients: [
+        { memberId: BARTEK, amount: 200 },
+        { memberId: KASIA, amount: 400 },
+      ],
+    };
+
+    it('are bubbles from their largest recipient, on the end edge when I am among the recipients', () => {
+      const asBartek = conversationItems([refund], { members, myMemberId: BARTEK, baseCurrency: 'PLN' });
+      expect(asBartek.items[1]).toMatchObject({ type: 'entry', side: 'end', payerName: 'Kasia', otherPayers: 1 });
+      const asAnia = conversationItems([refund], { members, myMemberId: ANIA, baseCurrency: 'PLN' });
+      expect(asAnia.items[1]).toMatchObject({ side: 'start', myShare: -200 });
+    });
+
+    it("reduce the day separator's total", () => {
+      const { items } = conversationItems([aniaEarly, bartekLate, refund], { members, myMemberId: ANIA, baseCurrency: 'PLN' });
+      expect(items[0]).toMatchObject({ type: 'day', date: '2026-07-11', total: 1800 - 600 });
+    });
   });
 
   it('is empty without entries', () => {

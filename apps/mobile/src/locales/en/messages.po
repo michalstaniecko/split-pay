@@ -12,26 +12,71 @@ msgstr ""
 msgid "{0} (wkrótce)"
 msgstr "{0} (coming soon)"
 
+#. placeholder {0}: names[i]
+#. placeholder {1}: amount(cell.paid)
+#. placeholder {2}: amount(cell.consumed)
+#: src/features/stats/stats-view.tsx
+msgid "{0}, {label}: zapłacone {1}, zużyte {2}"
+msgstr "{0}, {label}: paid {1}, consumed {2}"
+
 #. placeholder {0}: group.data.name
 #: src/app/(app)/groups/[groupId]/index.tsx
 msgid "{0}, informacje o grupie"
 msgstr "{0}, group info"
 
+#: src/features/claims/claim-messages.tsx
+msgid "{claimerName} przejął profil {memberName}"
+msgstr "{claimerName} claimed the {memberName} profile"
+
 #: src/app/(app)/groups/[groupId]/info.tsx
 msgid "{count, plural, one {# osoba} few {# osoby} many {# osób} other {# osoby}}"
 msgstr "{count, plural, one {# person} other {# people}}"
+
+#. placeholder {0}: amount(total)
+#: src/features/stats/stats-view.tsx
+msgid "{label}, razem {0}"
+msgstr "{label}, total {0}"
 
 #: src/app/(app)/g/[token].tsx
 msgid "{memberCount, plural, one {# osoba w grupie} few {# osoby w grupie} many {# osób w grupie} other {# osoby w grupie}}"
 msgstr "{memberCount, plural, one {# person in the group} other {# people in the group}}"
 
+#: src/features/claims/claim-messages.tsx
+msgid "{memberName} znowu będzie osobą bez konta."
+msgstr "{memberName} will be a member without an account again."
+
+#: src/features/claims/personal-claim-link-button.tsx
+msgid "{name}, to Twój link do grupy „{groupName}” w split-pay: {url}"
+msgstr "{name}, here is your link to the “{groupName}” group in split-pay: {url}"
+
+#: src/features/entries/bubble-label.ts
+msgid "{names} {count, plural, one {otrzymał(a)} few {otrzymali} many {otrzymali} other {otrzymali}} {amount} za {title}, {date}."
+msgstr "{names} received {amount} for {title}, {date}."
+
+#: src/features/entries/bubble-label.ts
+msgid "{names} {count, plural, one {zapłacił(a)} few {zapłacili} many {zapłacili} other {zapłacili}} {amount} za {title}, {date}."
+msgstr "{names} paid {amount} for {title}, {date}."
+
 #: src/features/entries/entry-bubble.tsx
 msgid "{payerName} + {otherPayers}"
 msgstr "{payerName} + {otherPayers}"
 
+#: src/features/entries/income-bubble-label.ts
+msgid "{payerName} i {otherPayers, plural, one {# inna osoba} few {# inne osoby} many {# innych osób} other {# innej osoby}}"
+msgstr "{payerName} and {otherPayers, plural, one {# other person} other {# other people}}"
+
+#: src/features/entries/bubble-label.ts
+msgid "{rest} i {last}"
+msgstr "{rest} and {last}"
+
 #: src/app/(app)/groups/[groupId]/entry-conflict.tsx
 msgid "{title} — usunięty"
 msgstr "{title} — deleted"
+
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+#: src/features/entries/entry-bubble.tsx
+msgid "↓ Wpływ"
+msgstr "↓ Income"
 
 #: src/app/(app)/groups/[groupId]/info.tsx
 msgid "+ Dodaj osobę bez konta"
@@ -60,8 +105,10 @@ msgstr "Alcohol"
 #: src/app/(app)/new-group.tsx
 #: src/app/(app)/new.tsx
 #: src/app/(app)/quick-bill.tsx
+#: src/features/claims/claim-messages.tsx
 #: src/features/group-link/group-link-section.tsx
 #: src/features/groups/attendance-grid-view.tsx
+#: src/features/profile/delete-account-section.tsx
 msgid "Anuluj"
 msgstr "Cancel"
 
@@ -74,6 +121,14 @@ msgstr "no account"
 msgid "Brak wpisów"
 msgstr "No entries"
 
+#: src/features/stats/stats-view.tsx
+msgid "Brak wydatków — statystyki pojawią się po dodaniu pierwszego."
+msgstr "No expenses yet — stats appear once the first one is added."
+
+#: src/features/stats/stats-view.tsx
+msgid "Była osoba"
+msgstr "Former member"
+
 #: src/features/theme/theme-picker.tsx
 msgid "Ciemny"
 msgstr "Dark"
@@ -81,6 +136,10 @@ msgstr "Dark"
 #: src/features/entries/undo-snackbar.tsx
 msgid "Cofnij"
 msgstr "Undo"
+
+#: src/features/claims/claim-messages.tsx
+msgid "Cofnij przejęcie"
+msgstr "Undo claim"
 
 #: src/app/(app)/groups/[groupId]/info.tsx
 msgid "Członkowie"
@@ -94,6 +153,14 @@ msgstr "Date"
 #: src/app/(app)/new-group.tsx
 msgid "Daty pozwalają dzielić koszty według obecności."
 msgstr "Dates let you split costs by attendance."
+
+#: src/features/stats/stats-view.tsx
+msgid "Dni × osoby"
+msgstr "Days × people"
+
+#: src/app/(app)/groups/[groupId]/info.tsx
+msgid "Dni × osoby i kategorie"
+msgstr "Days × people and categories"
 
 #: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
 #: src/app/(app)/new-group.tsx
@@ -137,6 +204,10 @@ msgstr "Join “{groupName}” on split-pay: {url}"
 msgid "Dołącz jako nowa osoba"
 msgstr "Join as a new person"
 
+#: src/features/stats/stats-view.tsx
+msgid "Dzień"
+msgstr "Day"
+
 #: src/features/entries/entry-bubble.tsx
 msgid "edytowano"
 msgstr "edited"
@@ -152,12 +223,20 @@ msgid "Edytuj"
 msgstr "Edit"
 
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Edytuj wpływ"
+msgstr "Edit income"
+
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
 msgid "Edytuj wydatek"
 msgstr "Edit expense"
 
 #: src/app/(app)/new-group.tsx
 msgid "Emoji"
 msgstr "Emoji"
+
+#: src/features/stats/stats-view.tsx
+msgid "Górna kwota: zapłacone, dolna: zużyte."
+msgstr "Top amount: paid, bottom: consumed."
 
 #: src/features/entries/entry-actions-menu.tsx
 msgid "Historia"
@@ -192,9 +271,25 @@ msgstr "Light"
 msgid "Jeden wydatek z kilkoma osobami"
 msgstr "One expense shared with a few people"
 
+#: src/features/entries/split-fields.tsx
+msgid "Jedna osoba otrzymała"
+msgstr "One person received it"
+
+#: src/features/entries/split-fields.tsx
+msgid "Jedna osoba zapłaciła"
+msgstr "One person paid"
+
 #: src/features/entries/use-entry-labels.ts
 msgid "Jedzenie"
 msgstr "Food"
+
+#: src/app/(app)/g/[token].tsx
+msgid "Jestem {personalName}"
+msgstr "I am {personalName}"
+
+#: src/app/(app)/g/[token].tsx
+msgid "Jesteś jednym z nich?"
+msgstr "Are you one of them?"
 
 #: src/components/language-picker.tsx
 msgid "Język"
@@ -209,6 +304,10 @@ msgstr "System language"
 msgid "Kategoria"
 msgstr "Category"
 
+#: src/features/stats/stats-view.tsx
+msgid "Kategorie"
+msgstr "Categories"
+
 #: src/app/(app)/quick-bill.tsx
 msgid "Każda osoba trafi do grupy jako osoba bez konta. Płacisz Ty, dzielimy po równo."
 msgstr "Each person joins the group as a member without an account. You pay, split equally."
@@ -216,6 +315,14 @@ msgstr "Each person joins the group as a member without an account. You pay, spl
 #: src/features/group-link/group-link-section.tsx
 msgid "Każdy, kto ma ten link, może dołączyć do grupy."
 msgstr "Anyone with this link can join the group."
+
+#: src/features/entries/split-fields.tsx
+msgid "Kilka osób otrzymało"
+msgstr "Several people received it"
+
+#: src/features/entries/split-fields.tsx
+msgid "Kilka osób płaciło"
+msgstr "Several people paid"
 
 #: src/app/(auth)/sign-in.tsx
 msgid "Kod jednorazowy"
@@ -264,6 +371,14 @@ msgstr "Someone changed this entry in the meantime"
 msgid "Kwota"
 msgstr "Amount"
 
+#: src/features/entries/split-fields.tsx
+msgid "Kwoty sumują się do {sum} z {total} — brakuje {diff}."
+msgstr "Amounts add up to {sum} of {total} — {diff} missing."
+
+#: src/features/entries/split-fields.tsx
+msgid "Kwoty sumują się do {sum} z {total} — o {diff} za dużo."
+msgstr "Amounts add up to {sum} of {total} — {diff} too much."
+
 #: src/features/profile/about-section.tsx
 msgid "Licencja: GNU AGPL v3"
 msgstr "Licence: GNU AGPL v3"
@@ -284,6 +399,14 @@ msgstr "Name"
 msgid "Nie masz jeszcze grup"
 msgstr "You have no groups yet"
 
+#: src/features/claims/claim-messages.tsx
+msgid "Nie udało się cofnąć przejęcia."
+msgstr "Couldn't undo the claim."
+
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Nie udało się dodać wpływu. Spróbuj ponownie."
+msgstr "Couldn't add the income. Try again."
+
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
 #: src/features/entries/composer.tsx
 msgid "Nie udało się dodać wydatku. Spróbuj ponownie."
@@ -297,6 +420,10 @@ msgstr "Couldn't join. Please try again."
 msgid "Nie udało się otworzyć linku grupy."
 msgstr "Couldn't open the group link."
 
+#: src/app/(app)/g/[token].tsx
+msgid "Nie udało się przejąć profilu. Spróbuj ponownie."
+msgstr "Couldn't claim the profile. Try again."
+
 #: src/app/(app)/groups/[groupId]/index.tsx
 msgid "Nie udało się przywrócić wpisu."
 msgstr "Couldn't restore the entry."
@@ -305,6 +432,10 @@ msgstr "Couldn't restore the entry."
 msgid "Nie udało się unieważnić linku."
 msgstr "Couldn't revoke the link."
 
+#: src/features/profile/delete-account-section.tsx
+msgid "Nie udało się usunąć konta. Spróbuj ponownie."
+msgstr "Couldn't delete the account. Please try again."
+
 #: src/app/(app)/groups/[groupId]/index.tsx
 msgid "Nie udało się usunąć wpisu. Spróbuj ponownie."
 msgstr "Couldn't delete the entry. Try again."
@@ -312,6 +443,10 @@ msgstr "Couldn't delete the entry. Try again."
 #: src/app/(app)/new-group.tsx
 msgid "Nie udało się utworzyć grupy. Spróbuj ponownie."
 msgstr "Could not create the group. Try again."
+
+#: src/features/claims/personal-claim-link-button.tsx
+msgid "Nie udało się utworzyć linku."
+msgstr "Couldn't create the link."
 
 #: src/app/(app)/quick-bill.tsx
 msgid "Nie udało się utworzyć rachunku. Spróbuj ponownie."
@@ -371,6 +506,10 @@ msgstr "New group"
 msgid "Nowy"
 msgstr "New"
 
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Nowy wpływ"
+msgstr "New income"
+
 #: src/app/(app)/_layout.tsx
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
 msgid "Nowy wydatek"
@@ -401,7 +540,12 @@ msgstr "Leave, archive or delete the group"
 msgid "Osoba"
 msgstr "Person"
 
+#: src/features/entries/split-fields.tsx
+msgid "Otrzymał(a)"
+msgstr "Received by"
+
 #: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
+#: src/features/entries/split-fields.tsx
 msgid "Otrzymali"
 msgstr "Received by"
 
@@ -416,10 +560,6 @@ msgstr "Full expense form"
 #: src/features/entries/use-entry-labels.ts
 msgid "Po równo"
 msgstr "Equally"
-
-#: src/app/(app)/groups/[groupId]/expense-form.tsx
-msgid "Po równo między obecnych tego dnia: {participantCount, plural, one {# osoba} few {# osoby} many {# osób} other {# osoby}}"
-msgstr "Equally among those present that day: {participantCount, plural, one {# person} other {# people}}"
 
 #: src/app/(app)/new-group.tsx
 msgid "Podaj datę końca (RRRR-MM-DD), nie wcześniejszą niż początek."
@@ -455,15 +595,45 @@ msgstr "Enter a valid email address."
 msgid "Podaj tytuł."
 msgstr "Enter a title."
 
-#: src/app/(app)/groups/[groupId]/expense-form.tsx
+#: src/features/entries/split-fields.tsx
 msgid "Podział"
 msgstr "Split"
+
+#: src/app/(app)/groups/[groupId]/info.tsx
+msgid "Pokaż"
+msgstr "Show"
+
+#: src/features/entries/split-fields.tsx
+msgid "Pozycje osobiste"
+msgstr "Personal items"
+
+#. placeholder {0}: money(problem.sum)
+#. placeholder {1}: money(problem.amount)
+#: src/features/entries/split-fields.tsx
+msgid "Pozycje osobiste ({0}) przekraczają kwotę wydatku ({1})."
+msgstr "Personal items ({0}) exceed the expense amount ({1})."
 
 #: src/app/(app)/_layout.tsx
 #: src/app/(app)/profile.tsx
 #: src/components/inbox-header-buttons.tsx
 msgid "Profil"
 msgstr "Profile"
+
+#: src/app/(app)/g/[token].tsx
+msgid "Przejmij profil osoby bez konta razem z historią wydatków."
+msgstr "Claim the profile of a member without an account, with their expense history."
+
+#: src/features/stats/stats-view.tsx
+msgid "Razem"
+msgstr "Total"
+
+#: src/features/entries/split-fields.tsx
+msgid "Resztę dzielą po równo"
+msgstr "The rest is split equally between"
+
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Rodzaj wpisu"
+msgstr "Entry type"
 
 #: src/features/entries/use-entry-labels.ts
 msgid "Rozrywka"
@@ -502,6 +672,7 @@ msgstr "Try again"
 msgid "Stary link i kod QR przestaną działać. Osoby w grupie zostają."
 msgstr "The old link and QR code will stop working. Members stay in the group."
 
+#: src/app/(app)/_layout.tsx
 #: src/app/(app)/groups/[groupId]/info.tsx
 msgid "Statystyki"
 msgstr "Stats"
@@ -537,6 +708,18 @@ msgstr "This conflict is already resolved."
 msgid "Ten link grupy jest nieważny. Poproś kogoś z grupy o nowy."
 msgstr "This group link is no longer valid. Ask someone in the group for a new one."
 
+#: src/app/(app)/g/[token].tsx
+msgid "Ten link jest dla osoby „{personalName}”. Przejmij ten profil razem z historią wydatków."
+msgstr "This link is for “{personalName}”. Claim this profile with its expense history."
+
+#: src/app/(app)/g/[token].tsx
+msgid "Ten profil ma już konto. Poproś kogoś z grupy o link grupy."
+msgstr "This profile already has an account. Ask someone in the group for the group link."
+
+#: src/app/(app)/g/[token].tsx
+msgid "Ten profil został już przejęty."
+msgstr "This profile has already been claimed."
+
 #: src/features/entries/use-entry-labels.ts
 msgid "Transport"
 msgstr "Transport"
@@ -545,17 +728,26 @@ msgstr "Transport"
 msgid "Tryb jasny/ciemny"
 msgstr "Light/dark mode"
 
-#. placeholder {0}: format.amount(myShare, baseCurrency)
+#: src/features/profile/delete-account-section.tsx
+msgid "Twój e-mail i dane konta zostaną usunięte. W grupach zostaniesz osobą bez konta „Usunięty użytkownik”, a wydatki i salda się nie zmienią. Tego nie można cofnąć."
+msgstr "Your email and account data will be deleted. In your groups you will become a member without an account called “Deleted user”; expenses and balances stay the same. This can't be undone."
+
+#. placeholder {0}: format.amount(shareAmount, baseCurrency)
 #: src/features/entries/entry-bubble.tsx
 msgid "twój udział {0}"
 msgstr "your share {0}"
+
+#: src/features/entries/bubble-label.ts
+#: src/features/entries/income-bubble-label.ts
+msgid "Twój udział {share}."
+msgstr "Your share {share}."
 
 #: src/app/(app)/groups/[groupId]/entry-conflict.tsx
 msgid "Twoje zmiany nie zostały zapisane."
 msgstr "Your changes were not saved."
 
-#: src/app/(app)/groups/[groupId]/expense-form.tsx
 #: src/app/(app)/groups/[groupId]/info.tsx
+#: src/features/entries/split-fields.tsx
 msgid "Ty"
 msgstr "You"
 
@@ -568,6 +760,10 @@ msgstr "Title"
 #: src/features/group-link/group-link-section.tsx
 msgid "Udostępnij link"
 msgstr "Share link"
+
+#: src/features/entries/split-fields.tsx
+msgid "udz."
+msgstr "shares"
 
 #: src/features/entries/use-entry-labels.ts
 msgid "Udziały"
@@ -599,10 +795,22 @@ msgstr "Delete"
 msgid "Usuń {0}"
 msgstr "Remove {0}"
 
+#: src/features/profile/delete-account-section.tsx
+msgid "Usuń konto"
+msgstr "Delete account"
+
+#: src/features/profile/delete-account-section.tsx
+msgid "Usunąć konto?"
+msgstr "Delete account?"
+
 #. placeholder {0}: titleOf(undo)
 #: src/app/(app)/groups/[groupId]/index.tsx
 msgid "Usunięto: {0}"
 msgstr "Deleted: {0}"
+
+#: src/features/profile/delete-account-section.tsx
+msgid "Usuwanie konta…"
+msgstr "Deleting account…"
 
 #: src/app/(app)/quick-bill.tsx
 msgid "Utwórz"
@@ -648,6 +856,10 @@ msgstr "The entry was not deleted."
 msgid "Wpisujesz za nią wydatki. Później może przejąć swój profil."
 msgstr "You enter their expenses. They can claim their profile later."
 
+#: src/features/entries/split-fields.tsx
+msgid "Wpisz co najmniej jedną pozycję osobistą."
+msgstr "Enter at least one personal item."
+
 #: src/app/(auth)/sign-in.tsx
 msgid "Wpisz kod wysłany na {email}."
 msgstr "Enter the code sent to {email}."
@@ -656,6 +868,14 @@ msgstr "Enter the code sent to {email}."
 msgid "Wpisz kwotę i tytuł poniżej, żeby dodać pierwszy wydatek."
 msgstr "Type an amount and a title below to add the first expense."
 
+#: src/features/entries/split-fields.tsx
+msgid "Wpisz, ile zapłaciła co najmniej jedna osoba."
+msgstr "Enter how much at least one person paid."
+
+#: src/features/entries/income-bubble-label.ts
+msgid "Wpływ {amount}: {title}. Otrzymał(a): {recipients}. {date}."
+msgstr "Income {amount}: {title}. Received by {recipients}. {date}."
+
 #: src/app/(app)/g/[token].tsx
 msgid "Wróć"
 msgstr "Back"
@@ -663,6 +883,10 @@ msgstr "Back"
 #: src/features/entries/use-entry-labels.ts
 msgid "Wspólne + osobiste"
 msgstr "Common + personal"
+
+#: src/features/entries/split-fields.tsx
+msgid "Wybierz co najmniej jedną osobę."
+msgstr "Pick at least one person."
 
 #: src/app/(app)/new-group.tsx
 msgid "Wybierz emoji."
@@ -676,9 +900,21 @@ msgstr "Choose a colour."
 msgid "Wybierz walutę."
 msgstr "Choose a currency."
 
+#: src/features/entries/split-fields.tsx
+msgid "Wybierz, kto dzieli część wspólną."
+msgstr "Pick who shares the common part."
+
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Wybierz, kto otrzymał pieniądze."
+msgstr "Choose who received the money."
+
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
 msgid "Wybierz, kto zapłacił."
 msgstr "Choose who paid."
+
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Wydatek"
+msgstr "Expense"
 
 #: src/app/(app)/new-group.tsx
 msgid "Wyjazd z datami"
@@ -700,6 +936,10 @@ msgstr "We'll email you a one-time code. No passwords."
 msgid "Wyślij"
 msgstr "Send"
 
+#: src/features/claims/personal-claim-link-button.tsx
+msgid "Wyślij {name} osobisty link"
+msgstr "Send {name} a personal link"
+
 #: src/app/(auth)/sign-in.tsx
 msgid "Wyślij kod"
 msgstr "Send code"
@@ -707,6 +947,10 @@ msgstr "Send code"
 #: src/app/(auth)/sign-in.tsx
 msgid "Wyślij kod ponownie"
 msgstr "Resend code"
+
+#: src/features/claims/personal-claim-link-button.tsx
+msgid "Wyślij link"
+msgstr "Send link"
 
 #: src/app/(app)/quick-bill.tsx
 msgid "Z kim"
@@ -762,11 +1006,12 @@ msgstr "Save"
 msgid "Zapisz obecność"
 msgstr "Save attendance"
 
-#: src/app/(app)/groups/[groupId]/expense-form.tsx
+#: src/features/entries/split-fields.tsx
 msgid "Zapłacił(a)"
 msgstr "Paid by"
 
 #: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
+#: src/features/entries/split-fields.tsx
 msgid "Zapłacili"
 msgstr "Paid by"
 

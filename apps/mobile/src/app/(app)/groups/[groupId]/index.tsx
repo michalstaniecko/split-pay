@@ -9,6 +9,8 @@ import { AccessibilityInfo, ActivityIndicator, Alert, KeyboardAvoidingView, Plat
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { GroupAvatar } from '@/components/group-avatar';
 import { GroupNotFound } from '@/components/group-not-found';
+import { ClaimMessage } from '@/features/claims/claim-messages';
+import { type Claim, claimsQuery } from '@/features/claims/claims-query';
 import { Composer } from '@/features/entries/composer';
 import {
   type ConversationItem,
@@ -44,8 +46,10 @@ export default function ConversationScreen() {
   const { groupId } = useLocalSearchParams<{ groupId: string }>();
   const group = useQuery(groupQuery(groupId));
   const entries = useQuery(entriesQuery(groupId));
+  const claims = useQuery(claimsQuery(groupId));
   useRefreshOnFocus(group.refetch);
   useRefreshOnFocus(entries.refetch);
+  useRefreshOnFocus(claims.refetch);
   const session = authClient.useSession();
   const me = group.data ? findMyMemberId(group.data.members, session.data?.user.id) : null;
 
@@ -100,7 +104,7 @@ export default function ConversationScreen() {
               </Pressable>
             </View>
           ) : (
-            <Conversation group={group.data} entries={entries.data} me={me} />
+            <Conversation group={group.data} entries={entries.data} claims={claims.data ?? []} me={me} />
           )}
           {group.data.archivedAt === null ? (
             <Composer
@@ -116,13 +120,23 @@ export default function ConversationScreen() {
   );
 }
 
-function Conversation({ group, entries, me }: { group: GroupDetail; entries: Entry[]; me: string | null }) {
+function Conversation({
+  group,
+  entries,
+  claims,
+  me,
+}: {
+  group: GroupDetail;
+  entries: Entry[];
+  claims: Claim[];
+  me: string | null;
+}) {
   const { t } = useLingui();
   const { items, stickyHeaderIndices } = useMemo(
-    () => conversationItems(entries, { members: group.members, myMemberId: me, baseCurrency: group.baseCurrency }),
-    [entries, group.members, me, group.baseCurrency],
+    () => conversationItems(entries, { members: group.members, myMemberId: me, baseCurrency: group.baseCurrency, claims }),
+    [entries, group.members, me, group.baseCurrency, claims],
   );
-  const listRef = useRef<FlashListRef<ConversationItem>>(null);
+  const listRef = useRef<FlashListRef<ConversationItem<Claim>>>(null);
   const highlightId = useNewEntryHighlight(items, listRef);
 
   const actions = useEntryActionHandler(group);
@@ -141,37 +155,39 @@ function Conversation({ group, entries, me }: { group: GroupDetail; entries: Ent
           <Text style={styles.muted}>{t`Wpisz kwotę i tytuł poniżej, żeby dodać pierwszy wydatek.`}</Text>
         </View>
       ) : (
-    <FlashList
-      ref={listRef}
-      data={items}
-      keyExtractor={(item) => item.key}
-      getItemType={(item) => item.type}
-      stickyHeaderIndices={stickyHeaderIndices}
-      extraData={[highlightId, conflicts]}
-      // Opens at the newest entry; keeps following new ones while the user is near the bottom.
-      maintainVisibleContentPosition={{ startRenderingFromBottom: true, autoscrollToBottomThreshold: 0.2 }}
-      initialScrollIndex={items.length - 1}
-      keyboardDismissMode="interactive"
-      keyboardShouldPersistTaps="handled"
-      contentContainerStyle={styles.list}
-      renderItem={({ item }) =>
-        item.type === 'day' ? (
-          <DaySeparator item={item} baseCurrency={group.baseCurrency} />
-        ) : (
-          <EntryBubble
-            item={item}
-            baseCurrency={group.baseCurrency}
-            highlighted={item.entry.id === highlightId}
-            onPress={() => openEntry(item.entry.id)}
-            onLongPress={() => actions.openMenu(item.entry)}
-            actions={entryActions(item.entry, group)}
-            onAction={(action) => actions.run(item.entry, action)}
-            conflict={conflicts.has(item.entry.id)}
-            onConflictPress={() => openConflict(item.entry.id)}
-          />
-        )
-      }
-    />
+        <FlashList
+          ref={listRef}
+          data={items}
+          keyExtractor={(item) => item.key}
+          getItemType={(item) => item.type}
+          stickyHeaderIndices={stickyHeaderIndices}
+          extraData={[highlightId, conflicts]}
+          // Opens at the newest entry; keeps following new ones while the user is near the bottom.
+          maintainVisibleContentPosition={{ startRenderingFromBottom: true, autoscrollToBottomThreshold: 0.2 }}
+          initialScrollIndex={items.length - 1}
+          keyboardDismissMode="interactive"
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={styles.list}
+          renderItem={({ item }) =>
+            item.type === 'day' ? (
+              <DaySeparator item={item} baseCurrency={group.baseCurrency} />
+            ) : item.type === 'claim' ? (
+              <ClaimMessage groupId={group.id} claim={item.claim} />
+            ) : (
+              <EntryBubble
+                item={item}
+                baseCurrency={group.baseCurrency}
+                highlighted={item.entry.id === highlightId}
+                onPress={() => openEntry(item.entry.id)}
+                onLongPress={() => actions.openMenu(item.entry)}
+                actions={entryActions(item.entry, group)}
+                onAction={(action) => actions.run(item.entry, action)}
+                conflict={conflicts.has(item.entry.id)}
+                onConflictPress={() => openConflict(item.entry.id)}
+              />
+            )
+          }
+        />
       )}
       {actions.elements}
     </View>
@@ -252,8 +268,8 @@ function useEntryActionHandler(group: GroupDetail) {
  * the viewport) and highlights it briefly. Returns the highlighted entry id.
  */
 function useNewEntryHighlight(
-  items: ConversationItem[],
-  listRef: React.RefObject<FlashListRef<ConversationItem> | null>,
+  items: ConversationItem<Claim>[],
+  listRef: React.RefObject<FlashListRef<ConversationItem<Claim>> | null>,
 ): string | null {
   const known = useRef<Set<string> | null>(null);
   const [highlightId, setHighlightId] = useState<string | null>(null);
