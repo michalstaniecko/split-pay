@@ -65,8 +65,11 @@ function InboxRow({ group }: { group: GroupListItem }) {
   const format = useFormatters();
   const dates =
     group.startDate && group.endDate ? `${format.date(group.startDate)} – ${format.date(group.endDate)}` : null;
-  // TODO(#8): preview of the most recently added entry.
-  const preview = dates ?? t`Brak wpisów`;
+  // The most recently added entry (API `lastEntry`); unread state comes later.
+  const last = group.lastEntry;
+  const preview = last
+    ? `${last.title ?? t`Spłata`} · ${format.amount(last.amount, last.currency)}`
+    : (dates ?? t`Brak wpisów`);
   return (
     <Link href={{ pathname: '/groups/[groupId]', params: { groupId: group.id } }} asChild>
       <Pressable accessibilityRole="button" style={({ pressed }) => [styles.row, pressed && styles.pressed]}>

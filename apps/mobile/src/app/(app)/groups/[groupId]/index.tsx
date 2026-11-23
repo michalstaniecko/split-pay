@@ -1,23 +1,45 @@
 import { useLingui } from '@lingui/react/macro';
+import { FlashList, type FlashListRef } from '@shopify/flash-list';
+import type { Entry } from '@split-pay/shared';
 import { useQuery } from '@tanstack/react-query';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
-import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, Text, View } from 'react-native';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { GroupAvatar } from '@/components/group-avatar';
 import { GroupNotFound } from '@/components/group-not-found';
-import { groupQuery } from '@/features/groups/groups-query';
+import { Composer } from '@/features/entries/composer';
+import {
+  type ConversationItem,
+  conversationItems,
+  myMemberId as findMyMemberId,
+  newestAddedEntry,
+} from '@/features/entries/conversation';
+import { entriesQuery } from '@/features/entries/entries-query';
+import { DaySeparator, EntryBubble } from '@/features/entries/entry-bubble';
+import { type GroupDetail, groupQuery } from '@/features/groups/groups-query';
+import { authClient } from '@/lib/auth-client';
 import { useRefreshOnFocus } from '@/lib/use-refresh-on-focus';
 
+/** How long a just-added entry stays highlighted. */
+const HIGHLIGHT_MS = 2000;
+
 /**
- * Group screen = the Conversation (ADR-0017). The header (emoji + name) and
- * `⋯` open Group info. Entries, balance banner and composer come in #8/#9.
+ * Group screen = the Conversation (ADR-0017): entries as bubbles from their
+ * payers by entry date, sticky day separators with the daily total, the
+ * composer at the bottom. The header (emoji + name) and `⋯` open Group info.
+ * TODO(#9): balance banner on top.
  */
 export default function ConversationScreen() {
   const { t } = useLingui();
   const { theme } = useUnistyles();
   const { groupId } = useLocalSearchParams<{ groupId: string }>();
   const group = useQuery(groupQuery(groupId));
+  const entries = useQuery(entriesQuery(groupId));
   useRefreshOnFocus(group.refetch);
+  useRefreshOnFocus(entries.refetch);
+  const session = authClient.useSession();
+  const me = group.data ? findMyMemberId(group.data.members, session.data?.user.id) : null;
 
   const openInfo = () => router.push({ pathname: '/groups/[groupId]/info', params: { groupId } });
 
@@ -56,14 +78,109 @@ export default function ConversationScreen() {
       ) : group.isError ? (
         <GroupNotFound error={group.error} onRetry={() => void group.refetch()} />
       ) : (
-        // TODO(#8): entries as bubbles (FlashList), composer at the bottom; TODO(#9): balance banner.
-        <View style={styles.center}>
-          <Text style={styles.emptyTitle}>{t`Brak wpisów`}</Text>
-          <Text style={styles.muted}>{t`Wydatki dodane w tej grupie pojawią się tutaj.`}</Text>
-        </View>
+        <KeyboardAvoidingView
+          style={styles.container}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}>
+          {entries.isPending ? (
+            <ActivityIndicator style={styles.center} color={theme.colors.primary} />
+          ) : entries.isError ? (
+            <View style={styles.center}>
+              <Text style={styles.muted}>{t`Nie udało się wczytać wpisów.`}</Text>
+              <Pressable accessibilityRole="button" onPress={() => void entries.refetch()}>
+                <Text style={styles.link}>{t`Spróbuj ponownie`}</Text>
+              </Pressable>
+            </View>
+          ) : (
+            <Conversation group={group.data} entries={entries.data} me={me} />
+          )}
+          {group.data.archivedAt === null ? (
+            <Composer
+              group={group.data}
+              members={group.data.members}
+              myMemberId={me}
+              onOpenForm={() => router.push({ pathname: '/groups/[groupId]/expense-form', params: { groupId } })}
+            />
+          ) : null}
+        </KeyboardAvoidingView>
       )}
     </View>
   );
+}
+
+function Conversation({ group, entries, me }: { group: GroupDetail; entries: Entry[]; me: string | null }) {
+  const { t } = useLingui();
+  const { items, stickyHeaderIndices } = useMemo(
+    () => conversationItems(entries, { members: group.members, myMemberId: me, baseCurrency: group.baseCurrency }),
+    [entries, group.members, me, group.baseCurrency],
+  );
+  const listRef = useRef<FlashListRef<ConversationItem>>(null);
+  const highlightId = useNewEntryHighlight(items, listRef);
+
+  const openEntry = (entryId: string) =>
+    router.push({ pathname: '/groups/[groupId]/entries/[entryId]', params: { groupId: group.id, entryId } });
+
+  if (items.length === 0) {
+    return (
+      <View style={styles.center}>
+        <Text style={styles.emptyTitle}>{t`Brak wpisów`}</Text>
+        <Text style={styles.muted}>{t`Wpisz kwotę i tytuł poniżej, żeby dodać pierwszy wydatek.`}</Text>
+      </View>
+    );
+  }
+
+  return (
+    <FlashList
+      ref={listRef}
+      data={items}
+      keyExtractor={(item) => item.key}
+      getItemType={(item) => item.type}
+      stickyHeaderIndices={stickyHeaderIndices}
+      extraData={highlightId}
+      // Opens at the newest entry; keeps following new ones while the user is near the bottom.
+      maintainVisibleContentPosition={{ startRenderingFromBottom: true, autoscrollToBottomThreshold: 0.2 }}
+      initialScrollIndex={items.length - 1}
+      keyboardDismissMode="interactive"
+      keyboardShouldPersistTaps="handled"
+      contentContainerStyle={styles.list}
+      renderItem={({ item }) =>
+        item.type === 'day' ? (
+          <DaySeparator item={item} baseCurrency={group.baseCurrency} />
+        ) : (
+          <EntryBubble
+            item={item}
+            baseCurrency={group.baseCurrency}
+            highlighted={item.entry.id === highlightId}
+            onPress={() => openEntry(item.entry.id)}
+          />
+        )
+      }
+    />
+  );
+}
+
+/**
+ * Scrolls to an entry that just appeared (e.g. a backdated one landing above
+ * the viewport) and highlights it briefly. Returns the highlighted entry id.
+ */
+function useNewEntryHighlight(
+  items: ConversationItem[],
+  listRef: React.RefObject<FlashListRef<ConversationItem> | null>,
+): string | null {
+  const known = useRef<Set<string> | null>(null);
+  const [highlightId, setHighlightId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const added = newestAddedEntry(known.current, items);
+    known.current = new Set(items.flatMap((i) => (i.type === 'entry' ? [i.entry.id] : [])));
+    if (!added) return;
+    void listRef.current?.scrollToIndex({ index: added.index, animated: true, viewPosition: 0.5 });
+    setHighlightId(added.id);
+    const timer = setTimeout(() => setHighlightId(null), HIGHLIGHT_MS);
+    return () => clearTimeout(timer);
+  }, [items, listRef]);
+
+  return highlightId;
 }
 
 const styles = StyleSheet.create((theme) => ({
@@ -77,6 +194,9 @@ const styles = StyleSheet.create((theme) => ({
     justifyContent: 'center',
     gap: theme.space(2),
     padding: theme.space(6),
+  },
+  list: {
+    paddingVertical: theme.space(2),
   },
   title: {
     flexDirection: 'row',
@@ -109,5 +229,9 @@ const styles = StyleSheet.create((theme) => ({
     fontSize: theme.font.sizeSm,
     color: theme.colors.textMuted,
     textAlign: 'center',
+  },
+  link: {
+    fontSize: theme.font.sizeMd,
+    color: theme.colors.primary,
   },
 }));

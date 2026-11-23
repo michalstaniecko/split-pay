@@ -1,0 +1,48 @@
+import { describe, expect, it } from 'vitest';
+import { addPerson, initialQuickBillDraft, parseQuickBillDraft, removePerson } from './quick-bill-form';
+
+const id = (n: number) => `00000000-0000-4000-8000-${n.toString().padStart(12, '0')}`;
+const ids = { groupId: id(1), expenseId: id(2) };
+const context = { ...ids, currency: 'PLN', color: '#1E88E5', today: '2026-11-23' };
+
+describe('quick bill chips', () => {
+  it('adds a trimmed name as a chip with the given id and clears the typed name', () => {
+    const draft = addPerson({ ...initialQuickBillDraft(), personName: '  Kasia ' }, id(10));
+    expect(draft.people).toEqual([{ id: id(10), displayName: 'Kasia' }]);
+    expect(draft.personName).toBe('');
+  });
+
+  it('ignores an empty name', () => {
+    const draft = addPerson({ ...initialQuickBillDraft(), personName: '   ' }, id(10));
+    expect(draft.people).toEqual([]);
+  });
+
+  it('removes a chip', () => {
+    let draft = addPerson({ ...initialQuickBillDraft(), personName: 'Kasia' }, id(10));
+    draft = addPerson({ ...draft, personName: 'Tomek' }, id(11));
+    expect(removePerson(draft, id(10)).people).toEqual([{ id: id(11), displayName: 'Tomek' }]);
+  });
+});
+
+describe('parseQuickBillDraft', () => {
+  const draft = { amount: '120,50', title: 'Pizza', personName: '', people: [{ id: id(10), displayName: 'Kasia' }] };
+
+  it('builds the quick bill dated today', () => {
+    expect(parseQuickBillDraft(draft, context)).toEqual({
+      ok: true,
+      value: { ...ids, title: 'Pizza', amount: 12_050, currency: 'PLN', date: '2026-11-23', color: '#1E88E5', people: draft.people },
+    });
+  });
+
+  it('counts a name still typed in the field as a chip', () => {
+    const parsed = parseQuickBillDraft({ ...draft, people: [], personName: 'Tomek' }, { ...context, pendingPersonId: id(11) });
+    expect(parsed.ok && parsed.value.people).toEqual([{ id: id(11), displayName: 'Tomek' }]);
+  });
+
+  it('lists invalid fields', () => {
+    expect(parseQuickBillDraft({ amount: '', title: ' ', personName: '', people: [] }, context)).toEqual({
+      ok: false,
+      errors: ['amount', 'title', 'people'],
+    });
+  });
+});

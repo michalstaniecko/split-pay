@@ -14,5 +14,8 @@ export function useFormatters() {
     /** Minor units in (ADR-0003), localised currency string out. */
     amount: (amount: MinorAmount, currency: CurrencyCode) => formatAmount(amount, currency, locale),
     date: (date: LocalDate) => formatDate(date, locale),
+    /** An ISO timestamp in the device's time zone, e.g. "23 lis 2026, 14:05". */
+    dateTime: (iso: string) =>
+      new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(iso)),
   };
 }

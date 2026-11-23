@@ -16,6 +16,10 @@ msgstr "{0}, informacje o grupie"
 msgid "{count, plural, one {# osoba} few {# osoby} many {# osób} other {# osoby}}"
 msgstr "{count, plural, one {# osoba} few {# osoby} many {# osób} other {# osoby}}"
 
+#: src/features/entries/entry-bubble.tsx
+msgid "{payerName} + {otherPayers}"
+msgstr "{payerName} + {otherPayers}"
+
 #: src/app/(app)/groups/[groupId]/info.tsx
 msgid "+ Dodaj osobę bez konta"
 msgstr "+ Dodaj osobę bez konta"
@@ -30,9 +34,15 @@ msgstr "Adres e-mail"
 msgid "Aktywność"
 msgstr "Aktywność"
 
+#: src/features/entries/use-entry-labels.ts
+msgid "Alkohol"
+msgstr "Alkohol"
+
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
 #: src/app/(app)/groups/[groupId]/member.tsx
 #: src/app/(app)/new-group.tsx
 #: src/app/(app)/new.tsx
+#: src/app/(app)/quick-bill.tsx
 msgid "Anuluj"
 msgstr "Anuluj"
 
@@ -53,10 +63,16 @@ msgstr "Ciemny"
 msgid "Członkowie"
 msgstr "Członkowie"
 
+#: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Data"
+msgstr "Data"
+
 #: src/app/(app)/new-group.tsx
 msgid "Daty pozwalają dzielić koszty według obecności."
 msgstr "Daty pozwalają dzielić koszty według obecności."
 
+#: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
 #: src/app/(app)/new-group.tsx
 msgid "Do"
 msgstr "Do"
@@ -65,9 +81,26 @@ msgstr "Do"
 msgid "Dodaj"
 msgstr "Dodaj"
 
+#: src/app/(app)/quick-bill.tsx
+msgid "Dodaj co najmniej jedną osobę."
+msgstr "Dodaj co najmniej jedną osobę."
+
+#: src/app/(app)/quick-bill.tsx
+msgid "Dodaj osobę"
+msgstr "Dodaj osobę"
+
 #: src/app/(app)/groups/[groupId]/member.tsx
 msgid "Dodaj osobę bez konta"
 msgstr "Dodaj osobę bez konta"
+
+#. placeholder {0}: format.dateTime(entry.createdAt)
+#: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
+msgid "Dodał(a) {addedBy}, {0}"
+msgstr "Dodał(a) {addedBy}, {0}"
+
+#: src/features/entries/use-entry-labels.ts
+msgid "Dokładne kwoty"
+msgstr "Dokładne kwoty"
 
 #: src/app/(app)/new-group.tsx
 msgid "Emoji"
@@ -81,10 +114,18 @@ msgstr "Historia zmian"
 msgid "Imię"
 msgstr "Imię"
 
+#: src/app/(app)/quick-bill.tsx
+msgid "Imię, potem Enter"
+msgstr "Imię, potem Enter"
+
 #: src/app/(app)/_layout.tsx
 #: src/app/(app)/groups/[groupId]/index.tsx
 msgid "Informacje o grupie"
 msgstr "Informacje o grupie"
+
+#: src/features/entries/use-entry-labels.ts
+msgid "Inne"
+msgstr "Inne"
 
 #: src/features/theme/theme-picker.tsx
 msgid "Jasny"
@@ -94,6 +135,10 @@ msgstr "Jasny"
 msgid "Jeden wydatek z kilkoma osobami"
 msgstr "Jeden wydatek z kilkoma osobami"
 
+#: src/features/entries/use-entry-labels.ts
+msgid "Jedzenie"
+msgstr "Jedzenie"
+
 #: src/components/language-picker.tsx
 msgid "Język"
 msgstr "Język"
@@ -101,6 +146,15 @@ msgstr "Język"
 #: src/components/language-picker.tsx
 msgid "Język systemu"
 msgstr "Język systemu"
+
+#: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Kategoria"
+msgstr "Kategoria"
+
+#: src/app/(app)/quick-bill.tsx
+msgid "Każda osoba trafi do grupy jako osoba bez konta. Płacisz Ty, dzielimy po równo."
+msgstr "Każda osoba trafi do grupy jako osoba bez konta. Płacisz Ty, dzielimy po równo."
 
 #: src/app/(auth)/sign-in.tsx
 msgid "Kod jednorazowy"
@@ -113,6 +167,13 @@ msgstr "Kod źródłowy na GitHubie"
 #: src/app/(app)/new-group.tsx
 msgid "Kolor"
 msgstr "Kolor"
+
+#: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+#: src/app/(app)/quick-bill.tsx
+#: src/features/entries/composer.tsx
+msgid "Kwota"
+msgstr "Kwota"
 
 #: src/features/profile/about-section.tsx
 msgid "Licencja: GNU AGPL v3"
@@ -134,9 +195,18 @@ msgstr "Nazwa"
 msgid "Nie masz jeszcze grup"
 msgstr "Nie masz jeszcze grup"
 
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+#: src/features/entries/composer.tsx
+msgid "Nie udało się dodać wydatku. Spróbuj ponownie."
+msgstr "Nie udało się dodać wydatku. Spróbuj ponownie."
+
 #: src/app/(app)/new-group.tsx
 msgid "Nie udało się utworzyć grupy. Spróbuj ponownie."
 msgstr "Nie udało się utworzyć grupy. Spróbuj ponownie."
+
+#: src/app/(app)/quick-bill.tsx
+msgid "Nie udało się utworzyć rachunku. Spróbuj ponownie."
+msgstr "Nie udało się utworzyć rachunku. Spróbuj ponownie."
 
 #: src/app/(app)/index.tsx
 msgid "Nie udało się wczytać grup."
@@ -145,6 +215,10 @@ msgstr "Nie udało się wczytać grup."
 #: src/components/group-not-found.tsx
 msgid "Nie udało się wczytać grupy."
 msgstr "Nie udało się wczytać grupy."
+
+#: src/app/(app)/groups/[groupId]/index.tsx
+msgid "Nie udało się wczytać wpisów."
+msgstr "Nie udało się wczytać wpisów."
 
 #: src/app/(auth)/sign-in.tsx
 msgid "Nie udało się wysłać kodu. Spróbuj ponownie."
@@ -158,6 +232,14 @@ msgstr "Nie udało się zapisać. Spróbuj ponownie."
 msgid "Nieprawidłowy lub wygasły kod."
 msgstr "Nieprawidłowy lub wygasły kod."
 
+#: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
+msgid "nieznana osoba"
+msgstr "nieznana osoba"
+
+#: src/features/entries/use-entry-labels.ts
+msgid "Nocleg"
+msgstr "Nocleg"
+
 #: src/app/(app)/_layout.tsx
 #: src/app/(app)/new.tsx
 msgid "Nowa grupa"
@@ -168,6 +250,11 @@ msgstr "Nowa grupa"
 msgid "Nowy"
 msgstr "Nowy"
 
+#: src/app/(app)/_layout.tsx
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Nowy wydatek"
+msgstr "Nowy wydatek"
+
 #: src/app/(app)/new-group.tsx
 msgid "np. Mazury 2026"
 msgstr "np. Mazury 2026"
@@ -176,6 +263,7 @@ msgstr "np. Mazury 2026"
 msgid "O aplikacji"
 msgstr "O aplikacji"
 
+#: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
 #: src/app/(app)/new-group.tsx
 msgid "Od"
 msgstr "Od"
@@ -188,6 +276,26 @@ msgstr "Opuść, archiwizuj lub usuń grupę"
 msgid "Osoba"
 msgstr "Osoba"
 
+#: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
+msgid "Otrzymali"
+msgstr "Otrzymali"
+
+#: src/features/entries/use-entry-labels.ts
+msgid "Paliwo"
+msgstr "Paliwo"
+
+#: src/features/entries/composer.tsx
+msgid "Pełny formularz wydatku"
+msgstr "Pełny formularz wydatku"
+
+#: src/features/entries/use-entry-labels.ts
+msgid "Po równo"
+msgstr "Po równo"
+
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Po równo między obecnych tego dnia: {participantCount, plural, one {# osoba} few {# osoby} many {# osób} other {# osoby}}"
+msgstr "Po równo między obecnych tego dnia: {participantCount, plural, one {# osoba} few {# osoby} many {# osób} other {# osoby}}"
+
 #: src/app/(app)/new-group.tsx
 msgid "Podaj datę końca (RRRR-MM-DD), nie wcześniejszą niż początek."
 msgstr "Podaj datę końca (RRRR-MM-DD), nie wcześniejszą niż początek."
@@ -196,9 +304,18 @@ msgstr "Podaj datę końca (RRRR-MM-DD), nie wcześniejszą niż początek."
 msgid "Podaj datę początku w formacie RRRR-MM-DD."
 msgstr "Podaj datę początku w formacie RRRR-MM-DD."
 
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Podaj datę w formacie RRRR-MM-DD."
+msgstr "Podaj datę w formacie RRRR-MM-DD."
+
 #: src/app/(app)/groups/[groupId]/member.tsx
 msgid "Podaj imię."
 msgstr "Podaj imię."
+
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+#: src/app/(app)/quick-bill.tsx
+msgid "Podaj kwotę większą od zera."
+msgstr "Podaj kwotę większą od zera."
 
 #: src/app/(app)/new-group.tsx
 msgid "Podaj nazwę grupy."
@@ -208,20 +325,41 @@ msgstr "Podaj nazwę grupy."
 msgid "Podaj poprawny adres e-mail."
 msgstr "Podaj poprawny adres e-mail."
 
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+#: src/app/(app)/quick-bill.tsx
+msgid "Podaj tytuł."
+msgstr "Podaj tytuł."
+
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Podział"
+msgstr "Podział"
+
 #: src/app/(app)/_layout.tsx
 #: src/app/(app)/profile.tsx
 #: src/components/inbox-header-buttons.tsx
 msgid "Profil"
 msgstr "Profil"
 
+#: src/features/entries/use-entry-labels.ts
+msgid "Rozrywka"
+msgstr "Rozrywka"
+
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
 #: src/app/(app)/new-group.tsx
 msgid "RRRR-MM-DD"
 msgstr "RRRR-MM-DD"
+
+#: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
+#: src/app/(app)/index.tsx
+#: src/features/entries/entry-bubble.tsx
+msgid "Spłata"
+msgstr "Spłata"
 
 #: src/features/profile/about-section.tsx
 msgid "split-pay, wersja {version}"
 msgstr "split-pay, wersja {version}"
 
+#: src/app/(app)/groups/[groupId]/index.tsx
 #: src/app/(app)/index.tsx
 #: src/components/group-not-found.tsx
 msgid "Spróbuj ponownie"
@@ -245,21 +383,59 @@ msgstr "Szybki rachunek"
 msgid "Ta grupa nie istnieje albo nie masz do niej dostępu."
 msgstr "Ta grupa nie istnieje albo nie masz do niej dostępu."
 
+#: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
+msgid "Tego wpisu już nie ma."
+msgstr "Tego wpisu już nie ma."
+
 #: src/app/(app)/groups/[groupId]/member.tsx
 msgid "Tej osoby nie ma już w grupie."
 msgstr "Tej osoby nie ma już w grupie."
+
+#: src/features/entries/use-entry-labels.ts
+msgid "Transport"
+msgstr "Transport"
 
 #: src/features/theme/theme-picker.tsx
 msgid "Tryb jasny/ciemny"
 msgstr "Tryb jasny/ciemny"
 
+#. placeholder {0}: format.amount(myShare, baseCurrency)
+#: src/features/entries/entry-bubble.tsx
+msgid "twój udział {0}"
+msgstr "twój udział {0}"
+
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
 #: src/app/(app)/groups/[groupId]/info.tsx
 msgid "Ty"
 msgstr "Ty"
 
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+#: src/app/(app)/quick-bill.tsx
+#: src/features/entries/composer.tsx
+msgid "Tytuł"
+msgstr "Tytuł"
+
+#: src/features/entries/use-entry-labels.ts
+msgid "Udziały"
+msgstr "Udziały"
+
+#. placeholder {0}: labels.splitMode[entry.split.mode]
+#: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
+msgid "Udziały · {0}"
+msgstr "Udziały · {0}"
+
 #: src/app/(app)/groups/[groupId]/info.tsx
 msgid "Ustawienia"
 msgstr "Ustawienia"
+
+#. placeholder {0}: person.displayName
+#: src/app/(app)/quick-bill.tsx
+msgid "Usuń {0}"
+msgstr "Usuń {0}"
+
+#: src/app/(app)/quick-bill.tsx
+msgid "Utwórz"
+msgstr "Utwórz"
 
 #: src/app/(app)/new-group.tsx
 msgid "Utwórz grupę"
@@ -274,9 +450,12 @@ msgid "Waluta bazowa"
 msgstr "Waluta bazowa"
 
 #: src/app/(app)/groups/[groupId]/info.tsx
-#: src/app/(app)/quick-bill.tsx
 msgid "Wkrótce"
 msgstr "Wkrótce"
+
+#: src/app/(app)/_layout.tsx
+msgid "Wpis"
+msgstr "Wpis"
 
 #: src/app/(app)/groups/[groupId]/member.tsx
 msgid "Wpisujesz za nią wydatki. Później może przejąć swój profil."
@@ -285,6 +464,14 @@ msgstr "Wpisujesz za nią wydatki. Później może przejąć swój profil."
 #: src/app/(auth)/sign-in.tsx
 msgid "Wpisz kod wysłany na {email}."
 msgstr "Wpisz kod wysłany na {email}."
+
+#: src/app/(app)/groups/[groupId]/index.tsx
+msgid "Wpisz kwotę i tytuł poniżej, żeby dodać pierwszy wydatek."
+msgstr "Wpisz kwotę i tytuł poniżej, żeby dodać pierwszy wydatek."
+
+#: src/features/entries/use-entry-labels.ts
+msgid "Wspólne + osobiste"
+msgstr "Wspólne + osobiste"
 
 #: src/app/(app)/new-group.tsx
 msgid "Wybierz emoji."
@@ -298,9 +485,9 @@ msgstr "Wybierz kolor."
 msgid "Wybierz walutę."
 msgstr "Wybierz walutę."
 
-#: src/app/(app)/groups/[groupId]/index.tsx
-msgid "Wydatki dodane w tej grupie pojawią się tutaj."
-msgstr "Wydatki dodane w tej grupie pojawią się tutaj."
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Wybierz, kto zapłacił."
+msgstr "Wybierz, kto zapłacił."
 
 #: src/app/(app)/new-group.tsx
 msgid "Wyjazd z datami"
@@ -318,6 +505,10 @@ msgstr "Wyloguj się"
 msgid "Wyślemy Ci jednorazowy kod na e-mail. Bez haseł."
 msgstr "Wyślemy Ci jednorazowy kod na e-mail. Bez haseł."
 
+#: src/features/entries/composer.tsx
+msgid "Wyślij"
+msgstr "Wyślij"
+
 #: src/app/(auth)/sign-in.tsx
 msgid "Wyślij kod"
 msgstr "Wyślij kod"
@@ -325,6 +516,23 @@ msgstr "Wyślij kod"
 #: src/app/(auth)/sign-in.tsx
 msgid "Wyślij kod ponownie"
 msgstr "Wyślij kod ponownie"
+
+#: src/app/(app)/quick-bill.tsx
+msgid "Z kim"
+msgstr "Z kim"
+
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+#: src/features/entries/composer.tsx
+msgid "Za co?"
+msgstr "Za co?"
+
+#: src/app/(app)/quick-bill.tsx
+msgid "Za co? np. Pizza u Kasi"
+msgstr "Za co? np. Pizza u Kasi"
+
+#: src/features/entries/use-entry-labels.ts
+msgid "Zakupy spożywcze"
+msgstr "Zakupy spożywcze"
 
 #: src/app/(app)/profile.tsx
 msgid "Zalogowano jako"
@@ -342,14 +550,23 @@ msgstr "Zaloguj się"
 msgid "założyciel"
 msgstr "założyciel"
 
+#: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
 #: src/app/(app)/groups/[groupId]/member.tsx
-#: src/app/(app)/quick-bill.tsx
 msgid "Zamknij"
 msgstr "Zamknij"
 
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
 #: src/app/(app)/groups/[groupId]/member.tsx
 msgid "Zapisz"
 msgstr "Zapisz"
+
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Zapłacił(a)"
+msgstr "Zapłacił(a)"
+
+#: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
+msgid "Zapłacili"
+msgstr "Zapłacili"
 
 #: src/app/(app)/groups/[groupId]/info.tsx
 msgid "Zmień"
