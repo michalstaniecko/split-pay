@@ -7,6 +7,7 @@ import type { SessionUser } from '../auth';
 import type { Db } from '../db/client';
 import { groups, members } from '../db/schema';
 import type { AuthEnv } from '../middleware/require-user';
+import { claimLinkRoutes, claimRoutes } from './claims';
 import { groupLinkRoutes } from './group-links';
 
 type GroupRow = typeof groups.$inferSelect;
@@ -62,6 +63,9 @@ export const groupsRoutes = ({ db, requireUser }: { db: Db; requireUser: Middlew
       .use(requireUser)
       /** The group link (share, QR, revoke): `routes/group-links.ts`. */
       .route('/:groupId/link', groupLinkRoutes({ db }))
+      /** Claims (system messages, undo) and personal claim links: `routes/claims.ts`. */
+      .route('/:groupId/claims', claimRoutes({ db }))
+      .route('/:groupId/members/:memberId/claim-link', claimLinkRoutes({ db }))
       /** My groups, most recent activity first (inbox). */
       .get('/', async (c) => {
         const rows = await db
