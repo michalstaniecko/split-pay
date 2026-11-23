@@ -7,7 +7,7 @@ import { StyleSheet } from 'react-native-unistyles';
 import { Button } from '@/components/button';
 import { entryKeys } from '@/features/entries/entries-query';
 import { entryConflicts } from '@/features/entries/entry-conflicts';
-import { isEditableInForm } from '@/features/entries/entry-edit';
+import { editScreen } from '@/features/entries/entry-edit';
 import { useFormatters } from '@/i18n/use-formatters';
 import { closeSheet } from '@/lib/close-sheet';
 
@@ -15,7 +15,7 @@ import { closeSheet } from '@/lib/close-sheet';
  * Opened from a bubble's red "!" (#11): someone changed the entry before my
  * change reached the server, so mine was not saved (ADR-0005). Explains it,
  * shows the current version and reloads the entry; "Wczytaj i edytuj" reopens
- * the form on the current version. Full "keep my / their version" comes with
+ * the form (settle sheet for a settlement) on the current version. Full "keep my / their version" comes with
  * offline (#23).
  */
 export default function EntryConflictSheet() {
@@ -35,7 +35,7 @@ export default function EntryConflictSheet() {
       setReloading(false);
     }
     entryConflicts.resolve(groupId, entryId);
-    if (thenEdit) router.replace({ pathname: '/groups/[groupId]/expense-form', params: { groupId, entryId } });
+    if (thenEdit && conflict) router.replace({ pathname: editScreen(conflict.current), params: { groupId, entryId } });
     else closeSheet();
   };
 
@@ -73,7 +73,7 @@ export default function EntryConflictSheet() {
       </Text>
       <Text style={styles.muted}>{t`Zmieniono ${format.dateTime(current.updatedAt)}`}</Text>
       <Button label={t`Wczytaj ponownie`} onPress={() => void reload(false)} loading={reloading} />
-      {!deleted && isEditableInForm(current) ? (
+      {!deleted ? (
         <Button variant="secondary" label={t`Wczytaj i edytuj`} onPress={() => void reload(true)} disabled={reloading} />
       ) : null}
     </ScrollView>

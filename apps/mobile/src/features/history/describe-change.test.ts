@@ -143,6 +143,12 @@ describe('describeChange', () => {
     expect(describe_('en', { kind: 'claim.undo', targetId: KASIA, before: { claimId: id(7) }, after: null }).title).toBe(
       'Undid claiming the Kasia profile',
     );
+    expect(describe_('en', { kind: 'group.archive', targetId: id(100), before: null, after: null }).title).toBe(
+      'Archived the group',
+    );
+    expect(describe_('pl', { kind: 'member.leave', targetId: BARTEK, before: null, after: null }).title).toBe(
+      'Opuszczenie grupy: Bartek',
+    );
     expect(describe_('pl', { kind: 'group.create', targetId: id(100), before: null, after: { name: 'Mazury', emoji: '⛵' } }).title).toBe(
       'Utworzono grupę ⛵ Mazury',
     );

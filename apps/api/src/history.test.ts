@@ -159,6 +159,26 @@ describe('change history', () => {
     });
   });
 
+  it('records archiving, unarchiving and leaving the group; an archived group is not undone', async () => {
+    const { bartek, bartekId, me, g, groupId, history, undo } = await setup();
+    await parseResponse(g().settings.$patch({ param: { groupId }, json: { simplifyDebts: false } }));
+    const [settings] = await history();
+    await parseResponse(g().archive.$put({ param: { groupId } }));
+    await parseResponse(g().archive.$put({ param: { groupId } }));
+
+    const archived = await undo(settings!.id);
+    expect(archived.status).toBe(409);
+    expect(await archived.json()).toEqual({ error: 'archived' });
+
+    await parseResponse(g().archive.$delete({ param: { groupId } }));
+    await parseResponse(g(bartek).leave.$post({ param: { groupId } }));
+    expect((await history()).slice(0, 3).map((c) => [c.kind, c.targetId, c.actorMemberId])).toEqual([
+      ['member.leave', bartekId, bartekId],
+      ['group.unarchive', groupId, me],
+      ['group.archive', groupId, me],
+    ]);
+  });
+
   it('a rejected change records nothing', async () => {
     const { addEntry, entryApi, history, input } = await setup();
     const created = await addEntry();

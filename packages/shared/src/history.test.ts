@@ -53,12 +53,14 @@ describe('isUndoable', () => {
     ).toBe(true);
   });
 
-  it('creating the group, adding/joining members and undoing a claim cannot be undone', () => {
+  it('group creation and archiving, members added/joining/leaving and undone claims cannot be undone', () => {
     expect(isUndoable(change({ kind: 'group.create', targetId: GROUP, before: null, after: { name: 'Mazury', emoji: '⛵' } }))).toBe(
       false,
     );
     expect(isUndoable(change({ kind: 'member.add', targetId: BARTEK, before: null, after: { displayName: 'Bartek' } }))).toBe(false);
     expect(isUndoable(change({ kind: 'member.join', targetId: BARTEK, before: null, after: { displayName: 'Bartek' } }))).toBe(false);
+    expect(isUndoable(change({ kind: 'group.archive', targetId: GROUP, before: null, after: null }))).toBe(false);
+    expect(isUndoable(change({ kind: 'member.leave', targetId: BARTEK, before: null, after: null }))).toBe(false);
     expect(isUndoable(change({ kind: 'claim.undo', targetId: BARTEK, before: { claimId: uuid(9) }, after: null }))).toBe(false);
   });
 

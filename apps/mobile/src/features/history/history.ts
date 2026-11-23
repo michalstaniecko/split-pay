@@ -14,11 +14,13 @@ export type UndoFailure = 'changedSince' | 'forbidden' | 'notUndoable' | 'invali
 /**
  * Why an undo failed: `changedSince` — the entry/member/setting changed after
  * this change (409; undo respects versioning), `forbidden` — renaming someone
- * else's account, `notUndoable`, `invalid` (e.g. archived group), else unknown.
+ * else's account, `notUndoable`, `invalid` (e.g. archived group: 409
+ * `archived`), else unknown.
  */
 export function undoFailure(error: unknown): UndoFailure {
   if (!(error instanceof DetailedError)) return 'unknown';
   const data = (error.detail as { data?: unknown } | undefined)?.data as { error?: unknown } | undefined;
+  if (data?.error === 'archived') return 'invalid';
   if (error.statusCode === 409) return 'changedSince';
   if (error.statusCode === 403) return 'forbidden';
   if (data?.error === 'not_undoable') return 'notUndoable';

@@ -14,6 +14,9 @@ import type { Attendance, Entry, Id } from './model';
  */
 export type ChangeData =
   | { kind: 'group.create'; before: null; after: { name: string; emoji: string } }
+  /** The group became read-only / writable again (#25); undone with the opposite action, not from the history. */
+  | { kind: 'group.archive'; before: null; after: null }
+  | { kind: 'group.unarchive'; before: null; after: null }
   /** An entry was added; `after` = the new entry. */
   | { kind: 'entry.create'; before: null; after: Entry }
   /** Content edit (version + 1). */
@@ -26,6 +29,8 @@ export type ChangeData =
   | { kind: 'member.add'; before: null; after: { displayName: string } }
   /** A user joined through a group link as a new member. */
   | { kind: 'member.join'; before: null; after: { displayName: string } }
+  /** A user left the group (#25): their member stays, without an account. */
+  | { kind: 'member.leave'; before: null; after: null }
   | { kind: 'member.rename'; before: { displayName: string }; after: { displayName: string } }
   | { kind: 'member.attendance'; before: { attendance: Attendance | null }; after: { attendance: Attendance | null } }
   /** Only the settings that changed, before and after. */

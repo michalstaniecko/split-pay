@@ -40,6 +40,14 @@ export function describeChange(change: Change, context: ChangeDescriptionContext
       const group = `${change.after.emoji} ${change.after.name}`;
       return only(t`Utworzono grupę ${group}`);
     }
+    case 'group.archive':
+      return only(t`Zarchiwizowano grupę`);
+    case 'group.unarchive':
+      return only(t`Przywrócono grupę z archiwum`);
+    case 'member.leave': {
+      const name = context.memberName(change.targetId);
+      return only(t`Opuszczenie grupy: ${name}`);
+    }
     case 'entry.create': {
       const what = withAmount(change.after);
       return only(t`Dodano ${what}`);

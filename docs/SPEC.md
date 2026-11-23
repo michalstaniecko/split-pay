@@ -129,8 +129,9 @@ A fixed, translated list with icons (food, transport, accommodation, alcohol, fu
 
 ## Group and account lifecycle
 
-- **"Opuść grupę"** in Group info, above archive / delete. You cannot leave a group with a non-zero balance (warning + block).
-- A group can be **archived** (read-only). Only the owner can permanently delete it.
+- **"Opuść grupę"** in Group info, above archive / delete. You cannot leave a group with a non-zero balance (warning + block). Leaving keeps your member as a member without an account (same name), so entries and balances stay intact and it can be claimed again.
+- A group can be **archived** (read-only) and unarchived by any member. Leaving and permanent deletion still work in an archived group.
+- Only the owner can permanently delete a group. Ownership follows the owner's member (claiming it makes you the owner). If the owner member has no account — the owner deleted their account or left — every member may delete the group.
 - **Account deletion** (Apple requirement): the user becomes an ordinary member without an account named "Usunięty użytkownik" ("Deleted user") — personal data is removed, other people's expenses and balances remain. Any group member can rename it; the profile can be claimed ([ADR-0010](./adr/0010-account-deletion-turns-into-member-without-account.md)).
 
 ## Offline

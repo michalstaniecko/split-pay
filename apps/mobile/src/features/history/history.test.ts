@@ -53,6 +53,7 @@ describe('undoFailure', () => {
     expect(undoFailure(failed(403, { error: 'forbidden' }))).toBe('forbidden');
     expect(undoFailure(failed(400, { error: 'not_undoable' }))).toBe('notUndoable');
     expect(undoFailure(failed(400, { error: 'invalid_entry', issues: [] }))).toBe('invalid');
+    expect(undoFailure(failed(409, { error: 'archived' }))).toBe('invalid');
     expect(undoFailure(new Error('network'))).toBe('unknown');
   });
 });

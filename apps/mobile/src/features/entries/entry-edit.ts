@@ -121,15 +121,19 @@ export function versionConflictEntry(error: unknown): Entry | null {
 export type EntryAction = 'edit' | 'delete' | 'history' | 'copyAmount';
 
 /**
- * A bubble's long-press actions in menu order (SPEC: Edytuj, Usuń, Historia,
- * Kopiuj kwotę). An archived group is read-only: only Historia and Kopiuj
- * kwotę. "Edytuj" only for kinds the full form can edit (expenses and
- * incomes; TODO(#10): settlements).
+ * An entry's long-press actions in menu order (SPEC: Edytuj, Usuń, Historia,
+ * Kopiuj kwotę) — bubbles and settlement system messages alike ("Edytuj" on
+ * a settlement opens the settle sheet). An archived group is read-only: only
+ * Historia and Kopiuj kwotę.
  */
-export function entryActions(entry: Entry, group: { archivedAt: string | null }): EntryAction[] {
+export function entryActions(_entry: Entry, group: { archivedAt: string | null }): EntryAction[] {
   if (group.archivedAt !== null) return ['history', 'copyAmount'];
-  return [...(isEditableInForm(entry) ? (['edit'] as const) : []), 'delete', 'history', 'copyAmount'];
+  return ['edit', 'delete', 'history', 'copyAmount'];
 }
+
+/** Where "Edytuj" opens with `?entryId=`: the settle sheet for a settlement, else the full form. */
+export const editScreen = (entry: Entry) =>
+  entry.kind === 'settlement' ? ('/groups/[groupId]/settle' as const) : ('/groups/[groupId]/expense-form' as const);
 
 /** The full expense form can edit this entry. */
 export const isEditableInForm = (entry: Entry): entry is FormEntry => entry.kind !== 'settlement';

@@ -8,6 +8,7 @@ import { groupLinks, members } from '../db/schema';
 import { recordChange } from './change-log';
 import type { AuthEnv } from '../middleware/require-user';
 import { claimMember, findMyMember, newLinkToken, resolveLinkToken } from './claims';
+import { archivedResponse } from './group-lifecycle';
 import { ownerDisplayName } from './groups';
 
 /**
@@ -88,12 +89,13 @@ export const linksRoutes = ({ db, requireUser }: { db: Db; requireUser: Middlewa
     })
     /**
      * Joins as a new person: adds the caller as a member named after their
-     * account. Already a member → 200 with the existing member.
+     * account. Already a member → 200 with the existing member. Archived group → 409.
      */
     .post('/:token/join', async (c) => {
       const link = await resolveLinkToken(db, c.req.param('token'));
       if (!link) return c.json({ error: 'not_found' as const }, 404);
       const { group } = link;
+      if (group.archivedAt) return c.json(archivedResponse, 409);
       const user = c.get('user');
       // The partial unique index (group_id, user_id) makes concurrent joins add one member.
       const created = await db.transaction(async (tx) => {
@@ -132,6 +134,7 @@ export const linksRoutes = ({ db, requireUser }: { db: Db; requireUser: Middlewa
       if (!link || (link.claimFor !== null && link.claimFor !== memberId)) {
         return c.json({ error: 'not_found' as const }, 404);
       }
+      if (link.group.archivedAt) return c.json(archivedResponse, 409);
       const user = c.get('user');
       const groupId = link.group.id;
       const result = await claimMember(db, { groupId, memberId, user }, ownerDisplayName(user));
