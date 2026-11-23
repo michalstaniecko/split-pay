@@ -1,6 +1,7 @@
 import { useLingui } from '@lingui/react/macro';
 import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
+import type { ReactNode } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { Button } from '@/components/button';
@@ -9,6 +10,7 @@ import { type BalanceRow, drawerRows, type TransferRow } from '@/features/balanc
 import { balancesQuery, type GroupBalances } from '@/features/balances/balances-query';
 import { myMemberId } from '@/features/entries/conversation';
 import { type GroupDetail, groupQuery } from '@/features/groups/groups-query';
+import { NudgeButton } from '@/features/notifications/nudge-button';
 import { useFormatters } from '@/i18n/use-formatters';
 import { authClient } from '@/lib/auth-client';
 
@@ -17,6 +19,7 @@ import { authClient } from '@/lib/auth-client';
  * who should pay whom — simplified or pairwise per the group's setting
  * (toggled in Group info → settings). "Oddaj" on my own transfer opens the
  * settle sheet with the recipient's payout details and the suggested amount;
+ * "Przypomnij" on a transfer owed to me nudges the debtor by push (#24);
  * "Inna spłata" at the bottom opens it with from / to / amount pickers.
  */
 export default function BalancesSheet() {
@@ -70,11 +73,11 @@ function Drawer({ group, balances }: { group: GroupDetail; balances: GroupBalanc
               currency={balances.baseCurrency}
               // Archived group: no "Oddaj" (SPEC).
               onPay={transfer.direction === 'fromMe' && !archived ? () => pay(transfer) : undefined}
+              nudge={<NudgeButton group={group} transfer={transfer} />}
             />
           ))}
         </View>
       )}
-      {/* TODO(#24): "Przypomnij" (nudge) on `toMe` transfers comes with push notifications. */}
       {archived ? null : (
         <Button
           variant="secondary"
@@ -107,10 +110,13 @@ function TransferItem({
   transfer,
   currency,
   onPay,
+  nudge,
 }: {
   transfer: TransferRow;
   currency: string;
   onPay: (() => void) | undefined;
+  /** "Przypomnij" (renders nothing where it doesn't apply). */
+  nudge?: ReactNode;
 }) {
   const { t } = useLingui();
   const format = useFormatters();
@@ -135,6 +141,7 @@ function TransferItem({
           <Text style={styles.payLabel}>{t`Oddaj`}</Text>
         </Pressable>
       ) : null}
+      {nudge}
     </View>
   );
 }

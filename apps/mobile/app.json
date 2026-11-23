@@ -38,6 +38,12 @@
       "expo-sqlite",
       "expo-secure-store",
       [
+        "expo-notifications",
+        {
+          "enableBackgroundRemoteNotifications": true
+        }
+      ],
+      [
         "expo-image-picker",
         {
           "cameraPermission": "split-pay uses the camera to photograph receipts and your profile picture.",

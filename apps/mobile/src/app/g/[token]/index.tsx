@@ -1,7 +1,7 @@
 import { plural } from '@lingui/core/macro';
 import { useLingui } from '@lingui/react/macro';
 import { useQuery } from '@tanstack/react-query';
-import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { Redirect, router, Stack, useLocalSearchParams } from 'expo-router';
 import { DetailedError } from 'hono/client';
 import { useEffect } from 'react';
 import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
@@ -12,8 +12,29 @@ import { type ClaimableMember, joinChoices } from '@/features/claims/claims';
 import { useClaimMember } from '@/features/claims/claims-query';
 import { pendingJoin } from '@/features/group-link/group-link';
 import { linkPreviewQuery, useJoinGroup } from '@/features/group-link/group-link-query';
+import { authClient } from '@/lib/auth-client';
 
 const openConversation = (groupId: string) => router.replace({ pathname: '/groups/[groupId]', params: { groupId } });
+
+/**
+ * A group link opened in the app. This route lives outside the signed-in
+ * group because on the web the same URL is the view-only web
+ * (`index.web.tsx`). Signed out: sign in first — the link is remembered
+ * (`+native-intent.tsx`) and reopened afterwards (`usePendingJoin`).
+ */
+export default function GroupLinkRoute() {
+  const { theme } = useUnistyles();
+  const session = authClient.useSession();
+  if (session.isPending) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator color={theme.colors.primary} />
+      </View>
+    );
+  }
+  if (!session.data) return <Redirect href="/sign-in" />;
+  return <JoinScreen />;
+}
 
 /**
  * Join screen: where a group link or a personal claim link
@@ -23,7 +44,7 @@ const openConversation = (groupId: string) => router.replace({ pathname: '/group
  * directly. Either opens the group's Conversation; if I'm already in the group
  * it opens right away.
  */
-export default function JoinScreen() {
+function JoinScreen() {
   const { t } = useLingui();
   const { theme } = useUnistyles();
   const { token } = useLocalSearchParams<{ token: string }>();

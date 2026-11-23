@@ -3,6 +3,7 @@ import { Stack } from 'expo-router';
 import { useUnistyles } from 'react-native-unistyles';
 import { InboxHeaderButtons } from '@/components/inbox-header-buttons';
 import { usePendingJoin } from '@/features/group-link/use-pending-join';
+import { usePushNotifications } from '@/features/notifications/push';
 
 /** Deep links (group link → Conversation) keep the inbox underneath, so "back" leads home. */
 export const unstable_settings = { anchor: 'index' };
@@ -16,6 +17,7 @@ export default function AppLayout() {
   const { t } = useLingui();
   const { theme } = useUnistyles();
   usePendingJoin();
+  usePushNotifications();
   return (
     <Stack
       screenOptions={{
@@ -106,6 +108,7 @@ export default function AppLayout() {
         name="groups/[groupId]/receipt"
         options={{ presentation: 'fullScreenModal', headerShown: false, animation: 'fade' }}
       />
+      <Stack.Screen name="groups/[groupId]/history" options={{ title: t`Historia zmian` }} />
       <Stack.Screen
         name="groups/[groupId]/member"
         options={{

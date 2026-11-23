@@ -14,6 +14,7 @@ import { GroupLifecycleSection } from '@/features/groups/group-lifecycle-section
 import { GroupSettingsSection } from '@/features/groups/group-settings-section';
 import { type GroupDetail, groupQuery } from '@/features/groups/groups-query';
 import { type MemberRow, memberRows } from '@/features/groups/member-form';
+import { HistorySection } from '@/features/history/history-section';
 import { MemberAvatar } from '@/features/photos/member-avatar';
 import { groupAvatarsQuery } from '@/features/photos/photos-query';
 import { useFormatters } from '@/i18n/use-formatters';
@@ -89,7 +90,9 @@ function GroupInfo({ group }: { group: GroupDetail }) {
         <Text style={styles.sectionTitle}>{t`Statystyki`}</Text>
         <Text style={styles.chevron}>{t`Pokaż`}</Text>
       </Pressable>
-      <Section title={t`Historia zmian`} subtitle={soon} />
+      <Section title={t`Historia zmian`}>
+        <HistorySection group={group} />
+      </Section>
       <Section title={t`Ustawienia`}>
         <GroupSettingsSection group={group} />
       </Section>

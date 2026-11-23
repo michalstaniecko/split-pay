@@ -9,6 +9,7 @@ import {
   Id,
   type Member,
   NewEntry,
+  type NotificationEvent,
   validateEntryInGroup,
 } from '@split-pay/shared';
 import { and, asc, desc, eq, inArray, isNotNull, isNull } from 'drizzle-orm';
@@ -16,6 +17,8 @@ import { type Context, Hono } from 'hono';
 import type { Db } from '../db/client';
 import { entries, groups, members } from '../db/schema';
 import type { AuthEnv } from '../middleware/require-user';
+import { notify } from '../push/enqueue';
+import { memberIdOfUser, recordChange } from './change-log';
 import { findMyGroup, toSharedGroup } from './group-access';
 import { attachReceipt } from './photos';
 
@@ -121,7 +124,17 @@ export async function createEntry(
   // Lost a race with the same id: report it like a repeated create.
   if (!created) return createEntry(tx, input, context);
   await tx.update(groups).set({ lastActivityAt: now }).where(eq(groups.id, context.group.id));
-  return { status: 'created', entry: toEntryDto(created) };
+  const entry = toEntryDto(created);
+  await recordChange(tx, {
+    kind: 'entry.create',
+    groupId: entry.groupId,
+    targetId: entry.id,
+    actorMemberId: context.members.find((m) => m.userId === context.userId)?.id ?? null,
+    before: null,
+    after: entry,
+    now,
+  });
+  return { status: 'created', entry };
 }
 
 const unknownReceipt = 'receiptPhotoId: not a receipt photo of this group';
@@ -201,6 +214,9 @@ export const entriesRoutes = ({ db }: { db: Db }) =>
         const groupMembers = await tx.select().from(members).where(eq(members.groupId, group.id));
         return createEntry(tx, c.req.valid('json'), { group: toSharedGroup(group), members: groupMembers, userId });
       });
+      if (result.status === 'created') {
+        await notify(db, { groupId: group.id, actorUserId: userId, event: { type: 'entryCreated', entry: result.entry } });
+      }
       switch (result.status) {
         case 'created':
           return c.json(result.entry, 201);
@@ -229,8 +245,10 @@ export const entriesRoutes = ({ db }: { db: Db }) =>
         return editEntry(tx, c.req.param('entryId'), entry, baseVersion, {
           group: toSharedGroup(group),
           members: groupMembers,
+          actorMemberId: groupMembers.find((m) => m.userId === userId)?.id ?? null,
         });
       });
+      await notifyEntryChange(db, userId, result);
       return entryChangeResponse(c, result);
     })
     /**
@@ -240,12 +258,17 @@ export const entriesRoutes = ({ db }: { db: Db }) =>
      * group (`rejectWritesToArchived`); 404.
      */
     .delete('/:entryId', zValidator('query', EntryVersionCheck), async (c) => {
-      const group = await findMyGroup(db, c.req.param('groupId'), c.get('user').id);
+      const userId = c.get('user').id;
+      const group = await findMyGroup(db, c.req.param('groupId'), userId);
       if (!group) return c.json({ error: 'not_found' as const }, 404);
-      const result = await setEntryDeleted(db, toSharedGroup(group), c.req.param('entryId'), {
-        deleted: true,
-        baseVersion: c.req.valid('query').baseVersion,
-      });
+      const result = await db.transaction(async (tx) =>
+        setEntryDeleted(tx, toSharedGroup(group), c.req.param('entryId'), {
+          deleted: true,
+          baseVersion: c.req.valid('query').baseVersion,
+          actorMemberId: await memberIdOfUser(tx, group.id, userId),
+        }),
+      );
+      await notifyEntryChange(db, userId, result);
       return entryChangeResponse(c, result);
     })
     /**
@@ -253,20 +276,40 @@ export const entriesRoutes = ({ db }: { db: Db }) =>
      * deleted. Responses as for delete (a live entry → 200 idempotent).
      */
     .post('/:entryId/restore', zValidator('json', EntryVersionCheck), async (c) => {
-      const group = await findMyGroup(db, c.req.param('groupId'), c.get('user').id);
+      const userId = c.get('user').id;
+      const group = await findMyGroup(db, c.req.param('groupId'), userId);
       if (!group) return c.json({ error: 'not_found' as const }, 404);
-      const result = await setEntryDeleted(db, toSharedGroup(group), c.req.param('entryId'), {
-        deleted: false,
-        baseVersion: c.req.valid('json').baseVersion,
-      });
+      const result = await db.transaction(async (tx) =>
+        setEntryDeleted(tx, toSharedGroup(group), c.req.param('entryId'), {
+          deleted: false,
+          baseVersion: c.req.valid('json').baseVersion,
+          actorMemberId: await memberIdOfUser(tx, group.id, userId),
+        }),
+      );
+      await notifyEntryChange(db, userId, result);
       return entryChangeResponse(c, result);
     });
 
 export type ChangeEntryResult =
-  | { status: 'changed'; entry: Entry }
+  /** `previous`: what was stored before — absent when nothing changed (idempotent retry). */
+  | { status: 'changed'; entry: Entry; previous?: Entry }
   | { status: 'conflict'; current: Entry }
   | { status: 'not_found' }
   | { status: 'invalid'; issues: string[] };
+
+/**
+ * Push notification (#24) for an edit, delete or restore that changed
+ * something. A restore is reported as an edit (the entry is back as it was).
+ */
+export async function notifyEntryChange(db: Db, actorUserId: Id, result: ChangeEntryResult) {
+  if (result.status !== 'changed' || !result.previous) return;
+  const { entry, previous } = result;
+  const event: NotificationEvent =
+    entry.deletedAt !== null
+      ? { type: 'entryDeleted', entry }
+      : { type: 'entryEdited', before: previous, after: entry };
+  await notify(db, { groupId: entry.groupId, actorUserId, event });
+}
 
 function entryChangeResponse(c: Context<AuthEnv>, result: ChangeEntryResult) {
   switch (result.status) {
@@ -296,15 +339,23 @@ async function findEntry(tx: Tx, groupId: Id, entryId: string | undefined): Prom
  * replaced only while its version is still `baseVersion` and it is not
  * deleted (`UPDATE … WHERE version = $base AND deleted_at IS NULL`), so a
  * concurrent edit can't be overwritten. Bumps `version`, `updatedAt` and the
- * group's `lastActivityAt`. Reuse for any content change (history undo #20,
- * outbox replay #22).
+ * group's `lastActivityAt`, and records an `entry.edit` in the change history
+ * (#20; `undoesChangeId` when it is an undo). Reuse for any content change
+ * (history undo #20, outbox replay #22).
  */
 export async function editEntry(
   tx: Tx,
   entryId: string | undefined,
   input: NewEntry,
   baseVersion: number,
-  context: { group: Group; members: readonly Member[]; now?: Date },
+  context: {
+    group: Group;
+    members: readonly Member[];
+    /** Who edits (change history). */
+    actorMemberId: Id | null;
+    undoesChangeId?: Id;
+    now?: Date;
+  },
 ): Promise<ChangeEntryResult> {
   const now = context.now ?? new Date();
   const row = await findEntry(tx, context.group.id, entryId);
@@ -342,22 +393,42 @@ export async function editEntry(
   // Lost a race with another change: report what is stored now.
   if (!updated) return editEntry(tx, entryId, input, baseVersion, context);
   await tx.update(groups).set({ lastActivityAt: now }).where(eq(groups.id, context.group.id));
-  return { status: 'changed', entry: toEntryDto(updated) };
+  const entry = toEntryDto(updated);
+  await recordChange(tx, {
+    kind: 'entry.edit',
+    groupId: entry.groupId,
+    targetId: entry.id,
+    actorMemberId: context.actorMemberId,
+    undoesChangeId: context.undoesChangeId ?? null,
+    before: current,
+    after: entry,
+    now,
+  });
+  return { status: 'changed', entry, previous: current };
 }
 
 /**
  * Soft-deletes (`deleted: true`) or restores an entry, based on the version
  * the client saw. Doesn't bump `version` (the content is unchanged — see
  * `EntryUpdate` in shared), only `updatedAt`; doesn't move the group in the
- * inbox. Already in the requested state → `changed` with the stored entry
- * (idempotent retry). Archived group → invalid.
+ * inbox. Records `entry.delete` / `entry.restore` in the change history.
+ * Already in the requested state → `changed` with the stored entry
+ * (idempotent retry, nothing recorded). Archived group → invalid.
  */
 export async function setEntryDeleted(
   tx: Tx,
   group: Group,
   entryId: string | undefined,
-  options: { deleted: boolean; baseVersion: number; now?: Date },
+  options: {
+    deleted: boolean;
+    baseVersion: number;
+    /** Who deletes/restores (change history). */
+    actorMemberId: Id | null;
+    undoesChangeId?: Id;
+    now?: Date;
+  },
 ): Promise<ChangeEntryResult> {
+  const now = options.now ?? new Date();
   const row = await findEntry(tx, group.id, entryId);
   if (!row) return { status: 'not_found' };
   const current = toEntryDto(row);
@@ -367,7 +438,7 @@ export async function setEntryDeleted(
 
   const [updated] = await tx
     .update(entries)
-    .set({ deletedAt: options.deleted ? (options.now ?? new Date()) : null })
+    .set({ deletedAt: options.deleted ? now : null, updatedAt: now })
     .where(
       and(
         eq(entries.id, current.id),
@@ -377,5 +448,16 @@ export async function setEntryDeleted(
     )
     .returning();
   if (!updated) return setEntryDeleted(tx, group, entryId, options);
-  return { status: 'changed', entry: toEntryDto(updated) };
+  const entry = toEntryDto(updated);
+  await recordChange(tx, {
+    kind: options.deleted ? 'entry.delete' : 'entry.restore',
+    groupId: group.id,
+    targetId: entry.id,
+    actorMemberId: options.actorMemberId,
+    undoesChangeId: options.undoesChangeId ?? null,
+    before: current,
+    after: entry,
+    now,
+  });
+  return { status: 'changed', entry, previous: current };
 }

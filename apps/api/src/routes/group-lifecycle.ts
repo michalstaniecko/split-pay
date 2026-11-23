@@ -1,10 +1,11 @@
 import { canDeleteGroup, canLeaveGroup, Id, settleUp } from '@split-pay/shared';
-import { and, eq, isNull } from 'drizzle-orm';
+import { and, eq, isNotNull, isNull } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { createMiddleware } from 'hono/factory';
 import type { Db } from '../db/client';
 import { entries, groups, members } from '../db/schema';
 import type { AuthEnv } from '../middleware/require-user';
+import { memberIdOfUser, recordChange } from './change-log';
 import { toEntryDto } from './entries';
 import { findMyGroup } from './group-access';
 import { toGroupDto } from './groups';
@@ -44,11 +45,19 @@ export const groupLifecycleRoutes = ({ db }: { db: Db }) =>
       const group = await findMyGroup(db, c.req.param('groupId'), c.get('user').id);
       if (!group) return c.json({ error: 'not_found' as const }, 404);
       if (group.archivedAt) return c.json(toGroupDto(group), 200);
-      const [updated] = await db
-        .update(groups)
-        .set({ archivedAt: new Date() })
-        .where(and(eq(groups.id, group.id), isNull(groups.archivedAt)))
-        .returning();
+      const userId = c.get('user').id;
+      const updated = await db.transaction(async (tx) => {
+        const [row] = await tx
+          .update(groups)
+          .set({ archivedAt: new Date() })
+          .where(and(eq(groups.id, group.id), isNull(groups.archivedAt)))
+          .returning();
+        if (row) {
+          const actorMemberId = await memberIdOfUser(tx, group.id, userId);
+          await recordChange(tx, { kind: 'group.archive', groupId: group.id, targetId: group.id, actorMemberId, before: null, after: null });
+        }
+        return row;
+      });
       const [current] = updated ? [updated] : await db.select().from(groups).where(eq(groups.id, group.id));
       return c.json(toGroupDto(current ?? group), 200);
     })
@@ -56,7 +65,19 @@ export const groupLifecycleRoutes = ({ db }: { db: Db }) =>
     .delete('/archive', async (c) => {
       const group = await findMyGroup(db, c.req.param('groupId'), c.get('user').id);
       if (!group) return c.json({ error: 'not_found' as const }, 404);
-      const [updated] = await db.update(groups).set({ archivedAt: null }).where(eq(groups.id, group.id)).returning();
+      const userId = c.get('user').id;
+      const updated = await db.transaction(async (tx) => {
+        const [row] = await tx
+          .update(groups)
+          .set({ archivedAt: null })
+          .where(and(eq(groups.id, group.id), isNotNull(groups.archivedAt)))
+          .returning();
+        if (row) {
+          const actorMemberId = await memberIdOfUser(tx, group.id, userId);
+          await recordChange(tx, { kind: 'group.unarchive', groupId: group.id, targetId: group.id, actorMemberId, before: null, after: null });
+        }
+        return row;
+      });
       return c.json(toGroupDto(updated ?? group), 200);
     })
     /**
@@ -90,6 +111,14 @@ export const groupLifecycleRoutes = ({ db }: { db: Db }) =>
           .update(members)
           .set({ userId: null })
           .where(and(eq(members.id, me.id), eq(members.userId, userId)));
+        await recordChange(tx, {
+          kind: 'member.leave',
+          groupId: group.id,
+          targetId: me.id,
+          actorMemberId: me.id,
+          before: null,
+          after: null,
+        });
         return { left: true as const, balance };
       });
       if (!result.left) return c.json({ error: 'non_zero_balance' as const, balance: result.balance }, 409);

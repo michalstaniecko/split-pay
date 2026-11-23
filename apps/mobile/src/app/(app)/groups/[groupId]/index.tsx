@@ -24,10 +24,17 @@ import { entriesQuery, useDeleteEntry, useRestoreEntry } from '@/features/entrie
 import { EntryActionsMenu } from '@/features/entries/entry-actions-menu';
 import { DaySeparator, EntryBubble } from '@/features/entries/entry-bubble';
 import { useEntryConflicts } from '@/features/entries/entry-conflicts';
-import { amountForClipboard, type EntryAction, entryActions, versionConflictEntry } from '@/features/entries/entry-edit';
+import {
+  amountForClipboard,
+  type EntryAction,
+  editScreen,
+  entryActions,
+  versionConflictEntry,
+} from '@/features/entries/entry-edit';
 import { UndoSnackbar } from '@/features/entries/undo-snackbar';
 import { type GroupDetail, groupQuery } from '@/features/groups/groups-query';
 import { groupAvatarsQuery, receiptsQuery } from '@/features/photos/photos-query';
+import { useFocusedEntry } from '@/features/notifications/use-focused-entry';
 import { SettlementSystemMessage } from '@/features/settlements/settlement-system-message';
 import { useLocale } from '@/i18n/locale-provider';
 import { authClient } from '@/lib/auth-client';
@@ -41,13 +48,14 @@ const HIGHLIGHT_MS = 2000;
  * payers by entry date, sticky day separators with the daily total, the
  * composer at the bottom, the balance banner on top. The header (emoji +
  * name) and `⋯` open Group info.
- * Long-press on a bubble: Edytuj, Usuń (with a "Cofnij" snackbar), Historia,
+ * Long-press on a bubble or a settlement: Edytuj, Usuń (with a "Cofnij" snackbar), Historia,
  * Kopiuj kwotę (#11).
  */
 export default function ConversationScreen() {
   const { t } = useLingui();
   const { theme } = useUnistyles();
-  const { groupId } = useLocalSearchParams<{ groupId: string }>();
+  // `entryId`: opened from a notification — scroll to that bubble and highlight it.
+  const { groupId, entryId } = useLocalSearchParams<{ groupId: string; entryId?: string }>();
   const group = useQuery(groupQuery(groupId));
   const entries = useQuery(entriesQuery(groupId));
   const claims = useQuery(claimsQuery(groupId));
@@ -110,7 +118,13 @@ export default function ConversationScreen() {
               </Pressable>
             </View>
           ) : (
-            <Conversation group={group.data} entries={entries.data} claims={claims.data ?? []} me={me} />
+            <Conversation
+              group={group.data}
+              entries={entries.data}
+              claims={claims.data ?? []}
+              me={me}
+              focusEntryId={entryId}
+            />
           )}
           {group.data.archivedAt === null ? (
             <Composer
@@ -136,11 +150,13 @@ function Conversation({
   entries,
   claims,
   me,
+  focusEntryId,
 }: {
   group: GroupDetail;
   entries: Entry[];
   claims: Claim[];
   me: string | null;
+  focusEntryId: string | undefined;
 }) {
   const { t } = useLingui();
   const { items, stickyHeaderIndices } = useMemo(
@@ -148,7 +164,9 @@ function Conversation({
     [entries, group.members, me, group.baseCurrency, claims],
   );
   const listRef = useRef<FlashListRef<ConversationItem<Claim>>>(null);
-  const highlightId = useNewEntryHighlight(items, listRef);
+  const newHighlightId = useNewEntryHighlight(items, listRef);
+  const focusedId = useFocusedEntry(items, listRef, focusEntryId);
+  const highlightId = focusedId ?? newHighlightId;
 
   const actions = useEntryActionHandler(group);
   const conflicts = useEntryConflicts(group.id);
@@ -195,6 +213,11 @@ function Conversation({
                 myMemberId={me}
                 highlighted={item.entry.id === highlightId}
                 onPress={() => openEntry(item.entry.id)}
+                onLongPress={() => actions.openMenu(item.entry)}
+                actions={entryActions(item.entry, group)}
+                onAction={(action) => actions.run(item.entry, action)}
+                conflict={conflicts.has(item.entry.id)}
+                onConflictPress={() => openConflict(item.entry.id)}
               />
             ) : (
               <EntryBubble
@@ -220,12 +243,12 @@ function Conversation({
 }
 
 /**
- * The bubbles' long-press menu and what its actions do: "Edytuj" opens the
- * full form for the entry, "Usuń" soft-deletes it and offers "Cofnij" in a
+ * The long-press menu of bubbles and settlement messages and what its actions
+ * do: "Edytuj" opens the full form for the entry (the settle sheet for a
+ * settlement), "Usuń" soft-deletes it and offers "Cofnij" in a
  * snackbar, "Kopiuj kwotę" copies the bare amount. `elements` (menu +
- * snackbar) go below the list. "Historia" opens the entry detail until the
- * change history exists (TODO(#20)). In an archived group only Historia and
- * Kopiuj kwotę are offered (`entryActions`).
+ * snackbar) go below the list. "Historia" opens the entry's change history (#20).
+ * In an archived group only Historia and Kopiuj kwotę are offered (`entryActions`).
  */
 function useEntryActionHandler(group: GroupDetail) {
   const { t } = useLingui();
@@ -239,7 +262,7 @@ function useEntryActionHandler(group: GroupDetail) {
   const run = (entry: Entry, action: EntryAction) => {
     switch (action) {
       case 'edit':
-        router.push({ pathname: '/groups/[groupId]/expense-form', params: { groupId: group.id, entryId: entry.id } });
+        router.push({ pathname: editScreen(entry), params: { groupId: group.id, entryId: entry.id } });
         return;
       case 'delete':
         setUndo(null);
@@ -252,8 +275,7 @@ function useEntryActionHandler(group: GroupDetail) {
         });
         return;
       case 'history':
-        // TODO(#20): the entry's change history; until then its detail.
-        router.push({ pathname: '/groups/[groupId]/entries/[entryId]', params: { groupId: group.id, entryId: entry.id } });
+        router.push({ pathname: '/groups/[groupId]/history', params: { groupId: group.id, entryId: entry.id } });
         return;
       case 'copyAmount':
         void Clipboard.setStringAsync(amountForClipboard(entry.amount, entry.currency, locale)).then(() =>

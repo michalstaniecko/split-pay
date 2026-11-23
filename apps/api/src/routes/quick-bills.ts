@@ -5,6 +5,7 @@ import { eq } from 'drizzle-orm';
 import { Hono, type MiddlewareHandler } from 'hono';
 import type { Db } from '../db/client';
 import { groups, members } from '../db/schema';
+import { recordChange } from './change-log';
 import type { AuthEnv } from '../middleware/require-user';
 import { createEntry } from './entries';
 import { findMyGroup, toSharedGroup } from './group-access';
@@ -58,6 +59,24 @@ export const quickBillsRoutes = ({ db, requireUser }: { db: Db; requireUser: Mid
             ...input.people.map((p, i) => ({ id: p.id, groupId: group.id, displayName: p.displayName, createdAt: at(i + 1) })),
           ])
           .returning();
+        await recordChange(tx, {
+          kind: 'group.create',
+          groupId: group.id,
+          targetId: group.id,
+          actorMemberId: ownerMemberId,
+          before: null,
+          after: { name: group.name, emoji: group.emoji },
+        });
+        for (const person of input.people) {
+          await recordChange(tx, {
+            kind: 'member.add',
+            groupId: group.id,
+            targetId: person.id,
+            actorMemberId: ownerMemberId,
+            before: null,
+            after: { displayName: person.displayName },
+          });
+        }
         const expense = equalExpenseDefaults({
           id: input.expenseId,
           title: input.title,

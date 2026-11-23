@@ -15,7 +15,9 @@ export interface SentOtp {
  * The real app wired to the test database. OTP codes are captured in `sentOtps`
  * instead of being logged.
  */
-export function createTestApp(options: { flags?: FeatureFlags; storage?: MemoryStorage | null } = {}) {
+export function createTestApp(
+  options: { flags?: FeatureFlags; webUrl?: string; storage?: MemoryStorage | null } = {},
+) {
   // Photos go to an in-memory bucket (ADR-0006); `storage.objects` shows what is stored.
   // `storage: null` = photos not configured.
   const { storage = memoryStorage(), ...appOptions } = options;

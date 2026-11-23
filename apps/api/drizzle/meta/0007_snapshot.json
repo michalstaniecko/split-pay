@@ -1,5 +1,5 @@
 {
-  "id": "b66c0068-e277-49d9-af1c-e0a1a76927f5",
+  "id": "1e214589-80cb-474d-a8cc-7c08339b206f",
   "prevId": "f04bfe5b-81df-41bd-9726-ed7487bc8be4",
   "version": "7",
   "dialect": "postgresql",
@@ -1167,8 +1167,8 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.photos": {
-      "name": "photos",
+    "public.changes": {
+      "name": "changes",
       "schema": "",
       "columns": {
         "id": {
@@ -1177,32 +1177,61 @@
           "primaryKey": true,
           "notNull": true
         },
+        "seq": {
+          "name": "seq",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "changes_seq_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "9223372036854775807",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "group_id": {
+          "name": "group_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
         "kind": {
           "name": "kind",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "object_key": {
-          "name": "object_key",
-          "type": "text",
+        "target_id": {
+          "name": "target_id",
+          "type": "uuid",
           "primaryKey": false,
           "notNull": true
         },
-        "uploaded_by": {
-          "name": "uploaded_by",
+        "actor_member_id": {
+          "name": "actor_member_id",
           "type": "uuid",
           "primaryKey": false,
           "notNull": false
         },
-        "group_id": {
-          "name": "group_id",
-          "type": "uuid",
+        "before": {
+          "name": "before",
+          "type": "jsonb",
           "primaryKey": false,
           "notNull": false
         },
-        "entry_id": {
-          "name": "entry_id",
+        "after": {
+          "name": "after",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "undoes_change_id": {
+          "name": "undoes_change_id",
           "type": "uuid",
           "primaryKey": false,
           "notNull": false
@@ -1213,35 +1242,20 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
-        },
-        "attached_at": {
-          "name": "attached_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
         }
       },
       "indexes": {
-        "photos_group_id_idx": {
-          "name": "photos_group_id_idx",
+        "changes_group_id_seq_idx": {
+          "name": "changes_group_id_seq_idx",
           "columns": [
             {
               "expression": "group_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "photos_entry_id_idx": {
-          "name": "photos_entry_id_idx",
-          "columns": [
+            },
             {
-              "expression": "entry_id",
+              "expression": "seq",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1252,45 +1266,47 @@
           "method": "btree",
           "with": {}
         },
-        "photos_uploaded_by_created_at_idx": {
-          "name": "photos_uploaded_by_created_at_idx",
+        "changes_group_id_target_id_idx": {
+          "name": "changes_group_id_target_id_idx",
           "columns": [
             {
-              "expression": "uploaded_by",
+              "expression": "group_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
             },
             {
-              "expression": "created_at",
+              "expression": "target_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
             }
           ],
           "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "changes_undoes_change_id_key": {
+          "name": "changes_undoes_change_id_key",
+          "columns": [
+            {
+              "expression": "undoes_change_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
           "concurrently": false,
           "method": "btree",
           "with": {}
         }
       },
       "foreignKeys": {
-        "photos_uploaded_by_user_id_fk": {
-          "name": "photos_uploaded_by_user_id_fk",
-          "tableFrom": "photos",
-          "tableTo": "user",
-          "columnsFrom": [
-            "uploaded_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        },
-        "photos_group_id_groups_id_fk": {
-          "name": "photos_group_id_groups_id_fk",
-          "tableFrom": "photos",
+        "changes_group_id_groups_id_fk": {
+          "name": "changes_group_id_groups_id_fk",
+          "tableFrom": "changes",
           "tableTo": "groups",
           "columnsFrom": [
             "group_id"
@@ -1298,27 +1314,14 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "set null",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "photos_objectKey_unique": {
-          "name": "photos_objectKey_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "object_key"
-          ]
-        }
-      },
+      "uniqueConstraints": {},
       "policies": {},
-      "checkConstraints": {
-        "photos_kind_check": {
-          "name": "photos_kind_check",
-          "value": "\"photos\".\"kind\" in ('receipt', 'avatar')"
-        }
-      },
+      "checkConstraints": {},
       "isRLSEnabled": false
     }
   },

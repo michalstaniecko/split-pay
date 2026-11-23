@@ -8,8 +8,11 @@ import { type AuthEnv, createRequireUser } from './middleware/require-user';
 import { deleteAccount } from './routes/account';
 import { linksRoutes } from './routes/group-links';
 import { groupsRoutes } from './routes/groups';
+import { myNotificationSettingsRoutes, myPushTokenRoutes } from './routes/notifications';
+import { openGraphRoutes } from './routes/open-graph';
 import { myPayoutDetailsRoutes } from './routes/payout-details';
 import { myAvatarRoutes } from './routes/photos';
+import { publicViewRoutes } from './routes/public-view';
 import { quickBillsRoutes } from './routes/quick-bills';
 import { ratesRoutes } from './routes/rates';
 import type { ObjectStorage } from './storage/object-storage';
@@ -21,6 +24,8 @@ export interface AppDeps {
   flags?: FeatureFlags;
   /** Photo bucket (ADR-0006); photo routes answer 503 when omitted. */
   storage?: ObjectStorage;
+  /** Origin of the web app (`WEB_URL`), where link previews send people; unset until the domain exists. */
+  webUrl?: string | undefined;
 }
 
 /**
@@ -29,7 +34,7 @@ export interface AppDeps {
  * Keep routes chained in one expression (or `.route()` chained sub-apps) —
  * the typed client (`hc`) infers its types from this chain.
  */
-export const createApp = ({ auth, db, flags = defaultFeatureFlags, storage }: AppDeps) => {
+export const createApp = ({ auth, db, flags = defaultFeatureFlags, storage, webUrl }: AppDeps) => {
   const requireUser = createRequireUser(auth);
 
   return (
@@ -53,11 +58,17 @@ export const createApp = ({ auth, db, flags = defaultFeatureFlags, storage }: Ap
       .route('/me/payout-details', myPayoutDetailsRoutes({ db, requireUser }))
       /** My avatar (Profile): upload, set, remove. */
       .route('/me/avatar', myAvatarRoutes({ db, requireUser, storage }))
+      /** Push notifications (#24): this device's token and the global switch. */
+      .route('/me/push-tokens', myPushTokenRoutes({ db, requireUser }))
+      .route('/me/notifications', myNotificationSettingsRoutes({ db, requireUser }))
       .route('/groups', groupsRoutes({ db, requireUser, storage }))
       /** Quick bill: group + members without an account + its expense in one step. */
       .route('/quick-bills', quickBillsRoutes({ db, requireUser }))
       /** Opening a group link in the app: preview + join. */
       .route('/links', linksRoutes({ db, requireUser }))
+      /** The view-only web for a group link (no session) and its link previews. */
+      .route('/public/links', publicViewRoutes({ db }))
+      .route('/og', openGraphRoutes({ db, webUrl }))
       /** ECB exchange rates for a date (ADR-0014). */
       .route('/rates', ratesRoutes({ db, requireUser }))
   );
