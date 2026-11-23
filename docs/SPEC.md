@@ -20,8 +20,24 @@ Not every participant will install the app — hence **members without an accoun
 
 - The only container is a **Group** with an optional date range. A group with dates = a trip; without dates = e.g. a shared flat. A **quick bill** is a group with a single expense, created from one sheet in a single step ([ADR-0002](./adr/0002-group-as-the-only-container.md)).
 - A group has **members** — with or without an account. Any member can add a member without an account; later someone can **claim** them ([ADR-0007](./adr/0007-members-without-account-and-claiming.md)).
-- On a trip every member has an **attendance** (a range of days). The default split of an expense covers the members present on the expense's date.
+- On a trip every member has an **attendance** (one or more ranges of days — a member can leave and come back). The default split of an expense covers the members present on the expense's date.
 - A group contains **expenses**, **incomes** and **settlements**.
+
+## Data model
+
+Confirmed decisions about the shapes in `packages/shared` (the source of truth for the split logic, [ADR-0016](./adr/0016-split-spec-as-source-of-truth.md)).
+
+- **Attendance** is a non-empty list of day ranges, or `null` = present for the whole trip ([ADR-0018](./adr/0018-attendance-as-a-list-of-ranges.md)). A range is `{ from, to }` — local calendar dates (`YYYY-MM-DD`), inclusive on both ends, `from <= to`. Only the canonical form is accepted: sorted by `from`, no overlapping and no touching ranges (`1–3` + `4–5` is stored as `1–5`), at least one range. `normalizeAttendance` turns any list of ranges (e.g. from the per-day grid) into that form; the UI calls it before saving. Attendance is not checked against the trip dates — days outside the trip are allowed and the UI clips them for display.
+- **Presence and default participants**: a member is present on a date when their attendance is `null` or some range contains the date. The default split participants are resolved to a `memberIds` list when the entry is created; later attendance changes do not touch existing entries (ADR-0016).
+- **Shares mode** weights are integers 1–1000. A "half portion" is expressed as a ratio (1:2). A member with no share is simply not listed.
+- **Income** has a `recipients` list (who received the money) instead of `payers`.
+- **Settlement** carries `currency` and a frozen `rateToBase` like other entries, so it can be in a foreign currency.
+- **Categories**: `groceries, food, transport, fuel, accommodation, alcohol, entertainment, other`. Category is required in the model, with `other` as the default; "optional" means the UI doesn't force a choice.
+- **Daily stats**: an income reduces the recipient's `paid` and the participants' `consumed` on its date. Invariant: Σ(paid − consumed) over all days = balance excluding settlements.
+- **Pairwise settle-up** (debt simplification off) with multiple payers allocates each consumer's share among the payers in proportion to what each paid.
+- **Remainders**: leftover minor units are assigned by largest remainder, ties broken by ascending member id — deterministic.
+- **Rates**: an entry in the base currency must have rate exactly 1. The rate is stored as a decimal string, conversion uses BigInt, and rounding is half away from zero ([ADR-0003](./adr/0003-amounts-in-minor-units.md), ADR-0016).
+- **Archived group** is fully read-only: no adding, editing or deleting entries, settlements included. Unarchive to change anything.
 
 ## Permissions
 
@@ -57,7 +73,7 @@ A reversed expense: someone received money belonging to several people (deposit 
 
 ### Categories
 
-A fixed, translated list with icons (food, transport, accommodation, alcohol, fuel, other…). Optional; "other" by default or a suggestion based on the title. Custom categories per group — v2.
+A fixed, translated list with icons (food, transport, accommodation, alcohol, fuel, other…). Optional in the UI (no forced choice); "other" by default or a suggestion based on the title. Every entry still has a category in the data model — see [Data model](#data-model). Custom categories per group — v2.
 
 ### Currencies
 
