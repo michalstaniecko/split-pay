@@ -16,10 +16,18 @@ msgstr "Email address"
 msgid "Aktywność"
 msgstr "Activity"
 
+#: src/features/theme/theme-picker.tsx
+msgid "Ciemny"
+msgstr "Dark"
+
 #: src/app/(tabs)/_layout.tsx
 #: src/app/(tabs)/index.tsx
 msgid "Grupy"
 msgstr "Groups"
+
+#: src/features/theme/theme-picker.tsx
+msgid "Jasny"
+msgstr "Light"
 
 #: src/components/language-picker.tsx
 msgid "Język"
@@ -33,6 +41,18 @@ msgstr "System language"
 msgid "Kod jednorazowy"
 msgstr "One-time code"
 
+#: src/features/profile/about-section.tsx
+msgid "Kod źródłowy na GitHubie"
+msgstr "Source code on GitHub"
+
+#: src/features/profile/about-section.tsx
+msgid "Licencja: GNU AGPL v3"
+msgstr "Licence: GNU AGPL v3"
+
+#: src/features/theme/theme-picker.tsx
+msgid "Motyw"
+msgstr "Theme"
+
 #: src/app/(auth)/sign-in.tsx
 msgid "Nie udało się wysłać kodu. Spróbuj ponownie."
 msgstr "Couldn't send the code. Please try again."
@@ -40,6 +60,10 @@ msgstr "Couldn't send the code. Please try again."
 #: src/app/(auth)/sign-in.tsx
 msgid "Nieprawidłowy lub wygasły kod."
 msgstr "Invalid or expired code."
+
+#: src/features/profile/about-section.tsx
+msgid "O aplikacji"
+msgstr "About"
 
 #: src/app/(auth)/sign-in.tsx
 msgid "Podaj poprawny adres e-mail."
@@ -53,6 +77,18 @@ msgstr "{amount} split between {count, plural, one {# person} other {# people}}"
 #: src/app/(tabs)/profile.tsx
 msgid "Profil"
 msgstr "Profile"
+
+#: src/features/profile/about-section.tsx
+msgid "split-pay, wersja {version}"
+msgstr "split-pay, version {version}"
+
+#: src/features/theme/theme-picker.tsx
+msgid "Systemowy"
+msgstr "System"
+
+#: src/features/theme/theme-picker.tsx
+msgid "Tryb jasny/ciemny"
+msgstr "Light/dark mode"
 
 #: src/app/(auth)/sign-in.tsx
 msgid "Wpisz kod wysłany na {email}."

@@ -1,5 +1,5 @@
 import { zValidator } from '@hono/zod-validator';
-import { splitEvenly } from '@split-pay/shared';
+import { defaultFeatureFlags, type FeatureFlags, splitEvenly } from '@split-pay/shared';
 import { Hono } from 'hono';
 import { logger } from 'hono/logger';
 import { z } from 'zod';
@@ -10,6 +10,8 @@ import { type AuthEnv, createRequireUser } from './middleware/require-user';
 export interface AppDeps {
   auth: Auth;
   db: Db;
+  /** Feature flags served to the apps; defaults (all off) when omitted. */
+  flags?: FeatureFlags;
 }
 
 /**
@@ -18,7 +20,7 @@ export interface AppDeps {
  * Keep routes chained in one expression (or `.route()` chained sub-apps) —
  * the typed client (`hc`) infers its types from this chain.
  */
-export const createApp = ({ auth }: AppDeps) => {
+export const createApp = ({ auth, flags = defaultFeatureFlags }: AppDeps) => {
   const requireUser = createRequireUser(auth);
 
   return (
@@ -26,6 +28,8 @@ export const createApp = ({ auth }: AppDeps) => {
       .use(logger())
       .on(['GET', 'POST'], '/api/auth/*', (c) => auth.handler(c.req.raw))
       .get('/health', (c) => c.json({ status: 'ok' as const }))
+      /** Feature flags. Public: the app reads them before and without signing in. */
+      .get('/flags', (c) => c.json<FeatureFlags>({ ...flags }))
       /** The signed-in user. */
       .get('/me', requireUser, (c) => {
         const user = c.get('user');
