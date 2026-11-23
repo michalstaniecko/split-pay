@@ -95,7 +95,7 @@ export function usePushNotifications() {
     if (!response || response.actionIdentifier !== Notifications.DEFAULT_ACTION_IDENTIFIER) return;
     const data = parsePushData(response.notification.request.content.data);
     if (data?.type !== 'notification') return;
-    void syncGroup(data.groupId);
+    void syncGroup(data.groupId).catch(() => undefined);
     router.navigate(notificationHref(data));
     // Handled: don't open it again on the next render or launch.
     Notifications.clearLastNotificationResponse();
@@ -104,7 +104,7 @@ export function usePushNotifications() {
   useEffect(() => {
     const subscription = Notifications.addNotificationReceivedListener((notification) => {
       const data = parsePushData(notification.request.content.data);
-      if (data) void syncGroup(data.groupId);
+      if (data) void syncGroup(data.groupId).catch(() => undefined);
     });
     return () => subscription.remove();
   }, []);
