@@ -8,7 +8,9 @@ import type { Db } from '../db/client';
 import { groups, members } from '../db/schema';
 import type { AuthEnv } from '../middleware/require-user';
 import { balancesRoutes, groupSettingsRoutes } from './balances';
+import { memberIdOfUser, recordChange } from './change-log';
 import { entriesRoutes, latestEntries } from './entries';
+import { historyRoutes } from './history';
 import { claimLinkRoutes, claimRoutes } from './claims';
 import { groupLifecycleRoutes, rejectWritesToArchived } from './group-lifecycle';
 import { groupLinkRoutes } from './group-links';
@@ -96,6 +98,8 @@ export const groupsRoutes = ({ db, requireUser }: { db: Db; requireUser: Middlew
       /** A member's payout details ("Oddaj" sheet): `routes/payout-details.ts`. */
       .route('/:groupId/members/:memberId/payout-details', memberPayoutDetailsRoutes({ db }))
       .route('/:groupId/stats', statsRoutes({ db }))
+      /** Change history + undo (#20): `routes/history.ts`. */
+      .route('/:groupId/changes', historyRoutes({ db }))
       /**
        * Creates a group with the caller as owner and first member, in one
        * transaction. Idempotent on the client-generated id: repeating the same
@@ -117,6 +121,14 @@ export const groupsRoutes = ({ db, requireUser }: { db: Db; requireUser: Middlew
             groupId: group.id,
             displayName: ownerDisplayName(user),
             userId: user.id,
+          });
+          await recordChange(tx, {
+            kind: 'group.create',
+            groupId: group.id,
+            targetId: group.id,
+            actorMemberId: ownerMemberId,
+            before: null,
+            after: { name: group.name, emoji: group.emoji },
           });
           return group;
         });
@@ -148,11 +160,25 @@ export const groupsRoutes = ({ db, requireUser }: { db: Db; requireUser: Middlew
         const group = Id.safeParse(groupId).success ? await findMyGroup(groupId, c.get('user').id) : undefined;
         if (!group) return c.json({ error: 'not_found' as const }, 404);
         const input = c.req.valid('json');
-        const [created] = await db
-          .insert(members)
-          .values({ id: input.id, groupId: group.id, displayName: input.displayName, attendance: input.attendance ?? null })
-          .onConflictDoNothing({ target: members.id })
-          .returning();
+        const userId = c.get('user').id;
+        const created = await db.transaction(async (tx) => {
+          const [member] = await tx
+            .insert(members)
+            .values({ id: input.id, groupId: group.id, displayName: input.displayName, attendance: input.attendance ?? null })
+            .onConflictDoNothing({ target: members.id })
+            .returning();
+          if (member) {
+            await recordChange(tx, {
+              kind: 'member.add',
+              groupId: group.id,
+              targetId: member.id,
+              actorMemberId: await memberIdOfUser(tx, group.id, userId),
+              before: null,
+              after: { displayName: member.displayName },
+            });
+          }
+          return member;
+        });
         if (created) return c.json(toMemberDto(created), 201);
 
         const [existing] = await db
@@ -178,11 +204,21 @@ export const groupsRoutes = ({ db, requireUser }: { db: Db; requireUser: Middlew
         if (!member) return c.json({ error: 'not_found' as const }, 404);
         if (!canRenameMember(member, userId)) return c.json({ error: 'forbidden' as const }, 403);
 
-        const [renamed] = await db
-          .update(members)
-          .set({ displayName: c.req.valid('json').displayName })
-          .where(eq(members.id, member.id))
-          .returning();
+        const displayName = c.req.valid('json').displayName;
+        const renamed = await db.transaction(async (tx) => {
+          const [row] = await tx.update(members).set({ displayName }).where(eq(members.id, member.id)).returning();
+          if (row && row.displayName !== member.displayName) {
+            await recordChange(tx, {
+              kind: 'member.rename',
+              groupId: group.id,
+              targetId: member.id,
+              actorMemberId: await memberIdOfUser(tx, group.id, userId),
+              before: { displayName: member.displayName },
+              after: { displayName: row.displayName },
+            });
+          }
+          return row;
+        });
         return c.json(toMemberDto(renamed ?? member), 200);
       })
       /**
@@ -192,13 +228,30 @@ export const groupsRoutes = ({ db, requireUser }: { db: Db; requireUser: Middlew
        */
       .put('/:groupId/members/:memberId/attendance', zValidator('json', MemberAttendanceUpdate), async (c) => {
         const { groupId, memberId } = c.req.param();
-        const group = Id.safeParse(groupId).success ? await findMyGroup(groupId, c.get('user').id) : undefined;
+        const userId = c.get('user').id;
+        const group = Id.safeParse(groupId).success ? await findMyGroup(groupId, userId) : undefined;
         if (!group || !Id.safeParse(memberId).success) return c.json({ error: 'not_found' as const }, 404);
-        const [updated] = await db
-          .update(members)
-          .set({ attendance: c.req.valid('json').attendance })
-          .where(and(eq(members.id, memberId), eq(members.groupId, group.id)))
-          .returning();
+        const { attendance } = c.req.valid('json');
+        const updated = await db.transaction(async (tx) => {
+          const [before] = await tx
+            .select()
+            .from(members)
+            .where(and(eq(members.id, memberId), eq(members.groupId, group.id)))
+            .for('update');
+          if (!before) return undefined;
+          const [row] = await tx.update(members).set({ attendance }).where(eq(members.id, before.id)).returning();
+          if (row && JSON.stringify(row.attendance) !== JSON.stringify(before.attendance)) {
+            await recordChange(tx, {
+              kind: 'member.attendance',
+              groupId: group.id,
+              targetId: row.id,
+              actorMemberId: await memberIdOfUser(tx, group.id, userId),
+              before: { attendance: before.attendance },
+              after: { attendance: row.attendance },
+            });
+          }
+          return row;
+        });
         if (!updated) return c.json({ error: 'not_found' as const }, 404);
         return c.json(toMemberDto(updated), 200);
       })

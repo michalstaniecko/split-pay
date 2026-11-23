@@ -229,9 +229,8 @@ function Conversation({
  * do: "Edytuj" opens the full form for the entry (the settle sheet for a
  * settlement), "Usuń" soft-deletes it and offers "Cofnij" in a
  * snackbar, "Kopiuj kwotę" copies the bare amount. `elements` (menu +
- * snackbar) go below the list. "Historia" opens the entry detail until the
- * change history exists (TODO(#20)). In an archived group only Historia and
- * Kopiuj kwotę are offered (`entryActions`).
+ * snackbar) go below the list. "Historia" opens the entry's change history (#20).
+ * In an archived group only Historia and Kopiuj kwotę are offered (`entryActions`).
  */
 function useEntryActionHandler(group: GroupDetail) {
   const { t } = useLingui();
@@ -258,8 +257,7 @@ function useEntryActionHandler(group: GroupDetail) {
         });
         return;
       case 'history':
-        // TODO(#20): the entry's change history; until then its detail.
-        router.push({ pathname: '/groups/[groupId]/entries/[entryId]', params: { groupId: group.id, entryId: entry.id } });
+        router.push({ pathname: '/groups/[groupId]/history', params: { groupId: group.id, entryId: entry.id } });
         return;
       case 'copyAmount':
         void Clipboard.setStringAsync(amountForClipboard(entry.amount, entry.currency, locale)).then(() =>

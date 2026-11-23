@@ -6,6 +6,7 @@ import type { SessionUser } from '../auth';
 import type { Db } from '../db/client';
 import { claims, groupLinks, groups, memberClaimLinks, members } from '../db/schema';
 import type { AuthEnv } from '../middleware/require-user';
+import { type Tx, recordChange } from './change-log';
 
 type ClaimRow = typeof claims.$inferSelect;
 type GroupRow = typeof groups.$inferSelect;
@@ -95,7 +96,18 @@ export async function claimMember(
         .where(and(eq(members.id, memberId), isNull(members.userId)))
         .returning();
       if (!updated) return false;
-      await tx.insert(claims).values({ id: randomUUID(), groupId, memberId, userId: user.id, claimerName });
+      const claimId = randomUUID();
+      await tx.insert(claims).values({ id: claimId, groupId, memberId, userId: user.id, claimerName });
+      // The claim's change shares its id, so undoing the claim points at it either way.
+      await recordChange(tx, {
+        id: claimId,
+        kind: 'claim',
+        groupId,
+        targetId: memberId,
+        actorMemberId: memberId,
+        before: null,
+        after: { claimId },
+      });
       return true;
     });
     if (claimed) return { status: 'claimed', memberId };
@@ -107,6 +119,38 @@ export async function claimMember(
   // Someone claimed it concurrently.
   const [now] = await db.select().from(members).where(eq(members.id, memberId));
   return now?.userId === user.id ? { status: 'already_mine', memberId } : { status: 'already_claimed' };
+}
+
+/**
+ * Undoes a claim (inside the caller's transaction): the member is without an
+ * account again — the claimer loses access unless they claim again — and a
+ * `claim.undo` is recorded in the change history, pointing at the claim's
+ * change (same id as the claim). Returns the updated claim, or `undefined`
+ * when it was already undone (nothing changes).
+ */
+export async function undoClaim(tx: Tx, claim: ClaimRow, actorMemberId: string): Promise<ClaimRow | undefined> {
+  const [row] = await tx
+    .update(claims)
+    .set({ undoneAt: new Date(), undoneByMemberId: actorMemberId })
+    .where(and(eq(claims.id, claim.id), isNull(claims.undoneAt)))
+    .returning();
+  if (!row) return undefined;
+  if (claim.userId) {
+    await tx
+      .update(members)
+      .set({ userId: null })
+      .where(and(eq(members.id, claim.memberId), eq(members.userId, claim.userId)));
+  }
+  await recordChange(tx, {
+    kind: 'claim.undo',
+    groupId: claim.groupId,
+    targetId: claim.memberId,
+    actorMemberId,
+    undoesChangeId: claim.id,
+    before: { claimId: claim.id },
+    after: null,
+  });
+  return row;
 }
 
 /**
@@ -153,21 +197,7 @@ export const claimRoutes = ({ db }: { db: Db }) => {
         if (!found) return c.json({ error: 'not_found' as const }, 404);
         if (found.claim.undoneAt) return c.json(toClaimDto(found.claim, found.memberName), 200);
 
-        const undone = await db.transaction(async (tx) => {
-          const { claim } = found;
-          if (claim.userId) {
-            await tx
-              .update(members)
-              .set({ userId: null })
-              .where(and(eq(members.id, claim.memberId), eq(members.userId, claim.userId)));
-          }
-          const [row] = await tx
-            .update(claims)
-            .set({ undoneAt: new Date(), undoneByMemberId: me.id })
-            .where(and(eq(claims.id, claim.id), isNull(claims.undoneAt)))
-            .returning();
-          return row;
-        });
+        const undone = await db.transaction(async (tx) => undoClaim(tx, found.claim, me.id));
         if (!undone) {
           // Undone concurrently.
           const [now] = await db.select().from(claims).where(eq(claims.id, claimId));
