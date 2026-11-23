@@ -77,13 +77,3 @@ export function activityTarget(item: ActivityItem): { groupId: string; entryId?:
       return { groupId: item.groupId };
   }
 }
-
-/** The list index of an entry's bubble in the Conversation, or `null` if it isn't shown. */
-export function entryItemIndex(
-  items: readonly { type: string; entry?: { id: string } }[],
-  entryId: string | undefined,
-): number | null {
-  if (!entryId) return null;
-  const index = items.findIndex((item) => item.type === 'entry' && item.entry?.id === entryId);
-  return index === -1 ? null : index;
-}

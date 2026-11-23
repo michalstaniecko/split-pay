@@ -11,7 +11,6 @@ import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { GroupAvatar } from '@/components/group-avatar';
 import { GroupNotFound } from '@/components/group-not-found';
 import { BalanceBanner } from '@/features/balances/balance-banner';
-import { entryItemIndex } from '@/features/activity/activity';
 import { ClaimMessage } from '@/features/claims/claim-messages';
 import { type Claim, claimsQuery } from '@/features/claims/claims-query';
 import { Composer } from '@/features/entries/composer';
@@ -34,6 +33,9 @@ import {
 } from '@/features/entries/entry-edit';
 import { UndoSnackbar } from '@/features/entries/undo-snackbar';
 import { type GroupDetail, groupQuery } from '@/features/groups/groups-query';
+import { useFocusedEntry } from '@/features/notifications/use-focused-entry';
+import { OfflineBanner } from '@/features/offline/offline-banner';
+import { useOutboxState } from '@/features/offline/outbox-query';
 import { SettlementSystemMessage } from '@/features/settlements/settlement-system-message';
 import { useLocale } from '@/i18n/locale-provider';
 import { authClient } from '@/lib/auth-client';
@@ -53,8 +55,8 @@ const HIGHLIGHT_MS = 2000;
 export default function ConversationScreen() {
   const { t } = useLingui();
   const { theme } = useUnistyles();
-  // `entryId`: scroll to that entry's bubble and highlight it (Activity, later push notifications).
-  const { groupId, entryId: focusEntryId } = useLocalSearchParams<{ groupId: string; entryId?: string }>();
+  // `entryId`: opened from a notification — scroll to that bubble and highlight it.
+  const { groupId, entryId } = useLocalSearchParams<{ groupId: string; entryId?: string }>();
   const group = useQuery(groupQuery(groupId));
   const entries = useQuery(entriesQuery(groupId));
   const claims = useQuery(claimsQuery(groupId));
@@ -106,6 +108,7 @@ export default function ConversationScreen() {
           style={styles.container}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}>
+          <OfflineBanner />
           <BalanceBanner groupId={groupId} myMemberId={me} />
           {entries.isPending ? (
             <ActivityIndicator style={styles.center} color={theme.colors.primary} />
@@ -122,7 +125,7 @@ export default function ConversationScreen() {
               entries={entries.data}
               claims={claims.data ?? []}
               me={me}
-              focusEntryId={focusEntryId}
+              focusEntryId={entryId}
             />
           )}
           {group.data.archivedAt === null ? (
@@ -155,7 +158,7 @@ function Conversation({
   entries: Entry[];
   claims: Claim[];
   me: string | null;
-  focusEntryId?: string | undefined;
+  focusEntryId: string | undefined;
 }) {
   const { t } = useLingui();
   const { items, stickyHeaderIndices } = useMemo(
@@ -163,17 +166,20 @@ function Conversation({
     [entries, group.members, me, group.baseCurrency, claims],
   );
   const listRef = useRef<FlashListRef<ConversationItem<Claim>>>(null);
-  const newEntryId = useNewEntryHighlight(items, listRef);
-  const focusedId = useFocusEntry(items, listRef, focusEntryId);
-  const highlightId = newEntryId ?? focusedId;
+  const newHighlightId = useNewEntryHighlight(items, listRef);
+  const focusedId = useFocusedEntry(items, listRef, focusEntryId);
+  const highlightId = focusedId ?? newHighlightId;
 
   const actions = useEntryActionHandler(group);
   const conflicts = useEntryConflicts(group.id);
+  const outbox = useOutboxState(group.id);
 
   const openEntry = (entryId: string) =>
     router.push({ pathname: '/groups/[groupId]/entries/[entryId]', params: { groupId: group.id, entryId } });
   const openConflict = (entryId: string) =>
     router.push({ pathname: '/groups/[groupId]/entry-conflict', params: { groupId: group.id, entryId } });
+  const openUnsent = (entryId: string) =>
+    router.push({ pathname: '/groups/[groupId]/unsent-entry', params: { groupId: group.id, entryId } });
 
   return (
     <View style={styles.container}>
@@ -189,7 +195,7 @@ function Conversation({
           keyExtractor={(item) => item.key}
           getItemType={(item) => (item.type === 'entry' && item.entry.kind === 'settlement' ? 'settlement' : item.type)}
           stickyHeaderIndices={stickyHeaderIndices}
-          extraData={[highlightId, conflicts]}
+          extraData={[highlightId, conflicts, outbox]}
           // Opens at the newest entry; keeps following new ones while the user is near the bottom.
           maintainVisibleContentPosition={{ startRenderingFromBottom: true, autoscrollToBottomThreshold: 0.2 }}
           initialScrollIndex={items.length - 1}
@@ -213,7 +219,11 @@ function Conversation({
                 actions={entryActions(item.entry, group)}
                 onAction={(action) => actions.run(item.entry, action)}
                 conflict={conflicts.has(item.entry.id)}
-                onConflictPress={() => openConflict(item.entry.id)}
+                queued={outbox.get(item.entry.id)?.status === 'queued'}
+                failed={outbox.get(item.entry.id)?.status === 'failed'}
+                onConflictPress={() =>
+                  conflicts.has(item.entry.id) ? openConflict(item.entry.id) : openUnsent(item.entry.id)
+                }
               />
             ) : (
               <EntryBubble
@@ -225,7 +235,11 @@ function Conversation({
                 actions={entryActions(item.entry, group)}
                 onAction={(action) => actions.run(item.entry, action)}
                 conflict={conflicts.has(item.entry.id)}
-                onConflictPress={() => openConflict(item.entry.id)}
+                queued={outbox.get(item.entry.id)?.status === 'queued'}
+                failed={outbox.get(item.entry.id)?.status === 'failed'}
+                onConflictPress={() =>
+                  conflicts.has(item.entry.id) ? openConflict(item.entry.id) : openUnsent(item.entry.id)
+                }
               />
             )
           }
@@ -327,36 +341,6 @@ function useNewEntryHighlight(
     const timer = setTimeout(() => setHighlightId(null), HIGHLIGHT_MS);
     return () => clearTimeout(timer);
   }, [items, listRef]);
-
-  return highlightId;
-}
-
-/**
- * Scrolls to the entry the screen was opened for (`?entryId=`, from Activity)
- * once, and highlights it briefly. Returns the highlighted entry id.
- */
-function useFocusEntry(
-  items: ConversationItem<Claim>[],
-  listRef: React.RefObject<FlashListRef<ConversationItem<Claim>> | null>,
-  entryId: string | undefined,
-): string | null {
-  const done = useRef<string | null>(null);
-  const [highlightId, setHighlightId] = useState<string | null>(null);
-
-  useEffect(() => {
-    const index = entryItemIndex(items, entryId);
-    if (index === null || !entryId || done.current === entryId) return;
-    done.current = entryId;
-    // After the list's first layout (it opens at the newest entry).
-    requestAnimationFrame(() => void listRef.current?.scrollToIndex({ index, animated: true, viewPosition: 0.5 }));
-    setHighlightId(entryId);
-  }, [items, listRef, entryId]);
-
-  useEffect(() => {
-    if (highlightId === null) return;
-    const timer = setTimeout(() => setHighlightId(null), HIGHLIGHT_MS);
-    return () => clearTimeout(timer);
-  }, [highlightId]);
 
   return highlightId;
 }

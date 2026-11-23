@@ -9,11 +9,13 @@ import { groups, members } from '../db/schema';
 import type { AuthEnv } from '../middleware/require-user';
 import { balancesRoutes, groupSettingsRoutes } from './balances';
 import { memberIdOfUser, recordChange } from './change-log';
+import { deltaSyncRoutes } from './delta-sync';
 import { entriesRoutes, latestEntries } from './entries';
 import { historyRoutes } from './history';
 import { claimLinkRoutes, claimRoutes } from './claims';
 import { groupLifecycleRoutes, rejectWritesToArchived } from './group-lifecycle';
 import { groupLinkRoutes } from './group-links';
+import { groupPushRoutes } from './notifications';
 import { memberPayoutDetailsRoutes } from './payout-details';
 import { statsRoutes } from './stats';
 
@@ -36,7 +38,7 @@ export const toGroupDto = (g: GroupRow) => ({
   lastActivityAt: g.lastActivityAt.toISOString(),
 });
 
-const toMemberDto = (m: MemberRow): Member => ({
+export const toMemberDto = (m: MemberRow): Member => ({
   id: m.id,
   groupId: m.groupId,
   displayName: m.displayName,
@@ -92,6 +94,8 @@ export const groupsRoutes = ({ db, requireUser }: { db: Db; requireUser: Middlew
         return c.json(rows.map((r) => ({ ...toGroupDto(r.group), lastEntry: previews.get(r.group.id) ?? null })));
       })
       .route('/:groupId/entries', entriesRoutes({ db }))
+      /** Delta sync for the offline cache (ADR-0005): `routes/delta-sync.ts`. */
+      .route('/:groupId/sync', deltaSyncRoutes({ db }))
       /** Balances + settle-up (balance drawer) and group settings: `routes/balances.ts`. */
       .route('/:groupId/balances', balancesRoutes({ db }))
       .route('/:groupId/settings', groupSettingsRoutes({ db }))
@@ -100,6 +104,8 @@ export const groupsRoutes = ({ db, requireUser }: { db: Db; requireUser: Middlew
       .route('/:groupId/stats', statsRoutes({ db }))
       /** Change history + undo (#20): `routes/history.ts`. */
       .route('/:groupId/changes', historyRoutes({ db }))
+      /** Per-group notifications switch and "Przypomnij" nudges: `routes/notifications.ts`. */
+      .route('/:groupId', groupPushRoutes({ db }))
       /**
        * Creates a group with the caller as owner and first member, in one
        * transaction. Idempotent on the client-generated id: repeating the same

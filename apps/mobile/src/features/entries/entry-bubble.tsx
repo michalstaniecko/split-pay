@@ -20,6 +20,8 @@ import type { EntryAction } from './entry-edit';
  * Long-press opens the entry actions (#11); screen readers get the same
  * actions as accessibility actions. Edited entries say "edytowano"; a change
  * rejected as a version conflict shows a red "!" that opens the conflict sheet.
+ * Outbox state (#22): 🕓 while queued, nothing once synced, a red "!" when
+ * the server refused it (opens the retry sheet via the same `onConflictPress`).
  * Later slices add: the receipt thumbnail (#26).
  */
 export function EntryBubble({
@@ -32,6 +34,8 @@ export function EntryBubble({
   onLongPress,
   conflict = false,
   onConflictPress,
+  queued = false,
+  failed = false,
 }: {
   item: EntryItem;
   baseCurrency: string;
@@ -43,7 +47,12 @@ export function EntryBubble({
   onLongPress?: () => void;
   /** The last change was rejected as a version conflict. */
   conflict?: boolean;
+  /** Pressing the red "!" (conflict or failed send). */
   onConflictPress?: () => void;
+  /** Waiting in the outbox to be sent (🕓). */
+  queued?: boolean;
+  /** The server refused it from the outbox (red "!" → retry sheet). */
+  failed?: boolean;
 }) {
   const { t } = useLingui();
   const format = useFormatters();
@@ -64,11 +73,12 @@ export function EntryBubble({
 
   const editedLabel = edited ? t`edytowano` : null;
   const conflictLabel = conflict ? t`konflikt zmian` : null;
+  const outboxLabel = failed ? t`nie wysłano` : queued ? t`czeka na wysłanie` : null;
 
-  const badge = conflict ? (
+  const badge = conflict || failed ? (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={t`Konflikt zmian: ${title}. Pokaż szczegóły`}
+      accessibilityLabel={conflict ? t`Konflikt zmian: ${title}. Pokaż szczegóły` : t`Nie wysłano: ${title}. Pokaż szczegóły`}
       hitSlop={8}
       onPress={onConflictPress}
       style={styles.conflict}>
@@ -84,7 +94,7 @@ export function EntryBubble({
         <Pressable
           accessible
           accessibilityRole="button"
-          accessibilityLabel={[entryBubbleLabel(item, { baseCurrency, locale }), editedLabel, conflictLabel]
+          accessibilityLabel={[entryBubbleLabel(item, { baseCurrency, locale }), editedLabel, conflictLabel, outboxLabel]
             .filter(Boolean)
             .join(', ')}
           accessibilityActions={actions.map((name) => ({ name, label: actionLabels[name] }))}
@@ -118,6 +128,7 @@ export function EntryBubble({
           {approx ? <Text style={[styles.approx, mine && styles.mineMuted]}>{approx}</Text> : null}
           {share ? <Text style={[styles.share, mine && styles.mineMuted]}>{share}</Text> : null}
           {editedLabel ? <Text style={[styles.edited, mine && styles.mineMuted]}>{editedLabel}</Text> : null}
+          {queued && !failed ? <Text style={styles.queued}>🕓</Text> : null}
         </Pressable>
         {side === 'end' ? null : badge}
       </View>
@@ -168,6 +179,10 @@ const styles = StyleSheet.create((theme) => ({
     fontSize: theme.font.sizeSm,
     fontWeight: theme.font.weightBold,
     color: theme.colors.onPrimary,
+  },
+  queued: {
+    fontSize: theme.font.sizeSm,
+    alignSelf: 'flex-end',
   },
   edited: {
     fontSize: theme.font.sizeSm,

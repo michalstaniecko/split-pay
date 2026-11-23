@@ -1,9 +1,13 @@
-import type { Category, Entry, NewEntry, NewQuickBill } from '@split-pay/shared';
+import { type Category, type Entry, entryFromNew, type NewEntry, type NewQuickBill } from '@split-pay/shared';
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import { parseResponse } from 'hono/client';
 import { groupKeys } from '@/features/groups/groups-query';
+import { localDb, localUserId } from '@/features/offline/local-session';
+import { enqueueCreate, isGroupSynced, readEntries, saveEntry } from '@/features/offline/local-store';
+import { clearConflict, markConflict } from '@/features/offline/outbox';
+import { invalidateOutbox } from '@/features/offline/outbox-query';
+import { attemptSync, flushNow, syncGroup } from '@/features/offline/sync';
 import { api } from '@/lib/api';
-import { entryConflicts } from './entry-conflicts';
 import { versionConflictEntry } from './entry-edit';
 
 /** Entry query keys live under the group's key, so invalidating the group refreshes them too. */
@@ -11,35 +15,64 @@ export const entryKeys = {
   list: (groupId: string) => [...groupKeys.detail(groupId), 'entries'] as const,
 };
 
-/** The group's live entries in Conversation order (GET /groups/:groupId/entries). */
+/**
+ * The group's live entries in Conversation order, queued ones included —
+ * read from the offline cache after a delta sync attempt (ADR-0005).
+ */
 export const entriesQuery = (groupId: string) =>
   queryOptions({
     queryKey: entryKeys.list(groupId),
-    queryFn: async (): Promise<Entry[]> =>
-      parseResponse(api.groups[':groupId'].entries.$get({ param: { groupId } })),
+    queryFn: async (): Promise<Entry[]> => {
+      const syncError = await attemptSync(() => syncGroup(groupId));
+      const db = await localDb();
+      if (syncError && !(await isGroupSynced(db, groupId))) throw syncError;
+      return readEntries(db, groupId);
+    },
+    networkMode: 'always',
   });
 
 /**
- * Creates an entry (POST /groups/:groupId/entries). The caller generates the
- * id once per draft, so a retry after a lost response can't duplicate it.
- * Refreshes the group's entries and the inbox (order + preview).
+ * Adds an entry through the outbox (ADR-0005): it is stored on the device and
+ * listed at once (🕓 until the server has it), then sent when online. The
+ * caller generates the id once per draft, so resending can't duplicate it.
+ * Fails only when the input breaks the `Entry` rules; a refusal by the server
+ * shows later as a red "!" on the bubble.
  */
 export function useCreateEntry(groupId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (input: NewEntry): Promise<Entry> =>
-      parseResponse(api.groups[':groupId'].entries.$post({ param: { groupId }, json: input })),
+    mutationFn: async (input: NewEntry): Promise<Entry> => {
+      const parsed = entryFromNew(input, { groupId, createdBy: localUserId(), now: new Date().toISOString() });
+      if (!parsed.success) throw parsed.error;
+      await enqueueCreate(await localDb(), parsed.data);
+      return parsed.data;
+    },
     onSuccess: async (entry) => {
-      // Show it right away; the refetch below confirms the order.
       queryClient.setQueryData(entryKeys.list(groupId), (old: Entry[] | undefined) =>
         old && !old.some((e) => e.id === entry.id) ? [...old, entry] : old,
       );
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: entryKeys.list(groupId) }),
-        queryClient.invalidateQueries({ queryKey: groupKeys.list() }),
-      ]);
+      void flushNow().catch(() => undefined);
+      await invalidateOutbox(queryClient, groupId);
     },
   });
+}
+
+/** Records a change refused as a version conflict: red "!" on the bubble (outbox state, #23 resolves it). */
+async function recordConflict(
+  queryClient: ReturnType<typeof useQueryClient>,
+  groupId: string,
+  conflict: { entryId: string; change: 'edit' | 'delete' | 'restore'; baseVersion: number; payload: NewEntry | null; current: Entry },
+) {
+  await markConflict(await localDb(), { groupId, ...conflict });
+  await invalidateOutbox(queryClient, groupId);
+}
+
+/** Stores the server's copy of a changed entry in the cache and clears its conflict mark. */
+async function confirmChange(queryClient: ReturnType<typeof useQueryClient>, groupId: string, entry: Entry) {
+  const db = await localDb();
+  await saveEntry(db, entry);
+  await clearConflict(db, entry.id);
+  await invalidateOutbox(queryClient, groupId);
 }
 
 /** Puts the server's copy of an entry into the cached list (deleted ones leave it). */
@@ -53,8 +86,8 @@ function cacheEntry(queryClient: ReturnType<typeof useQueryClient>, groupId: str
 
 /**
  * Edits an entry (PUT /groups/:groupId/entries/:entryId) based on the cached
- * version `base`. A 409 version conflict marks the entry in `entryConflicts`
- * (red "!" on the bubble) and leaves the cache alone; the error is still
+ * version `base`. A 409 version conflict marks the entry in the outbox
+ * (red "!" on the bubble, persisted in the outbox) and leaves the cache alone; the error is still
  * thrown to the caller (use `versionConflictEntry(error)`).
  */
 export function useEditEntry(groupId: string) {
@@ -69,15 +102,23 @@ export function useEditEntry(groupId: string) {
       ),
     onSuccess: async (entry) => {
       cacheEntry(queryClient, groupId, entry);
-      entryConflicts.resolve(groupId, entry.id);
+      await confirmChange(queryClient, groupId, entry);
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: entryKeys.list(groupId) }),
         queryClient.invalidateQueries({ queryKey: groupKeys.list() }),
       ]);
     },
-    onError: (error, { base }) => {
+    onError: async (error, { base, input }) => {
       const current = versionConflictEntry(error);
-      if (current) entryConflicts.mark(groupId, { entryId: base.id, change: 'edit', current });
+      if (current) {
+        await recordConflict(queryClient, groupId, {
+          entryId: base.id,
+          change: 'edit',
+          baseVersion: base.version,
+          payload: input,
+          current,
+        });
+      }
     },
   });
 }
@@ -104,9 +145,18 @@ export function useDeleteEntry(groupId: string) {
         old?.filter((e) => e.id !== entry.id),
       );
     },
-    onError: (error, entry) => {
+    onSuccess: (deleted) => confirmChange(queryClient, groupId, deleted),
+    onError: async (error, entry) => {
       const current = versionConflictEntry(error);
-      if (current) entryConflicts.mark(groupId, { entryId: entry.id, change: 'delete', current });
+      if (current) {
+        await recordConflict(queryClient, groupId, {
+          entryId: entry.id,
+          change: 'delete',
+          baseVersion: entry.version,
+          payload: null,
+          current,
+        });
+      }
     },
     onSettled: async () => {
       await Promise.all([
@@ -128,10 +178,21 @@ export function useRestoreEntry(groupId: string) {
           json: { baseVersion: deleted.version },
         }),
       ),
-    onSuccess: (entry) => cacheEntry(queryClient, groupId, entry),
-    onError: (error, deleted) => {
+    onSuccess: async (entry) => {
+      cacheEntry(queryClient, groupId, entry);
+      await confirmChange(queryClient, groupId, entry);
+    },
+    onError: async (error, deleted) => {
       const current = versionConflictEntry(error);
-      if (current) entryConflicts.mark(groupId, { entryId: deleted.id, change: 'restore', current });
+      if (current) {
+        await recordConflict(queryClient, groupId, {
+          entryId: deleted.id,
+          change: 'restore',
+          baseVersion: deleted.version,
+          payload: null,
+          current,
+        });
+      }
     },
     onSettled: async () => {
       await Promise.all([

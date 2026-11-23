@@ -36,6 +36,11 @@ msgstr "{0}, {label}: zapłacone {1}, zużyte {2}"
 msgid "{0}, informacje o grupie"
 msgstr "{0}, informacje o grupie"
 
+#. placeholder {0}: transfer.fromName
+#: src/features/notifications/nudge-button.tsx
+msgid "{0}: przypomniano dziś"
+msgstr "{0}: przypomniano dziś"
+
 #: src/features/claims/claim-messages.tsx
 msgid "{claimerName} przejął profil {memberName}"
 msgstr "{claimerName} przejął profil {memberName}"
@@ -237,6 +242,11 @@ msgstr "Cofnij"
 msgid "Cofnij przejęcie"
 msgstr "Cofnij przejęcie"
 
+#: src/features/entries/entry-bubble.tsx
+#: src/features/settlements/settlement-system-message.tsx
+msgid "czeka na wysłanie"
+msgstr "czeka na wysłanie"
+
 #: src/app/(app)/groups/[groupId]/info.tsx
 #: src/app/g/[token]/info.tsx
 msgid "Członkowie"
@@ -370,6 +380,10 @@ msgstr "Emoji"
 msgid "Górna kwota: zapłacone, dolna: zużyte."
 msgstr "Górna kwota: zapłacone, dolna: zużyte."
 
+#: src/app/(app)/groups/[groupId]/unsent-entry.tsx
+msgid "Grupa albo wpis już nie istnieje lub nie masz do nich dostępu."
+msgstr "Grupa albo wpis już nie istnieje lub nie masz do nich dostępu."
+
 #: src/features/groups/group-lifecycle-section.tsx
 msgid "Grupa jest tylko do odczytu. Przywróć ją, żeby coś zmienić."
 msgstr "Grupa jest tylko do odczytu. Przywróć ją, żeby coś zmienić."
@@ -385,6 +399,10 @@ msgstr "Grupa zarchiwizowana"
 #: src/features/groups/group-lifecycle-section.tsx
 msgid "Grupa zniknie z Twojej listy. Twoje wpisy zostaną w grupie."
 msgstr "Grupa zniknie z Twojej listy. Twoje wpisy zostaną w grupie."
+
+#: src/app/(app)/groups/[groupId]/unsent-entry.tsx
+msgid "Grupa została zarchiwizowana — nie można już w niej nic zmieniać."
+msgstr "Grupa została zarchiwizowana — nie można już w niej nic zmieniać."
 
 #: src/features/entries/entry-actions-menu.tsx
 msgid "Historia"
@@ -451,6 +469,10 @@ msgstr "Jestem {personalName}"
 #: src/app/g/[token]/index.tsx
 msgid "Jesteś jednym z nich?"
 msgstr "Jesteś jednym z nich?"
+
+#: src/features/offline/offline-banner.tsx
+msgid "Jesteś offline. Nowe wpisy wyślemy po połączeniu."
+msgstr "Jesteś offline. Nowe wpisy wyślemy po połączeniu."
 
 #: src/features/balances/balance-banner.tsx
 msgid "Jesteś winien {amount}"
@@ -667,6 +689,10 @@ msgstr "Nie udało się cofnąć przejęcia."
 msgid "Nie udało się cofnąć zmiany. Spróbuj ponownie."
 msgstr "Nie udało się cofnąć zmiany. Spróbuj ponownie."
 
+#: src/app/(app)/groups/[groupId]/unsent-entry.tsx
+msgid "Nie udało się dodać wpisu"
+msgstr "Nie udało się dodać wpisu"
+
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
 msgid "Nie udało się dodać wpływu. Spróbuj ponownie."
 msgstr "Nie udało się dodać wpływu. Spróbuj ponownie."
@@ -770,12 +796,31 @@ msgstr "Nie udało się zapisać spłaty. Spróbuj ponownie."
 msgid "Nie udało się zapisać zmian. Spróbuj ponownie."
 msgstr "Nie udało się zapisać zmian. Spróbuj ponownie."
 
+#: src/app/(app)/groups/[groupId]/unsent-entry.tsx
+msgid "Nie udało się zapisać zmiany"
+msgstr "Nie udało się zapisać zmiany"
+
 #: src/app/(app)/groups/[groupId]/member.tsx
 #: src/features/groups/group-lifecycle-section.tsx
 #: src/features/groups/group-settings-section.tsx
+#: src/features/notifications/notification-switches.tsx
 #: src/features/profile/payout-details-section.tsx
 msgid "Nie udało się zapisać. Spróbuj ponownie."
 msgstr "Nie udało się zapisać. Spróbuj ponownie."
+
+#: src/features/entries/entry-bubble.tsx
+#: src/features/settlements/settlement-system-message.tsx
+msgid "nie wysłano"
+msgstr "nie wysłano"
+
+#: src/app/(app)/_layout.tsx
+msgid "Nie wysłano"
+msgstr "Nie wysłano"
+
+#: src/features/entries/entry-bubble.tsx
+#: src/features/settlements/settlement-system-message.tsx
+msgid "Nie wysłano: {title}. Pokaż szczegóły"
+msgstr "Nie wysłano: {title}. Pokaż szczegóły"
 
 #: src/features/history/describe-change.ts
 msgid "nieobecność"
@@ -800,6 +845,10 @@ msgstr "Nocleg"
 #: src/app/(app)/new.tsx
 msgid "Nowa grupa"
 msgstr "Nowa grupa"
+
+#: src/features/notifications/notification-switches.tsx
+msgid "Nowe i zmienione wydatki z Twoim udziałem, spłaty dla Ciebie, przypomnienia."
+msgstr "Nowe i zmienione wydatki z Twoim udziałem, spłaty dla Ciebie, przypomnienia."
 
 #: src/app/(app)/_layout.tsx
 #: src/app/(app)/index.tsx
@@ -855,6 +904,10 @@ msgstr "Oddaj {amount} – {0}"
 #: src/app/(app)/groups/[groupId]/settle.tsx
 msgid "Oddaj {recipient}"
 msgstr "Oddaj {recipient}"
+
+#: src/app/(app)/groups/[groupId]/unsent-entry.tsx
+msgid "Odrzuć zmianę"
+msgstr "Odrzuć zmianę"
 
 #. placeholder {0}: format.date(rates.data.table.ratesDate)
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
@@ -983,6 +1036,18 @@ msgstr "Pokaż całą historię"
 msgid "Pokazuje salda i kto komu ile oddaje"
 msgstr "Pokazuje salda i kto komu ile oddaje"
 
+#: src/features/notifications/notification-switches.tsx
+msgid "Powiadomienia"
+msgstr "Powiadomienia"
+
+#: src/features/notifications/notification-switches.tsx
+msgid "Powiadomienia push"
+msgstr "Powiadomienia push"
+
+#: src/features/notifications/notification-switches.tsx
+msgid "Powiadomienia z tej grupy"
+msgstr "Powiadomienia z tej grupy"
+
 #: src/features/entries/split-fields.tsx
 msgid "Pozycje osobiste"
 msgstr "Pozycje osobiste"
@@ -1006,6 +1071,19 @@ msgstr "Przejęto profil {name}"
 #: src/app/g/[token]/index.tsx
 msgid "Przejmij profil osoby bez konta razem z historią wydatków."
 msgstr "Przejmij profil osoby bez konta razem z historią wydatków."
+
+#: src/features/notifications/nudge-button.tsx
+msgid "przypomniano dziś"
+msgstr "przypomniano dziś"
+
+#: src/features/notifications/nudge-button.tsx
+msgid "Przypomnij"
+msgstr "Przypomnij"
+
+#. placeholder {0}: transfer.fromName
+#: src/features/notifications/nudge-button.tsx
+msgid "Przypomnij: {0}"
+msgstr "Przypomnij: {0}"
 
 #: src/features/groups/group-lifecycle-section.tsx
 msgid "Przywróć z archiwum"
@@ -1055,6 +1133,14 @@ msgstr "Salda"
 msgid "Salda ›"
 msgstr "Salda ›"
 
+#: src/app/(app)/groups/[groupId]/unsent-entry.tsx
+msgid "Serwer odrzucił wpis jako niepoprawny — na przykład ktoś z uczestników opuścił grupę."
+msgstr "Serwer odrzucił wpis jako niepoprawny — na przykład ktoś z uczestników opuścił grupę."
+
+#: src/app/(app)/groups/[groupId]/unsent-entry.tsx
+msgid "Serwer odrzucił wpis."
+msgstr "Serwer odrzucił wpis."
+
 #: src/app/(app)/groups/[groupId]/settle.tsx
 msgid "Skopiowano"
 msgstr "Skopiowano"
@@ -1070,6 +1156,7 @@ msgstr "spłata"
 #: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
 #: src/app/(app)/groups/[groupId]/entry-conflict.tsx
 #: src/app/(app)/groups/[groupId]/index.tsx
+#: src/app/(app)/groups/[groupId]/unsent-entry.tsx
 #: src/app/(app)/index.tsx
 #: src/app/g/[token]/entries/[entryId].tsx
 #: src/features/entries/entry-bubble.tsx
@@ -1100,10 +1187,12 @@ msgstr "split-pay, wersja {version}"
 #: src/app/(app)/activity.tsx
 #: src/app/(app)/groups/[groupId]/index.tsx
 #: src/app/(app)/groups/[groupId]/settle.tsx
+#: src/app/(app)/groups/[groupId]/unsent-entry.tsx
 #: src/app/(app)/index.tsx
 #: src/app/g/[token]/index.tsx
 #: src/components/group-not-found.tsx
 #: src/features/group-link/group-link-section.tsx
+#: src/features/notifications/nudge-button.tsx
 #: src/features/web-view/public-error.tsx
 msgid "Spróbuj ponownie"
 msgstr "Spróbuj ponownie"
@@ -1176,6 +1265,10 @@ msgstr "Ten profil ma już konto. Poproś kogoś z grupy o link grupy."
 #: src/app/g/[token]/index.tsx
 msgid "Ten profil został już przejęty."
 msgstr "Ten profil został już przejęty."
+
+#: src/app/(app)/groups/[groupId]/unsent-entry.tsx
+msgid "Ten wpis nie czeka już na wysłanie."
+msgstr "Ten wpis nie czeka już na wysłanie."
 
 #: src/app/g/[token]/_layout.tsx
 msgid "To ja"
@@ -1312,6 +1405,10 @@ msgstr "Usuń konto"
 msgid "Usuń na zawsze"
 msgstr "Usuń na zawsze"
 
+#: src/app/(app)/groups/[groupId]/unsent-entry.tsx
+msgid "Usuń wpis"
+msgstr "Usuń wpis"
+
 #: src/features/groups/group-lifecycle-section.tsx
 msgid "Usunąć grupę „{name}” na zawsze?"
 msgstr "Usunąć grupę „{name}” na zawsze?"
@@ -1392,12 +1489,20 @@ msgid "Wpis"
 msgstr "Wpis"
 
 #: src/app/(app)/groups/[groupId]/entry-conflict.tsx
+msgid "Wpis nie został dodany."
+msgstr "Wpis nie został dodany."
+
+#: src/app/(app)/groups/[groupId]/entry-conflict.tsx
 msgid "Wpis nie został przywrócony."
 msgstr "Wpis nie został przywrócony."
 
 #: src/app/(app)/groups/[groupId]/entry-conflict.tsx
 msgid "Wpis nie został usunięty."
 msgstr "Wpis nie został usunięty."
+
+#: src/app/(app)/groups/[groupId]/unsent-entry.tsx
+msgid "Wpis o tym identyfikatorze już istnieje w innej grupie."
+msgstr "Wpis o tym identyfikatorze już istnieje w innej grupie."
 
 #: src/app/(app)/groups/[groupId]/member.tsx
 msgid "Wpisujesz za nią wydatki. Później może przejąć swój profil."
@@ -1516,6 +1621,10 @@ msgstr "Wyjazd z datami"
 msgid "Wyjazd, mieszkanie albo inne wspólne wydatki"
 msgstr "Wyjazd, mieszkanie albo inne wspólne wydatki"
 
+#: src/features/notifications/notification-switches.tsx
+msgid "Wyłączone: grupa odświeża się w tle, ale bez powiadomień."
+msgstr "Wyłączone: grupa odświeża się w tle, ale bez powiadomień."
+
 #: src/features/history/describe-change.ts
 msgid "Wyłączono upraszczanie długów"
 msgstr "Wyłączono upraszczanie długów"
@@ -1586,6 +1695,7 @@ msgstr "założyciel"
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
 #: src/app/(app)/groups/[groupId]/member.tsx
 #: src/app/(app)/groups/[groupId]/settle.tsx
+#: src/app/(app)/groups/[groupId]/unsent-entry.tsx
 #: src/app/g/[token]/entries/[entryId].tsx
 #: src/features/entries/entry-actions-menu.tsx
 msgid "Zamknij"

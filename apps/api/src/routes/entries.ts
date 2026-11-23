@@ -9,6 +9,7 @@ import {
   Id,
   type Member,
   NewEntry,
+  type NotificationEvent,
   validateEntryInGroup,
 } from '@split-pay/shared';
 import { and, asc, desc, eq, inArray, isNotNull, isNull } from 'drizzle-orm';
@@ -16,6 +17,7 @@ import { type Context, Hono } from 'hono';
 import type { Db } from '../db/client';
 import { entries, groups, members } from '../db/schema';
 import type { AuthEnv } from '../middleware/require-user';
+import { notify } from '../push/enqueue';
 import { memberIdOfUser, recordChange } from './change-log';
 import { findMyGroup, toSharedGroup } from './group-access';
 
@@ -198,6 +200,9 @@ export const entriesRoutes = ({ db }: { db: Db }) =>
         const groupMembers = await tx.select().from(members).where(eq(members.groupId, group.id));
         return createEntry(tx, c.req.valid('json'), { group: toSharedGroup(group), members: groupMembers, userId });
       });
+      if (result.status === 'created') {
+        await notify(db, { groupId: group.id, actorUserId: userId, event: { type: 'entryCreated', entry: result.entry } });
+      }
       switch (result.status) {
         case 'created':
           return c.json(result.entry, 201);
@@ -229,6 +234,7 @@ export const entriesRoutes = ({ db }: { db: Db }) =>
           actorMemberId: groupMembers.find((m) => m.userId === userId)?.id ?? null,
         });
       });
+      await notifyEntryChange(db, userId, result);
       return entryChangeResponse(c, result);
     })
     /**
@@ -248,6 +254,7 @@ export const entriesRoutes = ({ db }: { db: Db }) =>
           actorMemberId: await memberIdOfUser(tx, group.id, userId),
         }),
       );
+      await notifyEntryChange(db, userId, result);
       return entryChangeResponse(c, result);
     })
     /**
@@ -265,14 +272,30 @@ export const entriesRoutes = ({ db }: { db: Db }) =>
           actorMemberId: await memberIdOfUser(tx, group.id, userId),
         }),
       );
+      await notifyEntryChange(db, userId, result);
       return entryChangeResponse(c, result);
     });
 
 export type ChangeEntryResult =
-  | { status: 'changed'; entry: Entry }
+  /** `previous`: what was stored before — absent when nothing changed (idempotent retry). */
+  | { status: 'changed'; entry: Entry; previous?: Entry }
   | { status: 'conflict'; current: Entry }
   | { status: 'not_found' }
   | { status: 'invalid'; issues: string[] };
+
+/**
+ * Push notification (#24) for an edit, delete or restore that changed
+ * something. A restore is reported as an edit (the entry is back as it was).
+ */
+export async function notifyEntryChange(db: Db, actorUserId: Id, result: ChangeEntryResult) {
+  if (result.status !== 'changed' || !result.previous) return;
+  const { entry, previous } = result;
+  const event: NotificationEvent =
+    entry.deletedAt !== null
+      ? { type: 'entryDeleted', entry }
+      : { type: 'entryEdited', before: previous, after: entry };
+  await notify(db, { groupId: entry.groupId, actorUserId, event });
+}
 
 function entryChangeResponse(c: Context<AuthEnv>, result: ChangeEntryResult) {
   switch (result.status) {
@@ -364,7 +387,7 @@ export async function editEntry(
     after: entry,
     now,
   });
-  return { status: 'changed', entry };
+  return { status: 'changed', entry, previous: current };
 }
 
 /**
@@ -419,5 +442,5 @@ export async function setEntryDeleted(
     after: entry,
     now,
   });
-  return { status: 'changed', entry };
+  return { status: 'changed', entry, previous: current };
 }

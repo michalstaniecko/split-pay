@@ -4,7 +4,6 @@ import {
   ACTIVITY_LAST_OPENED_KEY,
   activityTarget,
   createActivitySeenStore,
-  entryItemIndex,
   flattenActivityPages,
   hasUnreadActivity,
 } from './activity';
@@ -110,24 +109,5 @@ describe('activityTarget', () => {
       { groupId: group.id },
     );
     expect(activityTarget(item(1))).toEqual({ groupId: group.id });
-  });
-});
-
-describe('entryItemIndex', () => {
-  const items = [
-    { type: 'day' },
-    { type: 'entry', entry: { id: id(1) } },
-    { type: 'claim' },
-    { type: 'entry', entry: { id: id(2) } },
-  ];
-
-  it('finds the bubble of an entry', () => {
-    expect(entryItemIndex(items, id(2))).toBe(3);
-    expect(entryItemIndex(items, id(1))).toBe(1);
-  });
-
-  it('is null without an entry or when it is not shown', () => {
-    expect(entryItemIndex(items, undefined)).toBeNull();
-    expect(entryItemIndex(items, id(9))).toBeNull();
   });
 });

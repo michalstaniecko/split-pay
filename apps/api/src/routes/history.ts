@@ -16,7 +16,7 @@ import { changes, claims, entries, groups, members } from '../db/schema';
 import type { AuthEnv } from '../middleware/require-user';
 import { type Tx, recordChange, toChangeDto } from './change-log';
 import { undoClaim } from './claims';
-import { editEntry, setEntryDeleted, toEntryDto } from './entries';
+import { type ChangeEntryResult, editEntry, notifyEntryChange, setEntryDeleted, toEntryDto } from './entries';
 import { findMyGroup, toSharedGroup } from './group-access';
 
 type ChangeRow = typeof changes.$inferSelect;
@@ -51,7 +51,8 @@ export async function withUndoneBy(db: Tx, rows: readonly ChangeRow[]): Promise<
 }
 
 export type UndoResult =
-  | { status: 'undone' }
+  /** `entryChange`: the entry change the undo made, to notify about after commit. */
+  | { status: 'undone'; entryChange?: ChangeEntryResult }
   | { status: 'version_conflict'; entry: Entry }
   | { status: 'changed_since' }
   | { status: 'forbidden' }
@@ -99,7 +100,7 @@ async function undoChange(
             });
       switch (result.status) {
         case 'changed':
-          return { status: 'undone' };
+          return { status: 'undone', entryChange: result };
         case 'conflict':
           return { status: 'version_conflict', entry: result.current };
         case 'not_found':
@@ -247,6 +248,8 @@ export const historyRoutes = ({ db }: { db: Db }) =>
       }
       switch (result.status) {
         case 'undone': {
+          // An undone entry change notifies like the same edit/delete/restore would.
+          if (result.entryChange) await notifyEntryChange(db, userId, result.entryChange);
           const undo = await undoOf(db, row.id);
           if (!undo) throw new Error(`undo of ${row.id} was not recorded`);
           return c.json(undo, 200);

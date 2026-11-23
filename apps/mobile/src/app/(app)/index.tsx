@@ -9,6 +9,7 @@ import { Button } from '@/components/button';
 import { GroupAvatar } from '@/components/group-avatar';
 import { inboxSections } from '@/features/groups/group-lifecycle';
 import { type GroupListItem, groupsQuery } from '@/features/groups/groups-query';
+import { OfflineBanner } from '@/features/offline/offline-banner';
 import { useFormatters } from '@/i18n/use-formatters';
 import { useRefreshOnFocus } from '@/lib/use-refresh-on-focus';
 
@@ -24,6 +25,7 @@ export default function InboxScreen() {
 
   return (
     <View style={styles.container}>
+      <OfflineBanner />
       {groups.isPending ? (
         <ActivityIndicator style={styles.center} color={theme.colors.primary} />
       ) : groups.isError ? (
