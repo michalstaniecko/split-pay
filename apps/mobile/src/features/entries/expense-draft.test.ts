@@ -6,8 +6,10 @@ import {
   expenseFormFromComposer,
   parseExpenseForm,
   todayLocalDate,
+  withDate,
   withTitle,
 } from './expense-draft';
+import { initialPayersForm, initialSplitForm, toggleParticipant } from './split-form';
 
 const id = (n: number) => `00000000-0000-4000-8000-${n.toString().padStart(12, '0')}`;
 const GROUP = id(100);
@@ -100,6 +102,8 @@ describe('expense form', () => {
       date: '2026-07-11',
       category: 'fuel',
       categoryChosen: false,
+      split: initialSplitForm,
+      payers: initialPayersForm,
     });
   });
 
@@ -128,5 +132,54 @@ describe('expense form', () => {
       { id: ENTRY, group: trip, members },
     );
     expect(parsed).toEqual({ ok: false, errors: ['amount', 'title', 'payer', 'date'] });
+  });
+
+  it('participants follow the date until picked by hand', () => {
+    const picked = { ...form, split: toggleParticipant(form.split, BARTEK, members, form.date) };
+    const moved = withDate(picked, '2026-07-13', members);
+    expect(moved.date).toBe('2026-07-13');
+    expect(parseExpenseForm(moved, { id: ENTRY, group: trip, members })).toMatchObject({
+      ok: true,
+      value: { split: { mode: 'equal', memberIds: [ANIA] } },
+    });
+  });
+
+  it('builds the split mode and multiple payers the form describes', () => {
+    const parsed = parseExpenseForm(
+      {
+        ...form,
+        split: { ...form.split, mode: 'shares', weights: { [ANIA]: '2', [TOMEK]: '1' } },
+        payers: { multiple: true, amounts: { [ANIA]: '40', [BARTEK]: '5,5' } },
+      },
+      { id: ENTRY, group: trip, members },
+    );
+    expect(parsed).toMatchObject({
+      ok: true,
+      value: {
+        payers: [
+          { memberId: ANIA, amount: 4000 },
+          { memberId: BARTEK, amount: 550 },
+        ],
+        split: {
+          mode: 'shares',
+          weights: [
+            { memberId: ANIA, weight: 2 },
+            { memberId: TOMEK, weight: 1 },
+          ],
+        },
+      },
+    });
+  });
+
+  it('blocks saving when split or payer amounts do not add up', () => {
+    const parsed = parseExpenseForm(
+      {
+        ...form,
+        split: { ...form.split, mode: 'exact', exact: { [ANIA]: '40' } },
+        payers: { multiple: true, amounts: { [ANIA]: '40' } },
+      },
+      { id: ENTRY, group: trip, members },
+    );
+    expect(parsed).toEqual({ ok: false, errors: ['payerAmounts', 'split'] });
   });
 });

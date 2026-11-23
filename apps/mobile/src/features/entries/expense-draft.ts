@@ -12,6 +12,15 @@ import {
   suggestCategory,
 } from '@split-pay/shared';
 import { parseAmountInput } from './amount-input';
+import {
+  buildPayers,
+  buildSplit,
+  initialPayersForm,
+  initialSplitForm,
+  type PayersForm,
+  type SplitForm,
+  withSplitDate,
+} from './split-form';
 
 /** What the group needs to provide for building an expense. */
 export type ExpenseGroup = Pick<Group, 'id' | 'startDate' | 'endDate'> & { baseCurrency: CurrencyCode };
@@ -75,10 +84,14 @@ export interface ExpenseForm {
   category: Category;
   /** The user picked a category — stop suggesting it from the title. */
   categoryChosen: boolean;
+  /** Split mode and its values (#12). */
+  split: SplitForm;
+  /** Multiple payers behind an advanced option; `payerMemberId` is the single payer (#12). */
+  payers: PayersForm;
 }
 
-export type ExpenseFormField = 'amount' | 'title' | 'payer' | 'date';
-const FIELDS: readonly ExpenseFormField[] = ['amount', 'title', 'payer', 'date'];
+export type ExpenseFormField = 'amount' | 'title' | 'payer' | 'payerAmounts' | 'date' | 'split';
+const FIELDS: readonly ExpenseFormField[] = ['amount', 'title', 'payer', 'payerAmounts', 'date', 'split'];
 
 /** The form opened by "+": the composer's values, me as payer, the default date, the suggested category. */
 export function expenseFormFromComposer(input: {
@@ -94,6 +107,8 @@ export function expenseFormFromComposer(input: {
     date: defaultEntryDate(input.today, input.group),
     category: suggestCategory(input.draft.title),
     categoryChosen: false,
+    split: initialSplitForm,
+    payers: initialPayersForm,
   };
 }
 
@@ -102,9 +117,14 @@ export function withTitle(form: ExpenseForm, title: string): ExpenseForm {
   return { ...form, title, category: form.categoryChosen ? form.category : suggestCategory(title) };
 }
 
+/** Changes the date; participants follow who is present that day unless picked by hand. */
+export function withDate(form: ExpenseForm, date: string, members: readonly Member[]): ExpenseForm {
+  return { ...form, date, split: withSplitDate(form.split, members, form.date, date) };
+}
+
 export type ParsedExpenseForm = { ok: true; value: NewExpense } | { ok: false; errors: ExpenseFormField[] };
 
-/** Validates the form and builds the equal-split expense (participants: present on the form's date). */
+/** Validates the form and builds the expense with the form's split mode and payers. */
 export function parseExpenseForm(
   form: ExpenseForm,
   context: { id: string; group: ExpenseGroup; members: readonly Member[] },
@@ -113,12 +133,19 @@ export function parseExpenseForm(
   const amount = parseAmountInput(form.amount, minorUnitDigits(context.group.baseCurrency));
   if (amount === null) errors.add('amount');
   if (form.title.trim() === '') errors.add('title');
-  if (!context.members.some((m) => m.id === form.payerMemberId)) errors.add('payer');
+  if (!form.payers.multiple && !context.members.some((m) => m.id === form.payerMemberId)) errors.add('payer');
+  const digits = minorUnitDigits(context.group.baseCurrency);
+  const payers = buildPayers(form.payerMemberId, form.payers, { amount, digits });
+  if (form.payers.multiple && !payers.ok) errors.add('payerAmounts');
   const date = form.date.trim();
   if (!LocalDate.safeParse(date).success) errors.add('date');
-  if (errors.size > 0 || amount === null) return { ok: false, errors: FIELDS.filter((f) => errors.has(f)) };
+  const split = buildSplit(form.split, { amount, digits, members: context.members, date });
+  if (amount !== null && !split.ok) errors.add('split');
+  if (errors.size > 0 || amount === null || !payers.ok || !split.ok) {
+    return { ok: false, errors: FIELDS.filter((f) => errors.has(f)) };
+  }
 
-  const value = equalExpenseDefaults({
+  const defaults = equalExpenseDefaults({
     id: context.id,
     title: form.title,
     amount,
@@ -128,11 +155,14 @@ export function parseExpenseForm(
     members: context.members,
     category: form.category,
   });
+  const value: NewExpense = { ...defaults, payers: payers.payers, split: split.split };
   // Same schema as the API; catches limits like the title length.
   const checked = NewEntry.safeParse(value);
   if (!checked.success) {
     const invalid = new Set(checked.error.issues.map((i) => i.path[0]));
-    return { ok: false, errors: FIELDS.filter((f) => invalid.has(f === 'payer' ? 'payers' : f)) };
+    const payersField = form.payers.multiple ? 'payerAmounts' : 'payer';
+    const pathOf = (f: ExpenseFormField) => (f === payersField ? 'payers' : f);
+    return { ok: false, errors: FIELDS.filter((f) => invalid.has(pathOf(f))) };
   }
   return { ok: true, value };
 }

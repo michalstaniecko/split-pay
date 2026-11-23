@@ -82,7 +82,30 @@ describe('conversationItems', () => {
 
   it('names the largest payer and counts the others; I am a payer if I am among them', () => {
     const { items } = conversationItems([backdated], { members, myMemberId: KASIA, baseCurrency: 'PLN' });
-    expect(items[1]).toMatchObject({ type: 'entry', side: 'end', payerName: 'Ania', otherPayers: 1 });
+    expect(items[1]).toMatchObject({
+      type: 'entry',
+      side: 'end',
+      payerName: 'Ania',
+      payerId: ANIA,
+      payerNames: ['Ania', 'Kasia'],
+      otherPayers: 1,
+    });
+  });
+
+  it('with three payers lists them largest first ("Kasia + 2"), ties by member id', () => {
+    const three = expense('2026-07-10', '2026-07-10T09:00:00.000Z', [
+      { memberId: ANIA, amount: 200 },
+      { memberId: BARTEK, amount: 200 },
+      { memberId: KASIA, amount: 500 },
+    ]);
+    const { items } = conversationItems([three], { members, myMemberId: BARTEK, baseCurrency: 'PLN' });
+    expect(items[1]).toMatchObject({
+      side: 'end',
+      payerName: 'Kasia',
+      payerId: KASIA,
+      payerNames: ['Kasia', 'Ania', 'Bartek'],
+      otherPayers: 2,
+    });
   });
 
   it('without a member of mine every bubble is on the start edge and has no share', () => {
