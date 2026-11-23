@@ -1,8 +1,10 @@
+import { useLingui } from '@lingui/react/macro';
 import { Tabs } from 'expo-router';
 import { useUnistyles } from 'react-native-unistyles';
 
 export default function TabsLayout() {
   const { theme } = useUnistyles();
+  const { t } = useLingui();
   return (
     <Tabs
       screenOptions={{
@@ -12,10 +14,9 @@ export default function TabsLayout() {
         headerStyle: { backgroundColor: theme.colors.background },
         headerTintColor: theme.colors.text,
       }}>
-      {/* TODO: i18n — Polish UI copy hardcoded for now */}
-      <Tabs.Screen name="index" options={{ title: 'Grupy' }} />
-      <Tabs.Screen name="activity" options={{ title: 'Aktywność' }} />
-      <Tabs.Screen name="profile" options={{ title: 'Profil' }} />
+      <Tabs.Screen name="index" options={{ title: t`Grupy` }} />
+      <Tabs.Screen name="activity" options={{ title: t`Aktywność` }} />
+      <Tabs.Screen name="profile" options={{ title: t`Profil` }} />
     </Tabs>
   );
 }

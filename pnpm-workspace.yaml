@@ -11,3 +11,5 @@ allowBuilds:
 permissions:
   tsdown:
     skills: false
+  expo-sqlite:
+    skills: false
