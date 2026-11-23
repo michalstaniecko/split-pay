@@ -161,7 +161,7 @@ A fixed, translated list with icons (food, transport, accommodation, alcohol, fu
 ## Language
 
 - MVP: **PL and EN**. Eventually at least the 15 most popular languages (excluding Russian).
-- ICU MessageFormat (plural forms), `Intl` for amounts and dates, i18next or Lingui.
+- ICU MessageFormat (plural forms), `Intl` for amounts and dates, Lingui (message extraction into PO catalogs).
 - RTL tested when the first RTL language is added.
 - Code, names and documentation in English; UI copy is Polish-first with i18n.
 
@@ -288,5 +288,5 @@ Expo Router, chat-style layout — no bottom tabs, no group tabs ([ADR-0017](./a
 
 - [ ] **App name and domain** — blocks the first public build. The bundle ID cannot change after publishing, and the domain is baked into universal links (changing it breaks already-sent invitations). Planned layout: `app.<domain>` (web + links), `api.<domain>` (API).
 - [ ] **PhotoDNA application** — at the public store launch.
-- [ ] Choose i18next vs Lingui.
+- [x] Choose i18next vs Lingui — **Lingui** (#4).
 - [ ] Choose an SMTP provider for OTP emails.

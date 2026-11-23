@@ -1,0 +1,35 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-11-23 23:15+0100\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: pl\n"
+
+#: src/app/(tabs)/_layout.tsx
+#: src/app/(tabs)/activity.tsx
+msgid "Aktywność"
+msgstr "Aktywność"
+
+#: src/app/(tabs)/_layout.tsx
+#: src/app/(tabs)/index.tsx
+msgid "Grupy"
+msgstr "Grupy"
+
+#: src/components/language-picker.tsx
+msgid "Język"
+msgstr "Język"
+
+#: src/components/language-picker.tsx
+msgid "Język systemu"
+msgstr "Język systemu"
+
+#: src/app/(tabs)/index.tsx
+msgid "Podział {amount} na {count, plural, one {# osobę} few {# osoby} many {# osób} other {# osoby}}"
+msgstr "Podział {amount} na {count, plural, one {# osobę} few {# osoby} many {# osób} other {# osoby}}"
+
+#: src/app/(tabs)/_layout.tsx
+#: src/app/(tabs)/profile.tsx
+msgid "Profil"
+msgstr "Profil"

@@ -12,6 +12,7 @@
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "mobile": "pnpm --filter @split-pay/mobile start",
+    "i18n:extract": "pnpm --filter @split-pay/mobile i18n:extract",
     "api": "pnpm --filter @split-pay/api dev"
   },
   "devDependencies": {

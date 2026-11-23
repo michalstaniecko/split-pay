@@ -33,7 +33,9 @@
           "imageWidth": 76
         }
       ],
-      "react-native-edge-to-edge"
+      "react-native-edge-to-edge",
+      "expo-localization",
+      "expo-sqlite"
     ],
     "experiments": {
       "typedRoutes": true,

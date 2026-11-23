@@ -1,11 +1,21 @@
+import type { ReactNode } from 'react';
 import { Text, View } from 'react-native';
 import { StyleSheet } from 'react-native-unistyles';
 
-export function PlaceholderScreen({ title, subtitle }: { title: string; subtitle?: string }) {
+export function PlaceholderScreen({
+  title,
+  subtitle,
+  children,
+}: {
+  title: string;
+  subtitle?: string;
+  children?: ReactNode;
+}) {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>{title}</Text>
       {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+      {children}
     </View>
   );
 }

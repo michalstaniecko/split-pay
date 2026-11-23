@@ -31,6 +31,10 @@ Run lint and typecheck before declaring any task done.
 
 Unistyles 3. On web, Unistyles compiles theme values inside `StyleSheet.create` into CSS variables, so a stylesheet cannot branch on them. Put theme-dependent choices (e.g. `theme.family === 'fresh'`) in the component, or express them as a theme token; keep stylesheets to plain token reads.
 
+## Translations
+
+Lingui, Polish source language, catalogs in `src/locales/{pl,en}/messages.po`. Write UI copy in Polish with the macros (`const { t } = useLingui()` from `@lingui/react/macro`, `plural` from `@lingui/core/macro`), then run `pnpm i18n:extract` from the repo root and fill in the English `msgstr`s. `pnpm test` fails while any message is untranslated. Format amounts and dates with `useFormatters()` (`src/i18n/use-formatters.ts`), never by hand.
+
 ## Building
 
 Per `docs/adr/0015-local-mobile-builds-linux-only-ci.md`, native builds run **locally** on the developer's Mac (`npx expo run:ios|android`, or `npx eas-cli@latest build --local`), never in EAS cloud builds or GitHub Actions. EAS Update (OTA) is fine. Use `pnpm`, not npm/bun — this app lives in a pnpm monorepo (`nodeLinker: hoisted` in `pnpm-workspace.yaml`).
