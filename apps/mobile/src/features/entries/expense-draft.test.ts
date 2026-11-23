@@ -6,6 +6,7 @@ import {
   expenseFormFromComposer,
   parseExpenseForm,
   todayLocalDate,
+  withDate,
   withTitle,
 } from './expense-draft';
 
@@ -88,11 +89,12 @@ describe('expense form', () => {
   const form = expenseFormFromComposer({
     draft: { amount: '45,5', title: 'Paliwo' },
     group: trip,
+    members,
     myMemberId: ANIA,
     today: '2026-07-11',
   });
 
-  it('is prefilled from the composer with me as payer, the default date and the suggested category', () => {
+  it('is prefilled from the composer with me as payer, the default date, those present and the suggested category', () => {
     expect(form).toEqual({
       amount: '45,5',
       title: 'Paliwo',
@@ -100,7 +102,26 @@ describe('expense form', () => {
       date: '2026-07-11',
       category: 'fuel',
       categoryChosen: false,
+      participantIds: [ANIA, BARTEK],
+      participantsDate: '2026-07-11',
     });
+  });
+
+  it('participants follow attendance when the date changes', () => {
+    const next = withDate(form, '2026-07-13', members);
+    expect(next).toMatchObject({ date: '2026-07-13', participantIds: [ANIA, BARTEK, TOMEK], participantsDate: '2026-07-13' });
+    expect(withDate(next, '2026-07-10', members).participantIds).toEqual([ANIA, BARTEK]);
+  });
+
+  it('keeps hand-picked participants when the date changes', () => {
+    const picked = { ...form, participantIds: [BARTEK] };
+    expect(withDate(picked, '2026-07-13', members).participantIds).toEqual([BARTEK]);
+  });
+
+  it('keeps participants while the date is being typed', () => {
+    const typing = withDate(form, '2026-07-1', members);
+    expect(typing).toMatchObject({ date: '2026-07-1', participantIds: [ANIA, BARTEK], participantsDate: '2026-07-11' });
+    expect(withDate(typing, '2026-07-13', members).participantIds).toEqual([ANIA, BARTEK, TOMEK]);
   });
 
   it('keeps suggesting the category from the title until the user picks one', () => {
@@ -109,7 +130,10 @@ describe('expense form', () => {
   });
 
   it('builds an equal-split expense; the date decides who is present', () => {
-    const parsed = parseExpenseForm({ ...form, payerMemberId: BARTEK, date: '2026-07-13' }, { id: ENTRY, group: trip, members });
+    const parsed = parseExpenseForm(
+      { ...withDate(form, '2026-07-13', members), payerMemberId: BARTEK },
+      { id: ENTRY, group: trip, members },
+    );
     expect(parsed).toEqual({
       ok: true,
       value: expect.objectContaining({
@@ -120,6 +144,14 @@ describe('expense form', () => {
         split: { mode: 'equal', memberIds: [ANIA, BARTEK, TOMEK] },
       }),
     });
+  });
+
+  it('splits among the chosen participants, everyone when nobody is present that day', () => {
+    const context = { id: ENTRY, group: trip, members };
+    const picked = parseExpenseForm({ ...form, participantIds: [BARTEK, TOMEK] }, context);
+    expect(picked.ok && picked.value.split).toEqual({ mode: 'equal', memberIds: [BARTEK, TOMEK] });
+    const nobody = parseExpenseForm({ ...form, participantIds: [] }, context);
+    expect(nobody.ok && nobody.value.split).toEqual({ mode: 'equal', memberIds: [ANIA, BARTEK, TOMEK] });
   });
 
   it('lists invalid fields in form order', () => {
