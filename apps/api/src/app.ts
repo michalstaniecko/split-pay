@@ -8,7 +8,9 @@ import { type AuthEnv, createRequireUser } from './middleware/require-user';
 import { deleteAccount } from './routes/account';
 import { linksRoutes } from './routes/group-links';
 import { groupsRoutes } from './routes/groups';
+import { openGraphRoutes } from './routes/open-graph';
 import { myPayoutDetailsRoutes } from './routes/payout-details';
+import { publicViewRoutes } from './routes/public-view';
 import { quickBillsRoutes } from './routes/quick-bills';
 
 export interface AppDeps {
@@ -16,6 +18,8 @@ export interface AppDeps {
   db: Db;
   /** Feature flags served to the apps; defaults (all off) when omitted. */
   flags?: FeatureFlags;
+  /** Origin of the web app (`WEB_URL`), where link previews send people; unset until the domain exists. */
+  webUrl?: string | undefined;
 }
 
 /**
@@ -24,7 +28,7 @@ export interface AppDeps {
  * Keep routes chained in one expression (or `.route()` chained sub-apps) —
  * the typed client (`hc`) infers its types from this chain.
  */
-export const createApp = ({ auth, db, flags = defaultFeatureFlags }: AppDeps) => {
+export const createApp = ({ auth, db, flags = defaultFeatureFlags, webUrl }: AppDeps) => {
   const requireUser = createRequireUser(auth);
 
   return (
@@ -51,6 +55,9 @@ export const createApp = ({ auth, db, flags = defaultFeatureFlags }: AppDeps) =>
       .route('/quick-bills', quickBillsRoutes({ db, requireUser }))
       /** Opening a group link in the app: preview + join. */
       .route('/links', linksRoutes({ db, requireUser }))
+      /** The view-only web for a group link (no session) and its link previews. */
+      .route('/public/links', publicViewRoutes({ db }))
+      .route('/og', openGraphRoutes({ db, webUrl }))
   );
 };
 

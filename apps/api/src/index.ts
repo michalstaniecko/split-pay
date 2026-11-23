@@ -21,7 +21,8 @@ const auth = createAuth({
 });
 // FEATURE_FLAGS: JSON, e.g. {"ads":true}. Unknown or invalid flags fall back to off.
 const flags = parseFeatureFlagsJson(process.env.FEATURE_FLAGS);
-const app = createApp({ auth, db, flags });
+// WEB_URL: origin of the web app (e.g. https://app.example.com), used by link previews (/og/:token).
+const app = createApp({ auth, db, flags, webUrl: process.env.WEB_URL || undefined });
 
 serve({ fetch: app.fetch, port }, (info) => {
   console.log(`API listening on http://localhost:${info.port}`);
