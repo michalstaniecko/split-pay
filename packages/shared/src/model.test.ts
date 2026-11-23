@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { Entry, Group, validateEntryInGroup } from './model';
-import { ANIA, BARTEK, KASIA, expense, group, members, settlement, uuid } from './test-fixtures';
+import { Entry, Group, Member, validateEntryInGroup } from './model';
+import { ANIA, BARTEK, KASIA, expense, group, member, members, settlement, uuid } from './test-fixtures';
 
 describe('Entry', () => {
   const valid = expense({
@@ -64,6 +64,66 @@ describe('Group', () => {
     expect(Group.safeParse({ ...group, startDate: null, endDate: null }).success).toBe(true);
     expect(Group.safeParse({ ...group, endDate: null }).success).toBe(false);
     expect(Group.safeParse({ ...group, startDate: '2026-07-20' }).success).toBe(false);
+  });
+});
+
+describe('Member', () => {
+  const withAttendance = (attendance: unknown) => Member.safeParse({ ...member(ANIA, 'Ania'), attendance });
+
+  it('accepts no attendance (whole trip) and canonical lists of ranges', () => {
+    expect(withAttendance(null).success).toBe(true);
+    expect(withAttendance([{ from: '2026-07-10', to: '2026-07-10' }]).success).toBe(true);
+    expect(
+      withAttendance([
+        { from: '2026-07-10', to: '2026-07-11' },
+        { from: '2026-07-13', to: '2026-07-14' },
+      ]).success,
+    ).toBe(true);
+  });
+
+  it('rejects an empty attendance list', () => {
+    expect(withAttendance([]).success).toBe(false);
+  });
+
+  it('rejects a range that starts after it ends', () => {
+    expect(withAttendance([{ from: '2026-07-12', to: '2026-07-11' }]).success).toBe(false);
+  });
+
+  it('rejects unsorted ranges', () => {
+    expect(
+      withAttendance([
+        { from: '2026-07-13', to: '2026-07-14' },
+        { from: '2026-07-10', to: '2026-07-11' },
+      ]).success,
+    ).toBe(false);
+  });
+
+  it('rejects overlapping ranges', () => {
+    expect(
+      withAttendance([
+        { from: '2026-07-10', to: '2026-07-12' },
+        { from: '2026-07-12', to: '2026-07-14' },
+      ]).success,
+    ).toBe(false);
+  });
+
+  it('rejects touching ranges', () => {
+    expect(
+      withAttendance([
+        { from: '2026-07-10', to: '2026-07-11' },
+        { from: '2026-07-12', to: '2026-07-14' },
+      ]).success,
+    ).toBe(false);
+    expect(
+      withAttendance([
+        { from: '2026-07-30', to: '2026-07-31' },
+        { from: '2026-08-01', to: '2026-08-02' },
+      ]).success,
+    ).toBe(false);
+  });
+
+  it('does not check attendance against the trip dates', () => {
+    expect(withAttendance([{ from: '2025-01-01', to: '2027-12-31' }]).success).toBe(true);
   });
 });
 
