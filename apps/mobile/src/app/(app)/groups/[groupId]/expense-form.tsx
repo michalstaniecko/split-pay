@@ -1,9 +1,9 @@
 import { useLingui } from '@lingui/react/macro';
-import { Category, minorUnitDigits } from '@split-pay/shared';
+import { Category, LocalDate, minorUnitDigits } from '@split-pay/shared';
 import { useQuery } from '@tanstack/react-query';
 import { randomUUID } from 'expo-crypto';
 import { useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { Button } from '@/components/button';
@@ -15,16 +15,23 @@ import { CATEGORY_ICONS, useCreateEntry } from '@/features/entries/entries-query
 import {
   type ExpenseForm,
   type ExpenseFormField,
+  entryCurrencies,
   type ExpenseFormKind,
   expenseFormFromComposer,
+  formBaseAmount,
   parseExpenseForm,
   todayLocalDate,
+  withCurrency,
   withDate,
+  withRate,
+  withSuggestedRate,
   withTitle,
 } from '@/features/entries/expense-draft';
 import { PayersField, SplitField } from '@/features/entries/split-fields';
 import { useEntryLabels } from '@/features/entries/use-entry-labels';
 import { type GroupDetail, groupQuery } from '@/features/groups/groups-query';
+import { ratesQuery } from '@/features/rates/rates-query';
+import { useFormatters } from '@/i18n/use-formatters';
 import { authClient } from '@/lib/auth-client';
 import { closeSheet } from '@/lib/close-sheet';
 
@@ -34,7 +41,8 @@ import { closeSheet } from '@/lib/close-sheet';
  * leaves the composer's values where they were.
  * Expense or income (#13; the payers field picks the recipients), payer(s),
  * date, category, split modes with a live preview of every member's share
- * (#12); base currency. Later: currency (#14),
+ * (#12), currency with the frozen rate (#14, prefilled with the ECB rate for
+ * the date, editable). Later:
  * receipt (#26), and editing with `?entryId=` (#11).
  */
 export default function ExpenseFormSheet() {
@@ -65,7 +73,21 @@ function ExpenseFormView({ group }: { group: GroupDetail }) {
   );
   const [errors, setErrors] = useState<ExpenseFormField[]>([]);
   const createEntry = useCreateEntry(group.id);
-  const digits = minorUnitDigits(group.baseCurrency);
+  const format = useFormatters();
+  const digits = minorUnitDigits(form.currency);
+  const foreign = form.currency !== group.baseCurrency;
+
+  // The ECB rate for the date (or the device's last cached one offline), prefilled until the user types a rate.
+  const rateDate = form.date.trim();
+  const rates = useQuery({
+    ...ratesQuery(group.baseCurrency, rateDate),
+    enabled: foreign && LocalDate.safeParse(rateDate).success,
+  });
+  const suggestedRate = foreign ? rates.data?.table?.rates[form.currency] : undefined;
+  useEffect(() => {
+    if (suggestedRate) setForm((current) => withSuggestedRate(current, suggestedRate));
+  }, [suggestedRate]);
+  const baseAmount = formBaseAmount(form, group.baseCurrency);
 
   const update = (next: ExpenseForm, fields: ExpenseFormField[]) => {
     setForm(next);
@@ -98,10 +120,20 @@ function ExpenseFormView({ group }: { group: GroupDetail }) {
     title: t`Podaj tytuł.`,
     payer: income ? t`Wybierz, kto otrzymał pieniądze.` : t`Wybierz, kto zapłacił.`,
     date: t`Podaj datę w formacie RRRR-MM-DD.`,
+    rate: t`Podaj kurs większy od zera, np. 4,3215.`,
     // The split and payer sections show what doesn't add up themselves.
     payerAmounts: '',
     split: '',
   };
+  const rateSource = !foreign
+    ? null
+    : rates.isPending && rates.fetchStatus !== 'idle'
+      ? t`Pobieram kurs EBC…`
+      : rates.data?.table && suggestedRate
+        ? rates.data.from === 'device'
+          ? t`Offline: ostatni zapisany kurs EBC z ${format.date(rates.data.table.ratesDate)}.`
+          : t`Kurs EBC z ${format.date(rates.data.table.ratesDate)}.`
+        : t`Brak kursu EBC dla tej daty — wpisz go ręcznie.`;
   const errorFor = (field: ExpenseFormField) =>
     errors.includes(field) && fieldError[field] !== '' ? <Text style={styles.error}>{fieldError[field]}</Text> : null;
 
@@ -138,10 +170,45 @@ function ExpenseFormView({ group }: { group: GroupDetail }) {
               keyboardType="decimal-pad"
               style={styles.amountInput}
             />
-            <Text style={styles.currency}>{group.baseCurrency}</Text>
+            <Text style={styles.currency}>{form.currency}</Text>
           </View>
+          {baseAmount !== null ? <Text style={styles.value}>≈ {format.amount(baseAmount, group.baseCurrency)}</Text> : null}
           {errorFor('amount')}
         </View>
+
+        <View style={styles.field}>
+          <Text style={styles.label}>{t`Waluta`}</Text>
+          <View style={styles.chips} accessibilityRole="radiogroup">
+            {entryCurrencies(group.baseCurrency).map((currency) => (
+              <Pressable
+                key={currency}
+                accessibilityRole="radio"
+                accessibilityState={{ checked: form.currency === currency }}
+                onPress={() => update(withCurrency(form, currency, group.baseCurrency), ['amount', 'rate'])}
+                style={[styles.chip, form.currency === currency && styles.chipSelected]}>
+                <Text style={styles.chipLabel}>{currency}</Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+
+        {foreign ? (
+          <View style={styles.field}>
+            <Text style={styles.label}>{t`Kurs: 1 ${form.currency} = ? ${group.baseCurrency}`}</Text>
+            <TextInput
+              value={form.rate}
+              onChangeText={(rate) => update(withRate(form, rate), ['rate'])}
+              placeholder="4,3215"
+              accessibilityLabel={t`Kurs: 1 ${form.currency} = ? ${group.baseCurrency}`}
+              placeholderTextColor={theme.colors.textMuted}
+              keyboardType="decimal-pad"
+              maxLength={20}
+              style={[styles.input, errors.includes('rate') && styles.inputInvalid]}
+            />
+            {rateSource ? <Text style={styles.label}>{rateSource}</Text> : null}
+            {errorFor('rate')}
+          </View>
+        ) : null}
 
         <View style={styles.field}>
           <Text style={styles.label}>{t`Tytuł`}</Text>
@@ -183,7 +250,7 @@ function ExpenseFormView({ group }: { group: GroupDetail }) {
           amountText={form.amount}
           amount={amount}
           digits={digits}
-          currency={group.baseCurrency}
+          currency={form.currency}
           showErrors={errors.includes('payerAmounts')}
           onChangePayer={(payerMemberId) => update({ ...form, payerMemberId }, ['payer'])}
           onChangePayers={(payers) => update({ ...form, payers }, ['payer', 'payerAmounts'])}
@@ -214,7 +281,7 @@ function ExpenseFormView({ group }: { group: GroupDetail }) {
           participantIds={form.participantIds}
           amount={amount}
           digits={digits}
-          currency={group.baseCurrency}
+          currency={form.currency}
           showErrors={errors.includes('split')}
           onChange={(split) => update({ ...form, split }, ['split'])}
           onChangeParticipants={(participantIds) => update({ ...form, participantIds }, ['split'])}
