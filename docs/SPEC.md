@@ -69,7 +69,7 @@ A fixed, translated list with icons (food, transport, accommodation, alcohol, fu
 ## Settle-up
 
 - Each member's **balance** in the group's base currency.
-- **Debt simplification** (minimum number of transfers) enabled by default, toggle in group settings.
+- **Debt simplification** (minimum number of transfers) enabled by default, toggle in Group info → settings.
 - A **settlement** is recorded as a separate operation type.
 - Optional **payout details** in the profile (bank account number, BLIK phone number) — visible only to members of shared groups, with a "copy" button. No payment integration.
 
@@ -91,8 +91,8 @@ A fixed, translated list with icons (food, transport, accommodation, alcohol, fu
 ## Web interface
 
 - The same Expo app with a web target (Expo Router), in SPA mode (`web.output: "single"`) — Unistyles does not work with static rendering without additional SSR configuration, and SEO is not needed.
-- Access via the group link, without logging in. Shows: list of expenses, balances, daily stats.
-- A "this is me" option — choosing a member, remembered in the browser, to see "how much I owe".
+- Access via the group link, without logging in. Shows the same **Conversation** as the app, read-only (no composer, no edit menu), plus balances and daily stats.
+- A "this is me" option — choosing a member, remembered in the browser. It decides which bubbles sit on the end edge and drives the balance banner ("how much I owe").
 - **No photos and no editing.**
 - Link previews (Open Graph) for messengers — a simple API endpoint.
 - This is where (along with the README) the GitHub Sponsors link lives.
@@ -136,6 +136,9 @@ A fixed, translated list with icons (food, transport, accommodation, alcohol, fu
 - Two themes: **Fresh** (youthful: vivid colors, larger corner radii, emoji, micro-animations) and **Classic** (subdued), each light and dark — 4 variants.
 - Toggle per user. The same screen layout in both themes — they differ only in tokens.
 - Custom, minimalist components. RTL-safe styles (`start`/`end`, not `left`/`right`) from day one.
+- **Form fields mirror the data model** — one field per value, across the whole app. No free-text parsing into several fields ([ADR-0017](./adr/0017-chat-style-navigation.md)).
+- Own bubbles: Fresh — accent fill with on-accent text; Classic — tinted surface with a border. Category icons: emoji in Fresh, monochrome glyphs in Classic (token-mapped).
+- All bubble text and pill colour pairs pass WCAG AA (4.5:1) in all 4 variants, checked by a test in `packages/ui`. Screen readers read a bubble as one element; Dynamic Type up to the largest size (amounts never truncate).
 
 ## Language
 
@@ -146,20 +149,36 @@ A fixed, translated list with icons (food, transport, accommodation, alcohol, fu
 
 ## Navigation and screens
 
-Expo Router, bottom tabs:
+Expo Router, chat-style layout — no bottom tabs, no group tabs ([ADR-0017](./adr/0017-chat-style-navigation.md)).
 
-1. **Groups** — list of groups with balances; FAB "+" → new group or quick bill.
-2. **Activity** — feed of changes from all groups.
-3. **Profile** — theme, language, payout details, notifications, account deletion.
+**Inbox** (home)
 
-Group screen — tabs:
+- Groups sorted by **last activity** (latest entry created/edited); the preview shows the most recently added entry. Archived groups in a collapsed "Zarchiwizowane" section at the bottom.
+- Unread: bold row + dot when others added entries since I last opened the group; no counters. "Last seen" stored locally on the device in the MVP.
+- Search ("Szukaj grup i wydatków"): group names and entry titles across all groups; an entry result opens the Conversation scrolled to that bubble, highlighted.
+- Header: bell → **Activity** (feed of changes from all groups, unread dot); avatar → **Profile** (theme, language, payout details, notifications, account deletion). Both full screens.
+- **"Nowy"** → sheet: **Szybki rachunek** (amount + title + who → a group with a single expense) or **Nowa grupa** (name, emoji/colour, optional dates).
 
-- **Expenses** — list grouped by day, daily total, who paid.
-- **Balances** — who owes whom how much, a "settle up" button.
-- **Stats** — days × people table, categories.
-- **People** — members, members without an account, attendance per day, invitation/QR.
+**Conversation** (group screen)
 
-**Adding an expense** — the key flow, goal: **3 taps + amount**. Large amount at the top, payer (me by default), date (today by default), split by default "equally among those present that day". Advanced modes (exact amounts, shares, personal items, multiple payers) hidden behind an expander.
+- Entries as bubbles from their payers, ordered by **entry date**, then creation time within a day. Opens at the bottom (newest); sticky day separators with the group's daily total; tapping a separator opens a day strip to jump to a day; virtualized list. A new entry outside the viewport → scroll to it and highlight briefly.
+- Current state only: edited bubbles marked "edytowano"; edits and deletions are not messages. System messages only for settlements and claims.
+- Bubble side: end edge when I am among the payers (income: the recipients), start edge otherwise; mirrors in RTL. Multiple payers: "Kasia + 2", avatar of the largest payer.
+- Bubble content: title (max 2 lines), amount (foreign currency: original large, base "≈" small), category icon, receipt thumbnail, "twój udział …"; income → "↓ Wpływ" and the positive colour. Tap → entry detail.
+- Long-press: Edytuj, Usuń ("Cofnij" snackbar), Historia, Kopiuj kwotę.
+- Outbox state: 🕓 while queued, nothing once synced, red **!** on failure or conflict → retry or "keep my / their version".
+- Push notifications and Activity items open the Conversation scrolled to the bubble, highlighted.
+- **Balance banner** on top → **drawer** with balances and suggested transfers. My transfer: **"Oddaj"** → recipient's payout details with copy buttons, editable prefilled amount, "Zapisz spłatę" (posts a settlement message). A transfer owed to me: **"Przypomnij"** (nudge).
+- Archived group: the composer is replaced by a "Grupa zarchiwizowana" bar; long-press offers only Historia and Kopiuj kwotę.
+
+**Group info** — tapping the group header or `⋯`: members and members without an account (with attendance), group link + QR, **Stats** (days × people table, categories), change history, settings (debt simplification, base currency, dates, notifications), archive / delete.
+
+**Adding an expense** — the key flow, goal: **3 taps + amount**.
+
+- Composer at the bottom of the Conversation: **amount** (numeric keyboard, comma or dot, decimals limited to the base currency's minor digits, currency as a label) and **title**. Focus starts in amount, "next" moves to title; send enabled when amount > 0 and title is non-empty.
+- Send creates an expense: paid by me, dated today, split equally among members present that day.
+- Category is not a composer field: suggested from the title on send (default "other", pure function in `packages/shared`), shown as the bubble's icon.
+- **"+"** opens the **full expense form** as a sheet, prefilled with the composer's amount and title: payer, date, participants, split modes, multiple payers, income, currency with frozen rate, category, receipt. Dismissing without saving puts the values back in the composer. **📷** takes the receipt photo first, then opens the same form. The full form is also the edit screen.
 
 ## Technical architecture
 
