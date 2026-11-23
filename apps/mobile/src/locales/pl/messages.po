@@ -124,15 +124,26 @@ msgstr "↓ Wpływ"
 msgid "+ Dodaj osobę bez konta"
 msgstr "+ Dodaj osobę bez konta"
 
+#: src/features/photos/receipt-field.tsx
+msgid "📷 Zrób nowe"
+msgstr "📷 Zrób nowe"
+
+#: src/features/photos/receipt-field.tsx
+msgid "📷 Zrób zdjęcie"
+msgstr "📷 Zrób zdjęcie"
+
 #: src/app/(auth)/sign-in.tsx
 msgid "Adres e-mail"
 msgstr "Adres e-mail"
 
 #: src/app/(app)/_layout.tsx
-#: src/app/(app)/activity.tsx
 #: src/components/inbox-header-buttons.tsx
 msgid "Aktywność"
 msgstr "Aktywność"
+
+#: src/components/inbox-header-buttons.tsx
+msgid "Aktywność, nowe zmiany"
+msgstr "Aktywność, nowe zmiany"
 
 #: src/features/entries/use-entry-labels.ts
 msgid "Alkohol"
@@ -180,6 +191,11 @@ msgstr "Błąd"
 msgid "Brak danych do spłaty. Zapytaj o nie bezpośrednio."
 msgstr "Brak danych do spłaty. Zapytaj o nie bezpośrednio."
 
+#: src/features/photos/avatar-section.tsx
+#: src/features/photos/receipt-field.tsx
+msgid "Brak dostępu do aparatu. Wybierz zdjęcie z galerii."
+msgstr "Brak dostępu do aparatu. Wybierz zdjęcie z galerii."
+
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
 msgid "Brak kursu EBC dla tej daty — wpisz go ręcznie."
 msgstr "Brak kursu EBC dla tej daty — wpisz go ręcznie."
@@ -214,10 +230,12 @@ msgstr "Ciemny"
 msgid "Cofnąć tę zmianę?"
 msgstr "Cofnąć tę zmianę?"
 
+#: src/features/activity/activity-row.tsx
 #: src/features/history/change-row.tsx
 msgid "cofnięcie"
 msgstr "cofnięcie"
 
+#: src/features/activity/activity-row.tsx
 #: src/features/history/change-row.tsx
 msgid "cofnięto"
 msgstr "cofnięto"
@@ -279,6 +297,10 @@ msgstr "Dni × osoby i kategorie"
 msgid "Do"
 msgstr "Do"
 
+#: src/features/photos/photo-messages.ts
+msgid "Do tego wpisu wysłano już {perEntry} zdjęć — to limit."
+msgstr "Do tego wpisu wysłano już {perEntry} zdjęć — to limit."
+
 #: src/features/history/describe-change.ts
 msgid "Do: {value}"
 msgstr "Do: {value}"
@@ -298,6 +320,10 @@ msgstr "Dodaj osobę"
 #: src/app/(app)/groups/[groupId]/member.tsx
 msgid "Dodaj osobę bez konta"
 msgstr "Dodaj osobę bez konta"
+
+#: src/features/photos/avatar-section.tsx
+msgid "Dodaj zdjęcie"
+msgstr "Dodaj zdjęcie"
 
 #. placeholder {0}: format.dateTime(entry.createdAt)
 #: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
@@ -336,6 +362,10 @@ msgstr "Dołączenie do grupy: {name}"
 #: src/features/stats/stats-view.tsx
 msgid "Dzień"
 msgstr "Dzień"
+
+#: src/features/photos/photo-messages.ts
+msgid "Dzisiejszy limit {perDay} zdjęć został wykorzystany. Spróbuj jutro."
+msgstr "Dzisiejszy limit {perDay} zdjęć został wykorzystany. Spróbuj jutro."
 
 #: src/features/entries/entry-bubble.tsx
 #: src/features/settlements/settlement-system-message.tsx
@@ -660,6 +690,10 @@ msgstr "Należy ci się {amount}"
 msgid "Nazwa"
 msgstr "Nazwa"
 
+#: src/app/(app)/activity.tsx
+msgid "Nic się jeszcze nie wydarzyło w Twoich grupach."
+msgstr "Nic się jeszcze nie wydarzyło w Twoich grupach."
+
 #: src/app/g/[token]/me.tsx
 msgid "Nie ma mnie na liście"
 msgstr "Nie ma mnie na liście"
@@ -749,6 +783,10 @@ msgstr "Nie udało się utworzyć linku."
 msgid "Nie udało się utworzyć rachunku. Spróbuj ponownie."
 msgstr "Nie udało się utworzyć rachunku. Spróbuj ponownie."
 
+#: src/app/(app)/activity.tsx
+msgid "Nie udało się wczytać aktywności."
+msgstr "Nie udało się wczytać aktywności."
+
 #: src/app/(app)/groups/[groupId]/settle.tsx
 #: src/features/profile/payout-details-section.tsx
 msgid "Nie udało się wczytać danych do spłaty."
@@ -775,9 +813,18 @@ msgstr "Nie udało się wczytać linku grupy."
 msgid "Nie udało się wczytać wpisów."
 msgstr "Nie udało się wczytać wpisów."
 
+#: src/app/(app)/groups/[groupId]/receipt.tsx
+#: src/features/photos/receipt-photo.tsx
+msgid "Nie udało się wczytać zdjęcia paragonu."
+msgstr "Nie udało się wczytać zdjęcia paragonu."
+
 #: src/app/(auth)/sign-in.tsx
 msgid "Nie udało się wysłać kodu. Spróbuj ponownie."
 msgstr "Nie udało się wysłać kodu. Spróbuj ponownie."
+
+#: src/features/photos/photo-messages.ts
+msgid "Nie udało się wysłać zdjęcia. Spróbuj ponownie."
+msgstr "Nie udało się wysłać zdjęcia. Spróbuj ponownie."
 
 #: src/features/groups/attendance-grid-view.tsx
 msgid "Nie udało się zapisać obecności. Spróbuj ponownie."
@@ -827,6 +874,7 @@ msgstr "Nieprawidłowy lub wygasły kod."
 
 #: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
 #: src/app/g/[token]/entries/[entryId].tsx
+#: src/features/activity/activity-row.tsx
 #: src/features/history/change-row.tsx
 msgid "nieznana osoba"
 msgstr "nieznana osoba"
@@ -942,6 +990,10 @@ msgstr "Otrzymujący: {value}"
 msgid "Otwiera historię wpisu"
 msgstr "Otwiera historię wpisu"
 
+#: src/features/photos/receipt-photo.tsx
+msgid "Otwiera zdjęcie na pełnym ekranie"
+msgstr "Otwiera zdjęcie na pełnym ekranie"
+
 #: src/features/web-view/web-footer.tsx
 msgid "Otwórz w aplikacji"
 msgstr "Otwórz w aplikacji"
@@ -949,6 +1001,11 @@ msgstr "Otwórz w aplikacji"
 #: src/features/entries/use-entry-labels.ts
 msgid "Paliwo"
 msgstr "Paliwo"
+
+#: src/features/photos/receipt-field.tsx
+#: src/features/photos/receipt-photo.tsx
+msgid "Paragon"
+msgstr "Paragon"
 
 #: src/features/entries/composer.tsx
 msgid "Pełny formularz wydatku"
@@ -1182,6 +1239,7 @@ msgstr "spłatę {from} → {to}"
 msgid "split-pay, wersja {version}"
 msgstr "split-pay, wersja {version}"
 
+#: src/app/(app)/activity.tsx
 #: src/app/(app)/groups/[groupId]/index.tsx
 #: src/app/(app)/groups/[groupId]/settle.tsx
 #: src/app/(app)/groups/[groupId]/unsent-entry.tsx
@@ -1326,6 +1384,7 @@ msgstr "Twoje zmiany nie zostały zapisane."
 #: src/app/(app)/groups/[groupId]/info.tsx
 #: src/app/g/[token]/balances.tsx
 #: src/app/g/[token]/info.tsx
+#: src/features/activity/activity-row.tsx
 #: src/features/entries/split-fields.tsx
 #: src/features/settlements/settlement-message.ts
 msgid "Ty"
@@ -1408,6 +1467,11 @@ msgstr "Usuń na zawsze"
 #: src/app/(app)/groups/[groupId]/unsent-entry.tsx
 msgid "Usuń wpis"
 msgstr "Usuń wpis"
+
+#: src/features/photos/avatar-section.tsx
+#: src/features/photos/receipt-field.tsx
+msgid "Usuń zdjęcie"
+msgstr "Usuń zdjęcie"
 
 #: src/features/groups/group-lifecycle-section.tsx
 msgid "Usunąć grupę „{name}” na zawsze?"
@@ -1661,6 +1725,10 @@ msgstr "Wyślij kod ponownie"
 msgid "Wyślij link"
 msgstr "Wyślij link"
 
+#: src/features/photos/receipt-field.tsx
+msgid "Z galerii"
+msgstr "Z galerii"
+
 #: src/app/(app)/quick-bill.tsx
 msgid "Z kim"
 msgstr "Z kim"
@@ -1710,6 +1778,7 @@ msgstr "założyciel"
 #: src/app/(app)/groups/[groupId]/entry-conflict.tsx
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
 #: src/app/(app)/groups/[groupId]/member.tsx
+#: src/app/(app)/groups/[groupId]/receipt.tsx
 #: src/app/(app)/groups/[groupId]/settle.tsx
 #: src/app/(app)/groups/[groupId]/unsent-entry.tsx
 #: src/app/g/[token]/entries/[entryId].tsx
@@ -1724,6 +1793,10 @@ msgstr "Zanim twoja zmiana dotarła na serwer, ktoś inny zmienił ten wpis."
 #: src/features/profile/payout-details-section.tsx
 msgid "Zapisano."
 msgstr "Zapisano."
+
+#: src/features/photos/avatar-section.tsx
+msgid "Zapisuję…"
+msgstr "Zapisuję…"
 
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
 #: src/app/(app)/groups/[groupId]/member.tsx
@@ -1765,6 +1838,25 @@ msgstr "Zarchiwizowano grupę"
 msgid "Zaznacz co najmniej jeden dzień: {0}"
 msgstr "Zaznacz co najmniej jeden dzień: {0}"
 
+#: src/features/photos/photo-messages.ts
+msgid "Zdjęcia są teraz niedostępne. Spróbuj później."
+msgstr "Zdjęcia są teraz niedostępne. Spróbuj później."
+
+#: src/features/photos/photo-messages.ts
+msgid "Zdjęcie jest za duże (maks. {megabytes} MB)."
+msgstr "Zdjęcie jest za duże (maks. {megabytes} MB)."
+
+#: src/app/(app)/groups/[groupId]/receipt.tsx
+#: src/features/entries/composer.tsx
+#: src/features/photos/receipt-field.tsx
+#: src/features/photos/receipt-photo.tsx
+msgid "Zdjęcie paragonu"
+msgstr "Zdjęcie paragonu"
+
+#: src/features/entries/entry-bubble.tsx
+msgid "ze zdjęciem paragonu"
+msgstr "ze zdjęciem paragonu"
+
 #: src/app/(app)/groups/[groupId]/info.tsx
 msgid "Zmień"
 msgstr "Zmień"
@@ -1777,6 +1869,10 @@ msgstr "Zmień adres e-mail"
 #: src/app/(app)/groups/[groupId]/member.tsx
 msgid "Zmień imię"
 msgstr "Zmień imię"
+
+#: src/features/photos/avatar-section.tsx
+msgid "Zmień zdjęcie"
+msgstr "Zmień zdjęcie"
 
 #: src/app/g/[token]/info.tsx
 msgid "Zmień, kim jestem"
@@ -1806,3 +1902,11 @@ msgstr "Zmieniono ustawienia grupy"
 #: src/features/history/describe-change.ts
 msgid "Zmieniono zdjęcie paragonu"
 msgstr "Zmieniono zdjęcie paragonu"
+
+#: src/features/photos/avatar-section.tsx
+msgid "Zrób zdjęcie"
+msgstr "Zrób zdjęcie"
+
+#: src/features/entries/composer.tsx
+msgid "Zrób zdjęcie, potem uzupełnij wydatek"
+msgstr "Zrób zdjęcie, potem uzupełnij wydatek"

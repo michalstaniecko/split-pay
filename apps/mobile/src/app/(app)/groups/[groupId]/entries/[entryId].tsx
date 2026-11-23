@@ -12,6 +12,7 @@ import { editScreen, lockedOffline } from '@/features/entries/entry-edit';
 import { useEntryLabels } from '@/features/entries/use-entry-labels';
 import { type GroupDetail, groupQuery } from '@/features/groups/groups-query';
 import { useIsOnline } from '@/features/offline/use-offline-sync';
+import { ReceiptPhoto } from '@/features/photos/receipt-photo';
 import { formatRate } from '@/features/rates/rate-format';
 import { useLocale } from '@/i18n/locale-provider';
 import { useFormatters } from '@/i18n/use-formatters';
@@ -24,7 +25,7 @@ import { closeSheet } from '@/lib/close-sheet';
  * replaces the sheet with the full form in edit mode (the settle sheet for a
  * settlement).
  * "edytowano" opens the entry's change history (#20).
- * Later slices add: the receipt photo (#26).
+ * The receipt photo (#26) opens a full-screen viewer.
  */
 export default function EntryDetailSheet() {
   const { t } = useLingui();
@@ -96,6 +97,7 @@ function EntryDetail({ group, entry }: { group: GroupDetail; entry: Entry }) {
               </Row>
             ))}
           </Section>
+          {entry.receiptPhotoId !== null ? <ReceiptPhoto groupId={group.id} entryId={entry.id} /> : null}
         </>
       )}
       <Text style={styles.meta}>{t`Dodał(a) ${addedBy}, ${format.dateTime(entry.createdAt)}`}</Text>

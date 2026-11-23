@@ -105,3 +105,22 @@ const field = (entry: Entry, key: EntryField): unknown => (entry as Record<strin
 export function changedEntryFields(before: Entry, after: Entry): EntryField[] {
   return ENTRY_FIELDS.filter((key) => JSON.stringify(field(before, key)) !== JSON.stringify(field(after, key)));
 }
+
+/**
+ * One item of the Activity feed (#21): a recorded change from one of the
+ * user's groups, with the group it happened in and whether the user made it
+ * (Activity's unread dot only counts changes by others).
+ */
+export type ActivityItem = Change & {
+  group: { id: Id; name: string; emoji: string; color: string };
+  byMe: boolean;
+};
+
+/** A page of `GET /activity`, newest first. */
+export interface ActivityPage {
+  items: ActivityItem[];
+  /** Current names of the members the items mention (actors and targets), by member id. */
+  memberNames: Record<Id, string>;
+  /** Pass as `cursor` for the next (older) page; `null` on the last page. */
+  nextCursor: string | null;
+}

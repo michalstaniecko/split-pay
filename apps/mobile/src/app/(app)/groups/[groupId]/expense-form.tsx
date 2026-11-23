@@ -1,6 +1,6 @@
 import { useLingui } from '@lingui/react/macro';
 import { Category, LocalDate, minorUnitDigits } from '@split-pay/shared';
-import { useQuery } from '@tanstack/react-query';
+import { onlineManager, useQuery } from '@tanstack/react-query';
 import { randomUUID } from 'expo-crypto';
 import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -39,6 +39,17 @@ import { useEntryLabels } from '@/features/entries/use-entry-labels';
 import { type GroupDetail, groupQuery } from '@/features/groups/groups-query';
 import { ratesQuery } from '@/features/rates/rates-query';
 import { LockedOfflineError, OutboxBlockedError } from '@/features/offline/offline-changes';
+import { pendingReceipt } from '@/features/photos/pending-receipt';
+import {
+  type PhotoProblem,
+  photoProblem,
+  type ReceiptDraft,
+  receiptDraftFromEntry,
+  receiptPhotoIdToSave,
+  withUploadedReceipt,
+} from '@/features/photos/photo-draft';
+import { receiptsQuery, uploadReceipt } from '@/features/photos/photos-query';
+import { ReceiptField } from '@/features/photos/receipt-field';
 import { useFormatters } from '@/i18n/use-formatters';
 import { authClient } from '@/lib/auth-client';
 import { closeSheet } from '@/lib/close-sheet';
@@ -50,7 +61,8 @@ import { closeSheet } from '@/lib/close-sheet';
  * Expense or income (#13; the payers field picks the recipients), payer(s),
  * date, category, split modes with a live preview of every member's share
  * (#12), currency with the frozen rate (#14, prefilled with the ECB rate for
- * the date, editable). Later: receipt (#26).
+ * the date, editable) and the receipt photo (#26; 📷 in the composer opens
+ * the form with the photo it just took, see `pendingReceipt`).
  * With `?entryId=` it is the edit screen (#11, long-press "Edytuj" or "Edytuj"
  * in the entry detail): prefilled from the cached entry, saved with the
  * version it was based on; a version conflict closes it and marks the bubble.
@@ -96,6 +108,15 @@ function ExpenseFormView({ group, editing }: { group: GroupDetail; editing?: For
     }),
   );
   const [errors, setErrors] = useState<ExpenseFormField[]>([]);
+  // The receipt is uploaded on save, before the entry that points at it.
+  const [receipt, setReceipt] = useState<ReceiptDraft>(() => {
+    if (editing) return receiptDraftFromEntry(editing);
+    const taken = pendingReceipt.get(group.id);
+    return taken ? { kind: 'local', photo: taken } : { kind: 'none' };
+  });
+  const [uploading, setUploading] = useState(false);
+  const [receiptProblem, setReceiptProblem] = useState<PhotoProblem | null>(null);
+  const storedReceipts = useQuery({ ...receiptsQuery(group.id), enabled: receipt.kind === 'stored' });
   const createEntry = useCreateEntry(group.id);
   const editEntry = useEditEntry(group.id);
   const [deletedMeanwhile, setDeletedMeanwhile] = useState(false);
@@ -128,15 +149,44 @@ function ExpenseFormView({ group, editing }: { group: GroupDetail; editing?: For
     { kind: 'income', label: t`↓ Wpływ` },
   ];
 
-  const submit = () => {
+  /**
+   * The receipt's photo id, uploading a new photo first; `undefined` when the upload failed.
+   * The upload needs the network: offline, the entry is not queued (#22's outbox
+   * carries no photos) and the form keeps the photo with the upload error.
+   */
+  const savedReceiptId = async (entryId: string): Promise<string | null | undefined> => {
+    const ready = receiptPhotoIdToSave(receipt);
+    if (ready !== undefined || receipt.kind !== 'local') return ready;
+    if (!onlineManager.isOnline()) {
+      setReceiptProblem('upload_failed');
+      return undefined;
+    }
+    setUploading(true);
+    setReceiptProblem(null);
+    try {
+      const photoId = await uploadReceipt(group.id, entryId, receipt.photo);
+      // A retried save reuses this upload.
+      setReceipt(withUploadedReceipt(receipt, photoId));
+      return photoId;
+    } catch (error) {
+      setReceiptProblem(photoProblem(error));
+      return undefined;
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const submit = async () => {
     if (editing) {
       const parsed = editedEntry(editing, form, { group, members: group.members });
       if (!parsed.ok) {
         setErrors(parsed.errors);
         return;
       }
+      const receiptPhotoId = await savedReceiptId(editing.id);
+      if (receiptPhotoId === undefined) return;
       editEntry.mutate(
-        { base: editing, input: parsed.value },
+        { base: editing, input: { ...parsed.value, receiptPhotoId } },
         {
           onSuccess: closeSheet,
           onError: (error) => {
@@ -154,9 +204,12 @@ function ExpenseFormView({ group, editing }: { group: GroupDetail; editing?: For
       setErrors(parsed.errors);
       return;
     }
-    createEntry.mutate(parsed.value, {
+    const receiptPhotoId = await savedReceiptId(id);
+    if (receiptPhotoId === undefined) return;
+    createEntry.mutate({ ...parsed.value, receiptPhotoId }, {
       onSuccess: () => {
         composerStore.clear(group.id);
+        pendingReceipt.clear(group.id);
         closeSheet();
       },
     });
@@ -336,6 +389,16 @@ function ExpenseFormView({ group, editing }: { group: GroupDetail; editing?: For
           onChangeParticipants={(participantIds) => update({ ...form, participantIds }, ['split'])}
         />
 
+        <ReceiptField
+          draft={receipt}
+          storedUrl={receipt.kind === 'stored' ? storedReceipts.data?.get(editing?.id ?? '')?.url : undefined}
+          problem={receiptProblem}
+          onChange={(next) => {
+            setReceipt(next);
+            setReceiptProblem(null);
+          }}
+        />
+
         {deletedMeanwhile ? (
           <Text style={styles.error}>{t`Ktoś usunął ten wpis w międzyczasie. Twoje zmiany nie zostały zapisane.`}</Text>
         ) : saving.error instanceof OutboxBlockedError ? (
@@ -352,7 +415,12 @@ function ExpenseFormView({ group, editing }: { group: GroupDetail; editing?: For
           </Text>
         ) : null}
 
-        <Button label={t`Zapisz`} onPress={submit} loading={saving.isPending} disabled={deletedMeanwhile} />
+        <Button
+          label={t`Zapisz`}
+          onPress={() => void submit()}
+          loading={saving.isPending || uploading}
+          disabled={deletedMeanwhile}
+        />
         <Button variant="secondary" label={t`Anuluj`} onPress={closeSheet} />
       </ScrollView>
     </KeyboardAvoidingView>

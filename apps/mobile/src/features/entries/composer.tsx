@@ -1,10 +1,12 @@
 import { useLingui } from '@lingui/react/macro';
-import { type Member, minorUnitDigits } from '@split-pay/shared';
+import { type Member, minorUnitDigits, RECEIPT_MAX_DIMENSION } from '@split-pay/shared';
 import { randomUUID } from 'expo-crypto';
 import { type ComponentRef, useRef, useState } from 'react';
 import { Platform, Pressable, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
+import { pendingReceipt } from '@/features/photos/pending-receipt';
+import { takeOrPickPhoto } from '@/features/photos/pick-photo';
 import { cleanAmountInput } from './amount-input';
 import { useComposerDraft } from './composer-store';
 import { useCreateEntry } from './entries-query';
@@ -14,7 +16,8 @@ import { canSendComposer, composerExpense, type ExpenseGroup, todayLocalDate } f
  * The Conversation's composer: amount + title (two fields mirroring the data
  * model, ADR-0017). Amount comes first — "next" moves to the title, whose
  * return key sends. Send creates an equal-split expense paid by me on the
- * default date (`composerExpense`). "+" opens the full form with these values.
+ * default date (`composerExpense`). "+" opens the full form with these values;
+ * 📷 takes the receipt photo first, then opens the same form with it (#26).
  */
 export function Composer({
   group,
@@ -37,6 +40,21 @@ export function Composer({
   const createEntry = useCreateEntry(group.id);
   const digits = minorUnitDigits(group.baseCurrency);
   const canSend = canSendComposer(draft, digits) && myMemberId !== null && !createEntry.isPending;
+
+  const [takingPhoto, setTakingPhoto] = useState(false);
+  const takeReceipt = async () => {
+    setTakingPhoto(true);
+    try {
+      const result = await takeOrPickPhoto({ maxDimension: RECEIPT_MAX_DIMENSION });
+      if (result.status !== 'picked') return;
+      pendingReceipt.set(group.id, result.photo);
+      onOpenForm();
+    } catch {
+      // Couldn't read the photo; nothing to attach.
+    } finally {
+      setTakingPhoto(false);
+    }
+  };
 
   const send = () => {
     if (!canSend) return;
@@ -61,6 +79,17 @@ export function Composer({
           onPress={onOpenForm}
           style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}>
           <Text style={styles.plus}>+</Text>
+        </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t`Zdjęcie paragonu`}
+          accessibilityHint={t`Zrób zdjęcie, potem uzupełnij wydatek`}
+          accessibilityState={{ busy: takingPhoto }}
+          disabled={takingPhoto}
+          hitSlop={8}
+          onPress={() => void takeReceipt()}
+          style={({ pressed }) => [styles.iconButton, (pressed || takingPhoto) && styles.pressed]}>
+          <Text style={styles.camera}>📷</Text>
         </Pressable>
         <View style={styles.amountField}>
           <TextInput
@@ -130,6 +159,9 @@ const styles = StyleSheet.create((theme) => ({
   plus: {
     fontSize: theme.font.sizeXl,
     color: theme.colors.primary,
+  },
+  camera: {
+    fontSize: theme.font.sizeMd,
   },
   pressed: {
     opacity: 0.6,

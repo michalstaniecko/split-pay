@@ -6,6 +6,7 @@ import { StyleSheet } from 'react-native-unistyles';
 import { Button } from '@/components/button';
 import { LanguagePicker } from '@/components/language-picker';
 import { PlaceholderScreen } from '@/components/placeholder-screen';
+import { AvatarSection } from '@/features/photos/avatar-section';
 import { NotificationsSection } from '@/features/notifications/notification-switches';
 import { unregisterFromPush } from '@/features/notifications/push';
 import { AboutSection } from '@/features/profile/about-section';
@@ -37,6 +38,7 @@ export default function ProfileScreen() {
     // Scrolls: Profile is taller than a small phone screen ("Usuń konto" is last).
     <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
       <PlaceholderScreen title={t`Profil`}>
+        <AvatarSection />
         <View style={styles.account}>
           <Text style={styles.label}>{t`Zalogowano jako`}</Text>
           <Text style={styles.email} selectable>

@@ -6,20 +6,25 @@ import type { Auth } from './auth';
 import type { Db } from './db/client';
 import { type AuthEnv, createRequireUser } from './middleware/require-user';
 import { deleteAccount } from './routes/account';
+import { activityRoutes } from './routes/activity';
 import { linksRoutes } from './routes/group-links';
 import { groupsRoutes } from './routes/groups';
 import { myNotificationSettingsRoutes, myPushTokenRoutes } from './routes/notifications';
 import { openGraphRoutes } from './routes/open-graph';
 import { myPayoutDetailsRoutes } from './routes/payout-details';
+import { myAvatarRoutes } from './routes/photos';
 import { publicViewRoutes } from './routes/public-view';
 import { quickBillsRoutes } from './routes/quick-bills';
 import { ratesRoutes } from './routes/rates';
+import type { ObjectStorage } from './storage/object-storage';
 
 export interface AppDeps {
   auth: Auth;
   db: Db;
   /** Feature flags served to the apps; defaults (all off) when omitted. */
   flags?: FeatureFlags;
+  /** Photo bucket (ADR-0006); photo routes answer 503 when omitted. */
+  storage?: ObjectStorage;
   /** Origin of the web app (`WEB_URL`), where link previews send people; unset until the domain exists. */
   webUrl?: string | undefined;
 }
@@ -30,7 +35,7 @@ export interface AppDeps {
  * Keep routes chained in one expression (or `.route()` chained sub-apps) —
  * the typed client (`hc`) infers its types from this chain.
  */
-export const createApp = ({ auth, db, flags = defaultFeatureFlags, webUrl }: AppDeps) => {
+export const createApp = ({ auth, db, flags = defaultFeatureFlags, storage, webUrl }: AppDeps) => {
   const requireUser = createRequireUser(auth);
 
   return (
@@ -47,15 +52,19 @@ export const createApp = ({ auth, db, flags = defaultFeatureFlags, webUrl }: App
       })
       /** Account deletion (ADR-0010): personal data goes, the user's members stay without an account. */
       .delete('/me', requireUser, zValidator('json', AccountDeletion), async (c) => {
-        await deleteAccount(db, c.get('user'), c.req.valid('json').locale);
+        await deleteAccount(db, c.get('user'), c.req.valid('json').locale, storage);
         return c.json({ deleted: true as const });
       })
       /** My payout details (Profile). */
       .route('/me/payout-details', myPayoutDetailsRoutes({ db, requireUser }))
+      /** My avatar (Profile): upload, set, remove. */
+      .route('/me/avatar', myAvatarRoutes({ db, requireUser, storage }))
       /** Push notifications (#24): this device's token and the global switch. */
       .route('/me/push-tokens', myPushTokenRoutes({ db, requireUser }))
       .route('/me/notifications', myNotificationSettingsRoutes({ db, requireUser }))
-      .route('/groups', groupsRoutes({ db, requireUser }))
+      .route('/groups', groupsRoutes({ db, requireUser, storage }))
+      /** Activity: changes from all my groups, newest first (#21). */
+      .route('/activity', activityRoutes({ db, requireUser }))
       /** Quick bill: group + members without an account + its expense in one step. */
       .route('/quick-bills', quickBillsRoutes({ db, requireUser }))
       /** Opening a group link in the app: preview + join. */
