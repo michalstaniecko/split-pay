@@ -6,6 +6,7 @@ import type { Db } from './db/client';
 import { type AuthEnv, createRequireUser } from './middleware/require-user';
 import { linksRoutes } from './routes/group-links';
 import { groupsRoutes } from './routes/groups';
+import { myPayoutDetailsRoutes } from './routes/payout-details';
 import { quickBillsRoutes } from './routes/quick-bills';
 
 export interface AppDeps {
@@ -36,6 +37,8 @@ export const createApp = ({ auth, db, flags = defaultFeatureFlags }: AppDeps) =>
         const user = c.get('user');
         return c.json({ id: user.id, email: user.email, name: user.name });
       })
+      /** My payout details (Profile). */
+      .route('/me/payout-details', myPayoutDetailsRoutes({ db, requireUser }))
       .route('/groups', groupsRoutes({ db, requireUser }))
       /** Quick bill: group + members without an account + its expense in one step. */
       .route('/quick-bills', quickBillsRoutes({ db, requireUser }))
