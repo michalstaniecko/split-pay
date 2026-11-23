@@ -1,5 +1,7 @@
 import type { LocalDb } from './local-db';
-import { openLocalDb } from './open-local-db';
+import { deleteLocalDbFile, openLocalDb } from './open-local-db';
+
+const fileName = (userId: string) => `split-pay-${userId}.db`;
 
 let current: { userId: string; db: Promise<LocalDb> } | null = null;
 
@@ -10,7 +12,7 @@ let current: { userId: string; db: Promise<LocalDb> } | null = null;
  */
 export function selectLocalUser(userId: string): void {
   if (current?.userId === userId) return;
-  const db = openLocalDb(`split-pay-${userId}.db`);
+  const db = openLocalDb(fileName(userId));
   // A failed open is retried on the next call instead of being cached.
   db.catch(() => {
     if (current?.db === db) current = null;
@@ -28,4 +30,19 @@ export function localDb(): Promise<LocalDb> {
 export function localUserId(): string {
   if (!current) throw new Error('No signed-in user selected for the offline cache');
   return current.userId;
+}
+
+/**
+ * Deletes the user's local database file (cache + outbox) — after the account
+ * was deleted (#28), nothing of it may stay on the device. Call after
+ * signing out, so the signed-in layout doesn't select it again.
+ */
+export async function forgetLocalUser(userId: string): Promise<void> {
+  if (current?.userId === userId) {
+    const { db } = current;
+    current = null;
+    // Let a pending open finish before closing its file.
+    await db.catch(() => undefined);
+  }
+  await deleteLocalDbFile(fileName(userId));
 }
