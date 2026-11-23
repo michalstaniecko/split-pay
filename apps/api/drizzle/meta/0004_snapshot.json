@@ -1,5 +1,5 @@
 {
-  "id": "d47c8302-7af5-489a-bb1f-828ef5323ab8",
+  "id": "aa288d7c-644b-4cbc-9ea6-6c193fe5e219",
   "prevId": "aefb0ab4-997f-45e8-b5b4-ad4341a06023",
   "version": "7",
   "dialect": "postgresql",
@@ -879,30 +879,154 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.payout_details": {
-      "name": "payout_details",
+    "public.claims": {
+      "name": "claims",
       "schema": "",
       "columns": {
-        "user_id": {
-          "name": "user_id",
+        "id": {
+          "name": "id",
           "type": "uuid",
           "primaryKey": true,
           "notNull": true
         },
-        "bank_account": {
-          "name": "bank_account",
-          "type": "text",
+        "group_id": {
+          "name": "group_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "member_id": {
+          "name": "member_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
           "primaryKey": false,
           "notNull": false
         },
-        "blik_phone": {
-          "name": "blik_phone",
+        "claimer_name": {
+          "name": "claimer_name",
           "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "claimed_at": {
+          "name": "claimed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "undone_at": {
+          "name": "undone_at",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
         },
-        "updated_at": {
-          "name": "updated_at",
+        "undone_by_member_id": {
+          "name": "undone_by_member_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "claims_group_id_claimed_at_idx": {
+          "name": "claims_group_id_claimed_at_idx",
+          "columns": [
+            {
+              "expression": "group_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "claimed_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "claims_group_id_groups_id_fk": {
+          "name": "claims_group_id_groups_id_fk",
+          "tableFrom": "claims",
+          "tableTo": "groups",
+          "columnsFrom": [
+            "group_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "claims_member_id_members_id_fk": {
+          "name": "claims_member_id_members_id_fk",
+          "tableFrom": "claims",
+          "tableTo": "members",
+          "columnsFrom": [
+            "member_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "claims_user_id_user_id_fk": {
+          "name": "claims_user_id_user_id_fk",
+          "tableFrom": "claims",
+          "tableTo": "user",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.member_claim_links": {
+      "name": "member_claim_links",
+      "schema": "",
+      "columns": {
+        "member_id": {
+          "name": "member_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "group_id": {
+          "name": "group_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "token": {
+          "name": "token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
@@ -911,12 +1035,25 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "payout_details_user_id_user_id_fk": {
-          "name": "payout_details_user_id_user_id_fk",
-          "tableFrom": "payout_details",
-          "tableTo": "user",
+        "member_claim_links_member_id_members_id_fk": {
+          "name": "member_claim_links_member_id_members_id_fk",
+          "tableFrom": "member_claim_links",
+          "tableTo": "members",
           "columnsFrom": [
-            "user_id"
+            "member_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "member_claim_links_group_id_groups_id_fk": {
+          "name": "member_claim_links_group_id_groups_id_fk",
+          "tableFrom": "member_claim_links",
+          "tableTo": "groups",
+          "columnsFrom": [
+            "group_id"
           ],
           "columnsTo": [
             "id"
@@ -926,7 +1063,15 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
+      "uniqueConstraints": {
+        "member_claim_links_token_unique": {
+          "name": "member_claim_links_token_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "token"
+          ]
+        }
+      },
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false

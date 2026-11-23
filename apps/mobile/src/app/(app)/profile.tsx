@@ -5,7 +5,9 @@ import { ScrollView, Text, View } from 'react-native';
 import { StyleSheet } from 'react-native-unistyles';
 import { Button } from '@/components/button';
 import { LanguagePicker } from '@/components/language-picker';
+import { PlaceholderScreen } from '@/components/placeholder-screen';
 import { AboutSection } from '@/features/profile/about-section';
+import { DeleteAccountSection } from '@/features/profile/delete-account-section';
 import { meQuery } from '@/features/profile/me-query';
 import { PayoutDetailsSection } from '@/features/profile/payout-details-section';
 import { ThemePicker } from '@/features/theme/theme-picker';
@@ -28,33 +30,29 @@ export default function ProfileScreen() {
   };
 
   return (
-    // Scrolls: the Profile is taller than a small phone screen.
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-      <View style={styles.account}>
-        <Text style={styles.label}>{t`Zalogowano jako`}</Text>
-        <Text style={styles.email} selectable>
-          {email}
-        </Text>
-      </View>
-      <PayoutDetailsSection />
-      <LanguagePicker />
-      <ThemePicker />
-      <Button variant="secondary" label={t`Wyloguj się`} onPress={() => void signOut()} loading={signingOut} />
-      <AboutSection />
+    // Scrolls: Profile is taller than a small phone screen ("Usuń konto" is last).
+    <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+      <PlaceholderScreen title={t`Profil`}>
+        <View style={styles.account}>
+          <Text style={styles.label}>{t`Zalogowano jako`}</Text>
+          <Text style={styles.email} selectable>
+            {email}
+          </Text>
+        </View>
+        <PayoutDetailsSection />
+        <LanguagePicker />
+        <ThemePicker />
+        <Button variant="secondary" label={t`Wyloguj się`} onPress={() => void signOut()} loading={signingOut} />
+        <AboutSection />
+        <DeleteAccountSection />
+      </PlaceholderScreen>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create((theme) => ({
-  screen: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-  },
-  content: {
-    alignItems: 'center',
-    gap: theme.space(4),
-    padding: theme.space(6),
-    paddingBottom: theme.space(12),
+  scroll: {
+    flexGrow: 1,
   },
   account: {
     alignSelf: 'stretch',

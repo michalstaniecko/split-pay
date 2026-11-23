@@ -111,7 +111,7 @@ describe('memberShare', () => {
 });
 
 describe('dailyTotals', () => {
-  it("sums each day's expenses in the base currency, skipping incomes, settlements and deleted entries", () => {
+  it("sums each day's expenses minus incomes in the base currency, skipping settlements and deleted entries", () => {
     const entries = [
       ...trip,
       settlement({ date: '2026-07-11', amount: 500, from: ANIA, to: BARTEK }),
@@ -129,8 +129,30 @@ describe('dailyTotals', () => {
         ['2026-07-11', 12_000],
         ['2026-07-12', 20_000],
         ['2026-07-13', 8_500],
+        // The deposit refund: money back to the group, not spending.
+        ['2026-07-14', -40_000],
       ]),
     );
+  });
+
+  it('an income on a day with expenses reduces that day\'s total by its amount in the base currency', () => {
+    const entries = [
+      expense({
+        date: '2026-07-10',
+        amount: 30_000,
+        payers: [{ memberId: ANIA, amount: 30_000 }],
+        split: { mode: 'equal', memberIds: [ANIA, BARTEK] },
+      }),
+      income({
+        date: '2026-07-10',
+        amount: 1_000,
+        currency: 'EUR',
+        rateToBase: '4.25',
+        recipients: [{ memberId: BARTEK, amount: 1_000 }],
+        split: { mode: 'equal', memberIds: [ANIA, BARTEK, KASIA] },
+      }),
+    ];
+    expect(dailyTotals(entries, 'PLN')).toEqual(new Map([['2026-07-10', 30_000 - 4_250]]));
   });
 });
 

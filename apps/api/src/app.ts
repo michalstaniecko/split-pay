@@ -1,9 +1,11 @@
-import { defaultFeatureFlags, type FeatureFlags } from '@split-pay/shared';
+import { zValidator } from '@hono/zod-validator';
+import { AccountDeletion, defaultFeatureFlags, type FeatureFlags } from '@split-pay/shared';
 import { Hono } from 'hono';
 import { logger } from 'hono/logger';
 import type { Auth } from './auth';
 import type { Db } from './db/client';
 import { type AuthEnv, createRequireUser } from './middleware/require-user';
+import { deleteAccount } from './routes/account';
 import { linksRoutes } from './routes/group-links';
 import { groupsRoutes } from './routes/groups';
 import { myPayoutDetailsRoutes } from './routes/payout-details';
@@ -36,6 +38,11 @@ export const createApp = ({ auth, db, flags = defaultFeatureFlags }: AppDeps) =>
       .get('/me', requireUser, (c) => {
         const user = c.get('user');
         return c.json({ id: user.id, email: user.email, name: user.name });
+      })
+      /** Account deletion (ADR-0010): personal data goes, the user's members stay without an account. */
+      .delete('/me', requireUser, zValidator('json', AccountDeletion), async (c) => {
+        await deleteAccount(db, c.get('user'), c.req.valid('json').locale);
+        return c.json({ deleted: true as const });
       })
       /** My payout details (Profile). */
       .route('/me/payout-details', myPayoutDetailsRoutes({ db, requireUser }))

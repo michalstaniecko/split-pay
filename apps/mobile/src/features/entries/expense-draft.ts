@@ -2,6 +2,7 @@ import {
   type Category,
   type CurrencyCode,
   defaultEntryDate,
+  defaultParticipants,
   equalExpenseDefaults,
   type Group,
   LocalDate,
@@ -9,6 +10,7 @@ import {
   minorUnitDigits,
   type NewExpense,
   NewEntry,
+  participantsOnDateChange,
   suggestCategory,
 } from '@split-pay/shared';
 import { parseAmountInput } from './amount-input';
@@ -75,25 +77,72 @@ export interface ExpenseForm {
   category: Category;
   /** The user picked a category — stop suggesting it from the title. */
   categoryChosen: boolean;
+  /**
+   * Equal-split participants. They start as the members present on the date
+   * and follow attendance when it changes, unless hand-picked (#15). Empty =
+   * nobody present that day, which saves as everyone.
+   */
+  participantIds: string[];
+  /** The last valid date `participantIds` were resolved for (`date` may be half-typed). */
+  participantsDate: LocalDate;
+  /**
+   * Expense (default) or income (#13): for an income `payerMemberId` is the
+   * recipient — the person chips read "Otrzymał(a)" instead of "Zapłacił(a)".
+   */
+  kind?: ExpenseFormKind;
+}
+
+/** What the full form saves; settlements have their own sheet. */
+export type ExpenseFormKind = 'expense' | 'income';
+
+/** A new income, as the full form sends it. */
+export type NewIncome = Extract<NewEntry, { kind: 'income' }>;
+
+/** The same entry as an income: payers become recipients, everything else stays (a reversed expense). */
+export function asIncome(expense: NewExpense): NewIncome {
+  const { kind: _kind, payers, ...fields } = expense;
+  return { kind: 'income', ...fields, recipients: payers };
 }
 
 export type ExpenseFormField = 'amount' | 'title' | 'payer' | 'date';
 const FIELDS: readonly ExpenseFormField[] = ['amount', 'title', 'payer', 'date'];
 
-/** The form opened by "+": the composer's values, me as payer, the default date, the suggested category. */
+/**
+ * The form opened by "+": the composer's values, me as payer, the default
+ * date, the members present that day, the suggested category.
+ */
 export function expenseFormFromComposer(input: {
   draft: ComposerDraft;
   group: ExpenseGroup;
+  members: readonly Member[];
   myMemberId: string | null;
   today: LocalDate;
 }): ExpenseForm {
+  const date = defaultEntryDate(input.today, input.group);
   return {
     amount: input.draft.amount,
     title: input.draft.title,
     payerMemberId: input.myMemberId ?? '',
-    date: defaultEntryDate(input.today, input.group),
+    date,
     category: suggestCategory(input.draft.title),
     categoryChosen: false,
+    participantIds: defaultParticipants(input.members, date),
+    participantsDate: date,
+  };
+}
+
+/**
+ * Changes the date as typed. Once it is a valid date, participants follow
+ * attendance on it unless they were hand-picked (`participantsOnDateChange`).
+ */
+export function withDate(form: ExpenseForm, date: string, members: readonly Member[]): ExpenseForm {
+  const next = date.trim();
+  if (!LocalDate.safeParse(next).success || next === form.participantsDate) return { ...form, date };
+  return {
+    ...form,
+    date,
+    participantIds: participantsOnDateChange(members, form.participantIds, form.participantsDate, next),
+    participantsDate: next,
   };
 }
 
@@ -102,9 +151,12 @@ export function withTitle(form: ExpenseForm, title: string): ExpenseForm {
   return { ...form, title, category: form.categoryChosen ? form.category : suggestCategory(title) };
 }
 
-export type ParsedExpenseForm = { ok: true; value: NewExpense } | { ok: false; errors: ExpenseFormField[] };
+export type ParsedExpenseForm = { ok: true; value: NewExpense | NewIncome } | { ok: false; errors: ExpenseFormField[] };
 
-/** Validates the form and builds the equal-split expense (participants: present on the form's date). */
+/**
+ * Validates the form and builds the equal-split expense among the form's
+ * participants — or income, with the payer as its recipient.
+ */
 export function parseExpenseForm(
   form: ExpenseForm,
   context: { id: string; group: ExpenseGroup; members: readonly Member[] },
@@ -118,7 +170,7 @@ export function parseExpenseForm(
   if (!LocalDate.safeParse(date).success) errors.add('date');
   if (errors.size > 0 || amount === null) return { ok: false, errors: FIELDS.filter((f) => errors.has(f)) };
 
-  const value = equalExpenseDefaults({
+  const expense = equalExpenseDefaults({
     id: context.id,
     title: form.title,
     amount,
@@ -128,11 +180,15 @@ export function parseExpenseForm(
     members: context.members,
     category: form.category,
   });
+  // Nobody present that day: everyone takes part, as in `equalExpenseDefaults`.
+  const memberIds = form.participantIds.length > 0 ? form.participantIds : context.members.map((m) => m.id);
+  expense.split = { mode: 'equal', memberIds: [...memberIds] };
+  const value = form.kind === 'income' ? asIncome(expense) : expense;
   // Same schema as the API; catches limits like the title length.
   const checked = NewEntry.safeParse(value);
   if (!checked.success) {
     const invalid = new Set(checked.error.issues.map((i) => i.path[0]));
-    return { ok: false, errors: FIELDS.filter((f) => invalid.has(f === 'payer' ? 'payers' : f)) };
+    return { ok: false, errors: FIELDS.filter((f) => invalid.has(f === 'payer' ? (value.kind === 'income' ? 'recipients' : 'payers') : f)) };
   }
   return { ok: true, value };
 }
