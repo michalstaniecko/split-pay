@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { attendanceFromDays, MemberAttendanceUpdate, presentDays, tripDays } from './attendance';
+import { attendanceFromDays, MemberAttendanceUpdate, participantsOnDateChange, presentDays, tripDays } from './attendance';
+import { ANIA, BARTEK, KASIA, members, TOMEK, ZOSIA } from './test-fixtures';
 
 const trip = { startDate: '2026-07-10', endDate: '2026-07-14' };
 
@@ -84,5 +85,18 @@ describe('MemberAttendanceUpdate', () => {
     ];
     expect(MemberAttendanceUpdate.safeParse({ attendance: touching }).success).toBe(false);
     expect(MemberAttendanceUpdate.safeParse({}).success).toBe(false);
+  });
+});
+
+describe('participantsOnDateChange', () => {
+  // Defaults: 07-11 = Ania, Bartek, Kasia, Zosia; 07-12 = Ania, Bartek, Kasia, Tomek.
+  it('follows attendance while the participants are still the defaults of the previous date', () => {
+    const selected = [ZOSIA, KASIA, ANIA, BARTEK];
+    expect(participantsOnDateChange(members, selected, '2026-07-11', '2026-07-12')).toEqual([ANIA, BARTEK, KASIA, TOMEK]);
+  });
+
+  it('keeps participants the user picked by hand', () => {
+    const selected = [ANIA, ZOSIA];
+    expect(participantsOnDateChange(members, selected, '2026-07-11', '2026-07-12')).toEqual(selected);
   });
 });

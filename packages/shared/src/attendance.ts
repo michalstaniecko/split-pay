@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import { Attendance, type AttendanceRange, type LocalDate, nextDay, normalizeAttendance } from './model';
+import { Attendance, type AttendanceRange, type LocalDate, type Member, nextDay, normalizeAttendance } from './model';
+import { defaultParticipants } from './split';
 
 /**
  * The per-day attendance grid of a trip (Group info) and its mapping to the
@@ -39,6 +40,23 @@ export function attendanceFromDays(days: Iterable<LocalDate>, trip: TripDates): 
   const present = all.filter((day) => ticked.has(day));
   if (present.length === all.length && all.length > 0) return null;
   return normalizeAttendance(present.map((day) => ({ from: day, to: day })));
+}
+
+/**
+ * Split participants after the entry's date changes in a form: while they are
+ * still the defaults of the previous date (in any order), they follow
+ * attendance on the new date (`defaultParticipants`); a hand-picked selection
+ * is kept. The result is snapshotted on save (ADR-0016).
+ */
+export function participantsOnDateChange(
+  members: readonly Member[],
+  selected: readonly Member['id'][],
+  previousDate: LocalDate,
+  nextDate: LocalDate,
+): Member['id'][] {
+  const previous = new Set(defaultParticipants(members, previousDate));
+  const untouched = selected.length === previous.size && selected.every((id) => previous.has(id));
+  return untouched ? defaultParticipants(members, nextDate) : [...selected];
 }
 
 /** Setting a member's attendance (`null` = whole trip). Only the canonical form is accepted. */
