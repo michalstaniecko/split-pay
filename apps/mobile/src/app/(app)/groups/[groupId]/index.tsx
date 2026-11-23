@@ -11,6 +11,7 @@ import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { GroupAvatar } from '@/components/group-avatar';
 import { GroupNotFound } from '@/components/group-not-found';
 import { BalanceBanner } from '@/features/balances/balance-banner';
+import { entryItemIndex } from '@/features/activity/activity';
 import { ClaimMessage } from '@/features/claims/claim-messages';
 import { type Claim, claimsQuery } from '@/features/claims/claims-query';
 import { Composer } from '@/features/entries/composer';
@@ -52,7 +53,8 @@ const HIGHLIGHT_MS = 2000;
 export default function ConversationScreen() {
   const { t } = useLingui();
   const { theme } = useUnistyles();
-  const { groupId } = useLocalSearchParams<{ groupId: string }>();
+  // `entryId`: scroll to that entry's bubble and highlight it (Activity, later push notifications).
+  const { groupId, entryId: focusEntryId } = useLocalSearchParams<{ groupId: string; entryId?: string }>();
   const group = useQuery(groupQuery(groupId));
   const entries = useQuery(entriesQuery(groupId));
   const claims = useQuery(claimsQuery(groupId));
@@ -115,7 +117,13 @@ export default function ConversationScreen() {
               </Pressable>
             </View>
           ) : (
-            <Conversation group={group.data} entries={entries.data} claims={claims.data ?? []} me={me} />
+            <Conversation
+              group={group.data}
+              entries={entries.data}
+              claims={claims.data ?? []}
+              me={me}
+              focusEntryId={focusEntryId}
+            />
           )}
           {group.data.archivedAt === null ? (
             <Composer
@@ -141,11 +149,13 @@ function Conversation({
   entries,
   claims,
   me,
+  focusEntryId,
 }: {
   group: GroupDetail;
   entries: Entry[];
   claims: Claim[];
   me: string | null;
+  focusEntryId?: string | undefined;
 }) {
   const { t } = useLingui();
   const { items, stickyHeaderIndices } = useMemo(
@@ -153,7 +163,9 @@ function Conversation({
     [entries, group.members, me, group.baseCurrency, claims],
   );
   const listRef = useRef<FlashListRef<ConversationItem<Claim>>>(null);
-  const highlightId = useNewEntryHighlight(items, listRef);
+  const newEntryId = useNewEntryHighlight(items, listRef);
+  const focusedId = useFocusEntry(items, listRef, focusEntryId);
+  const highlightId = newEntryId ?? focusedId;
 
   const actions = useEntryActionHandler(group);
   const conflicts = useEntryConflicts(group.id);
@@ -315,6 +327,36 @@ function useNewEntryHighlight(
     const timer = setTimeout(() => setHighlightId(null), HIGHLIGHT_MS);
     return () => clearTimeout(timer);
   }, [items, listRef]);
+
+  return highlightId;
+}
+
+/**
+ * Scrolls to the entry the screen was opened for (`?entryId=`, from Activity)
+ * once, and highlights it briefly. Returns the highlighted entry id.
+ */
+function useFocusEntry(
+  items: ConversationItem<Claim>[],
+  listRef: React.RefObject<FlashListRef<ConversationItem<Claim>> | null>,
+  entryId: string | undefined,
+): string | null {
+  const done = useRef<string | null>(null);
+  const [highlightId, setHighlightId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const index = entryItemIndex(items, entryId);
+    if (index === null || !entryId || done.current === entryId) return;
+    done.current = entryId;
+    // After the list's first layout (it opens at the newest entry).
+    requestAnimationFrame(() => void listRef.current?.scrollToIndex({ index, animated: true, viewPosition: 0.5 }));
+    setHighlightId(entryId);
+  }, [items, listRef, entryId]);
+
+  useEffect(() => {
+    if (highlightId === null) return;
+    const timer = setTimeout(() => setHighlightId(null), HIGHLIGHT_MS);
+    return () => clearTimeout(timer);
+  }, [highlightId]);
 
   return highlightId;
 }

@@ -132,10 +132,13 @@ msgid "Aktualna wersja"
 msgstr "Aktualna wersja"
 
 #: src/app/(app)/_layout.tsx
-#: src/app/(app)/activity.tsx
 #: src/components/inbox-header-buttons.tsx
 msgid "Aktywność"
 msgstr "Aktywność"
+
+#: src/components/inbox-header-buttons.tsx
+msgid "Aktywność, nowe zmiany"
+msgstr "Aktywność, nowe zmiany"
 
 #: src/features/entries/use-entry-labels.ts
 msgid "Alkohol"
@@ -211,10 +214,12 @@ msgstr "Ciemny"
 msgid "Cofnąć tę zmianę?"
 msgstr "Cofnąć tę zmianę?"
 
+#: src/features/activity/activity-row.tsx
 #: src/features/history/change-row.tsx
 msgid "cofnięcie"
 msgstr "cofnięcie"
 
+#: src/features/activity/activity-row.tsx
 #: src/features/history/change-row.tsx
 msgid "cofnięto"
 msgstr "cofnięto"
@@ -630,6 +635,10 @@ msgstr "Należy ci się {amount}"
 msgid "Nazwa"
 msgstr "Nazwa"
 
+#: src/app/(app)/activity.tsx
+msgid "Nic się jeszcze nie wydarzyło w Twoich grupach."
+msgstr "Nic się jeszcze nie wydarzyło w Twoich grupach."
+
 #: src/app/g/[token]/me.tsx
 msgid "Nie ma mnie na liście"
 msgstr "Nie ma mnie na liście"
@@ -715,6 +724,10 @@ msgstr "Nie udało się utworzyć linku."
 msgid "Nie udało się utworzyć rachunku. Spróbuj ponownie."
 msgstr "Nie udało się utworzyć rachunku. Spróbuj ponownie."
 
+#: src/app/(app)/activity.tsx
+msgid "Nie udało się wczytać aktywności."
+msgstr "Nie udało się wczytać aktywności."
+
 #: src/app/(app)/groups/[groupId]/settle.tsx
 #: src/features/profile/payout-details-section.tsx
 msgid "Nie udało się wczytać danych do spłaty."
@@ -774,6 +787,7 @@ msgstr "Nieprawidłowy lub wygasły kod."
 
 #: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
 #: src/app/g/[token]/entries/[entryId].tsx
+#: src/features/activity/activity-row.tsx
 #: src/features/history/change-row.tsx
 msgid "nieznana osoba"
 msgstr "nieznana osoba"
@@ -1083,6 +1097,7 @@ msgstr "spłatę {from} → {to}"
 msgid "split-pay, wersja {version}"
 msgstr "split-pay, wersja {version}"
 
+#: src/app/(app)/activity.tsx
 #: src/app/(app)/groups/[groupId]/index.tsx
 #: src/app/(app)/groups/[groupId]/settle.tsx
 #: src/app/(app)/index.tsx
@@ -1217,6 +1232,7 @@ msgstr "Twoje zmiany nie zostały zapisane."
 #: src/app/(app)/groups/[groupId]/info.tsx
 #: src/app/g/[token]/balances.tsx
 #: src/app/g/[token]/info.tsx
+#: src/features/activity/activity-row.tsx
 #: src/features/entries/split-fields.tsx
 #: src/features/settlements/settlement-message.ts
 msgid "Ty"
