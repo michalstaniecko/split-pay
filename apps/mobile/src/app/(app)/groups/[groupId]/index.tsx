@@ -5,12 +5,14 @@ import { useQuery } from '@tanstack/react-query';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { GroupAvatar } from '@/components/group-avatar';
 import { GroupNotFound } from '@/components/group-not-found';
 import { BalanceBanner } from '@/features/balances/balance-banner';
 import { ClaimMessage } from '@/features/claims/claim-messages';
 import { type Claim, claimsQuery } from '@/features/claims/claims-query';
+import { useBubbleMenu } from '@/features/entries/bubble-menu';
 import { Composer } from '@/features/entries/composer';
 import {
   type ConversationItem,
@@ -43,6 +45,7 @@ export default function ConversationScreen() {
   useRefreshOnFocus(group.refetch);
   useRefreshOnFocus(entries.refetch);
   useRefreshOnFocus(claims.refetch);
+  const insets = useSafeAreaInsets();
   const session = authClient.useSession();
   const me = group.data ? findMyMemberId(group.data.members, session.data?.user.id) : null;
 
@@ -107,7 +110,12 @@ export default function ConversationScreen() {
               myMemberId={me}
               onOpenForm={() => router.push({ pathname: '/groups/[groupId]/expense-form', params: { groupId } })}
             />
-          ) : null}
+          ) : (
+            // Archived group: read-only (SPEC "Conversation").
+            <View style={[styles.archivedBar, { paddingBottom: insets.bottom + theme.space(3) }]} accessibilityRole="text">
+              <Text style={styles.archivedText}>{t`Grupa zarchiwizowana`}</Text>
+            </View>
+          )}
         </KeyboardAvoidingView>
       )}
     </View>
@@ -132,6 +140,7 @@ function Conversation({
   );
   const listRef = useRef<FlashListRef<ConversationItem<Claim>>>(null);
   const highlightId = useNewEntryHighlight(items, listRef);
+  const openMenu = useBubbleMenu(group);
 
   const openEntry = (entryId: string) =>
     router.push({ pathname: '/groups/[groupId]/entries/[entryId]', params: { groupId: group.id, entryId } });
@@ -170,6 +179,7 @@ function Conversation({
             baseCurrency={group.baseCurrency}
             highlighted={item.entry.id === highlightId}
             onPress={() => openEntry(item.entry.id)}
+            onLongPress={() => openMenu(item.entry)}
           />
         )
       }
@@ -251,5 +261,20 @@ const styles = StyleSheet.create((theme) => ({
   link: {
     fontSize: theme.font.sizeMd,
     color: theme.colors.primary,
+  },
+  archivedBar: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 52,
+    paddingHorizontal: theme.space(4),
+    paddingTop: theme.space(3),
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.border,
+    backgroundColor: theme.colors.surface,
+  },
+  archivedText: {
+    fontSize: theme.font.sizeMd,
+    fontWeight: theme.font.weightBold,
+    color: theme.colors.textMuted,
   },
 }));

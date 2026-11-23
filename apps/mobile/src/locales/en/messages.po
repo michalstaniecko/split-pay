@@ -114,11 +114,17 @@ msgstr "Alcohol"
 #: src/app/(app)/new.tsx
 #: src/app/(app)/quick-bill.tsx
 #: src/features/claims/claim-messages.tsx
+#: src/features/entries/bubble-menu.ts
 #: src/features/group-link/group-link-section.tsx
 #: src/features/groups/attendance-grid-view.tsx
+#: src/features/groups/group-lifecycle-section.tsx
 #: src/features/profile/delete-account-section.tsx
 msgid "Anuluj"
 msgstr "Cancel"
+
+#: src/features/groups/group-lifecycle-section.tsx
+msgid "Archiwizuj grupę"
+msgstr "Archive group"
 
 #: src/app/(app)/groups/[groupId]/info.tsx
 msgid "bez konta"
@@ -233,6 +239,26 @@ msgstr "Emoji"
 msgid "Górna kwota: zapłacone, dolna: zużyte."
 msgstr "Top amount: paid, bottom: consumed."
 
+#: src/features/groups/group-lifecycle-section.tsx
+msgid "Grupa jest tylko do odczytu. Przywróć ją, żeby coś zmienić."
+msgstr "The group is read-only. Unarchive it to change anything."
+
+#: src/features/groups/group-lifecycle-section.tsx
+msgid "Grupa stanie się tylko do odczytu: nikt nie doda, nie zmieni ani nie usunie wpisów."
+msgstr "The group becomes read-only: nobody can add, edit or delete entries."
+
+#: src/app/(app)/groups/[groupId]/index.tsx
+msgid "Grupa zarchiwizowana"
+msgstr "Group archived"
+
+#: src/features/groups/group-lifecycle-section.tsx
+msgid "Grupa zniknie z Twojej listy. Twoje wpisy zostaną w grupie."
+msgstr "The group will disappear from your list. Your entries stay in the group."
+
+#: src/features/entries/bubble-menu.ts
+msgid "Historia"
+msgstr "History"
+
 #: src/app/(app)/groups/[groupId]/info.tsx
 msgid "Historia zmian"
 msgstr "Change history"
@@ -339,6 +365,10 @@ msgstr "Colour"
 msgid "Kopiuj"
 msgstr "Copy"
 
+#: src/features/entries/bubble-menu.ts
+msgid "Kopiuj kwotę"
+msgstr "Copy amount"
+
 #: src/app/(app)/groups/[groupId]/settle.tsx
 msgid "Kopiuj: {label}"
 msgstr "Copy: {label}"
@@ -394,6 +424,10 @@ msgstr "Name"
 msgid "Nie masz jeszcze grup"
 msgstr "You have no groups yet"
 
+#: src/features/groups/group-lifecycle-section.tsx
+msgid "Nie możesz opuścić grupy, dopóki Twoje saldo nie wynosi zero (teraz {balanceText}). Najpierw się rozlicz."
+msgstr "You can't leave the group until your balance is zero (now {balanceText}). Settle up first."
+
 #: src/features/claims/claim-messages.tsx
 msgid "Nie udało się cofnąć przejęcia."
 msgstr "Couldn't undo the claim."
@@ -411,6 +445,10 @@ msgstr "Couldn't add the expense. Try again."
 msgid "Nie udało się dołączyć. Spróbuj ponownie."
 msgstr "Couldn't join. Please try again."
 
+#: src/features/groups/group-lifecycle-section.tsx
+msgid "Nie udało się opuścić grupy."
+msgstr "Couldn't leave the group."
+
 #: src/app/(app)/g/[token].tsx
 msgid "Nie udało się otworzyć linku grupy."
 msgstr "Couldn't open the group link."
@@ -422,6 +460,10 @@ msgstr "Couldn't claim the profile. Try again."
 #: src/features/group-link/group-link-section.tsx
 msgid "Nie udało się unieważnić linku."
 msgstr "Couldn't revoke the link."
+
+#: src/features/groups/group-lifecycle-section.tsx
+msgid "Nie udało się usunąć grupy."
+msgstr "Couldn't delete the group."
 
 #: src/features/profile/delete-account-section.tsx
 msgid "Nie udało się usunąć konta. Spróbuj ponownie."
@@ -469,6 +511,7 @@ msgid "Nie udało się zapisać obecności. Spróbuj ponownie."
 msgstr "Couldn't save attendance. Please try again."
 
 #: src/app/(app)/groups/[groupId]/member.tsx
+#: src/features/groups/group-lifecycle-section.tsx
 #: src/features/groups/group-settings-section.tsx
 #: src/features/profile/payout-details-section.tsx
 msgid "Nie udało się zapisać. Spróbuj ponownie."
@@ -541,9 +584,13 @@ msgstr "Pay back {amount} – {0}"
 msgid "Oddaj {recipient}"
 msgstr "Pay back {recipient}"
 
-#: src/app/(app)/groups/[groupId]/info.tsx
-msgid "Opuść, archiwizuj lub usuń grupę"
-msgstr "Leave, archive or delete the group"
+#: src/features/groups/group-lifecycle-section.tsx
+msgid "Opuść grupę"
+msgstr "Leave group"
+
+#: src/features/groups/group-lifecycle-section.tsx
+msgid "Opuścić grupę „{name}”?"
+msgstr "Leave “{name}”?"
 
 #: src/app/(app)/_layout.tsx
 msgid "Osoba"
@@ -636,6 +683,10 @@ msgstr "Profile"
 msgid "Przejmij profil osoby bez konta razem z historią wydatków."
 msgstr "Claim the profile of a member without an account, with their expense history."
 
+#: src/features/groups/group-lifecycle-section.tsx
+msgid "Przywróć z archiwum"
+msgstr "Unarchive"
+
 #: src/features/stats/stats-view.tsx
 msgid "Razem"
 msgstr "Total"
@@ -672,6 +723,7 @@ msgstr "Copied"
 
 #: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
 #: src/app/(app)/index.tsx
+#: src/features/entries/bubble-menu.ts
 #: src/features/entries/entry-bubble.tsx
 msgid "Spłata"
 msgstr "Settlement"
@@ -829,9 +881,21 @@ msgstr "Settings"
 msgid "Usuń {0}"
 msgstr "Remove {0}"
 
+#: src/features/groups/group-lifecycle-section.tsx
+msgid "Usuń grupę na zawsze"
+msgstr "Delete group permanently"
+
 #: src/features/profile/delete-account-section.tsx
 msgid "Usuń konto"
 msgstr "Delete account"
+
+#: src/features/groups/group-lifecycle-section.tsx
+msgid "Usuń na zawsze"
+msgstr "Delete permanently"
+
+#: src/features/groups/group-lifecycle-section.tsx
+msgid "Usunąć grupę „{name}” na zawsze?"
+msgstr "Delete “{name}” permanently?"
 
 #: src/features/profile/delete-account-section.tsx
 msgid "Usunąć konto?"
@@ -904,6 +968,10 @@ msgstr "Common + personal"
 #: src/app/(app)/groups/[groupId]/balances.tsx
 msgid "Wszyscy są rozliczeni."
 msgstr "Everyone is settled up."
+
+#: src/features/groups/group-lifecycle-section.tsx
+msgid "Wszystkie wpisy i salda znikną dla wszystkich członków. Tego nie da się cofnąć."
+msgstr "All entries and balances will be gone for every member. This can't be undone."
 
 #: src/features/balances/balance-banner.tsx
 msgid "Wszystko rozliczone"
@@ -1041,6 +1109,10 @@ msgstr "Paid by"
 #: src/features/entries/split-fields.tsx
 msgid "Zapłacili"
 msgstr "Paid by"
+
+#: src/app/(app)/index.tsx
+msgid "Zarchiwizowane"
+msgstr "Archived"
 
 #. placeholder {0}: emptyNames.join(', ')
 #: src/features/groups/attendance-grid-view.tsx

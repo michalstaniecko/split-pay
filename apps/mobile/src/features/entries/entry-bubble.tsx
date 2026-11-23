@@ -22,11 +22,14 @@ export function EntryBubble({
   baseCurrency,
   highlighted,
   onPress,
+  onLongPress,
 }: {
   item: EntryItem;
   baseCurrency: string;
   highlighted: boolean;
   onPress: () => void;
+  /** The long-press menu (`useBubbleMenu`). */
+  onLongPress?: () => void;
 }) {
   const { t } = useLingui();
   const format = useFormatters();
@@ -65,6 +68,7 @@ export function EntryBubble({
         accessibilityRole="button"
         accessibilityLabel={label}
         onPress={onPress}
+        {...(onLongPress ? { onLongPress } : {})}
         style={({ pressed }) => [
           styles.bubble,
           mine ? styles.mine : styles.theirs,
