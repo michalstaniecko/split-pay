@@ -70,6 +70,16 @@ export default function AppLayout() {
         }}
       />
       <Stack.Screen
+        name="groups/[groupId]/entry-conflict"
+        options={{
+          title: t`Konflikt zmian`,
+          presentation: 'formSheet',
+          sheetAllowedDetents: 'fitToContents',
+          sheetGrabberVisible: true,
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
         name="groups/[groupId]/balances"
         options={{
           title: t`Salda`,

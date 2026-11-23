@@ -2,6 +2,7 @@ export * from './account';
 export * from './attendance';
 export * from './category';
 export * from './entry-defaults';
+export * from './entry-edit';
 export * from './claims';
 export * from './flags';
 export * from './format';

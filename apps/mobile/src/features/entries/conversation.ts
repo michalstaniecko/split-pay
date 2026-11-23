@@ -3,6 +3,7 @@ import {
   type CurrencyCode,
   dailyTotals,
   type Entry,
+  isEdited,
   type LocalDate,
   type Member,
   type MemberAmount,
@@ -45,6 +46,8 @@ export interface EntryItem {
   otherPayers: number;
   /** My share in the base currency ("twój udział"); `null` without a member of mine. */
   myShare: number | null;
+  /** The content was edited after it was added ("edytowano", #11). */
+  edited: boolean;
   /** A foreign-currency entry's amount in the base currency at its frozen rate ("≈ …"); `null` in the base currency. */
   baseAmount: number | null;
 }
@@ -129,6 +132,7 @@ export function conversationItems<C extends ClaimLike = ClaimLike>(
       payerNames: senders.map((h) => names.get(h.memberId) ?? '?'),
       otherPayers: senders.length - 1,
       myShare: me === null ? null : memberShare(entry, me, context.baseCurrency),
+      edited: isEdited(entry),
       baseAmount:
         entry.currency === context.baseCurrency
           ? null

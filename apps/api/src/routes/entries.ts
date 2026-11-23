@@ -1,15 +1,18 @@
 import { zValidator } from '@hono/zod-validator';
 import {
   type Entry,
+  entryFromEdit,
   entryFromNew,
+  EntryUpdate,
+  EntryVersionCheck,
   type Group,
-  type Id,
+  Id,
   type Member,
   NewEntry,
   validateEntryInGroup,
 } from '@split-pay/shared';
-import { and, asc, desc, eq, inArray, isNull } from 'drizzle-orm';
-import { Hono } from 'hono';
+import { and, asc, desc, eq, inArray, isNotNull, isNull } from 'drizzle-orm';
+import { type Context, Hono } from 'hono';
 import type { Db } from '../db/client';
 import { entries, groups, members } from '../db/schema';
 import type { AuthEnv } from '../middleware/require-user';
@@ -194,4 +197,166 @@ export const entriesRoutes = ({ db }: { db: Db }) =>
         case 'invalid':
           return c.json({ error: 'invalid_entry' as const, issues: result.issues }, 400);
       }
+    })
+    /**
+     * Edits an entry (any member, ADR-0008): the body is the whole entry as
+     * entered plus the version it was based on. 200 the new version; 409
+     * `version_conflict` with the current entry when that version is stale or
+     * the entry is deleted; 400 invalid (also: archived group, another id); 404.
+     */
+    .put('/:entryId', zValidator('json', EntryUpdate), async (c) => {
+      const userId = c.get('user').id;
+      const group = await findMyGroup(db, c.req.param('groupId'), userId);
+      if (!group) return c.json({ error: 'not_found' as const }, 404);
+      const { baseVersion, entry } = c.req.valid('json');
+      const result = await db.transaction(async (tx) => {
+        const groupMembers = await tx.select().from(members).where(eq(members.groupId, group.id));
+        return editEntry(tx, c.req.param('entryId'), entry, baseVersion, {
+          group: toSharedGroup(group),
+          members: groupMembers,
+        });
+      });
+      return entryChangeResponse(c, result);
+    })
+    /**
+     * Soft-deletes an entry (`deletedAt`), based on `?baseVersion=`. 200 the
+     * deleted entry (also when it already was deleted — idempotent); 409
+     * `version_conflict` with the current entry; 400 archived group; 404.
+     */
+    .delete('/:entryId', zValidator('query', EntryVersionCheck), async (c) => {
+      const group = await findMyGroup(db, c.req.param('groupId'), c.get('user').id);
+      if (!group) return c.json({ error: 'not_found' as const }, 404);
+      const result = await setEntryDeleted(db, toSharedGroup(group), c.req.param('entryId'), {
+        deleted: true,
+        baseVersion: c.req.valid('query').baseVersion,
+      });
+      return entryChangeResponse(c, result);
+    })
+    /**
+     * Restores a deleted entry ("Cofnij"), based on the version it had when
+     * deleted. Responses as for delete (a live entry → 200 idempotent).
+     */
+    .post('/:entryId/restore', zValidator('json', EntryVersionCheck), async (c) => {
+      const group = await findMyGroup(db, c.req.param('groupId'), c.get('user').id);
+      if (!group) return c.json({ error: 'not_found' as const }, 404);
+      const result = await setEntryDeleted(db, toSharedGroup(group), c.req.param('entryId'), {
+        deleted: false,
+        baseVersion: c.req.valid('json').baseVersion,
+      });
+      return entryChangeResponse(c, result);
     });
+
+export type ChangeEntryResult =
+  | { status: 'changed'; entry: Entry }
+  | { status: 'conflict'; current: Entry }
+  | { status: 'not_found' }
+  | { status: 'invalid'; issues: string[] };
+
+function entryChangeResponse(c: Context<AuthEnv>, result: ChangeEntryResult) {
+  switch (result.status) {
+    case 'changed':
+      return c.json(result.entry, 200);
+    case 'conflict':
+      return c.json({ error: 'version_conflict' as const, entry: result.current }, 409);
+    case 'not_found':
+      return c.json({ error: 'not_found' as const }, 404);
+    case 'invalid':
+      return c.json({ error: 'invalid_entry' as const, issues: result.issues }, 400);
+  }
+}
+
+/** The entry with this id in this group (deleted ones included). */
+async function findEntry(tx: Tx, groupId: Id, entryId: string | undefined): Promise<EntryRow | undefined> {
+  if (!Id.safeParse(entryId).success) return undefined;
+  const [row] = await tx
+    .select()
+    .from(entries)
+    .where(and(eq(entries.id, entryId!), eq(entries.groupId, groupId)));
+  return row;
+}
+
+/**
+ * Applies an edit with optimistic concurrency (ADR-0005): the stored entry is
+ * replaced only while its version is still `baseVersion` and it is not
+ * deleted (`UPDATE … WHERE version = $base AND deleted_at IS NULL`), so a
+ * concurrent edit can't be overwritten. Bumps `version`, `updatedAt` and the
+ * group's `lastActivityAt`. Reuse for any content change (history undo #20,
+ * outbox replay #22).
+ */
+export async function editEntry(
+  tx: Tx,
+  entryId: string | undefined,
+  input: NewEntry,
+  baseVersion: number,
+  context: { group: Group; members: readonly Member[]; now?: Date },
+): Promise<ChangeEntryResult> {
+  const now = context.now ?? new Date();
+  const row = await findEntry(tx, context.group.id, entryId);
+  if (!row) return { status: 'not_found' };
+  const current = toEntryDto(row);
+  if (current.version !== baseVersion || current.deletedAt !== null) return { status: 'conflict', current };
+
+  const parsed = entryFromEdit(current, input, iso(now));
+  if (!parsed.success) {
+    return { status: 'invalid', issues: parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`) };
+  }
+  const issues = validateEntryInGroup(parsed.data, context.group, context.members);
+  if (issues.length > 0) return { status: 'invalid', issues };
+
+  // Every kind-specific column is rewritten, so a changed kind leaves no stale values behind.
+  const { id: _id, groupId: _groupId, createdBy: _by, createdAt: _at, ...changes } = toEntryRow(parsed.data);
+  const [updated] = await tx
+    .update(entries)
+    .set({
+      title: null,
+      category: null,
+      split: null,
+      payers: null,
+      recipients: null,
+      fromMemberId: null,
+      toMemberId: null,
+      receiptPhotoId: null,
+      ...changes,
+    })
+    .where(and(eq(entries.id, current.id), eq(entries.version, baseVersion), isNull(entries.deletedAt)))
+    .returning();
+  // Lost a race with another change: report what is stored now.
+  if (!updated) return editEntry(tx, entryId, input, baseVersion, context);
+  await tx.update(groups).set({ lastActivityAt: now }).where(eq(groups.id, context.group.id));
+  return { status: 'changed', entry: toEntryDto(updated) };
+}
+
+/**
+ * Soft-deletes (`deleted: true`) or restores an entry, based on the version
+ * the client saw. Doesn't bump `version` (the content is unchanged — see
+ * `EntryUpdate` in shared), only `updatedAt`; doesn't move the group in the
+ * inbox. Already in the requested state → `changed` with the stored entry
+ * (idempotent retry). Archived group → invalid.
+ */
+export async function setEntryDeleted(
+  tx: Tx,
+  group: Group,
+  entryId: string | undefined,
+  options: { deleted: boolean; baseVersion: number; now?: Date },
+): Promise<ChangeEntryResult> {
+  const row = await findEntry(tx, group.id, entryId);
+  if (!row) return { status: 'not_found' };
+  const current = toEntryDto(row);
+  if ((current.deletedAt !== null) === options.deleted) return { status: 'changed', entry: current };
+  if (current.version !== options.baseVersion) return { status: 'conflict', current };
+  if (group.archivedAt !== null) return { status: 'invalid', issues: ['Group is archived'] };
+
+  const [updated] = await tx
+    .update(entries)
+    .set({ deletedAt: options.deleted ? (options.now ?? new Date()) : null })
+    .where(
+      and(
+        eq(entries.id, current.id),
+        eq(entries.version, options.baseVersion),
+        options.deleted ? isNull(entries.deletedAt) : isNotNull(entries.deletedAt),
+      ),
+    )
+    .returning();
+  if (!updated) return setEntryDeleted(tx, group, entryId, options);
+  return { status: 'changed', entry: toEntryDto(updated) };
+}

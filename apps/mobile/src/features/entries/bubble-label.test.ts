@@ -32,6 +32,7 @@ const bubble = (overrides: Partial<EntryItem> = {}): EntryItem => ({
   type: 'entry',
   key: dinner.id,
   entry: dinner,
+  edited: false,
   side: 'start',
   payerId: id(3),
   payerName: 'Kasia',
