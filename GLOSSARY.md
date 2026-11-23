@@ -42,6 +42,14 @@ _Avoid_: Merge, link-up
 The range of trip days on which a member is present; it determines the default split participants.
 _Avoid_: Availability, stay
 
+**Conversation** (PL: Rozmowa):
+A group's entries shown as a thread of messages from their payers, ordered by entry date and separated by days.
+_Avoid_: Chat, feed, timeline, expense list
+
+**Group info** (PL: Informacje o grupie):
+The screen with a group's members, group link, stats, change history and settings.
+_Avoid_: Group settings, group details
+
 **Group link** (PL: Link grupy):
 A secret, revocable link that leads to joining the group (in the app) or previewing it (on the web).
 _Avoid_: Email invitation, group code
