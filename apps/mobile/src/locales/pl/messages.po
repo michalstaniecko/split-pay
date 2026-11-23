@@ -41,6 +41,10 @@ msgstr "Anuluj"
 msgid "Brak wpisów"
 msgstr "Brak wpisów"
 
+#: src/features/theme/theme-picker.tsx
+msgid "Ciemny"
+msgstr "Ciemny"
+
 #: src/app/(app)/groups/[groupId]/info.tsx
 msgid "Członkowie"
 msgstr "Członkowie"
@@ -66,6 +70,10 @@ msgstr "Historia zmian"
 msgid "Informacje o grupie"
 msgstr "Informacje o grupie"
 
+#: src/features/theme/theme-picker.tsx
+msgid "Jasny"
+msgstr "Jasny"
+
 #: src/app/(app)/new.tsx
 msgid "Jeden wydatek z kilkoma osobami"
 msgstr "Jeden wydatek z kilkoma osobami"
@@ -82,13 +90,25 @@ msgstr "Język systemu"
 msgid "Kod jednorazowy"
 msgstr "Kod jednorazowy"
 
+#: src/features/profile/about-section.tsx
+msgid "Kod źródłowy na GitHubie"
+msgstr "Kod źródłowy na GitHubie"
+
 #: src/app/(app)/new-group.tsx
 msgid "Kolor"
 msgstr "Kolor"
 
+#: src/features/profile/about-section.tsx
+msgid "Licencja: GNU AGPL v3"
+msgstr "Licencja: GNU AGPL v3"
+
 #: src/app/(app)/groups/[groupId]/info.tsx
 msgid "Link grupy"
 msgstr "Link grupy"
+
+#: src/features/theme/theme-picker.tsx
+msgid "Motyw"
+msgstr "Motyw"
 
 #: src/app/(app)/new-group.tsx
 msgid "Nazwa"
@@ -132,6 +152,10 @@ msgstr "Nowy"
 msgid "np. Mazury 2026"
 msgstr "np. Mazury 2026"
 
+#: src/features/profile/about-section.tsx
+msgid "O aplikacji"
+msgstr "O aplikacji"
+
 #: src/app/(app)/new-group.tsx
 msgid "Od"
 msgstr "Od"
@@ -166,6 +190,10 @@ msgstr "Profil"
 msgid "RRRR-MM-DD"
 msgstr "RRRR-MM-DD"
 
+#: src/features/profile/about-section.tsx
+msgid "split-pay, wersja {version}"
+msgstr "split-pay, wersja {version}"
+
 #: src/app/(app)/index.tsx
 #: src/components/group-not-found.tsx
 msgid "Spróbuj ponownie"
@@ -174,6 +202,10 @@ msgstr "Spróbuj ponownie"
 #: src/app/(app)/groups/[groupId]/info.tsx
 msgid "Statystyki"
 msgstr "Statystyki"
+
+#: src/features/theme/theme-picker.tsx
+msgid "Systemowy"
+msgstr "Systemowy"
 
 #: src/app/(app)/_layout.tsx
 #: src/app/(app)/new.tsx
@@ -184,6 +216,10 @@ msgstr "Szybki rachunek"
 #: src/components/group-not-found.tsx
 msgid "Ta grupa nie istnieje albo nie masz do niej dostępu."
 msgstr "Ta grupa nie istnieje albo nie masz do niej dostępu."
+
+#: src/features/theme/theme-picker.tsx
+msgid "Tryb jasny/ciemny"
+msgstr "Tryb jasny/ciemny"
 
 #: src/app/(app)/groups/[groupId]/info.tsx
 msgid "Ustawienia"

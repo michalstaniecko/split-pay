@@ -1,4 +1,5 @@
 import { serve } from '@hono/node-server';
+import { parseFeatureFlagsJson } from '@split-pay/shared';
 import { createApp } from './app';
 import { createAuth, devOtpSender } from './auth';
 import { createDb } from './db/client';
@@ -18,7 +19,9 @@ const auth = createAuth({
   baseURL: requireEnv('BETTER_AUTH_URL'),
   secret: requireEnv('BETTER_AUTH_SECRET'),
 });
-const app = createApp({ auth, db });
+// FEATURE_FLAGS: JSON, e.g. {"ads":true}. Unknown or invalid flags fall back to off.
+const flags = parseFeatureFlagsJson(process.env.FEATURE_FLAGS);
+const app = createApp({ auth, db, flags });
 
 serve({ fetch: app.fetch, port }, (info) => {
   console.log(`API listening on http://localhost:${info.port}`);

@@ -41,6 +41,10 @@ msgstr "Cancel"
 msgid "Brak wpisów"
 msgstr "No entries"
 
+#: src/features/theme/theme-picker.tsx
+msgid "Ciemny"
+msgstr "Dark"
+
 #: src/app/(app)/groups/[groupId]/info.tsx
 msgid "Członkowie"
 msgstr "Members"
@@ -66,6 +70,10 @@ msgstr "Change history"
 msgid "Informacje o grupie"
 msgstr "Group info"
 
+#: src/features/theme/theme-picker.tsx
+msgid "Jasny"
+msgstr "Light"
+
 #: src/app/(app)/new.tsx
 msgid "Jeden wydatek z kilkoma osobami"
 msgstr "One expense shared with a few people"
@@ -82,13 +90,25 @@ msgstr "System language"
 msgid "Kod jednorazowy"
 msgstr "One-time code"
 
+#: src/features/profile/about-section.tsx
+msgid "Kod źródłowy na GitHubie"
+msgstr "Source code on GitHub"
+
 #: src/app/(app)/new-group.tsx
 msgid "Kolor"
 msgstr "Colour"
 
+#: src/features/profile/about-section.tsx
+msgid "Licencja: GNU AGPL v3"
+msgstr "Licence: GNU AGPL v3"
+
 #: src/app/(app)/groups/[groupId]/info.tsx
 msgid "Link grupy"
 msgstr "Group link"
+
+#: src/features/theme/theme-picker.tsx
+msgid "Motyw"
+msgstr "Theme"
 
 #: src/app/(app)/new-group.tsx
 msgid "Nazwa"
@@ -132,6 +152,10 @@ msgstr "New"
 msgid "np. Mazury 2026"
 msgstr "e.g. Lake trip 2026"
 
+#: src/features/profile/about-section.tsx
+msgid "O aplikacji"
+msgstr "About"
+
 #: src/app/(app)/new-group.tsx
 msgid "Od"
 msgstr "From"
@@ -166,6 +190,10 @@ msgstr "Profile"
 msgid "RRRR-MM-DD"
 msgstr "YYYY-MM-DD"
 
+#: src/features/profile/about-section.tsx
+msgid "split-pay, wersja {version}"
+msgstr "split-pay, version {version}"
+
 #: src/app/(app)/index.tsx
 #: src/components/group-not-found.tsx
 msgid "Spróbuj ponownie"
@@ -174,6 +202,10 @@ msgstr "Try again"
 #: src/app/(app)/groups/[groupId]/info.tsx
 msgid "Statystyki"
 msgstr "Stats"
+
+#: src/features/theme/theme-picker.tsx
+msgid "Systemowy"
+msgstr "System"
 
 #: src/app/(app)/_layout.tsx
 #: src/app/(app)/new.tsx
@@ -184,6 +216,10 @@ msgstr "Quick bill"
 #: src/components/group-not-found.tsx
 msgid "Ta grupa nie istnieje albo nie masz do niej dostępu."
 msgstr "This group does not exist or you do not have access to it."
+
+#: src/features/theme/theme-picker.tsx
+msgid "Tryb jasny/ciemny"
+msgstr "Light/dark mode"
 
 #: src/app/(app)/groups/[groupId]/info.tsx
 msgid "Ustawienia"
