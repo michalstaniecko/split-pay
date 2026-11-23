@@ -37,7 +37,7 @@ async function undoOf(db: Tx, changeId: Id): Promise<Change | undefined> {
 }
 
 /** Rows as DTOs with `undoneByChangeId` filled in. */
-async function withUndoneBy(db: Tx, rows: readonly ChangeRow[]): Promise<Change[]> {
+export async function withUndoneBy(db: Tx, rows: readonly ChangeRow[]): Promise<Change[]> {
   const ids = rows.map((r) => r.id);
   const undos =
     ids.length === 0
