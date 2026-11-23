@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { defaultParticipants, resolveSplit } from './split';
-import { ANIA, BARTEK, KASIA, TOMEK, members } from './test-fixtures';
+import { ANIA, BARTEK, KASIA, TOMEK, ZOSIA, members } from './test-fixtures';
 
 describe('resolveSplit', () => {
   it('equal', () => {
@@ -80,7 +80,21 @@ describe('resolveSplit', () => {
 
 describe('defaultParticipants', () => {
   it('skips members absent on that day', () => {
-    expect(defaultParticipants(members, '2026-07-11')).toEqual([ANIA, BARTEK, KASIA]);
+    expect(defaultParticipants(members, '2026-07-11')).toEqual([ANIA, BARTEK, KASIA, ZOSIA]);
     expect(defaultParticipants(members, '2026-07-12')).toEqual([ANIA, BARTEK, KASIA, TOMEK]);
+  });
+
+  it('excludes a member during the gap after they leave and includes them from the day they return', () => {
+    expect(defaultParticipants(members, '2026-07-10')).toContain(ZOSIA);
+    expect(defaultParticipants(members, '2026-07-11')).toContain(ZOSIA);
+    expect(defaultParticipants(members, '2026-07-12')).not.toContain(ZOSIA);
+    expect(defaultParticipants(members, '2026-07-13')).toContain(ZOSIA);
+    expect(defaultParticipants(members, '2026-07-14')).toContain(ZOSIA);
+  });
+
+  it('always includes members without attendance (whole trip)', () => {
+    for (const date of ['2025-01-01', '2026-07-12', '2027-12-31']) {
+      expect(defaultParticipants(members, date)).toEqual(expect.arrayContaining([ANIA, BARTEK, KASIA]));
+    }
   });
 });
