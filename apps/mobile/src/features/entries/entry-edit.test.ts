@@ -213,9 +213,10 @@ describe('entryActions', () => {
     expect(entryActions(pizza, open)).toEqual(['edit', 'delete', 'history', 'copyAmount']);
   });
 
-  it('has no Edytuj where the full form cannot edit the kind yet', () => {
+  it('offers the same actions on a settlement (Edytuj opens the settle sheet)', () => {
     const settlement = { ...pizza, kind: 'settlement' as const, from: ANIA, to: BARTEK };
-    expect(entryActions(settlement, open)).toEqual(['delete', 'history', 'copyAmount']);
+    expect(entryActions(settlement, open)).toEqual(['edit', 'delete', 'history', 'copyAmount']);
+    expect(entryActions(settlement, { archivedAt: '2026-08-01T00:00:00.000Z' })).toEqual(['history', 'copyAmount']);
   });
 
   it('only Historia and Kopiuj kwotę in an archived group', () => {

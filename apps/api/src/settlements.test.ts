@@ -90,4 +90,33 @@ describe('settlements', () => {
     const zero = await settle(aniaId, randomUUID(), 0);
     expect(zero.status).toBe(400);
   });
+
+  it('edits a settlement with the version it was based on; a stale edit is a version conflict', async () => {
+    const { groupId, ania, bartek, aniaId, bartekId, tomekId, settle, balances } = await setup();
+    const created = await parseResponse(settle(bartekId, aniaId, 3_000));
+    const as = (from: string, amount: number): NewEntry => ({
+      kind: 'settlement',
+      id: created.id,
+      date: '2026-07-12',
+      amount,
+      currency: 'PLN',
+      rateToBase: '1',
+      from,
+      to: aniaId,
+    });
+    const put = (session: typeof ania, baseVersion: number, entry: NewEntry) =>
+      client(session).groups[':groupId'].entries[':entryId'].$put({
+        param: { groupId, entryId: created.id },
+        json: { baseVersion, entry },
+      });
+
+    const res = await put(ania, 1, as(tomekId, 1_000));
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({ kind: 'settlement', from: tomekId, to: aniaId, amount: 1_000, version: 2 });
+    expect((await balances()).balances).toContainEqual({ memberId: bartekId, amount: -3_000 });
+
+    const stale = await put(bartek, 1, as(bartekId, 2_000));
+    expect(stale.status).toBe(409);
+    expect(await stale.json()).toMatchObject({ error: 'version_conflict', entry: { version: 2, amount: 1_000 } });
+  });
 });

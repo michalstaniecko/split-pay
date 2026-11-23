@@ -280,6 +280,7 @@ msgid "Dzień"
 msgstr "Day"
 
 #: src/features/entries/entry-bubble.tsx
+#: src/features/settlements/settlement-system-message.tsx
 msgid "edytowano"
 msgstr "edited"
 
@@ -293,6 +294,10 @@ msgstr "edited {0}"
 #: src/features/entries/entry-actions-menu.tsx
 msgid "Edytuj"
 msgstr "Edit"
+
+#: src/app/(app)/groups/[groupId]/settle.tsx
+msgid "Edytuj spłatę"
+msgstr "Edit settlement"
 
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
 msgid "Edytuj wpływ"
@@ -449,6 +454,7 @@ msgid "Komu"
 msgstr "To whom"
 
 #: src/features/entries/entry-bubble.tsx
+#: src/features/settlements/settlement-system-message.tsx
 msgid "konflikt zmian"
 msgstr "conflicting change"
 
@@ -457,6 +463,7 @@ msgid "Konflikt zmian"
 msgstr "Conflicting change"
 
 #: src/features/entries/entry-bubble.tsx
+#: src/features/settlements/settlement-system-message.tsx
 msgid "Konflikt zmian: {title}. Pokaż szczegóły"
 msgstr "Conflicting change: {title}. Show details"
 
@@ -482,6 +489,7 @@ msgid "Kto oddaje"
 msgstr "Who pays back"
 
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
+#: src/app/(app)/groups/[groupId]/settle.tsx
 msgid "Ktoś usunął ten wpis w międzyczasie. Twoje zmiany nie zostały zapisane."
 msgstr "Someone deleted this entry in the meantime. Your changes were not saved."
 
@@ -914,6 +922,7 @@ msgstr "Amount copied"
 #: src/app/(app)/index.tsx
 #: src/app/g/[token]/entries/[entryId].tsx
 #: src/features/entries/entry-bubble.tsx
+#: src/features/settlements/settlement-system-message.tsx
 msgid "Spłata"
 msgstr "Settlement"
 
@@ -970,6 +979,7 @@ msgstr "This group does not exist or you do not have access to it."
 
 #: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
+#: src/app/(app)/groups/[groupId]/settle.tsx
 #: src/app/g/[token]/entries/[entryId].tsx
 msgid "Tego wpisu już nie ma."
 msgstr "This entry no longer exists."
