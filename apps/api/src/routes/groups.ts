@@ -14,6 +14,7 @@ import { historyRoutes } from './history';
 import { claimLinkRoutes, claimRoutes } from './claims';
 import { groupLifecycleRoutes, rejectWritesToArchived } from './group-lifecycle';
 import { groupLinkRoutes } from './group-links';
+import { groupPushRoutes } from './notifications';
 import { memberPayoutDetailsRoutes } from './payout-details';
 import { statsRoutes } from './stats';
 
@@ -100,6 +101,8 @@ export const groupsRoutes = ({ db, requireUser }: { db: Db; requireUser: Middlew
       .route('/:groupId/stats', statsRoutes({ db }))
       /** Change history + undo (#20): `routes/history.ts`. */
       .route('/:groupId/changes', historyRoutes({ db }))
+      /** Per-group notifications switch and "Przypomnij" nudges: `routes/notifications.ts`. */
+      .route('/:groupId', groupPushRoutes({ db }))
       /**
        * Creates a group with the caller as owner and first member, in one
        * transaction. Idempotent on the client-generated id: repeating the same

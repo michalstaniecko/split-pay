@@ -36,6 +36,11 @@ msgstr "{0}, {label}: zapłacone {1}, zużyte {2}"
 msgid "{0}, informacje o grupie"
 msgstr "{0}, informacje o grupie"
 
+#. placeholder {0}: transfer.fromName
+#: src/features/notifications/nudge-button.tsx
+msgid "{0}: przypomniano dziś"
+msgstr "{0}: przypomniano dziś"
+
 #: src/features/claims/claim-messages.tsx
 msgid "{claimerName} przejął profil {memberName}"
 msgstr "{claimerName} przejął profil {memberName}"
@@ -760,6 +765,7 @@ msgstr "Nie udało się zapisać zmian. Spróbuj ponownie."
 #: src/app/(app)/groups/[groupId]/member.tsx
 #: src/features/groups/group-lifecycle-section.tsx
 #: src/features/groups/group-settings-section.tsx
+#: src/features/notifications/notification-switches.tsx
 #: src/features/profile/payout-details-section.tsx
 msgid "Nie udało się zapisać. Spróbuj ponownie."
 msgstr "Nie udało się zapisać. Spróbuj ponownie."
@@ -786,6 +792,10 @@ msgstr "Nocleg"
 #: src/app/(app)/new.tsx
 msgid "Nowa grupa"
 msgstr "Nowa grupa"
+
+#: src/features/notifications/notification-switches.tsx
+msgid "Nowe i zmienione wydatki z Twoim udziałem, spłaty dla Ciebie, przypomnienia."
+msgstr "Nowe i zmienione wydatki z Twoim udziałem, spłaty dla Ciebie, przypomnienia."
 
 #: src/app/(app)/_layout.tsx
 #: src/app/(app)/index.tsx
@@ -969,6 +979,18 @@ msgstr "Pokaż całą historię"
 msgid "Pokazuje salda i kto komu ile oddaje"
 msgstr "Pokazuje salda i kto komu ile oddaje"
 
+#: src/features/notifications/notification-switches.tsx
+msgid "Powiadomienia"
+msgstr "Powiadomienia"
+
+#: src/features/notifications/notification-switches.tsx
+msgid "Powiadomienia push"
+msgstr "Powiadomienia push"
+
+#: src/features/notifications/notification-switches.tsx
+msgid "Powiadomienia z tej grupy"
+msgstr "Powiadomienia z tej grupy"
+
 #: src/features/entries/split-fields.tsx
 msgid "Pozycje osobiste"
 msgstr "Pozycje osobiste"
@@ -992,6 +1014,19 @@ msgstr "Przejęto profil {name}"
 #: src/app/g/[token]/index.tsx
 msgid "Przejmij profil osoby bez konta razem z historią wydatków."
 msgstr "Przejmij profil osoby bez konta razem z historią wydatków."
+
+#: src/features/notifications/nudge-button.tsx
+msgid "przypomniano dziś"
+msgstr "przypomniano dziś"
+
+#: src/features/notifications/nudge-button.tsx
+msgid "Przypomnij"
+msgstr "Przypomnij"
+
+#. placeholder {0}: transfer.fromName
+#: src/features/notifications/nudge-button.tsx
+msgid "Przypomnij: {0}"
+msgstr "Przypomnij: {0}"
 
 #: src/features/groups/group-lifecycle-section.tsx
 msgid "Przywróć z archiwum"
@@ -1089,6 +1124,7 @@ msgstr "split-pay, wersja {version}"
 #: src/app/g/[token]/index.tsx
 #: src/components/group-not-found.tsx
 #: src/features/group-link/group-link-section.tsx
+#: src/features/notifications/nudge-button.tsx
 #: src/features/web-view/public-error.tsx
 msgid "Spróbuj ponownie"
 msgstr "Spróbuj ponownie"
@@ -1499,6 +1535,10 @@ msgstr "Wyjazd z datami"
 #: src/app/(app)/new.tsx
 msgid "Wyjazd, mieszkanie albo inne wspólne wydatki"
 msgstr "Wyjazd, mieszkanie albo inne wspólne wydatki"
+
+#: src/features/notifications/notification-switches.tsx
+msgid "Wyłączone: grupa odświeża się w tle, ale bez powiadomień."
+msgstr "Wyłączone: grupa odświeża się w tle, ale bez powiadomień."
 
 #: src/features/history/describe-change.ts
 msgid "Wyłączono upraszczanie długów"

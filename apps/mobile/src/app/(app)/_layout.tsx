@@ -3,6 +3,7 @@ import { Stack } from 'expo-router';
 import { useUnistyles } from 'react-native-unistyles';
 import { InboxHeaderButtons } from '@/components/inbox-header-buttons';
 import { usePendingJoin } from '@/features/group-link/use-pending-join';
+import { usePushNotifications } from '@/features/notifications/push';
 
 /** Deep links (group link → Conversation) keep the inbox underneath, so "back" leads home. */
 export const unstable_settings = { anchor: 'index' };
@@ -16,6 +17,7 @@ export default function AppLayout() {
   const { t } = useLingui();
   const { theme } = useUnistyles();
   usePendingJoin();
+  usePushNotifications();
   return (
     <Stack
       screenOptions={{

@@ -2,6 +2,7 @@ import { useLingui } from '@lingui/react/macro';
 import { Switch, Text, View } from 'react-native';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { useUpdateGroupSettings } from '@/features/balances/balances-query';
+import { GroupNotificationsSwitch } from '@/features/notifications/notification-switches';
 import type { GroupDetail } from './groups-query';
 
 /**
@@ -32,6 +33,7 @@ export function GroupSettingsSection({ group }: { group: GroupDetail }) {
         />
       </View>
       {update.isError ? <Text style={styles.error}>{t`Nie udało się zapisać. Spróbuj ponownie.`}</Text> : null}
+      <GroupNotificationsSwitch groupId={group.id} />
     </View>
   );
 }
