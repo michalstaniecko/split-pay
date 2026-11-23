@@ -1,3 +1,4 @@
+import type { FeatureFlags } from '@split-pay/shared';
 import { createApp } from '../src/app';
 import { createAuth, type OtpSender, type OtpType } from '../src/auth';
 import { createApiClient } from '../src/client';
@@ -13,7 +14,7 @@ export interface SentOtp {
  * The real app wired to the test database. OTP codes are captured in `sentOtps`
  * instead of being logged.
  */
-export function createTestApp() {
+export function createTestApp(options: { flags?: FeatureFlags } = {}) {
   const sentOtps: SentOtp[] = [];
   const otpSender: OtpSender = {
     async send(message) {
@@ -26,7 +27,7 @@ export function createTestApp() {
     baseURL: 'http://localhost:3000',
     secret: 'test-secret-test-secret-test-secret!!',
   });
-  const app = createApp({ auth, db: testDb.db });
+  const app = createApp({ auth, db: testDb.db, ...options });
 
   const json = (body: unknown, headers: Record<string, string> = {}): RequestInit => ({
     method: 'POST',
