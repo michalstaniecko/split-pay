@@ -43,12 +43,32 @@ export default function AppLayout() {
         options={{
           title: t`Szybki rachunek`,
           presentation: 'formSheet',
-          sheetAllowedDetents: [0.4],
+          sheetAllowedDetents: [0.75, 1],
           sheetGrabberVisible: true,
           headerShown: false,
         }}
       />
       <Stack.Screen name="groups/[groupId]/index" options={{ title: '' }} />
+      <Stack.Screen
+        name="groups/[groupId]/expense-form"
+        options={{
+          title: t`Nowy wydatek`,
+          presentation: 'formSheet',
+          sheetAllowedDetents: [1],
+          sheetGrabberVisible: true,
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="groups/[groupId]/entries/[entryId]"
+        options={{
+          title: t`Wpis`,
+          presentation: 'formSheet',
+          sheetAllowedDetents: [0.6, 1],
+          sheetGrabberVisible: true,
+          headerShown: false,
+        }}
+      />
       <Stack.Screen name="groups/[groupId]/info" options={{ title: t`Informacje o grupie` }} />
       <Stack.Screen
         name="groups/[groupId]/member"

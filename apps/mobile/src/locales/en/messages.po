@@ -20,6 +20,10 @@ msgstr "{count, plural, one {# person} other {# people}}"
 msgid "{memberCount, plural, one {# osoba w grupie} few {# osoby w grupie} many {# osób w grupie} other {# osoby w grupie}}"
 msgstr "{memberCount, plural, one {# person in the group} other {# people in the group}}"
 
+#: src/features/entries/entry-bubble.tsx
+msgid "{payerName} + {otherPayers}"
+msgstr "{payerName} + {otherPayers}"
+
 #: src/app/(app)/groups/[groupId]/info.tsx
 msgid "+ Dodaj osobę bez konta"
 msgstr "+ Add a person without an account"
@@ -34,9 +38,15 @@ msgstr "Email address"
 msgid "Aktywność"
 msgstr "Activity"
 
+#: src/features/entries/use-entry-labels.ts
+msgid "Alkohol"
+msgstr "Alcohol"
+
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
 #: src/app/(app)/groups/[groupId]/member.tsx
 #: src/app/(app)/new-group.tsx
 #: src/app/(app)/new.tsx
+#: src/app/(app)/quick-bill.tsx
 #: src/features/group-link/group-link-section.tsx
 #: src/features/groups/attendance-grid-view.tsx
 msgid "Anuluj"
@@ -59,10 +69,16 @@ msgstr "Dark"
 msgid "Członkowie"
 msgstr "Members"
 
+#: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Data"
+msgstr "Date"
+
 #: src/app/(app)/new-group.tsx
 msgid "Daty pozwalają dzielić koszty według obecności."
 msgstr "Dates let you split costs by attendance."
 
+#: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
 #: src/app/(app)/new-group.tsx
 msgid "Do"
 msgstr "To"
@@ -71,9 +87,26 @@ msgstr "To"
 msgid "Dodaj"
 msgstr "Add"
 
+#: src/app/(app)/quick-bill.tsx
+msgid "Dodaj co najmniej jedną osobę."
+msgstr "Add at least one person."
+
+#: src/app/(app)/quick-bill.tsx
+msgid "Dodaj osobę"
+msgstr "Add a person"
+
 #: src/app/(app)/groups/[groupId]/member.tsx
 msgid "Dodaj osobę bez konta"
 msgstr "Add a person without an account"
+
+#. placeholder {0}: format.dateTime(entry.createdAt)
+#: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
+msgid "Dodał(a) {addedBy}, {0}"
+msgstr "Added by {addedBy}, {0}"
+
+#: src/features/entries/use-entry-labels.ts
+msgid "Dokładne kwoty"
+msgstr "Exact amounts"
 
 #: src/app/(app)/g/[token].tsx
 msgid "Dołącz do grupy"
@@ -99,10 +132,18 @@ msgstr "Change history"
 msgid "Imię"
 msgstr "Name"
 
+#: src/app/(app)/quick-bill.tsx
+msgid "Imię, potem Enter"
+msgstr "Name, then Enter"
+
 #: src/app/(app)/_layout.tsx
 #: src/app/(app)/groups/[groupId]/index.tsx
 msgid "Informacje o grupie"
 msgstr "Group info"
+
+#: src/features/entries/use-entry-labels.ts
+msgid "Inne"
+msgstr "Other"
 
 #: src/features/theme/theme-picker.tsx
 msgid "Jasny"
@@ -112,6 +153,10 @@ msgstr "Light"
 msgid "Jeden wydatek z kilkoma osobami"
 msgstr "One expense shared with a few people"
 
+#: src/features/entries/use-entry-labels.ts
+msgid "Jedzenie"
+msgstr "Food"
+
 #: src/components/language-picker.tsx
 msgid "Język"
 msgstr "Language"
@@ -119,6 +164,15 @@ msgstr "Language"
 #: src/components/language-picker.tsx
 msgid "Język systemu"
 msgstr "System language"
+
+#: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Kategoria"
+msgstr "Category"
+
+#: src/app/(app)/quick-bill.tsx
+msgid "Każda osoba trafi do grupy jako osoba bez konta. Płacisz Ty, dzielimy po równo."
+msgstr "Each person joins the group as a member without an account. You pay, split equally."
 
 #: src/features/group-link/group-link-section.tsx
 msgid "Każdy, kto ma ten link, może dołączyć do grupy."
@@ -140,6 +194,13 @@ msgstr "Source code on GitHub"
 msgid "Kolor"
 msgstr "Colour"
 
+#: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+#: src/app/(app)/quick-bill.tsx
+#: src/features/entries/composer.tsx
+msgid "Kwota"
+msgstr "Amount"
+
 #: src/features/profile/about-section.tsx
 msgid "Licencja: GNU AGPL v3"
 msgstr "Licence: GNU AGPL v3"
@@ -160,6 +221,11 @@ msgstr "Name"
 msgid "Nie masz jeszcze grup"
 msgstr "You have no groups yet"
 
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+#: src/features/entries/composer.tsx
+msgid "Nie udało się dodać wydatku. Spróbuj ponownie."
+msgstr "Couldn't add the expense. Try again."
+
 #: src/app/(app)/g/[token].tsx
 msgid "Nie udało się dołączyć. Spróbuj ponownie."
 msgstr "Couldn't join. Please try again."
@@ -176,6 +242,10 @@ msgstr "Couldn't revoke the link."
 msgid "Nie udało się utworzyć grupy. Spróbuj ponownie."
 msgstr "Could not create the group. Try again."
 
+#: src/app/(app)/quick-bill.tsx
+msgid "Nie udało się utworzyć rachunku. Spróbuj ponownie."
+msgstr "Couldn't create the bill. Try again."
+
 #: src/app/(app)/index.tsx
 msgid "Nie udało się wczytać grup."
 msgstr "Could not load groups."
@@ -187,6 +257,10 @@ msgstr "Could not load the group."
 #: src/features/group-link/group-link-section.tsx
 msgid "Nie udało się wczytać linku grupy."
 msgstr "Couldn't load the group link."
+
+#: src/app/(app)/groups/[groupId]/index.tsx
+msgid "Nie udało się wczytać wpisów."
+msgstr "Couldn't load the entries."
 
 #: src/app/(auth)/sign-in.tsx
 msgid "Nie udało się wysłać kodu. Spróbuj ponownie."
@@ -204,6 +278,14 @@ msgstr "Couldn't save. Please try again."
 msgid "Nieprawidłowy lub wygasły kod."
 msgstr "Invalid or expired code."
 
+#: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
+msgid "nieznana osoba"
+msgstr "unknown person"
+
+#: src/features/entries/use-entry-labels.ts
+msgid "Nocleg"
+msgstr "Accommodation"
+
 #: src/app/(app)/_layout.tsx
 #: src/app/(app)/new.tsx
 msgid "Nowa grupa"
@@ -213,6 +295,11 @@ msgstr "New group"
 #: src/app/(app)/index.tsx
 msgid "Nowy"
 msgstr "New"
+
+#: src/app/(app)/_layout.tsx
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Nowy wydatek"
+msgstr "New expense"
 
 #: src/app/(app)/new-group.tsx
 msgid "np. Mazury 2026"
@@ -226,6 +313,7 @@ msgstr "About"
 msgid "Obecność"
 msgstr "Attendance"
 
+#: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
 #: src/app/(app)/new-group.tsx
 msgid "Od"
 msgstr "From"
@@ -238,6 +326,26 @@ msgstr "Leave, archive or delete the group"
 msgid "Osoba"
 msgstr "Person"
 
+#: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
+msgid "Otrzymali"
+msgstr "Received by"
+
+#: src/features/entries/use-entry-labels.ts
+msgid "Paliwo"
+msgstr "Fuel"
+
+#: src/features/entries/composer.tsx
+msgid "Pełny formularz wydatku"
+msgstr "Full expense form"
+
+#: src/features/entries/use-entry-labels.ts
+msgid "Po równo"
+msgstr "Equally"
+
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Po równo między obecnych tego dnia: {participantCount, plural, one {# osoba} few {# osoby} many {# osób} other {# osoby}}"
+msgstr "Equally among those present that day: {participantCount, plural, one {# person} other {# people}}"
+
 #: src/app/(app)/new-group.tsx
 msgid "Podaj datę końca (RRRR-MM-DD), nie wcześniejszą niż początek."
 msgstr "Enter an end date (YYYY-MM-DD) no earlier than the start."
@@ -246,9 +354,18 @@ msgstr "Enter an end date (YYYY-MM-DD) no earlier than the start."
 msgid "Podaj datę początku w formacie RRRR-MM-DD."
 msgstr "Enter a start date as YYYY-MM-DD."
 
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Podaj datę w formacie RRRR-MM-DD."
+msgstr "Enter the date as YYYY-MM-DD."
+
 #: src/app/(app)/groups/[groupId]/member.tsx
 msgid "Podaj imię."
 msgstr "Enter a name."
+
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+#: src/app/(app)/quick-bill.tsx
+msgid "Podaj kwotę większą od zera."
+msgstr "Enter an amount greater than zero."
 
 #: src/app/(app)/new-group.tsx
 msgid "Podaj nazwę grupy."
@@ -258,21 +375,42 @@ msgstr "Enter a group name."
 msgid "Podaj poprawny adres e-mail."
 msgstr "Enter a valid email address."
 
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+#: src/app/(app)/quick-bill.tsx
+msgid "Podaj tytuł."
+msgstr "Enter a title."
+
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Podział"
+msgstr "Split"
+
 #: src/app/(app)/_layout.tsx
 #: src/app/(app)/profile.tsx
 #: src/components/inbox-header-buttons.tsx
 msgid "Profil"
 msgstr "Profile"
 
+#: src/features/entries/use-entry-labels.ts
+msgid "Rozrywka"
+msgstr "Entertainment"
+
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
 #: src/app/(app)/new-group.tsx
 msgid "RRRR-MM-DD"
 msgstr "YYYY-MM-DD"
+
+#: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
+#: src/app/(app)/index.tsx
+#: src/features/entries/entry-bubble.tsx
+msgid "Spłata"
+msgstr "Settlement"
 
 #: src/features/profile/about-section.tsx
 msgid "split-pay, wersja {version}"
 msgstr "split-pay, version {version}"
 
 #: src/app/(app)/g/[token].tsx
+#: src/app/(app)/groups/[groupId]/index.tsx
 #: src/app/(app)/index.tsx
 #: src/components/group-not-found.tsx
 #: src/features/group-link/group-link-section.tsx
@@ -301,6 +439,10 @@ msgstr "Quick bill"
 msgid "Ta grupa nie istnieje albo nie masz do niej dostępu."
 msgstr "This group does not exist or you do not have access to it."
 
+#: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
+msgid "Tego wpisu już nie ma."
+msgstr "This entry no longer exists."
+
 #: src/app/(app)/groups/[groupId]/member.tsx
 msgid "Tej osoby nie ma już w grupie."
 msgstr "This person is no longer in the group."
@@ -309,17 +451,42 @@ msgstr "This person is no longer in the group."
 msgid "Ten link grupy jest nieważny. Poproś kogoś z grupy o nowy."
 msgstr "This group link is no longer valid. Ask someone in the group for a new one."
 
+#: src/features/entries/use-entry-labels.ts
+msgid "Transport"
+msgstr "Transport"
+
 #: src/features/theme/theme-picker.tsx
 msgid "Tryb jasny/ciemny"
 msgstr "Light/dark mode"
 
+#. placeholder {0}: format.amount(myShare, baseCurrency)
+#: src/features/entries/entry-bubble.tsx
+msgid "twój udział {0}"
+msgstr "your share {0}"
+
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
 #: src/app/(app)/groups/[groupId]/info.tsx
 msgid "Ty"
 msgstr "You"
 
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+#: src/app/(app)/quick-bill.tsx
+#: src/features/entries/composer.tsx
+msgid "Tytuł"
+msgstr "Title"
+
 #: src/features/group-link/group-link-section.tsx
 msgid "Udostępnij link"
 msgstr "Share link"
+
+#: src/features/entries/use-entry-labels.ts
+msgid "Udziały"
+msgstr "Shares"
+
+#. placeholder {0}: labels.splitMode[entry.split.mode]
+#: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
+msgid "Udziały · {0}"
+msgstr "Shares · {0}"
 
 #: src/features/group-link/group-link-section.tsx
 msgid "Unieważnij i utwórz nowy"
@@ -332,6 +499,15 @@ msgstr "Revoke link"
 #: src/app/(app)/groups/[groupId]/info.tsx
 msgid "Ustawienia"
 msgstr "Settings"
+
+#. placeholder {0}: person.displayName
+#: src/app/(app)/quick-bill.tsx
+msgid "Usuń {0}"
+msgstr "Remove {0}"
+
+#: src/app/(app)/quick-bill.tsx
+msgid "Utwórz"
+msgstr "Create"
 
 #: src/app/(app)/new-group.tsx
 msgid "Utwórz grupę"
@@ -346,9 +522,12 @@ msgid "Waluta bazowa"
 msgstr "Base currency"
 
 #: src/app/(app)/groups/[groupId]/info.tsx
-#: src/app/(app)/quick-bill.tsx
 msgid "Wkrótce"
 msgstr "Coming soon"
+
+#: src/app/(app)/_layout.tsx
+msgid "Wpis"
+msgstr "Entry"
 
 #: src/app/(app)/groups/[groupId]/member.tsx
 msgid "Wpisujesz za nią wydatki. Później może przejąć swój profil."
@@ -358,9 +537,17 @@ msgstr "You enter their expenses. They can claim their profile later."
 msgid "Wpisz kod wysłany na {email}."
 msgstr "Enter the code sent to {email}."
 
+#: src/app/(app)/groups/[groupId]/index.tsx
+msgid "Wpisz kwotę i tytuł poniżej, żeby dodać pierwszy wydatek."
+msgstr "Type an amount and a title below to add the first expense."
+
 #: src/app/(app)/g/[token].tsx
 msgid "Wróć"
 msgstr "Back"
+
+#: src/features/entries/use-entry-labels.ts
+msgid "Wspólne + osobiste"
+msgstr "Common + personal"
 
 #: src/app/(app)/new-group.tsx
 msgid "Wybierz emoji."
@@ -374,9 +561,9 @@ msgstr "Choose a colour."
 msgid "Wybierz walutę."
 msgstr "Choose a currency."
 
-#: src/app/(app)/groups/[groupId]/index.tsx
-msgid "Wydatki dodane w tej grupie pojawią się tutaj."
-msgstr "Expenses added to this group will show up here."
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Wybierz, kto zapłacił."
+msgstr "Choose who paid."
 
 #: src/app/(app)/new-group.tsx
 msgid "Wyjazd z datami"
@@ -394,6 +581,10 @@ msgstr "Sign out"
 msgid "Wyślemy Ci jednorazowy kod na e-mail. Bez haseł."
 msgstr "We'll email you a one-time code. No passwords."
 
+#: src/features/entries/composer.tsx
+msgid "Wyślij"
+msgstr "Send"
+
 #: src/app/(auth)/sign-in.tsx
 msgid "Wyślij kod"
 msgstr "Send code"
@@ -401,6 +592,23 @@ msgstr "Send code"
 #: src/app/(auth)/sign-in.tsx
 msgid "Wyślij kod ponownie"
 msgstr "Resend code"
+
+#: src/app/(app)/quick-bill.tsx
+msgid "Z kim"
+msgstr "With whom"
+
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+#: src/features/entries/composer.tsx
+msgid "Za co?"
+msgstr "What for?"
+
+#: src/app/(app)/quick-bill.tsx
+msgid "Za co? np. Pizza u Kasi"
+msgstr "What for? e.g. Pizza at Kasia's"
+
+#: src/features/entries/use-entry-labels.ts
+msgid "Zakupy spożywcze"
+msgstr "Groceries"
 
 #: src/app/(app)/profile.tsx
 msgid "Zalogowano jako"
@@ -418,11 +626,12 @@ msgstr "Sign in"
 msgid "założyciel"
 msgstr "owner"
 
+#: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
 #: src/app/(app)/groups/[groupId]/member.tsx
-#: src/app/(app)/quick-bill.tsx
 msgid "Zamknij"
 msgstr "Close"
 
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
 #: src/app/(app)/groups/[groupId]/member.tsx
 msgid "Zapisz"
 msgstr "Save"
@@ -430,6 +639,14 @@ msgstr "Save"
 #: src/features/groups/attendance-grid-view.tsx
 msgid "Zapisz obecność"
 msgstr "Save attendance"
+
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Zapłacił(a)"
+msgstr "Paid by"
+
+#: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
+msgid "Zapłacili"
+msgstr "Paid by"
 
 #. placeholder {0}: emptyNames.join(', ')
 #: src/features/groups/attendance-grid-view.tsx

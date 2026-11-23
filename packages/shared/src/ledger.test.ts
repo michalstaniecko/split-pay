@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { computeBalances, dailyStats, pairwiseTransfers, simplifiedTransfers, type Transfer } from './ledger';
+import {
+  computeBalances,
+  dailyStats,
+  dailyTotals,
+  memberShare,
+  pairwiseTransfers,
+  simplifiedTransfers,
+  type Transfer,
+} from './ledger';
 import type { Entry } from './model';
 import { ANIA, BARTEK, KASIA, TOMEK, expense, income, settlement, sum } from './test-fixtures';
 
@@ -82,6 +90,47 @@ describe('computeBalances', () => {
       'PLN',
     );
     expect(Object.fromEntries(balances)).toEqual({ [ANIA]: 0, [BARTEK]: 0 });
+  });
+});
+
+describe('memberShare', () => {
+  it("is the member's share of an entry in the base currency", () => {
+    expect(memberShare(trip[0]!, ANIA, 'PLN')).toBe(10_000);
+    expect(memberShare(trip[2]!, TOMEK, 'PLN')).toBe(8_000);
+    expect(memberShare(trip[3]!, TOMEK, 'PLN')).toBe(2_125);
+  });
+
+  it('is 0 for a member outside the split and for settlements', () => {
+    expect(memberShare(trip[1]!, TOMEK, 'PLN')).toBe(0);
+    expect(memberShare(settlement({ amount: 100, from: ANIA, to: BARTEK }), ANIA, 'PLN')).toBe(0);
+  });
+
+  it('is negative for an income (money owed to the member)', () => {
+    expect(memberShare(trip[4]!, BARTEK, 'PLN')).toBe(-10_000);
+  });
+});
+
+describe('dailyTotals', () => {
+  it("sums each day's expenses in the base currency, skipping incomes, settlements and deleted entries", () => {
+    const entries = [
+      ...trip,
+      settlement({ date: '2026-07-11', amount: 500, from: ANIA, to: BARTEK }),
+      expense({
+        date: '2026-07-11',
+        amount: 999,
+        deletedAt: '2026-07-11T20:00:00Z',
+        payers: [{ memberId: ANIA, amount: 999 }],
+        split: { mode: 'equal', memberIds: [ANIA] },
+      }),
+    ];
+    expect(dailyTotals(entries, 'PLN')).toEqual(
+      new Map([
+        ['2026-07-10', 30_000],
+        ['2026-07-11', 12_000],
+        ['2026-07-12', 20_000],
+        ['2026-07-13', 8_500],
+      ]),
+    );
   });
 });
 
