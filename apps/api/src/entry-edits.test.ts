@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { computeBalances, type Entry, type NewEntry, toNewEntry } from '@split-pay/shared';
+import { type Entry, type NewEntry, toNewEntry } from '@split-pay/shared';
 import { eq } from 'drizzle-orm';
 import { parseResponse } from 'hono/client';
 import { describe, expect, it } from 'vitest';
@@ -137,15 +137,18 @@ describe('editing and deleting entries', () => {
   });
 
   it('a deleted entry no longer counts in balances; restoring brings it back', async () => {
-    const { me, bartekId, remove, restore, list } = await setup();
-    // TODO(#9): read these from the balances endpoint once it exists; it uses the same shared ledger.
-    expect(Object.fromEntries(computeBalances(await list(), 'PLN'))).toEqual({ [me]: 5_000, [bartekId]: -5_000 });
+    const { ania, group, me, bartekId, remove, restore } = await setup();
+    const balances = async () => {
+      const body = await parseResponse(client(ania).groups[':groupId'].balances.$get({ param: { groupId: group.id } }));
+      return Object.fromEntries(body.balances.map((b) => [b.memberId, b.amount]));
+    };
+    expect(await balances()).toEqual({ [me]: 5_000, [bartekId]: -5_000 });
 
     await parseResponse(remove(1));
-    expect(computeBalances(await list(), 'PLN').size).toBe(0);
+    expect(await balances()).toEqual({ [me]: 0, [bartekId]: 0 });
 
     await parseResponse(restore(1));
-    expect(Object.fromEntries(computeBalances(await list(), 'PLN'))).toEqual({ [me]: 5_000, [bartekId]: -5_000 });
+    expect(await balances()).toEqual({ [me]: 5_000, [bartekId]: -5_000 });
   });
 
   it('delete and restore are idempotent', async () => {

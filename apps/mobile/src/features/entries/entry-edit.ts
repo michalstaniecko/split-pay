@@ -72,6 +72,10 @@ export function expenseFormFromEntry(entry: FormEntry): ExpenseForm {
     date: entry.date,
     category: entry.category,
     categoryChosen: true,
+    currency: entry.currency,
+    // The frozen rate stays (ADR-0016): marked as typed so the ECB rate isn't prefilled over it.
+    rate: entry.rateToBase,
+    rateEdited: true,
     // The saved snapshot (ADR-0016): a new date moves them only while they are that day's defaults.
     participantIds,
     participantsDate: entry.date,
@@ -84,7 +88,7 @@ export function expenseFormFromEntry(entry: FormEntry): ExpenseForm {
 /**
  * The edited entry from the form — the whole entry, sent with the version it
  * was based on. Validated like a new one; keeps the id and the receipt (not
- * in the form yet, #26). TODO(#14): the entry currency.
+ * in the form yet, #26).
  */
 export function editedEntry(
   entry: FormEntry,

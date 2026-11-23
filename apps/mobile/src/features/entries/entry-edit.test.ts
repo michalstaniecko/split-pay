@@ -75,6 +75,9 @@ describe('expenseFormFromEntry', () => {
       date: '2026-07-11',
       category: 'food',
       categoryChosen: true,
+      currency: 'PLN',
+      rate: '1',
+      rateEdited: true,
       participantIds: [ANIA, BARTEK],
       participantsDate: '2026-07-11',
       split: { mode: 'equal', exact: {}, weights: {}, personal: {} },
@@ -108,6 +111,13 @@ describe('expenseFormFromEntry', () => {
       split: { mode: 'commonPlusPersonal', commonMemberIds: [ANIA, KASIA], personal: [{ memberId: BARTEK, amount: 2_000 }] },
     });
     expect(personal).toMatchObject({ participantIds: [ANIA, KASIA], split: { mode: 'commonPlusPersonal', personal: { [BARTEK]: '20' } } });
+  });
+
+  it('keeps the frozen rate of a foreign-currency entry (no ECB prefill over it)', () => {
+    const euro = { ...pizza, currency: 'EUR', rateToBase: '4.2817', amount: 2_050, payers: [{ memberId: BARTEK, amount: 2_050 }] };
+    expect(expenseFormFromEntry(euro)).toMatchObject({ amount: '20.5', currency: 'EUR', rate: '4.2817', rateEdited: true });
+    const r = editedEntry(euro, expenseFormFromEntry(euro), { group, members });
+    expect(r).toEqual({ ok: true, value: toNewEntry(euro) });
   });
 
   it('opens an income with its recipient as the person', () => {

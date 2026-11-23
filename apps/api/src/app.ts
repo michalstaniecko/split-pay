@@ -8,7 +8,9 @@ import { type AuthEnv, createRequireUser } from './middleware/require-user';
 import { deleteAccount } from './routes/account';
 import { linksRoutes } from './routes/group-links';
 import { groupsRoutes } from './routes/groups';
+import { myPayoutDetailsRoutes } from './routes/payout-details';
 import { quickBillsRoutes } from './routes/quick-bills';
+import { ratesRoutes } from './routes/rates';
 
 export interface AppDeps {
   auth: Auth;
@@ -43,11 +45,15 @@ export const createApp = ({ auth, db, flags = defaultFeatureFlags }: AppDeps) =>
         await deleteAccount(db, c.get('user'), c.req.valid('json').locale);
         return c.json({ deleted: true as const });
       })
+      /** My payout details (Profile). */
+      .route('/me/payout-details', myPayoutDetailsRoutes({ db, requireUser }))
       .route('/groups', groupsRoutes({ db, requireUser }))
       /** Quick bill: group + members without an account + its expense in one step. */
       .route('/quick-bills', quickBillsRoutes({ db, requireUser }))
       /** Opening a group link in the app: preview + join. */
       .route('/links', linksRoutes({ db, requireUser }))
+      /** ECB exchange rates for a date (ADR-0014). */
+      .route('/rates', ratesRoutes({ db, requireUser }))
   );
 };
 

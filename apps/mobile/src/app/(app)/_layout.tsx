@@ -79,6 +79,26 @@ export default function AppLayout() {
           headerShown: false,
         }}
       />
+      <Stack.Screen
+        name="groups/[groupId]/balances"
+        options={{
+          title: t`Salda`,
+          presentation: 'formSheet',
+          sheetAllowedDetents: [0.6, 1],
+          sheetGrabberVisible: true,
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="groups/[groupId]/settle"
+        options={{
+          title: t`Oddaj`,
+          presentation: 'formSheet',
+          sheetAllowedDetents: [0.6, 1],
+          sheetGrabberVisible: true,
+          headerShown: false,
+        }}
+      />
       <Stack.Screen name="groups/[groupId]/info" options={{ title: t`Informacje o grupie` }} />
       <Stack.Screen name="groups/[groupId]/stats" options={{ title: t`Statystyki` }} />
       <Stack.Screen

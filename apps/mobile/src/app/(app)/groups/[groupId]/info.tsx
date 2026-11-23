@@ -10,6 +10,7 @@ import { GroupNotFound } from '@/components/group-not-found';
 import { PersonalClaimLinkButton } from '@/features/claims/personal-claim-link-button';
 import { GroupLinkSection } from '@/features/group-link/group-link-section';
 import { AttendanceGridView } from '@/features/groups/attendance-grid-view';
+import { GroupSettingsSection } from '@/features/groups/group-settings-section';
 import { type GroupDetail, groupQuery } from '@/features/groups/groups-query';
 import { type MemberRow, memberRows } from '@/features/groups/member-form';
 import { useFormatters } from '@/i18n/use-formatters';
@@ -80,7 +81,9 @@ function GroupInfo({ group }: { group: GroupDetail }) {
         <Text style={styles.chevron}>{t`Pokaż`}</Text>
       </Pressable>
       <Section title={t`Historia zmian`} subtitle={soon} />
-      <Section title={t`Ustawienia`} subtitle={soon} />
+      <Section title={t`Ustawienia`}>
+        <GroupSettingsSection group={group} />
+      </Section>
       <Section title={t`Opuść, archiwizuj lub usuń grupę`} subtitle={soon} />
     </ScrollView>
   );
