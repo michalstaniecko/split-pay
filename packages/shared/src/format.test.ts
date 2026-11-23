@@ -28,6 +28,11 @@ describe('formatAmount', () => {
     expect(plain(formatAmount(Number.MAX_SAFE_INTEGER, 'PLN', 'pl'))).toBe('90 071 992 547 409,91 zł');
   });
 
+  it('spells the currency name for screen readers', () => {
+    expect(plain(formatAmount(2_000, 'EUR', 'pl', { currencyDisplay: 'name' }))).toBe('20,00 euro');
+    expect(plain(formatAmount(8_643, 'PLN', 'en', { currencyDisplay: 'name' }))).toBe('86.43 Polish zlotys');
+  });
+
   it('rejects non-integer amounts', () => {
     expect(() => formatAmount(10.5, 'PLN', 'pl')).toThrow(RangeError);
   });
