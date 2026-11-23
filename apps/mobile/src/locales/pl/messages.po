@@ -7,11 +7,6 @@ msgstr ""
 "X-Generator: @lingui/cli\n"
 "Language: pl\n"
 
-#. placeholder {0}: member.displayName
-#: src/app/(app)/groups/[groupId]/info.tsx
-msgid "{0} (założyciel)"
-msgstr "{0} (założyciel)"
-
 #. placeholder {0}: group.data.name
 #: src/app/(app)/groups/[groupId]/index.tsx
 msgid "{0}, informacje o grupie"
@@ -20,6 +15,10 @@ msgstr "{0}, informacje o grupie"
 #: src/app/(app)/groups/[groupId]/info.tsx
 msgid "{count, plural, one {# osoba} few {# osoby} many {# osób} other {# osoby}}"
 msgstr "{count, plural, one {# osoba} few {# osoby} many {# osób} other {# osoby}}"
+
+#: src/app/(app)/groups/[groupId]/info.tsx
+msgid "+ Dodaj osobę bez konta"
+msgstr "+ Dodaj osobę bez konta"
 
 #: src/app/(auth)/sign-in.tsx
 msgid "Adres e-mail"
@@ -31,10 +30,15 @@ msgstr "Adres e-mail"
 msgid "Aktywność"
 msgstr "Aktywność"
 
+#: src/app/(app)/groups/[groupId]/member.tsx
 #: src/app/(app)/new-group.tsx
 #: src/app/(app)/new.tsx
 msgid "Anuluj"
 msgstr "Anuluj"
+
+#: src/app/(app)/groups/[groupId]/info.tsx
+msgid "bez konta"
+msgstr "bez konta"
 
 #: src/app/(app)/groups/[groupId]/index.tsx
 #: src/app/(app)/index.tsx
@@ -57,6 +61,14 @@ msgstr "Daty pozwalają dzielić koszty według obecności."
 msgid "Do"
 msgstr "Do"
 
+#: src/app/(app)/groups/[groupId]/member.tsx
+msgid "Dodaj"
+msgstr "Dodaj"
+
+#: src/app/(app)/groups/[groupId]/member.tsx
+msgid "Dodaj osobę bez konta"
+msgstr "Dodaj osobę bez konta"
+
 #: src/app/(app)/new-group.tsx
 msgid "Emoji"
 msgstr "Emoji"
@@ -64,6 +76,10 @@ msgstr "Emoji"
 #: src/app/(app)/groups/[groupId]/info.tsx
 msgid "Historia zmian"
 msgstr "Historia zmian"
+
+#: src/app/(app)/groups/[groupId]/member.tsx
+msgid "Imię"
+msgstr "Imię"
 
 #: src/app/(app)/_layout.tsx
 #: src/app/(app)/groups/[groupId]/index.tsx
@@ -134,6 +150,10 @@ msgstr "Nie udało się wczytać grupy."
 msgid "Nie udało się wysłać kodu. Spróbuj ponownie."
 msgstr "Nie udało się wysłać kodu. Spróbuj ponownie."
 
+#: src/app/(app)/groups/[groupId]/member.tsx
+msgid "Nie udało się zapisać. Spróbuj ponownie."
+msgstr "Nie udało się zapisać. Spróbuj ponownie."
+
 #: src/app/(auth)/sign-in.tsx
 msgid "Nieprawidłowy lub wygasły kod."
 msgstr "Nieprawidłowy lub wygasły kod."
@@ -164,6 +184,10 @@ msgstr "Od"
 msgid "Opuść, archiwizuj lub usuń grupę"
 msgstr "Opuść, archiwizuj lub usuń grupę"
 
+#: src/app/(app)/_layout.tsx
+msgid "Osoba"
+msgstr "Osoba"
+
 #: src/app/(app)/new-group.tsx
 msgid "Podaj datę końca (RRRR-MM-DD), nie wcześniejszą niż początek."
 msgstr "Podaj datę końca (RRRR-MM-DD), nie wcześniejszą niż początek."
@@ -171,6 +195,10 @@ msgstr "Podaj datę końca (RRRR-MM-DD), nie wcześniejszą niż początek."
 #: src/app/(app)/new-group.tsx
 msgid "Podaj datę początku w formacie RRRR-MM-DD."
 msgstr "Podaj datę początku w formacie RRRR-MM-DD."
+
+#: src/app/(app)/groups/[groupId]/member.tsx
+msgid "Podaj imię."
+msgstr "Podaj imię."
 
 #: src/app/(app)/new-group.tsx
 msgid "Podaj nazwę grupy."
@@ -217,9 +245,17 @@ msgstr "Szybki rachunek"
 msgid "Ta grupa nie istnieje albo nie masz do niej dostępu."
 msgstr "Ta grupa nie istnieje albo nie masz do niej dostępu."
 
+#: src/app/(app)/groups/[groupId]/member.tsx
+msgid "Tej osoby nie ma już w grupie."
+msgstr "Tej osoby nie ma już w grupie."
+
 #: src/features/theme/theme-picker.tsx
 msgid "Tryb jasny/ciemny"
 msgstr "Tryb jasny/ciemny"
+
+#: src/app/(app)/groups/[groupId]/info.tsx
+msgid "Ty"
+msgstr "Ty"
 
 #: src/app/(app)/groups/[groupId]/info.tsx
 msgid "Ustawienia"
@@ -241,6 +277,10 @@ msgstr "Waluta bazowa"
 #: src/app/(app)/quick-bill.tsx
 msgid "Wkrótce"
 msgstr "Wkrótce"
+
+#: src/app/(app)/groups/[groupId]/member.tsx
+msgid "Wpisujesz za nią wydatki. Później może przejąć swój profil."
+msgstr "Wpisujesz za nią wydatki. Później może przejąć swój profil."
 
 #: src/app/(auth)/sign-in.tsx
 msgid "Wpisz kod wysłany na {email}."
@@ -298,10 +338,28 @@ msgstr "Zaloguj"
 msgid "Zaloguj się"
 msgstr "Zaloguj się"
 
+#: src/app/(app)/groups/[groupId]/info.tsx
+msgid "założyciel"
+msgstr "założyciel"
+
+#: src/app/(app)/groups/[groupId]/member.tsx
 #: src/app/(app)/quick-bill.tsx
 msgid "Zamknij"
 msgstr "Zamknij"
 
+#: src/app/(app)/groups/[groupId]/member.tsx
+msgid "Zapisz"
+msgstr "Zapisz"
+
+#: src/app/(app)/groups/[groupId]/info.tsx
+msgid "Zmień"
+msgstr "Zmień"
+
 #: src/app/(auth)/sign-in.tsx
 msgid "Zmień adres e-mail"
 msgstr "Zmień adres e-mail"
+
+#: src/app/(app)/groups/[groupId]/info.tsx
+#: src/app/(app)/groups/[groupId]/member.tsx
+msgid "Zmień imię"
+msgstr "Zmień imię"

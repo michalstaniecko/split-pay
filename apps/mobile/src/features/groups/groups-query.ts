@@ -1,4 +1,4 @@
-import type { NewGroup } from '@split-pay/shared';
+import type { MemberRename, NewGroup, NewMember } from '@split-pay/shared';
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import { type InferResponseType, parseResponse } from 'hono/client';
 import { api } from '@/lib/api';
@@ -37,6 +37,32 @@ export function useCreateGroup() {
     mutationFn: (input: NewGroup) => parseResponse(api.groups.$post({ json: input })),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: groupKeys.list() });
+    },
+  });
+}
+
+/** Adds a member without an account (POST /groups/:groupId/members); the caller generates the id. */
+export function useAddMember(groupId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: NewMember) =>
+      parseResponse(api.groups[':groupId'].members.$post({ param: { groupId }, json: input })),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: groupKeys.detail(groupId) });
+    },
+  });
+}
+
+/** Renames a member (PATCH /groups/:groupId/members/:memberId). */
+export function useRenameMember(groupId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ memberId, ...input }: MemberRename & { memberId: string }) =>
+      parseResponse(
+        api.groups[':groupId'].members[':memberId'].$patch({ param: { groupId, memberId }, json: input }),
+      ),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: groupKeys.detail(groupId) });
     },
   });
 }

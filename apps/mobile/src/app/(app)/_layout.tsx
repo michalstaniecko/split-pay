@@ -45,6 +45,16 @@ export default function AppLayout() {
       />
       <Stack.Screen name="groups/[groupId]/index" options={{ title: '' }} />
       <Stack.Screen name="groups/[groupId]/info" options={{ title: t`Informacje o grupie` }} />
+      <Stack.Screen
+        name="groups/[groupId]/member"
+        options={{
+          title: t`Osoba`,
+          presentation: 'formSheet',
+          sheetAllowedDetents: 'fitToContents',
+          sheetGrabberVisible: true,
+          headerShown: false,
+        }}
+      />
     </Stack>
   );
 }

@@ -83,6 +83,28 @@ export const Member = z.object({
 });
 export type Member = z.infer<typeof Member>;
 
+/**
+ * Adding a member without an account (ADR-0007): a client-generated id and a
+ * name. Attendance is optional (`null`/missing = whole trip). There is no
+ * `userId` — an account is linked only by claiming.
+ */
+export const NewMember = Member.pick({ id: true, displayName: true }).extend({
+  attendance: Attendance.nullable().optional(),
+});
+export type NewMember = z.infer<typeof NewMember>;
+
+/** Renaming a member. */
+export const MemberRename = Member.pick({ displayName: true });
+export type MemberRename = z.infer<typeof MemberRename>;
+
+/**
+ * Any member can rename a member without an account (ADR-0008) and their own
+ * member; a member with an account can't be renamed by others.
+ */
+export function canRenameMember(member: Pick<Member, 'userId'>, userId: Id): boolean {
+  return member.userId === null || member.userId === userId;
+}
+
 const GroupFields = z.object({
   id: Id,
   name: z.string().trim().min(1).max(80),
