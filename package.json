@@ -1,0 +1,21 @@
+{
+  "name": "split-pay",
+  "private": true,
+  "license": "AGPL-3.0-only",
+  "packageManager": "pnpm@12.23.0+sha512.02da94ffaf133f46074322afe552f90d40b5f71ae259aefbccdacc5085b1d617e98d65e0131f5748b9b67445978ee5055d7d59a473f1eef0d504854fefcd5975",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "mobile": "pnpm --filter @split-pay/mobile start",
+    "api": "pnpm --filter @split-pay/api dev"
+  },
+  "devDependencies": {
+    "turbo": "^2.11.13",
+    "typescript": "~6.0.3"
+  }
+}

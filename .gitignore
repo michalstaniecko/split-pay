@@ -1,0 +1,46 @@
+# dependencies
+node_modules/
+
+# build output
+dist/
+build/
+coverage/
+*.tsbuildinfo
+
+# turbo
+.turbo/
+
+# Expo
+.expo/
+web-build/
+expo-env.d.ts
+.metro-health-check*
+apps/mobile/ios/
+apps/mobile/android/
+.kotlin/
+*.orig.*
+
+# signing — nigdy w repo
+*.jks
+*.p8
+*.p12
+*.key
+*.pem
+*.mobileprovision
+
+# env
+.env
+.env*.local
+!.env.example
+
+# logs
+npm-debug.*
+pnpm-debug.*
+*.log
+
+# OS / editor
+.DS_Store
+.idea/
+
+# Claude Code — lokalne ustawienia
+.claude/settings.local.json
