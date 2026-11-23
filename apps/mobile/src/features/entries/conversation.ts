@@ -1,4 +1,5 @@
 import {
+  convert,
   type CurrencyCode,
   dailyTotals,
   type Entry,
@@ -44,6 +45,8 @@ export interface EntryItem {
   otherPayers: number;
   /** My share in the base currency ("twój udział"); `null` without a member of mine. */
   myShare: number | null;
+  /** A foreign-currency entry's amount in the base currency at its frozen rate ("≈ …"); `null` in the base currency. */
+  baseAmount: number | null;
 }
 
 /** A claim system message ("Tomek przejął profil Tomek", #18). */
@@ -126,6 +129,10 @@ export function conversationItems<C extends ClaimLike = ClaimLike>(
       payerNames: senders.map((h) => names.get(h.memberId) ?? '?'),
       otherPayers: senders.length - 1,
       myShare: me === null ? null : memberShare(entry, me, context.baseCurrency),
+      baseAmount:
+        entry.currency === context.baseCurrency
+          ? null
+          : convert(entry.amount, entry.rateToBase, entry.currency, context.baseCurrency),
     });
   }
   return { items, stickyHeaderIndices };

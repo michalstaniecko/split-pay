@@ -73,6 +73,10 @@ msgstr "{names} received {amount} for {title}, {date}."
 msgid "{names} {count, plural, one {zapłacił(a)} few {zapłacili} many {zapłacili} other {zapłacili}} {amount} za {title}, {date}."
 msgstr "{names} paid {amount} for {title}, {date}."
 
+#: src/features/entries/spoken-amount.ts
+msgid "{original}, czyli około {base}"
+msgstr "{original}, about {base}"
+
 #: src/features/entries/entry-bubble.tsx
 msgid "{payerName} + {otherPayers}"
 msgstr "{payerName} + {otherPayers}"
@@ -131,6 +135,10 @@ msgstr "Debts not simplified"
 #: src/app/(app)/groups/[groupId]/settle.tsx
 msgid "Brak danych do spłaty. Zapytaj o nie bezpośrednio."
 msgstr "No payout details. Ask for them directly."
+
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Brak kursu EBC dla tej daty — wpisz go ręcznie."
+msgstr "No ECB rate for this date — enter it manually."
 
 #: src/app/(app)/groups/[groupId]/index.tsx
 #: src/app/(app)/index.tsx
@@ -348,6 +356,21 @@ msgid "Kto komu oddaje"
 msgstr "Who pays whom"
 
 #: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
+msgid "Kurs"
+msgstr "Rate"
+
+#. placeholder {0}: format.date(rates.data.table.ratesDate)
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Kurs EBC z {0}."
+msgstr "ECB rate from {0}."
+
+#. placeholder {0}: form.currency
+#. placeholder {1}: group.baseCurrency
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Kurs: 1 {0} = ? {1}"
+msgstr "Rate: 1 {0} = ? {1}"
+
+#: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
 #: src/app/(app)/quick-bill.tsx
 #: src/features/entries/composer.tsx
@@ -541,6 +564,11 @@ msgstr "Pay back {amount} – {0}"
 msgid "Oddaj {recipient}"
 msgstr "Pay back {recipient}"
 
+#. placeholder {0}: format.date(rates.data.table.ratesDate)
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Offline: ostatni zapisany kurs EBC z {0}."
+msgstr "Offline: last saved ECB rate from {0}."
+
 #: src/app/(app)/groups/[groupId]/info.tsx
 msgid "Opuść, archiwizuj lub usuń grupę"
 msgstr "Leave, archive or delete the group"
@@ -570,6 +598,10 @@ msgstr "Full expense form"
 msgid "Po równo"
 msgstr "Equally"
 
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Pobieram kurs EBC…"
+msgstr "Fetching the ECB rate…"
+
 #: src/app/(app)/new-group.tsx
 msgid "Podaj datę końca (RRRR-MM-DD), nie wcześniejszą niż początek."
 msgstr "Enter an end date (YYYY-MM-DD) no earlier than the start."
@@ -585,6 +617,10 @@ msgstr "Enter the date as YYYY-MM-DD."
 #: src/app/(app)/groups/[groupId]/member.tsx
 msgid "Podaj imię."
 msgstr "Enter a name."
+
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Podaj kurs większy od zera, np. 4,3215."
+msgstr "Enter a rate greater than zero, e.g. 4.3215."
 
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
 #: src/app/(app)/quick-bill.tsx
@@ -675,6 +711,10 @@ msgstr "Copied"
 #: src/features/entries/entry-bubble.tsx
 msgid "Spłata"
 msgstr "Settlement"
+
+#: src/features/entries/bubble-label.ts
+msgid "Spłata {amount}. Od: {payerName}. {date}."
+msgstr "Settlement {amount} from {payerName}. {date}."
 
 #: src/features/profile/about-section.tsx
 msgid "split-pay, wersja {version}"
@@ -853,6 +893,14 @@ msgstr "Create group"
 msgid "Utwórz grupę dla wyjazdu, mieszkania albo jednego rachunku."
 msgstr "Create a group for a trip, a flat or a single bill."
 
+#: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
+msgid "W walucie bazowej"
+msgstr "In the base currency"
+
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Waluta"
+msgstr "Currency"
+
 #: src/app/(app)/new-group.tsx
 msgid "Waluta bazowa"
 msgstr "Base currency"
@@ -940,6 +988,10 @@ msgstr "Choose who paid."
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
 msgid "Wydatek"
 msgstr "Expense"
+
+#: src/features/entries/bubble-label.ts
+msgid "Wydatek {amount}: {title}. Zapłacił(a): {payerName}. {date}."
+msgstr "Expense {amount}: {title}. Paid by {payerName}. {date}."
 
 #: src/app/(app)/new-group.tsx
 msgid "Wyjazd z datami"

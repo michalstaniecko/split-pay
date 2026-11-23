@@ -73,6 +73,10 @@ msgstr "{names} {count, plural, one {otrzymał(a)} few {otrzymali} many {otrzyma
 msgid "{names} {count, plural, one {zapłacił(a)} few {zapłacili} many {zapłacili} other {zapłacili}} {amount} za {title}, {date}."
 msgstr "{names} {count, plural, one {zapłacił(a)} few {zapłacili} many {zapłacili} other {zapłacili}} {amount} za {title}, {date}."
 
+#: src/features/entries/spoken-amount.ts
+msgid "{original}, czyli około {base}"
+msgstr "{original}, czyli około {base}"
+
 #: src/features/entries/entry-bubble.tsx
 msgid "{payerName} + {otherPayers}"
 msgstr "{payerName} + {otherPayers}"
@@ -131,6 +135,10 @@ msgstr "Bez upraszczania długów"
 #: src/app/(app)/groups/[groupId]/settle.tsx
 msgid "Brak danych do spłaty. Zapytaj o nie bezpośrednio."
 msgstr "Brak danych do spłaty. Zapytaj o nie bezpośrednio."
+
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Brak kursu EBC dla tej daty — wpisz go ręcznie."
+msgstr "Brak kursu EBC dla tej daty — wpisz go ręcznie."
 
 #: src/app/(app)/groups/[groupId]/index.tsx
 #: src/app/(app)/index.tsx
@@ -348,6 +356,21 @@ msgid "Kto komu oddaje"
 msgstr "Kto komu oddaje"
 
 #: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
+msgid "Kurs"
+msgstr "Kurs"
+
+#. placeholder {0}: format.date(rates.data.table.ratesDate)
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Kurs EBC z {0}."
+msgstr "Kurs EBC z {0}."
+
+#. placeholder {0}: form.currency
+#. placeholder {1}: group.baseCurrency
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Kurs: 1 {0} = ? {1}"
+msgstr "Kurs: 1 {0} = ? {1}"
+
+#: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
 #: src/app/(app)/quick-bill.tsx
 #: src/features/entries/composer.tsx
@@ -541,6 +564,11 @@ msgstr "Oddaj {amount} – {0}"
 msgid "Oddaj {recipient}"
 msgstr "Oddaj {recipient}"
 
+#. placeholder {0}: format.date(rates.data.table.ratesDate)
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Offline: ostatni zapisany kurs EBC z {0}."
+msgstr "Offline: ostatni zapisany kurs EBC z {0}."
+
 #: src/app/(app)/groups/[groupId]/info.tsx
 msgid "Opuść, archiwizuj lub usuń grupę"
 msgstr "Opuść, archiwizuj lub usuń grupę"
@@ -570,6 +598,10 @@ msgstr "Pełny formularz wydatku"
 msgid "Po równo"
 msgstr "Po równo"
 
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Pobieram kurs EBC…"
+msgstr "Pobieram kurs EBC…"
+
 #: src/app/(app)/new-group.tsx
 msgid "Podaj datę końca (RRRR-MM-DD), nie wcześniejszą niż początek."
 msgstr "Podaj datę końca (RRRR-MM-DD), nie wcześniejszą niż początek."
@@ -585,6 +617,10 @@ msgstr "Podaj datę w formacie RRRR-MM-DD."
 #: src/app/(app)/groups/[groupId]/member.tsx
 msgid "Podaj imię."
 msgstr "Podaj imię."
+
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Podaj kurs większy od zera, np. 4,3215."
+msgstr "Podaj kurs większy od zera, np. 4,3215."
 
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
 #: src/app/(app)/quick-bill.tsx
@@ -675,6 +711,10 @@ msgstr "Skopiowano"
 #: src/features/entries/entry-bubble.tsx
 msgid "Spłata"
 msgstr "Spłata"
+
+#: src/features/entries/bubble-label.ts
+msgid "Spłata {amount}. Od: {payerName}. {date}."
+msgstr "Spłata {amount}. Od: {payerName}. {date}."
 
 #: src/features/profile/about-section.tsx
 msgid "split-pay, wersja {version}"
@@ -853,6 +893,14 @@ msgstr "Utwórz grupę"
 msgid "Utwórz grupę dla wyjazdu, mieszkania albo jednego rachunku."
 msgstr "Utwórz grupę dla wyjazdu, mieszkania albo jednego rachunku."
 
+#: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
+msgid "W walucie bazowej"
+msgstr "W walucie bazowej"
+
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Waluta"
+msgstr "Waluta"
+
 #: src/app/(app)/new-group.tsx
 msgid "Waluta bazowa"
 msgstr "Waluta bazowa"
@@ -940,6 +988,10 @@ msgstr "Wybierz, kto zapłacił."
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
 msgid "Wydatek"
 msgstr "Wydatek"
+
+#: src/features/entries/bubble-label.ts
+msgid "Wydatek {amount}: {title}. Zapłacił(a): {payerName}. {date}."
+msgstr "Wydatek {amount}: {title}. Zapłacił(a): {payerName}. {date}."
 
 #: src/app/(app)/new-group.tsx
 msgid "Wyjazd z datami"

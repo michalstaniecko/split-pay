@@ -10,6 +10,7 @@ import { linksRoutes } from './routes/group-links';
 import { groupsRoutes } from './routes/groups';
 import { myPayoutDetailsRoutes } from './routes/payout-details';
 import { quickBillsRoutes } from './routes/quick-bills';
+import { ratesRoutes } from './routes/rates';
 
 export interface AppDeps {
   auth: Auth;
@@ -51,6 +52,8 @@ export const createApp = ({ auth, db, flags = defaultFeatureFlags }: AppDeps) =>
       .route('/quick-bills', quickBillsRoutes({ db, requireUser }))
       /** Opening a group link in the app: preview + join. */
       .route('/links', linksRoutes({ db, requireUser }))
+      /** ECB exchange rates for a date (ADR-0014). */
+      .route('/rates', ratesRoutes({ db, requireUser }))
   );
 };
 
