@@ -1,11 +1,9 @@
-import { zValidator } from '@hono/zod-validator';
-import { splitEvenly } from '@split-pay/shared';
 import { Hono } from 'hono';
 import { logger } from 'hono/logger';
-import { z } from 'zod';
 import type { Auth } from './auth';
 import type { Db } from './db/client';
 import { type AuthEnv, createRequireUser } from './middleware/require-user';
+import { groupsRoutes } from './routes/groups';
 
 export interface AppDeps {
   auth: Auth;
@@ -18,7 +16,7 @@ export interface AppDeps {
  * Keep routes chained in one expression (or `.route()` chained sub-apps) —
  * the typed client (`hc`) infers its types from this chain.
  */
-export const createApp = ({ auth }: AppDeps) => {
+export const createApp = ({ auth, db }: AppDeps) => {
   const requireUser = createRequireUser(auth);
 
   return (
@@ -31,16 +29,7 @@ export const createApp = ({ auth }: AppDeps) => {
         const user = c.get('user');
         return c.json({ id: user.id, email: user.email, name: user.name });
       })
-      // Temporary demo endpoint — shows that packages/shared logic runs on the
-      // server. Remove once real resources exist.
-      .post(
-        '/dev/split-evenly',
-        zValidator('json', z.object({ total: z.number().int(), memberIds: z.array(z.string()).min(1) })),
-        (c) => {
-          const { total, memberIds } = c.req.valid('json');
-          return c.json({ allocations: splitEvenly(total, memberIds) });
-        },
-      )
+      .route('/groups', groupsRoutes({ db, requireUser }))
   );
 };
 
