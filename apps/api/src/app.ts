@@ -3,19 +3,45 @@ import { splitEvenly } from '@split-pay/shared';
 import { Hono } from 'hono';
 import { logger } from 'hono/logger';
 import { z } from 'zod';
+import type { Auth } from './auth';
+import type { Db } from './db/client';
+import { type AuthEnv, createRequireUser } from './middleware/require-user';
 
-export const app = new Hono()
-  .use(logger())
-  .get('/health', (c) => c.json({ status: 'ok' as const }))
-  // Temporary demo endpoint — shows that packages/shared logic runs on the
-  // server. Remove once real resources exist.
-  .post(
-    '/dev/split-evenly',
-    zValidator('json', z.object({ total: z.number().int(), memberIds: z.array(z.string()).min(1) })),
-    (c) => {
-      const { total, memberIds } = c.req.valid('json');
-      return c.json({ allocations: splitEvenly(total, memberIds) });
-    },
+export interface AppDeps {
+  auth: Auth;
+  db: Db;
+}
+
+/**
+ * Builds the HTTP app. IO (env, pools, OTP delivery) is injected so tests can
+ * run it against the test database with a capturing OTP sender.
+ * Keep routes chained in one expression (or `.route()` chained sub-apps) —
+ * the typed client (`hc`) infers its types from this chain.
+ */
+export const createApp = ({ auth }: AppDeps) => {
+  const requireUser = createRequireUser(auth);
+
+  return (
+    new Hono<AuthEnv>()
+      .use(logger())
+      .on(['GET', 'POST'], '/api/auth/*', (c) => auth.handler(c.req.raw))
+      .get('/health', (c) => c.json({ status: 'ok' as const }))
+      /** The signed-in user. */
+      .get('/me', requireUser, (c) => {
+        const user = c.get('user');
+        return c.json({ id: user.id, email: user.email, name: user.name });
+      })
+      // Temporary demo endpoint — shows that packages/shared logic runs on the
+      // server. Remove once real resources exist.
+      .post(
+        '/dev/split-evenly',
+        zValidator('json', z.object({ total: z.number().int(), memberIds: z.array(z.string()).min(1) })),
+        (c) => {
+          const { total, memberIds } = c.req.valid('json');
+          return c.json({ allocations: splitEvenly(total, memberIds) });
+        },
+      )
   );
+};
 
-export type AppType = typeof app;
+export type AppType = ReturnType<typeof createApp>;
