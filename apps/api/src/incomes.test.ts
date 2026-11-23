@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { computeBalances, type NewEntry } from '@split-pay/shared';
+import type { NewEntry } from '@split-pay/shared';
 import { parseResponse } from 'hono/client';
 import { describe, expect, it } from 'vitest';
 import { createTestApp } from '../test/app';
@@ -29,7 +29,11 @@ describe('incomes', () => {
     const entries = (session = ania) => client(session).groups[':groupId'].entries;
     const create = (input: NewEntry, session = ania) => entries(session).$post({ param: { groupId: group.id }, json: input });
     const list = (session = ania) => parseResponse(entries(session).$get({ param: { groupId: group.id } }));
-    return { ania, bartekSession, group, ids, everyone, create, list };
+    const balances = async () => {
+      const body = await parseResponse(client(ania).groups[':groupId'].balances.$get({ param: { groupId: group.id } }));
+      return Object.fromEntries(body.balances.map((b) => [b.memberId, b.amount]));
+    };
+    return { ania, bartekSession, group, ids, everyone, create, list, balances };
   }
 
   const income = (fields: { amount: number; recipients: { memberId: string; amount: number }[]; memberIds: string[] }): NewEntry => ({
@@ -62,7 +66,7 @@ describe('incomes', () => {
   });
 
   it('balances include incomes: the recipients owe the participants their shares', async () => {
-    const { ids, everyone, create, list } = await setup();
+    const { ids, everyone, create, balances } = await setup();
     // Ania paid the 300 zł deposit for everyone; Bartek got it back as a 120 zł partial refund.
     const deposit: NewEntry = {
       kind: 'expense',
@@ -80,9 +84,7 @@ describe('incomes', () => {
     const refund = income({ amount: 12_000, recipients: [{ memberId: ids.bartek, amount: 12_000 }], memberIds: everyone });
     for (const input of [deposit, refund]) expect((await create(input)).status).toBe(201);
 
-    // TODO(#9): read these from the balances endpoint once it exists; it uses the same shared ledger.
-    const balances = computeBalances(await list(), 'PLN');
-    expect(Object.fromEntries(balances)).toEqual({
+    expect(await balances()).toEqual({
       [ids.ania]: 30_000 - 10_000 + 4_000, // paid 300, consumed 100, owed 40 of the refund
       [ids.bartek]: -10_000 - 12_000 + 4_000, // consumed 100, holds the 120 refund, 40 of it is his
       [ids.tomek]: -10_000 + 4_000,

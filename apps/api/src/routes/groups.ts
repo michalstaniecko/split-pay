@@ -7,9 +7,11 @@ import type { SessionUser } from '../auth';
 import type { Db } from '../db/client';
 import { groups, members } from '../db/schema';
 import type { AuthEnv } from '../middleware/require-user';
+import { balancesRoutes, groupSettingsRoutes } from './balances';
 import { entriesRoutes, latestEntries } from './entries';
 import { claimLinkRoutes, claimRoutes } from './claims';
 import { groupLinkRoutes } from './group-links';
+import { memberPayoutDetailsRoutes } from './payout-details';
 import { statsRoutes } from './stats';
 
 type GroupRow = typeof groups.$inferSelect;
@@ -83,6 +85,11 @@ export const groupsRoutes = ({ db, requireUser }: { db: Db; requireUser: Middlew
         return c.json(rows.map((r) => ({ ...toGroupDto(r.group), lastEntry: previews.get(r.group.id) ?? null })));
       })
       .route('/:groupId/entries', entriesRoutes({ db }))
+      /** Balances + settle-up (balance drawer) and group settings: `routes/balances.ts`. */
+      .route('/:groupId/balances', balancesRoutes({ db }))
+      .route('/:groupId/settings', groupSettingsRoutes({ db }))
+      /** A member's payout details ("Oddaj" sheet): `routes/payout-details.ts`. */
+      .route('/:groupId/members/:memberId/payout-details', memberPayoutDetailsRoutes({ db }))
       .route('/:groupId/stats', statsRoutes({ db }))
       /**
        * Creates a group with the caller as owner and first member, in one

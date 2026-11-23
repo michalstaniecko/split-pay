@@ -8,6 +8,7 @@ import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, Text, Vie
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { GroupAvatar } from '@/components/group-avatar';
 import { GroupNotFound } from '@/components/group-not-found';
+import { BalanceBanner } from '@/features/balances/balance-banner';
 import { ClaimMessage } from '@/features/claims/claim-messages';
 import { type Claim, claimsQuery } from '@/features/claims/claims-query';
 import { Composer } from '@/features/entries/composer';
@@ -29,8 +30,8 @@ const HIGHLIGHT_MS = 2000;
 /**
  * Group screen = the Conversation (ADR-0017): entries as bubbles from their
  * payers by entry date, sticky day separators with the daily total, the
- * composer at the bottom. The header (emoji + name) and `⋯` open Group info.
- * TODO(#9): balance banner on top.
+ * composer at the bottom, the balance banner on top. The header (emoji +
+ * name) and `⋯` open Group info.
  */
 export default function ConversationScreen() {
   const { t } = useLingui();
@@ -86,6 +87,7 @@ export default function ConversationScreen() {
           style={styles.container}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}>
+          <BalanceBanner groupId={groupId} myMemberId={me} />
           {entries.isPending ? (
             <ActivityIndicator style={styles.center} color={theme.colors.primary} />
           ) : entries.isError ? (

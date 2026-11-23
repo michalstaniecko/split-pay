@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { computeBalances, type Entry, memberShare, type NewEntry, type Split } from '@split-pay/shared';
+import { type Entry, memberShare, type NewEntry, type Split } from '@split-pay/shared';
 import { parseResponse } from 'hono/client';
 import { describe, expect, it } from 'vitest';
 import { createTestApp } from '../test/app';
@@ -38,8 +38,11 @@ describe('split modes and multiple payers', () => {
     });
     const create = (input: NewEntry) => entries.$post({ param: { groupId: group.id }, json: input });
     const list = () => parseResponse(entries.$get({ param: { groupId: group.id } })) as Promise<Entry[]>;
-    /** Balances and shares from what the API returns (the Conversation and the balance banner read the same list). */
-    const balancesOf = async () => Object.fromEntries(computeBalances(await list(), 'PLN'));
+    /** Balances from the balances endpoint; shares from the entries list (the Conversation's bubbles). */
+    const balancesOf = async () => {
+      const body = await parseResponse(client(ania).groups[':groupId'].balances.$get({ param: { groupId: group.id } }));
+      return Object.fromEntries(body.balances.map((b) => [b.memberId, b.amount]));
+    };
     const sharesOf = async (id: string) => {
       const entry = (await list()).find((e) => e.id === id)!;
       return [A, B, T].map((m) => memberShare(entry, m, 'PLN'));

@@ -5,3 +5,4 @@ export * from './entries';
 export * from './groups';
 export * from './group-links';
 export * from './claims';
+export * from './payout-details';

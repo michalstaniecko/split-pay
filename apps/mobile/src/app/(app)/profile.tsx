@@ -9,6 +9,7 @@ import { PlaceholderScreen } from '@/components/placeholder-screen';
 import { AboutSection } from '@/features/profile/about-section';
 import { DeleteAccountSection } from '@/features/profile/delete-account-section';
 import { meQuery } from '@/features/profile/me-query';
+import { PayoutDetailsSection } from '@/features/profile/payout-details-section';
 import { ThemePicker } from '@/features/theme/theme-picker';
 import { authClient } from '@/lib/auth-client';
 
@@ -30,7 +31,7 @@ export default function ProfileScreen() {
 
   return (
     // Scrolls: Profile is taller than a small phone screen ("Usuń konto" is last).
-    <ScrollView contentContainerStyle={styles.scroll}>
+    <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
       <PlaceholderScreen title={t`Profil`}>
         <View style={styles.account}>
           <Text style={styles.label}>{t`Zalogowano jako`}</Text>
@@ -38,6 +39,7 @@ export default function ProfileScreen() {
             {email}
           </Text>
         </View>
+        <PayoutDetailsSection />
         <LanguagePicker />
         <ThemePicker />
         <Button variant="secondary" label={t`Wyloguj się`} onPress={() => void signOut()} loading={signingOut} />
