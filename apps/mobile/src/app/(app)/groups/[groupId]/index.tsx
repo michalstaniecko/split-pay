@@ -5,6 +5,7 @@ import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { GroupAvatar } from '@/components/group-avatar';
 import { GroupNotFound } from '@/components/group-not-found';
+import { ClaimMessages } from '@/features/claims/claim-messages';
 import { groupQuery } from '@/features/groups/groups-query';
 import { useRefreshOnFocus } from '@/lib/use-refresh-on-focus';
 
@@ -56,11 +57,15 @@ export default function ConversationScreen() {
       ) : group.isError ? (
         <GroupNotFound error={group.error} onRetry={() => void group.refetch()} />
       ) : (
-        // TODO(#8): entries as bubbles (FlashList), composer at the bottom; TODO(#9): balance banner.
-        <View style={styles.center}>
-          <Text style={styles.emptyTitle}>{t`Brak wpisów`}</Text>
-          <Text style={styles.muted}>{t`Wydatki dodane w tej grupie pojawią się tutaj.`}</Text>
-        </View>
+        <>
+          {/* Claim system messages (#18). */}
+          <ClaimMessages groupId={groupId} />
+          {/* TODO(#8): entries as bubbles (FlashList), composer at the bottom; TODO(#9): balance banner. */}
+          <View style={styles.center}>
+            <Text style={styles.emptyTitle}>{t`Brak wpisów`}</Text>
+            <Text style={styles.muted}>{t`Wydatki dodane w tej grupie pojawią się tutaj.`}</Text>
+          </View>
+        </>
       )}
     </View>
   );
