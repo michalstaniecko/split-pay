@@ -14,6 +14,7 @@ export * from './model';
 export * from './money';
 export * from './notifications';
 export * from './payout-details';
+export * from './photos';
 export * from './rates';
 export * from './settle-up';
 export * from './split';

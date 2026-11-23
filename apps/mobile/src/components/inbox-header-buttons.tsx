@@ -1,14 +1,18 @@
 import { useLingui } from '@lingui/react/macro';
+import { useQuery } from '@tanstack/react-query';
 import { Link } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
 import { StyleSheet } from 'react-native-unistyles';
+import { MemberAvatar } from '@/features/photos/member-avatar';
+import { myAvatarQuery } from '@/features/photos/photos-query';
 import { authClient } from '@/lib/auth-client';
 
 /** Inbox header: bell → Activity, the user's avatar → Profile (ADR-0017). */
 export function InboxHeaderButtons() {
   const { t } = useLingui();
   const { data: session } = authClient.useSession();
-  const initial = (session?.user.name.trim() || session?.user.email || '?').charAt(0).toUpperCase();
+  const name = session?.user.name.trim() || session?.user.email || '?';
+  const avatar = useQuery(myAvatarQuery());
   return (
     <View style={styles.row}>
       <Link href="/activity" asChild>
@@ -18,7 +22,11 @@ export function InboxHeaderButtons() {
       </Link>
       <Link href="/profile" asChild>
         <Pressable accessibilityRole="button" accessibilityLabel={t`Profil`} hitSlop={8} style={styles.avatar}>
-          <Text style={styles.initial}>{initial}</Text>
+          {avatar.data ? (
+            <MemberAvatar name={name} url={avatar.data.url} size={32} />
+          ) : (
+            <Text style={styles.initial}>{name.charAt(0).toUpperCase()}</Text>
+          )}
         </Pressable>
       </Link>
     </View>

@@ -3,6 +3,8 @@ import { and, eq, inArray, sql } from 'drizzle-orm';
 import type { OtpType } from '../auth';
 import type { Db } from '../db/client';
 import { changes, claims, members, user, verification } from '../db/schema';
+import type { ObjectStorage } from '../storage/object-storage';
+import { avatarPhotosOf, deletePhotos } from './photos';
 
 const otpTypes: readonly OtpType[] = ['sign-in', 'email-verification', 'forget-password', 'change-email'];
 
@@ -16,11 +18,18 @@ const otpTypes: readonly OtpType[] = ['sign-in', 'email-verification', 'forget-p
  * expenses and balances are untouched. Anyone can rename or claim it later.
  *
  * Payout details, push tokens, notification settings and queued pushes go
- * with the `user` row (`onDelete: 'cascade'`). Future personal data (avatars
- * in storage) must be removed here too, or cascade the same way.
+ * with the `user` row (`onDelete: 'cascade'`). Avatars are deleted from the
+ * bucket (#26); receipt photos the user took stay with the group's entries.
+ * Future personal data must be removed here too, or cascade the same way.
  */
-export async function deleteAccount(db: Db, account: { id: string; email: string }, locale: string) {
+export async function deleteAccount(
+  db: Db,
+  account: { id: string; email: string },
+  locale: string,
+  storage?: ObjectStorage,
+) {
   const name = deletedUserName(locale);
+  const avatars = await avatarPhotosOf(db, account.id);
   await db.transaction(async (tx) => {
     // Names their members had (added, joined, renamed) in the change history.
     const named = (column: typeof changes.before | typeof changes.after) =>
@@ -44,4 +53,11 @@ export async function deleteAccount(db: Db, account: { id: string; email: string
     );
     await tx.delete(user).where(eq(user.id, account.id));
   });
+  // After the account is gone: if the bucket fails now, the retention job
+  // removes these avatars later (their uploader is null).
+  try {
+    await deletePhotos(db, storage, avatars);
+  } catch (error) {
+    console.error('[photos] avatar deletion failed; the retention job retries', error);
+  }
 }

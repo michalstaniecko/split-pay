@@ -122,9 +122,9 @@ A fixed, translated list with icons (food, transport, accommodation, alcohol, fu
 - Upload directly from the phone via a presigned URL; the API only issues the URLs.
 - On the phone: downscaling (e.g. 1600 px), compression, EXIF stripping (including GPS).
 - Access only for group members via short-lived signed URLs. Logged-out web visitors do not see photos.
-- Limits: file size, number of photos per expense, daily limit per account.
+- Limits: file size, number of photos per expense, daily limit per account. MVP values (`PHOTO_LIMITS` in `@split-pay/shared`): 3 MB per photo, 5 receipt uploads per entry (retakes count; an entry shows one receipt), 50 uploads per account in 24 hours. Receipts are downscaled to 1600 px, avatars to 512 px.
 - A "Report" button on a photo, an admin panel for reviewing reports, account blocking.
-- Retention: receipt photos deleted e.g. one year after the group is archived.
+- Retention: receipt photos deleted one year (365 days) after the group is archived, by a daily job; it also removes photos of deleted groups and uploads never attached to an entry or set as avatar within a day. Avatars are deleted with the account.
 - CSAM scanning: **none in the MVP**; apply for Microsoft PhotoDNA at the public store launch.
 
 ## Group and account lifecycle

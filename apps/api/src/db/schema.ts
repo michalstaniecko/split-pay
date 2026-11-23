@@ -8,4 +8,5 @@ export * from './claims';
 export * from './payout-details';
 export * from './push';
 export * from './rates';
+export * from './photos';
 export * from './changes';
