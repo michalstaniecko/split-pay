@@ -1,5 +1,5 @@
 import { type Entry, type Member, toNewEntry } from '@split-pay/shared';
-import { and, asc, eq, inArray, isNull, notInArray, sql } from 'drizzle-orm';
+import { and, asc, eq, inArray, isNull, notInArray } from 'drizzle-orm';
 import type { BatchItem } from 'drizzle-orm/batch';
 import type { LocalDb } from './local-db';
 import { type CachedGroup, type EntryPreview, localEntries, localGroups, localMembers, localOutbox } from './local-schema';
@@ -104,7 +104,7 @@ export async function applyGroupChanges(db: LocalDb, changes: GroupChanges, now 
             .where(inArray(localOutbox.entryId, entries.map((e) => e.id)))
         ).map((r) => r.entryId),
   );
-  const row = { ...groupRow(group), cursor, syncedAt: now.toISOString() };
+  const row = { ...groupRow(group), cursor, syncedAt: now.toISOString(), syncedActivityAt: group.lastActivityAt };
   const batch: BatchItem<'sqlite'>[] = [
     db.insert(localGroups).values(row).onConflictDoUpdate({ target: localGroups.id, set: row }),
     db.delete(localMembers).where(eq(localMembers.groupId, group.id)),
@@ -124,36 +124,29 @@ export async function applyGroupChanges(db: LocalDb, changes: GroupChanges, now 
 }
 
 /**
- * The inbox from the cache, most recent activity first. The preview is the
- * newest live cached entry once the group's entries are cached (so queued
- * entries show at once), else the server's; a queued entry also counts as
- * activity.
+ * The inbox from the cache, most recent activity first, with the server's
+ * preview. An entry of mine still in the outbox counts as newer activity and
+ * becomes the preview, so an entry added offline shows in the inbox at once.
  */
 export async function readGroupList(db: LocalDb): Promise<CachedGroupListItem[]> {
   const groups = await db.select().from(localGroups);
-  const latest = await db
+  const queued = await db
     .select({ groupId: localEntries.groupId, data: localEntries.data })
     .from(localEntries)
-    .where(
-      and(
-        isNull(localEntries.deletedAt),
-        sql`${localEntries.createdAt} = (select max(e2.created_at) from entries e2 where e2.group_id = ${localEntries.groupId} and e2.deleted_at is null)`,
-      ),
-    );
-  const latestByGroup = new Map(latest.map((r) => [r.groupId, r.data]));
-  const queued = await db
-    .select({ groupId: localOutbox.groupId, at: sql<string>`max(${localOutbox.createdAt})` })
-    .from(localOutbox)
-    .groupBy(localOutbox.groupId);
-  const queuedAt = new Map(queued.map((r) => [r.groupId, r.at]));
+    .innerJoin(
+      localOutbox,
+      and(eq(localOutbox.entryId, localEntries.id), eq(localOutbox.change, 'create')),
+    )
+    .where(isNull(localEntries.deletedAt))
+    .orderBy(asc(localEntries.createdAt));
+  // Ordered oldest first: the last one written per group is its newest.
+  const newestQueued = new Map(queued.map((r) => [r.groupId, r.data]));
 
   return groups
     .map((g): CachedGroupListItem => {
-      const local = latestByGroup.get(g.id);
-      const lastEntry = g.syncedAt !== null || queuedAt.has(g.id) ? (local ? previewOf(local) : null) : (g.lastEntry ?? null);
-      const pendingAt = queuedAt.get(g.id);
-      const lastActivityAt = pendingAt && pendingAt > g.lastActivityAt ? pendingAt : g.lastActivityAt;
-      return { ...g.data, lastActivityAt, lastEntry };
+      const mine = newestQueued.get(g.id);
+      if (!mine || mine.createdAt <= g.lastActivityAt) return { ...g.data, lastActivityAt: g.lastActivityAt, lastEntry: g.lastEntry ?? null };
+      return { ...g.data, lastActivityAt: mine.createdAt, lastEntry: previewOf(mine) };
     })
     .sort(
       (a, b) =>
@@ -161,6 +154,24 @@ export async function readGroupList(db: LocalDb): Promise<CachedGroupListItem[]>
         b.createdAt.localeCompare(a.createdAt) ||
         a.id.localeCompare(b.id),
     );
+}
+
+/**
+ * Of the groups in `GET /groups`, those whose entries should be pulled for
+ * offline reading: not cached, never pulled, or active since the last pull
+ * (`lastActivityAt` moves on every new or edited entry). Deletions and member
+ * changes elsewhere don't move it — they arrive when the Conversation opens.
+ */
+export async function groupsNeedingSync(db: LocalDb, listed: readonly CachedGroup[]): Promise<string[]> {
+  const rows = await db.select({ id: localGroups.id, at: localGroups.syncedActivityAt }).from(localGroups);
+  const pulledAt = new Map(rows.map((r) => [r.id, r.at]));
+  return listed.filter((g) => (pulledAt.get(g.id) ?? null) !== g.lastActivityAt).map((g) => g.id);
+}
+
+/** Stores the server's copy of one entry (accepted change). */
+export async function saveEntry(db: LocalDb, entry: Entry): Promise<void> {
+  const values = entryRow(entry);
+  await db.insert(localEntries).values(values).onConflictDoUpdate({ target: localEntries.id, set: values });
 }
 
 /** One cached group with its members, or `undefined` when it isn't cached (yet). */

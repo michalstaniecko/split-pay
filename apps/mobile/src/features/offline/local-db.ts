@@ -30,7 +30,8 @@ export const LOCAL_MIGRATIONS: readonly string[] = [
     last_activity_at TEXT NOT NULL,
     created_at TEXT NOT NULL,
     cursor TEXT,
-    synced_at TEXT
+    synced_at TEXT,
+    synced_activity_at TEXT
   );
   CREATE TABLE members (
     id TEXT PRIMARY KEY NOT NULL,

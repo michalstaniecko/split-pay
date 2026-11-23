@@ -26,6 +26,8 @@ import { useEntryConflicts } from '@/features/entries/entry-conflicts';
 import { amountForClipboard, type EntryAction, entryActions, versionConflictEntry } from '@/features/entries/entry-edit';
 import { UndoSnackbar } from '@/features/entries/undo-snackbar';
 import { type GroupDetail, groupQuery } from '@/features/groups/groups-query';
+import { OfflineBanner } from '@/features/offline/offline-banner';
+import { useOutboxState } from '@/features/offline/outbox-query';
 import { useLocale } from '@/i18n/locale-provider';
 import { authClient } from '@/lib/auth-client';
 import { useRefreshOnFocus } from '@/lib/use-refresh-on-focus';
@@ -95,6 +97,7 @@ export default function ConversationScreen() {
           style={styles.container}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}>
+          <OfflineBanner />
           <BalanceBanner groupId={groupId} myMemberId={me} />
           {entries.isPending ? (
             <ActivityIndicator style={styles.center} color={theme.colors.primary} />
@@ -143,11 +146,14 @@ function Conversation({
 
   const actions = useEntryActionHandler(group);
   const conflicts = useEntryConflicts(group.id);
+  const outbox = useOutboxState(group.id);
 
   const openEntry = (entryId: string) =>
     router.push({ pathname: '/groups/[groupId]/entries/[entryId]', params: { groupId: group.id, entryId } });
   const openConflict = (entryId: string) =>
     router.push({ pathname: '/groups/[groupId]/entry-conflict', params: { groupId: group.id, entryId } });
+  const openUnsent = (entryId: string) =>
+    router.push({ pathname: '/groups/[groupId]/unsent-entry', params: { groupId: group.id, entryId } });
 
   return (
     <View style={styles.container}>
@@ -163,7 +169,7 @@ function Conversation({
           keyExtractor={(item) => item.key}
           getItemType={(item) => item.type}
           stickyHeaderIndices={stickyHeaderIndices}
-          extraData={[highlightId, conflicts]}
+          extraData={[highlightId, conflicts, outbox]}
           // Opens at the newest entry; keeps following new ones while the user is near the bottom.
           maintainVisibleContentPosition={{ startRenderingFromBottom: true, autoscrollToBottomThreshold: 0.2 }}
           initialScrollIndex={items.length - 1}
@@ -185,7 +191,11 @@ function Conversation({
                 actions={entryActions(item.entry, group)}
                 onAction={(action) => actions.run(item.entry, action)}
                 conflict={conflicts.has(item.entry.id)}
-                onConflictPress={() => openConflict(item.entry.id)}
+                queued={outbox.get(item.entry.id)?.status === 'queued'}
+                failed={outbox.get(item.entry.id)?.status === 'failed'}
+                onConflictPress={() =>
+                  conflicts.has(item.entry.id) ? openConflict(item.entry.id) : openUnsent(item.entry.id)
+                }
               />
             )
           }

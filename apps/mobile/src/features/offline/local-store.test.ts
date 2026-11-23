@@ -4,6 +4,7 @@ import type { CachedGroup, EntryPreview } from './local-schema';
 import {
   applyGroupChanges,
   enqueueCreate,
+  groupsNeedingSync,
   readEntries,
   readGroupDetail,
   readGroupList,
@@ -105,21 +106,35 @@ describe('local store: inbox', () => {
     expect(await readEntries(db, G1)).toEqual([]);
   });
 
-  it("previews the server's last entry until the group's entries are cached, then the local newest", async () => {
+  it("previews the server's last entry; a delta sync doesn't replace it", async () => {
     const db = await nodeLocalDb();
     const serverLast = entry(G1, { title: 'Z serwera' });
     await saveGroupList(db, [{ ...group(G1), lastEntry: preview(serverLast) }]);
-    expect((await readGroupList(db))[0]?.lastEntry).toEqual(preview(serverLast));
-
-    const deleted = { ...serverLast, deletedAt: '2026-07-03T10:00:00.000Z' };
-    const live = entry(G1, { createdAt: '2026-07-01T09:00:00.000Z', title: 'Starszy' });
     await applyGroupChanges(db, {
       group: { ...group(G1), members: [member(ANIA, G1, 'Ania')] },
-      entries: [deleted, live],
+      entries: [entry(G1, { createdAt: '2026-07-01T09:00:00.000Z', title: 'Starszy' })],
       cursor: '2026-07-03T10:00:00.000Z',
     });
 
-    expect((await readGroupList(db))[0]?.lastEntry).toEqual(preview(live));
+    expect((await readGroupList(db))[0]?.lastEntry).toEqual(preview(serverLast));
+  });
+
+  it('lists groups whose entries need pulling: new, never pulled, or with new activity', async () => {
+    const db = await nodeLocalDb();
+    const G3 = '00000000-0000-4000-8000-000000000003';
+    await saveGroupList(db, [
+      { ...group(G1), lastEntry: null },
+      { ...group(G2), lastEntry: null },
+    ]);
+    await applyGroupChanges(db, { group: { ...group(G1), members: [] }, entries: [], cursor: null });
+    await applyGroupChanges(db, { group: { ...group(G2), members: [] }, entries: [], cursor: null });
+
+    const listed = [
+      { ...group(G1), lastEntry: null },
+      { ...group(G2, { lastActivityAt: '2026-07-09T10:00:00.000Z' }), lastEntry: null },
+      { ...group(G3), lastEntry: null },
+    ];
+    expect(await groupsNeedingSync(db, listed)).toEqual([G2, G3]);
   });
 
   it('an entry waiting in the outbox moves its group up and becomes the preview', async () => {

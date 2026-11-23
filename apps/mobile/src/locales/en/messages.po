@@ -178,6 +178,10 @@ msgstr "Undo"
 msgid "Cofnij przejęcie"
 msgstr "Undo claim"
 
+#: src/features/entries/entry-bubble.tsx
+msgid "czeka na wysłanie"
+msgstr "waiting to be sent"
+
 #: src/app/(app)/groups/[groupId]/info.tsx
 msgid "Członkowie"
 msgstr "Members"
@@ -280,6 +284,10 @@ msgstr "Emoji"
 msgid "Górna kwota: zapłacone, dolna: zużyte."
 msgstr "Top amount: paid, bottom: consumed."
 
+#: src/app/(app)/groups/[groupId]/unsent-entry.tsx
+msgid "Grupa albo wpis już nie istnieje lub nie masz do nich dostępu."
+msgstr "The group or the entry no longer exists, or you no longer have access to it."
+
 #: src/features/entries/entry-actions-menu.tsx
 msgid "Historia"
 msgstr "History"
@@ -332,6 +340,10 @@ msgstr "I am {personalName}"
 #: src/app/(app)/g/[token].tsx
 msgid "Jesteś jednym z nich?"
 msgstr "Are you one of them?"
+
+#: src/features/offline/offline-banner.tsx
+msgid "Jesteś offline. Nowe wpisy wyślemy po połączeniu."
+msgstr "You're offline. New entries will be sent once you're connected."
 
 #: src/features/balances/balance-banner.tsx
 msgid "Jesteś winien {amount}"
@@ -488,6 +500,10 @@ msgstr "You have no groups yet"
 msgid "Nie udało się cofnąć przejęcia."
 msgstr "Couldn't undo the claim."
 
+#: src/app/(app)/groups/[groupId]/unsent-entry.tsx
+msgid "Nie udało się dodać wpisu"
+msgstr "Couldn't add the entry"
+
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
 msgid "Nie udało się dodać wpływu. Spróbuj ponownie."
 msgstr "Couldn't add the income. Try again."
@@ -570,11 +586,27 @@ msgstr "Couldn't save attendance. Please try again."
 msgid "Nie udało się zapisać zmian. Spróbuj ponownie."
 msgstr "Couldn't save the changes. Try again."
 
+#: src/app/(app)/groups/[groupId]/unsent-entry.tsx
+msgid "Nie udało się zapisać zmiany"
+msgstr "Couldn't save the change"
+
 #: src/app/(app)/groups/[groupId]/member.tsx
 #: src/features/groups/group-settings-section.tsx
 #: src/features/profile/payout-details-section.tsx
 msgid "Nie udało się zapisać. Spróbuj ponownie."
 msgstr "Couldn't save. Please try again."
+
+#: src/features/entries/entry-bubble.tsx
+msgid "nie wysłano"
+msgstr "not sent"
+
+#: src/app/(app)/_layout.tsx
+msgid "Nie wysłano"
+msgstr "Not sent"
+
+#: src/features/entries/entry-bubble.tsx
+msgid "Nie wysłano: {title}. Pokaż szczegóły"
+msgstr "Not sent: {title}. Show details"
 
 #: src/app/(auth)/sign-in.tsx
 msgid "Nieprawidłowy lub wygasły kod."
@@ -642,6 +674,10 @@ msgstr "Pay back {amount} – {0}"
 #: src/app/(app)/groups/[groupId]/settle.tsx
 msgid "Oddaj {recipient}"
 msgstr "Pay back {recipient}"
+
+#: src/app/(app)/groups/[groupId]/unsent-entry.tsx
+msgid "Odrzuć zmianę"
+msgstr "Discard the change"
 
 #. placeholder {0}: format.date(rates.data.table.ratesDate)
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
@@ -781,6 +817,14 @@ msgstr "Balances"
 msgid "Salda ›"
 msgstr "Balances ›"
 
+#: src/app/(app)/groups/[groupId]/unsent-entry.tsx
+msgid "Serwer odrzucił wpis jako niepoprawny — na przykład grupa została zarchiwizowana albo ktoś z uczestników opuścił grupę."
+msgstr "The server rejected the entry as invalid, for example because the group was archived or a participant left the group."
+
+#: src/app/(app)/groups/[groupId]/unsent-entry.tsx
+msgid "Serwer odrzucił wpis."
+msgstr "The server rejected the entry."
+
 #: src/app/(app)/groups/[groupId]/settle.tsx
 msgid "Skopiowano"
 msgstr "Copied"
@@ -792,6 +836,7 @@ msgstr "Amount copied"
 #: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
 #: src/app/(app)/groups/[groupId]/entry-conflict.tsx
 #: src/app/(app)/groups/[groupId]/index.tsx
+#: src/app/(app)/groups/[groupId]/unsent-entry.tsx
 #: src/app/(app)/index.tsx
 #: src/features/entries/entry-bubble.tsx
 msgid "Spłata"
@@ -808,6 +853,7 @@ msgstr "split-pay, version {version}"
 #: src/app/(app)/g/[token].tsx
 #: src/app/(app)/groups/[groupId]/index.tsx
 #: src/app/(app)/groups/[groupId]/settle.tsx
+#: src/app/(app)/groups/[groupId]/unsent-entry.tsx
 #: src/app/(app)/index.tsx
 #: src/components/group-not-found.tsx
 #: src/features/group-link/group-link-section.tsx
@@ -870,6 +916,10 @@ msgstr "This profile already has an account. Ask someone in the group for the gr
 #: src/app/(app)/g/[token].tsx
 msgid "Ten profil został już przejęty."
 msgstr "This profile has already been claimed."
+
+#: src/app/(app)/groups/[groupId]/unsent-entry.tsx
+msgid "Ten wpis nie czeka już na wysłanie."
+msgstr "This entry is no longer waiting to be sent."
 
 #: src/features/profile/payout-details-section.tsx
 msgid "To nie wygląda na numer konta."
@@ -971,6 +1021,10 @@ msgstr "Remove {0}"
 msgid "Usuń konto"
 msgstr "Delete account"
 
+#: src/app/(app)/groups/[groupId]/unsent-entry.tsx
+msgid "Usuń wpis"
+msgstr "Remove the entry"
+
 #: src/features/profile/delete-account-section.tsx
 msgid "Usunąć konto?"
 msgstr "Delete account?"
@@ -1029,12 +1083,20 @@ msgid "Wpis"
 msgstr "Entry"
 
 #: src/app/(app)/groups/[groupId]/entry-conflict.tsx
+msgid "Wpis nie został dodany."
+msgstr "The entry was not added."
+
+#: src/app/(app)/groups/[groupId]/entry-conflict.tsx
 msgid "Wpis nie został przywrócony."
 msgstr "The entry was not restored."
 
 #: src/app/(app)/groups/[groupId]/entry-conflict.tsx
 msgid "Wpis nie został usunięty."
 msgstr "The entry was not deleted."
+
+#: src/app/(app)/groups/[groupId]/unsent-entry.tsx
+msgid "Wpis o tym identyfikatorze już istnieje w innej grupie."
+msgstr "An entry with this ID already exists in another group."
 
 #: src/app/(app)/groups/[groupId]/member.tsx
 msgid "Wpisujesz za nią wydatki. Później może przejąć swój profil."
@@ -1186,6 +1248,7 @@ msgstr "owner"
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
 #: src/app/(app)/groups/[groupId]/member.tsx
 #: src/app/(app)/groups/[groupId]/settle.tsx
+#: src/app/(app)/groups/[groupId]/unsent-entry.tsx
 #: src/features/entries/entry-actions-menu.tsx
 msgid "Zamknij"
 msgstr "Close"

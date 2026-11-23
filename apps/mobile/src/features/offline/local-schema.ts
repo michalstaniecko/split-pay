@@ -41,7 +41,7 @@ export interface EntryPreview {
 export const localGroups = sqliteTable('groups', {
   id: text().primaryKey(),
   data: text({ mode: 'json' }).$type<CachedGroup>().notNull(),
-  /** The server's inbox preview; used until the group's entries are cached. */
+  /** The server's inbox preview (`GET /groups`); a newer queued entry of mine overrides it. */
   lastEntry: text({ mode: 'json' }).$type<EntryPreview | null>(),
   lastActivityAt: text().notNull(),
   createdAt: text().notNull(),
@@ -49,6 +49,8 @@ export const localGroups = sqliteTable('groups', {
   cursor: text(),
   /** When the group's members and entries were last pulled; null = only the inbox row is cached. */
   syncedAt: text(),
+  /** The group's `lastActivityAt` as of that pull — a newer one in `GET /groups` means new entries to pull. */
+  syncedActivityAt: text(),
 });
 
 export const localMembers = sqliteTable(

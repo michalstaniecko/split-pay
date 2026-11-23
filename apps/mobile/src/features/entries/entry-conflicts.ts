@@ -1,54 +1,28 @@
 import type { Entry } from '@split-pay/shared';
-import { useSyncExternalStore } from 'react';
+import { useMemo } from 'react';
+import type { OutboxChange } from '@/features/offline/local-schema';
+import { useOutboxState } from '@/features/offline/outbox-query';
 
 /** A change the server rejected because the entry had changed meanwhile (409 `version_conflict`). */
 export interface EntryConflict {
   entryId: string;
-  change: 'edit' | 'delete' | 'restore';
+  change: OutboxChange;
   /** The server's current entry (may be deleted). */
   current: Entry;
 }
 
-const EMPTY: ReadonlyMap<string, EntryConflict> = new Map();
-const byGroup = new Map<string, ReadonlyMap<string, EntryConflict>>();
-const listeners = new Set<() => void>();
-const notify = () => {
-  for (const listener of listeners) listener();
-};
-
 /**
- * Entries whose last change was rejected as a version conflict, per group, in
- * memory: the bubble shows a red "!" until the user opens the conflict sheet
- * and reloads the entry (#11). Each group's map is replaced on change, so it
- * is a stable `useSyncExternalStore` snapshot. #22 (offline) replaces this
- * with the outbox state and "keep my / their version" (#23).
+ * The group's conflicted entries (entry id → conflict), from the outbox state
+ * persisted on the device (#22 replaced #11's in-memory store). The bubble
+ * shows a red "!" until the conflict sheet resolves it.
  */
-export const entryConflicts = {
-  forGroup: (groupId: string): ReadonlyMap<string, EntryConflict> => byGroup.get(groupId) ?? EMPTY,
-  get: (groupId: string, entryId: string): EntryConflict | undefined => byGroup.get(groupId)?.get(entryId),
-  mark: (groupId: string, conflict: EntryConflict) => {
-    byGroup.set(groupId, new Map(entryConflicts.forGroup(groupId)).set(conflict.entryId, conflict));
-    notify();
-  },
-  resolve: (groupId: string, entryId: string) => {
-    const next = new Map(entryConflicts.forGroup(groupId));
-    if (!next.delete(entryId)) return;
-    byGroup.set(groupId, next);
-    notify();
-  },
-  subscribe: (listener: () => void) => {
-    listeners.add(listener);
-    return () => {
-      listeners.delete(listener);
-    };
-  },
-};
-
-/** The group's conflicted entries (entry id → conflict). */
 export function useEntryConflicts(groupId: string): ReadonlyMap<string, EntryConflict> {
-  return useSyncExternalStore(
-    entryConflicts.subscribe,
-    () => entryConflicts.forGroup(groupId),
-    () => entryConflicts.forGroup(groupId),
-  );
+  const outbox = useOutboxState(groupId);
+  return useMemo(() => {
+    const conflicts = new Map<string, EntryConflict>();
+    for (const [entryId, state] of outbox) {
+      if (state.status === 'conflict' && state.current) conflicts.set(entryId, { entryId, change: state.change, current: state.current });
+    }
+    return conflicts;
+  }, [outbox]);
 }

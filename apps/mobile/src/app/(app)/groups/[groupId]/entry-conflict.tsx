@@ -2,13 +2,14 @@ import { useLingui } from '@lingui/react/macro';
 import { useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, Text } from 'react-native';
-import { StyleSheet } from 'react-native-unistyles';
+import { ActivityIndicator, ScrollView, Text } from 'react-native';
+import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { Button } from '@/components/button';
 import { entryKeys } from '@/features/entries/entries-query';
-import { entryConflicts } from '@/features/entries/entry-conflicts';
+import { type EntryConflict, useEntryConflicts } from '@/features/entries/entry-conflicts';
 import { isEditableInForm } from '@/features/entries/entry-edit';
 import { useFormatters } from '@/i18n/use-formatters';
+import { outboxKeys, useDiscardOutbox } from '@/features/offline/outbox-query';
 import { closeSheet } from '@/lib/close-sheet';
 
 /**
@@ -16,29 +17,38 @@ import { closeSheet } from '@/lib/close-sheet';
  * change reached the server, so mine was not saved (ADR-0005). Explains it,
  * shows the current version and reloads the entry; "Wczytaj i edytuj" reopens
  * the form on the current version. Full "keep my / their version" comes with
- * offline (#23).
+ * offline (#23). The conflict is outbox state on the device (#22).
  */
 export default function EntryConflictSheet() {
   const { t } = useLingui();
   const format = useFormatters();
+  const { theme } = useUnistyles();
   const queryClient = useQueryClient();
   const { groupId, entryId } = useLocalSearchParams<{ groupId: string; entryId: string }>();
-  // Read once: resolving the conflict below must not blank the sheet while it closes.
-  const [conflict] = useState(() => entryConflicts.get(groupId, entryId));
+  const conflicts = useEntryConflicts(groupId);
+  const discard = useDiscardOutbox(groupId);
+  // Kept once seen: resolving the conflict below must not blank the sheet while it closes.
+  const [seen, setSeen] = useState<EntryConflict | undefined>();
+  const conflict = seen ?? conflicts.get(entryId);
+  if (conflict && !seen) setSeen(conflict);
   const [reloading, setReloading] = useState(false);
 
   const reload = async (thenEdit: boolean) => {
     setReloading(true);
     try {
+      // "Keep their version": drop my refused change, then pull the current entry.
+      await discard.mutateAsync(entryId);
       await queryClient.invalidateQueries({ queryKey: entryKeys.list(groupId) });
     } finally {
       setReloading(false);
     }
-    entryConflicts.resolve(groupId, entryId);
     if (thenEdit) router.replace({ pathname: '/groups/[groupId]/expense-form', params: { groupId, entryId } });
     else closeSheet();
   };
 
+  if (!conflict && !queryClient.getQueryData(outboxKeys.group(groupId))) {
+    return <ActivityIndicator style={styles.content} color={theme.colors.primary} />;
+  }
   if (!conflict) {
     return (
       <ScrollView contentContainerStyle={styles.content}>
@@ -52,6 +62,7 @@ export default function EntryConflictSheet() {
   const deleted = current.deletedAt !== null;
   const title = current.kind === 'settlement' ? t`Spłata` : current.title;
   const notSaved = {
+    create: t`Wpis nie został dodany.`,
     edit: t`Twoje zmiany nie zostały zapisane.`,
     delete: t`Wpis nie został usunięty.`,
     restore: t`Wpis nie został przywrócony.`,
