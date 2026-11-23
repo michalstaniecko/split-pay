@@ -3,9 +3,14 @@ import { describe, expect, it } from 'vitest';
 import {
   canSendComposer,
   composerExpense,
+  entryCurrencies,
   expenseFormFromComposer,
+  formBaseAmount,
   parseExpenseForm,
   todayLocalDate,
+  withCurrency,
+  withRate,
+  withSuggestedRate,
   withDate,
   withTitle,
 } from './expense-draft';
@@ -103,6 +108,9 @@ describe('expense form', () => {
       date: '2026-07-11',
       category: 'fuel',
       categoryChosen: false,
+      currency: 'PLN',
+      rate: '1',
+      rateEdited: false,
       participantIds: [ANIA, BARTEK],
       participantsDate: '2026-07-11',
       split: initialSplitForm,
@@ -202,6 +210,87 @@ describe('expense form', () => {
       { id: ENTRY, group: trip, members },
     );
     expect(parsed).toEqual({ ok: false, errors: ['payerAmounts', 'split'] });
+  });
+});
+
+describe('expense form in a foreign currency', () => {
+  const form = expenseFormFromComposer({
+    draft: { amount: '20,505', title: 'Kolacja' },
+    group: trip,
+    members,
+    myMemberId: ANIA,
+    today: '2026-07-11',
+  });
+  const eur = withCurrency(form, 'EUR', 'PLN');
+
+  it('picking a currency clears the rate until the ECB rate arrives; the base currency has rate 1', () => {
+    expect(eur).toMatchObject({ currency: 'EUR', rate: '', rateEdited: false });
+    expect(withCurrency(withRate(eur, '4,5'), 'PLN', 'PLN')).toMatchObject({ currency: 'PLN', rate: '1', rateEdited: false });
+  });
+
+  it("trims the amount to the new currency's minor digits", () => {
+    expect(withCurrency({ ...form, amount: '1200,50' }, 'JPY', 'PLN').amount).toBe('1200');
+  });
+
+  it('prefills the suggested rate until the user edits it', () => {
+    expect(withSuggestedRate(eur, '4.3157').rate).toBe('4.3157');
+    expect(withSuggestedRate(withRate(eur, '4,30'), '4.3157').rate).toBe('4,30');
+  });
+
+  it('shows the amount in the base currency at the typed rate', () => {
+    expect(formBaseAmount({ ...withRate(eur, '4,3157'), amount: '20' }, 'PLN')).toBe(8_631);
+    expect(formBaseAmount({ ...eur, amount: '20' }, 'PLN')).toBeNull();
+    expect(formBaseAmount(form, 'PLN')).toBeNull();
+  });
+
+  it('builds the expense in the entry currency with the frozen rate as a decimal string', () => {
+    const parsed = parseExpenseForm({ ...withRate(eur, '4,3157'), amount: '20,50' }, { id: ENTRY, group: trip, members });
+    expect(parsed).toEqual({
+      ok: true,
+      value: expect.objectContaining({
+        amount: 2050,
+        currency: 'EUR',
+        rateToBase: '4.3157',
+        payers: [{ memberId: ANIA, amount: 2050 }],
+      }),
+    });
+  });
+
+  it("reads several payers' amounts in the entry currency's minor units", () => {
+    const yen = { ...withRate(withCurrency(form, 'JPY', 'PLN'), '0,0262862'), amount: '3000' };
+    const parsed = parseExpenseForm(
+      { ...yen, payers: { multiple: true, amounts: { [ANIA]: '1000', [BARTEK]: '2000' } } },
+      { id: ENTRY, group: trip, members },
+    );
+    expect(parsed).toEqual({
+      ok: true,
+      value: expect.objectContaining({
+        amount: 3000,
+        currency: 'JPY',
+        rateToBase: '0.0262862',
+        payers: [
+          { memberId: ANIA, amount: 1000 },
+          { memberId: BARTEK, amount: 2000 },
+        ],
+      }),
+    });
+  });
+
+  it('rejects a missing or invalid rate', () => {
+    const context = { id: ENTRY, group: trip, members };
+    expect(parseExpenseForm({ ...eur, amount: '20' }, context)).toEqual({ ok: false, errors: ['rate'] });
+    expect(parseExpenseForm({ ...withRate(eur, '0'), amount: '20' }, context)).toEqual({ ok: false, errors: ['rate'] });
+    expect(parseExpenseForm({ ...withRate(eur, '4.3.1'), amount: '20' }, context)).toEqual({ ok: false, errors: ['rate'] });
+  });
+});
+
+describe('entryCurrencies', () => {
+  it('offers the base currency first, then the others once', () => {
+    const list = entryCurrencies('PLN');
+    expect(list[0]).toBe('PLN');
+    expect(list).toContain('EUR');
+    expect(new Set(list).size).toBe(list.length);
+    expect(entryCurrencies('MXN')[0]).toBe('MXN');
   });
 });
 

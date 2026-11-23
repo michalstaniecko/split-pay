@@ -113,6 +113,15 @@ describe('conversationItems', () => {
     expect(items[1]).toMatchObject({ side: 'start', myShare: null });
   });
 
+  it('a foreign-currency bubble carries its base amount; day totals and my share are in the base currency', () => {
+    // 20.00 EUR at 4.3157 = 86.31 PLN; Ania's share 6.67 EUR of 20.00 → 28.79 PLN
+    const dinner = { ...aniaEarly, amount: 2_000, currency: 'EUR', rateToBase: '4.3157', payers: [{ memberId: ANIA, amount: 2_000 }] };
+    const { items } = conversationItems([dinner, bartekLate], { members, myMemberId: ANIA, baseCurrency: 'PLN' });
+    expect(items[0]).toMatchObject({ type: 'day', total: 8_631 + 900 });
+    expect(items[1]).toMatchObject({ type: 'entry', baseAmount: 8_631, myShare: 2_879 });
+    expect(items[2]).toMatchObject({ type: 'entry', baseAmount: null });
+  });
+
   describe('claims', () => {
     const claim = (n: number, claimedAt: string, undoneAt: string | null = null) => ({ id: id(n), claimedAt, undoneAt });
     // Tests run in any time zone: map timestamps to UTC dates.

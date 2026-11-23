@@ -3,10 +3,9 @@ import { Pressable, Text, View } from 'react-native';
 import { StyleSheet } from 'react-native-unistyles';
 import { useLocale } from '@/i18n/locale-provider';
 import { useFormatters } from '@/i18n/use-formatters';
-import { payersBubbleLabel } from './bubble-label';
+import { entryBubbleLabel } from './bubble-label';
 import type { DayItem, EntryItem } from './conversation';
 import { CATEGORY_ICONS } from './entries-query';
-import { incomeBubbleLabel } from './income-bubble-label';
 
 /**
  * One entry in the Conversation, from its payer: end edge when it's mine,
@@ -14,8 +13,9 @@ import { incomeBubbleLabel } from './income-bubble-label';
  * mirrors it). Read as one element by screen readers.
  * An income (#13) is from its largest recipient, labelled "↓ Wpływ" in the
  * positive colour on a surface background (on either edge).
- * Later slices add: "edytowano" (#11), the base amount of a foreign currency
- * (#14), the receipt thumbnail (#26).
+ * A foreign-currency bubble shows the original amount large and the base
+ * amount small ("≈ 86,43 zł").
+ * Later slices add: "edytowano" (#11), the receipt thumbnail (#26).
  */
 export function EntryBubble({
   item,
@@ -34,7 +34,7 @@ export function EntryBubble({
   const { t } = useLingui();
   const format = useFormatters();
   const { locale } = useLocale();
-  const { entry, side, payerName, payerNames, otherPayers, myShare } = item;
+  const { entry, side, payerName, otherPayers, myShare, baseAmount } = item;
   const income = entry.kind === 'income';
   // Income bubbles keep the surface background so the positive colour reads on both edges.
   const mine = side === 'end' && !income;
@@ -45,28 +45,14 @@ export function EntryBubble({
   // An income share is money that belongs to me — shown without the minus.
   const shareAmount = myShare !== null && income ? Math.abs(myShare) : myShare;
   const share = shareAmount !== null && shareAmount !== 0 ? t`twój udział ${format.amount(shareAmount, baseCurrency)}` : null;
-  // Income: its own sentence (#13, names extra recipients). Multiple payers:
-  // one sentence naming all of them (#12); single-payer wording is #36's.
-  const label =
-    entry.kind === 'income'
-      ? incomeBubbleLabel({ entry, payerName, otherPayers, myShare }, { baseCurrency, locale })
-      : entry.kind !== 'settlement' && otherPayers > 0
-        ? payersBubbleLabel({
-            kind: entry.kind,
-            payerNames,
-            title,
-            amount,
-            date: format.date(entry.date),
-            myShare: myShare !== null && myShare !== 0 ? format.amount(myShare, baseCurrency) : null,
-          })
-        : [author, title, amount, share].filter(Boolean).join(', ');
+  const approx = baseAmount !== null ? `≈ ${format.amount(baseAmount, baseCurrency)}` : null;
 
   return (
     <View style={[styles.row, side === 'end' ? styles.rowEnd : styles.rowStart]}>
       <Pressable
         accessible
         accessibilityRole="button"
-        accessibilityLabel={label}
+        accessibilityLabel={entryBubbleLabel(item, { baseCurrency, locale })}
         onPress={onPress}
         {...(onLongPress ? { onLongPress } : {})}
         style={({ pressed }) => [
@@ -93,6 +79,7 @@ export function EntryBubble({
           </Text>
         </View>
         <Text style={[styles.amount, mine && styles.mineText, income && styles.incomeAmount]}>{amount}</Text>
+        {approx ? <Text style={[styles.approx, mine && styles.mineMuted]}>{approx}</Text> : null}
         {share ? <Text style={[styles.share, mine && styles.mineMuted]}>{share}</Text> : null}
       </Pressable>
     </View>
@@ -205,6 +192,10 @@ const styles = StyleSheet.create((theme) => ({
     fontSize: theme.font.sizeLg,
     fontWeight: theme.font.weightBold,
     color: theme.colors.text,
+  },
+  approx: {
+    fontSize: theme.font.sizeSm,
+    color: theme.colors.textMuted,
   },
   share: {
     fontSize: theme.font.sizeSm,
