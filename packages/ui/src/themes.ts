@@ -1,6 +1,6 @@
 /**
- * Design tokeny. Motywy Fresh i Classic różnią się wyłącznie wartościami
- * tokenów — układ ekranów jest wspólny (patrz docs/SPEC.md → Wygląd).
+ * Design tokens. The Fresh and Classic themes differ only in token values —
+ * the screen layout is shared (see the appearance section of docs/SPEC.md).
  */
 
 export interface ThemeColors {

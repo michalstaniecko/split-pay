@@ -1,28 +1,28 @@
 import { z } from 'zod';
 
 /**
- * Kwoty są zawsze liczbami całkowitymi w najmniejszej jednostce waluty
- * (grosze, centy…). Patrz docs/adr/0003-kwoty-w-jednostkach-minimalnych.md.
+ * Amounts are always integers in the currency's minor unit (grosze, cents…).
+ * See docs/adr/0003-amounts-in-minor-units.md.
  */
-export const MinorAmount = z.number().int().refine(Number.isSafeInteger, 'Kwota poza bezpiecznym zakresem');
+export const MinorAmount = z.number().int().refine(Number.isSafeInteger, 'Amount out of safe integer range');
 export type MinorAmount = z.infer<typeof MinorAmount>;
 
-export const PositiveMinorAmount = MinorAmount.refine((n) => n > 0, 'Kwota musi być dodatnia');
+export const PositiveMinorAmount = MinorAmount.refine((n) => n > 0, 'Amount must be positive');
 
-export const CurrencyCode = z.string().regex(/^[A-Z]{3}$/, 'Kod waluty ISO 4217');
+export const CurrencyCode = z.string().regex(/^[A-Z]{3}$/, 'ISO 4217 currency code');
 export type CurrencyCode = z.infer<typeof CurrencyCode>;
 
 /**
- * Kurs przeliczenia: ile jednostek waluty bazowej za 1 jednostkę waluty wpisu,
- * zapisany jako dziesiętny string (np. "4.2715"), żeby uniknąć floatów.
+ * Exchange rate: units of the base currency per 1 unit of the entry currency,
+ * stored as a decimal string (e.g. "4.2715") to avoid floats.
  */
 export const ExchangeRate = z
   .string()
-  .regex(/^\d{1,9}(\.\d{1,10})?$/, 'Kurs jako liczba dziesiętna, np. "4.2715"')
-  .refine((s) => /[1-9]/.test(s), 'Kurs musi być dodatni');
+  .regex(/^\d{1,9}(\.\d{1,10})?$/, 'Rate must be a decimal string, e.g. "4.2715"')
+  .refine((s) => /[1-9]/.test(s), 'Rate must be positive');
 export type ExchangeRate = z.infer<typeof ExchangeRate>;
 
-/** Liczba miejsc po przecinku waluty (np. PLN → 2, JPY → 0, KWD → 3). */
+/** Number of decimal places of a currency (e.g. PLN → 2, JPY → 0, KWD → 3). */
 export function minorUnitDigits(currency: CurrencyCode): number {
   return new Intl.NumberFormat('en', { style: 'currency', currency }).resolvedOptions()
     .maximumFractionDigits ?? 2;
@@ -30,7 +30,7 @@ export function minorUnitDigits(currency: CurrencyCode): number {
 
 const compareIds = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
 
-/** Dzielenie całkowite z zaokrągleniem połówek od zera. */
+/** Integer division rounding halves away from zero. */
 function divRoundHalfAwayFromZero(numerator: bigint, denominator: bigint): bigint {
   const negative = numerator < 0n !== denominator < 0n;
   const n = numerator < 0n ? -numerator : numerator;
@@ -41,13 +41,13 @@ function divRoundHalfAwayFromZero(numerator: bigint, denominator: bigint): bigin
 
 function toSafeNumber(value: bigint): number {
   const n = Number(value);
-  if (!Number.isSafeInteger(n)) throw new RangeError('Wynik poza bezpiecznym zakresem');
+  if (!Number.isSafeInteger(n)) throw new RangeError('Result out of safe integer range');
   return n;
 }
 
 /**
- * Przelicza kwotę między walutami. `rate` = ile jednostek waluty docelowej
- * za 1 jednostkę waluty źródłowej. Zaokrąglenie: połówki od zera.
+ * Converts an amount between currencies. `rate` = units of the target currency
+ * per 1 unit of the source currency. Rounding: halves away from zero.
  */
 export function convert(
   amount: MinorAmount,
@@ -56,7 +56,7 @@ export function convert(
   to: CurrencyCode,
 ): MinorAmount {
   if (from === to) {
-    if (rate !== '1' && !/^1\.0+$/.test(rate)) throw new RangeError('Kurs dla tej samej waluty musi wynosić 1');
+    if (rate !== '1' && !/^1\.0+$/.test(rate)) throw new RangeError('Rate for the same currency must be 1');
     return amount;
   }
   ExchangeRate.parse(rate);
@@ -72,7 +72,7 @@ export function convert(
 
 export interface WeightedShare {
   memberId: string;
-  /** Nieujemna liczba całkowita. */
+  /** Non-negative integer. */
   weight: number;
 }
 
@@ -82,28 +82,28 @@ export interface Allocation {
 }
 
 /**
- * Dzieli kwotę proporcjonalnie do wag tak, by suma udziałów była dokładnie
- * równa kwocie. Reszta (pojedyncze grosze) trafia do członków z największą
- * resztą z dzielenia, a przy remisie — według rosnącego `memberId`.
- * Arytmetyka wyłącznie całkowita (BigInt), więc wynik jest identyczny na
- * każdej platformie i niezależny od kolejności wejścia. Wynik jest
- * posortowany po `memberId`. Ujemna kwota (np. wpływ) dzielona symetrycznie.
+ * Splits an amount proportionally to weights so that the shares add up to
+ * exactly the amount. The remainder (single minor units) goes to the members
+ * with the largest division remainder, ties broken by ascending `memberId`.
+ * Integer-only arithmetic (BigInt), so the result is identical on every
+ * platform and independent of input order. The result is sorted by
+ * `memberId`. A negative amount (e.g. income) is split symmetrically.
  *
- * UWAGA: zmiana tego algorytmu zmienia salda historycznych wpisów (ADR-0016).
+ * NOTE: changing this algorithm changes the balances of historical entries (ADR-0016).
  */
 export function allocate(total: MinorAmount, shares: readonly WeightedShare[]): Allocation[] {
-  if (!Number.isSafeInteger(total)) throw new RangeError('Kwota musi być bezpieczną liczbą całkowitą');
-  if (shares.length === 0) throw new RangeError('Brak członków do podziału');
+  if (!Number.isSafeInteger(total)) throw new RangeError('Amount must be a safe integer');
+  if (shares.length === 0) throw new RangeError('No members to split between');
   if (new Set(shares.map((s) => s.memberId)).size !== shares.length) {
-    throw new RangeError('Zduplikowany memberId');
+    throw new RangeError('Duplicate memberId');
   }
   for (const s of shares) {
     if (!Number.isSafeInteger(s.weight) || s.weight < 0) {
-      throw new RangeError(`Waga musi być nieujemną liczbą całkowitą (${s.memberId})`);
+      throw new RangeError(`Weight must be a non-negative integer (${s.memberId})`);
     }
   }
   const weightSum = shares.reduce((acc, s) => acc + BigInt(s.weight), 0n);
-  if (weightSum === 0n) throw new RangeError('Suma wag musi być dodatnia');
+  if (weightSum === 0n) throw new RangeError('Sum of weights must be positive');
 
   const sign = total < 0 ? -1n : 1n;
   const abs = BigInt(Math.abs(total));
@@ -128,7 +128,7 @@ export function allocate(total: MinorAmount, shares: readonly WeightedShare[]): 
   return parts.map((p) => ({ memberId: p.memberId, amount: toSafeNumber(sign * p.amount) || 0 }));
 }
 
-/** Podział po równo — szczególny przypadek `allocate` z wagami 1. */
+/** Equal split — a special case of `allocate` with all weights equal to 1. */
 export function splitEvenly(total: MinorAmount, memberIds: readonly string[]): Allocation[] {
   return allocate(
     total,
@@ -137,9 +137,9 @@ export function splitEvenly(total: MinorAmount, memberIds: readonly string[]): A
 }
 
 /**
- * Przelicza listę alokacji na inną walutę tak, by suma wyniku była dokładnie
- * równa przeliczonej sumie (przeliczamy sumę, a potem dzielimy ją
- * proporcjonalnie do oryginalnych kwot).
+ * Converts a list of allocations to another currency so that the result adds
+ * up to exactly the converted total (convert the total first, then split it
+ * proportionally to the original amounts).
  */
 export function convertAllocations(
   allocations: readonly Allocation[],
@@ -150,7 +150,7 @@ export function convertAllocations(
   if (from === to) return allocations.map((a) => ({ ...a }));
   const total = allocations.reduce((acc, a) => acc + a.amount, 0);
   if (allocations.some((a) => Math.sign(a.amount) * Math.sign(total) < 0)) {
-    throw new RangeError('Alokacje muszą mieć ten sam znak');
+    throw new RangeError('Allocations must all have the same sign');
   }
   if (total === 0) return allocations.map((a) => ({ memberId: a.memberId, amount: 0 }));
   return allocate(

@@ -1,4 +1,4 @@
-# Budowany z katalogu głównego repo: docker build -f apps/api/Dockerfile .
+# Built from the repo root: docker build -f apps/api/Dockerfile .
 FROM node:26-alpine AS base
 RUN npm install -g pnpm@12.23.0
 WORKDIR /repo

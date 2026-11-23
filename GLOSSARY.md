@@ -1,126 +1,126 @@
 # split-pay
 
-Dzielenie wspólnych wydatków między znajomymi — od pojedynczego rachunku po kilkudniowy wyjazd — i wyliczanie, kto komu ile oddaje.
+Splitting shared expenses between friends — from a single bill to a multi-day trip — and working out who pays back whom and how much.
 
-W nawiasach angielskie nazwy używane w kodzie.
+The app UI is Polish-first, so each term lists its Polish UI name.
 
-## Grupy i ludzie
+## Groups and people
 
-**Grupa** (`Group`):
-Jedyny kontener wydatków i członków; może mieć opcjonalny zakres dat.
-_Avoid_: Wydarzenie, event, rachunek (jako kontener)
+**Group** (PL: Grupa):
+The only container for expenses and members; it can have an optional date range.
+_Avoid_: Event, bill (as a container)
 
-**Wyjazd** (`Group` z datami):
-Grupa z zakresem dat. Nie jest osobnym bytem — to nazwa potoczna dla grupy z datami.
-_Avoid_: Trip, wycieczka, event
+**Trip** (PL: Wyjazd):
+A group with a date range. Not a separate entity — just the everyday name for a group with dates.
+_Avoid_: Journey, excursion, event
 
-**Szybki rachunek**:
-Grupa tworzona jednym kliknięciem w celu podzielenia jednego wydatku.
-_Avoid_: Bill, rachunek współdzielony
+**Quick bill** (PL: Szybki rachunek):
+A group created with a single tap to split one expense.
+_Avoid_: Bill, shared bill
 
-**Użytkownik** (`User`):
-Osoba z kontem w aplikacji.
-_Avoid_: Konto (w znaczeniu osoby), account
+**User** (PL: Użytkownik):
+A person with an account in the app.
+_Avoid_: Account (meaning a person)
 
-**Członek** (`Member`):
-Osoba należąca do grupy — z kontem lub bez. Wydatki, udziały i salda zawsze odnoszą się do członka, nie do użytkownika.
-_Avoid_: Uczestnik, participant, user (w kontekście grupy)
+**Member** (PL: Członek):
+A person belonging to a group — with or without an account. Expenses, shares and balances always refer to a member, never to a user.
+_Avoid_: Participant, user (in a group context)
 
-**Członek bez konta** (`Member` bez `User`):
-Członek, który nie ma konta lub nie przejął jeszcze swojego profilu; jego wydatki wpisują inni.
-_Avoid_: Ghost, gość, placeholder, osoba wirtualna
+**Member without account** (PL: Członek bez konta):
+A member who has no account or has not yet claimed their profile; others enter their expenses.
+_Avoid_: Ghost, guest, placeholder, virtual person
 
-**Założyciel** (`owner`):
-Członek, który utworzył grupę; jedyny, który może ją trwale usunąć.
-_Avoid_: Admin, właściciel
+**Owner** (PL: Założyciel):
+The member who created the group; the only one who can permanently delete it.
+_Avoid_: Admin, founder
 
-**Przejęcie** (`claim`):
-Powiązanie członka bez konta z użytkownikiem, przenoszące na niego całą historię w grupie.
-_Avoid_: Scalenie, merge, połączenie
+**Claim** (PL: Przejęcie):
+Linking a member without account to a user, transferring their whole history in the group to that user.
+_Avoid_: Merge, link-up
 
-**Obecność** (`attendance`):
-Zakres dni wyjazdu, w których członek jest obecny; wyznacza domyślnych uczestników podziału.
-_Avoid_: Dostępność, pobyt
+**Attendance** (PL: Obecność):
+The range of trip days on which a member is present; it determines the default split participants.
+_Avoid_: Availability, stay
 
-**Link grupy**:
-Sekretny, unieważnialny link prowadzący do dołączenia do grupy (w aplikacji) lub jej podglądu (w www).
-_Avoid_: Zaproszenie e-mail, kod grupy
+**Group link** (PL: Link grupy):
+A secret, revocable link that leads to joining the group (in the app) or previewing it (on the web).
+_Avoid_: Email invitation, group code
 
-**Osobisty link przejęcia**:
-Link wskazujący konkretnego członka bez konta do przejęcia.
+**Personal claim link** (PL: Osobisty link przejęcia):
+A link pointing to a specific member without account to be claimed.
 
-## Pieniądze
+## Money
 
-**Wpis** (`Entry`):
-Wspólna nazwa wydatku, wpływu i spłaty, czyli wszystkiego, co zmienia salda w grupie.
-_Avoid_: Transakcja, operacja, rekord
+**Entry** (PL: Wpis):
+The common name for an expense, an income and a settlement — everything that changes balances in a group.
+_Avoid_: Transaction, operation, record
 
-**Wydatek** (`Expense`):
-Zapłata dokonana przez jednego lub kilku płatników, dzielona na udziały członków.
-_Avoid_: Rachunek, transakcja, koszt
+**Expense** (PL: Wydatek):
+A payment made by one or more payers, split into members' shares.
+_Avoid_: Bill, transaction, cost
 
-**Wpływ** (`Income`):
-Pieniądze otrzymane przez członka, a należące do wielu członków (np. zwrot kaucji); odwrotność wydatku.
-_Avoid_: Ujemny wydatek, zwrot (jako typ)
+**Income** (PL: Wpływ):
+Money received by a member that belongs to several members (e.g. a deposit refund); the reverse of an expense.
+_Avoid_: Negative expense, refund (as a type)
 
-**Spłata** (`Settlement`):
-Przekazanie pieniędzy od jednego członka drugiemu w celu wyrównania sald.
-_Avoid_: Płatność, przelew (jako typ), payment
+**Settlement** (PL: Spłata):
+A transfer of money from one member to another to even out balances.
+_Avoid_: Payment, transfer (as a type)
 
-**Płatnik** (`payer`):
-Członek, który zapłacił (całość lub część) wydatku.
-_Avoid_: Kupujący, payer-user
+**Payer** (PL: Płatnik):
+A member who paid (all or part of) an expense.
+_Avoid_: Buyer, purchaser
 
-**Udział** (`share`):
-Część wydatku lub wpływu przypadająca na danego członka.
-_Avoid_: Split, część, porcja
+**Share** (PL: Udział):
+The part of an expense or income that falls to a given member.
+_Avoid_: Split (for a single member's part), portion, cut
 
-**Tryb podziału** (`Split`):
-Sposób, w jaki kwota wpisu jest dzielona na udziały: po równo, dokładnymi kwotami, według wag albo „wspólne + osobiste”.
-_Avoid_: Typ podziału, metoda
+**Split mode** (PL: Tryb podziału):
+How an entry's amount is divided into shares: equally, by exact amounts, by weights, or "common + personal".
+_Avoid_: Split type, method
 
-**Pozycja osobista**:
-Część wydatku przypisana w całości jednemu członkowi, wyłączona z podziału wspólnego.
-_Avoid_: Wyjątek, wykluczenie
+**Personal item** (PL: Pozycja osobista):
+A part of an expense assigned entirely to one member, excluded from the common split.
+_Avoid_: Exception, exclusion
 
-**Saldo** (`balance`):
-Różnica między tym, co członek zapłacił, a tym, co skonsumował, w walucie bazowej grupy.
-_Avoid_: Dług, bilans
+**Balance** (PL: Saldo):
+The difference between what a member paid and what they consumed, in the group's base currency.
+_Avoid_: Debt, net
 
-**Konsumpcja**:
-Suma udziałów członka w danym okresie (np. dniu).
-_Avoid_: Wydatki członka (myli się z tym, co zapłacił)
+**Consumption** (PL: Konsumpcja):
+The sum of a member's shares over a given period (e.g. a day).
+_Avoid_: Member's expenses (confused with what they paid)
 
-**Rozliczenie**:
-Zestaw proponowanych spłat sprowadzający wszystkie salda do zera.
-_Avoid_: Settle-up, podsumowanie
+**Settle-up** (PL: Rozliczenie):
+The set of suggested settlements that brings all balances to zero.
+_Avoid_: Summary, reconciliation
 
-**Waluta bazowa**:
-Waluta grupy, w której liczone są salda i rozliczenie.
-_Avoid_: Waluta domyślna, waluta główna
+**Base currency** (PL: Waluta bazowa):
+The group's currency, in which balances and the settle-up are computed.
+_Avoid_: Default currency, main currency
 
-**Zamrożony kurs**:
-Kurs przeliczenia waluty wydatku na walutę bazową, ustalony w chwili dodania wydatku.
-_Avoid_: Kurs bieżący
+**Frozen rate** (PL: Zamrożony kurs):
+The rate for converting an expense's currency to the base currency, fixed when the expense is added.
+_Avoid_: Current rate, live rate
 
-**Dane do spłaty**:
-Numer konta lub telefon BLIK użytkownika, widoczny dla członków wspólnych grup.
+**Payout details** (PL: Dane do spłaty):
+A user's bank account number or BLIK phone number, visible to members of shared groups.
 
-## Stan i historia
+## State and history
 
-**Historia zmian**:
-Zapis każdej zmiany w grupie (kto, co, kiedy), umożliwiający cofnięcie.
-_Avoid_: Log, audyt (w UI)
+**Change history** (PL: Historia zmian):
+A record of every change in a group (who, what, when) that allows undoing it.
+_Avoid_: Log, audit (in the UI)
 
-**Archiwizacja**:
-Przejście grupy w stan tylko do odczytu.
-_Avoid_: Zamknięcie, usunięcie
+**Archiving** (PL: Archiwizacja):
+Putting a group into a read-only state.
+_Avoid_: Closing, deletion
 
-**Konflikt**:
-Sytuacja, w której zmiana offline dotyczy wersji wydatku, która w międzyczasie zmieniła się na serwerze.
+**Conflict** (PL: Konflikt):
+A situation where an offline change targets a version of an expense that has meanwhile changed on the server.
 
-## Wygląd
+## Look and feel
 
-**Motyw** (`theme`):
-Zestaw tokenów wyglądu: Fresh lub Classic, każdy w wariancie jasnym i ciemnym. Wybierany per użytkownik.
-_Avoid_: Skórka, styl, layout
+**Theme** (PL: Motyw):
+A set of look-and-feel tokens: Fresh or Classic, each in a light and dark variant. Chosen per user.
+_Avoid_: Skin, style, layout

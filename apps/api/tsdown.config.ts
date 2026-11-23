@@ -4,6 +4,6 @@ export default defineConfig({
   entry: ['src/index.ts'],
   platform: 'node',
   format: 'esm',
-  // Pakiety workspace są źródłami TS — wbudowujemy je w bundle.
+  // Workspace packages ship TS sources — bundle them in.
   noExternal: [/^@split-pay\//],
 });

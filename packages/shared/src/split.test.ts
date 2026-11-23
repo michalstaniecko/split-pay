@@ -39,7 +39,7 @@ describe('resolveSplit', () => {
     ).toEqual([501, 250, 250]);
   });
 
-  it('wspólne + osobiste: 150 zł zakupów, w tym piwo Tomka za 24 zł', () => {
+  it('common + personal: 150 PLN of groceries incl. Tomek\'s 24 PLN beer', () => {
     expect(
       resolveSplit(
         {
@@ -57,7 +57,7 @@ describe('resolveSplit', () => {
     ]);
   });
 
-  it('wspólne + osobiste: kilka pozycji tej samej osoby i osoba spoza części wspólnej', () => {
+  it('common + personal: several items of one person who is outside the common part', () => {
     expect(
       resolveSplit(
         {
@@ -79,7 +79,7 @@ describe('resolveSplit', () => {
 });
 
 describe('defaultParticipants', () => {
-  it('pomija członków nieobecnych danego dnia', () => {
+  it('skips members absent on that day', () => {
     expect(defaultParticipants(members, '2026-07-11')).toEqual([ANIA, BARTEK, KASIA]);
     expect(defaultParticipants(members, '2026-07-12')).toEqual([ANIA, BARTEK, KASIA, TOMEK]);
   });

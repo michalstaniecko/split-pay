@@ -2,30 +2,33 @@ import { z } from 'zod';
 import { CurrencyCode, ExchangeRate, MinorAmount, PositiveMinorAmount } from './money';
 
 /**
- * Model danych wpisów grupy (wydatek, wpływ, spłata).
- * Słownictwo: GLOSSARY.md. Decyzje: ADR-0002, 0003, 0004, 0016.
+ * Data model of group entries (expense, income, settlement).
+ * Vocabulary: GLOSSARY.md. Decisions: ADR-0002, 0003, 0004, 0016.
+ *
+ * Validation messages are developer-facing English; the UI maps issues to
+ * translated copy via i18n.
  */
 
 export const Id = z.uuid();
 export type Id = z.infer<typeof Id>;
 
-/** Data kalendarzowa wyjazdu bez strefy czasowej: "YYYY-MM-DD". */
+/** Calendar date of the trip without a time zone: "YYYY-MM-DD". */
 export const LocalDate = z.iso.date();
 export type LocalDate = z.infer<typeof LocalDate>;
 
-// ── Grupa i członkowie ───────────────────────────────────────────────────────
+// ── Group and members ────────────────────────────────────────────────────────
 
-/** Obecność: zakres dni (włącznie). `null` = obecny przez cały wyjazd. */
+/** Attendance: inclusive range of days. `null` = present for the whole trip. */
 export const Attendance = z
   .object({ from: LocalDate, to: LocalDate })
-  .refine((a) => a.from <= a.to, 'Początek obecności po jej końcu');
+  .refine((a) => a.from <= a.to, 'Attendance starts after it ends');
 export type Attendance = z.infer<typeof Attendance>;
 
 export const Member = z.object({
   id: Id,
   groupId: Id,
   displayName: z.string().trim().min(1).max(60),
-  /** `null` = członek bez konta. */
+  /** `null` = member without account. */
   userId: Id.nullable(),
   attendance: Attendance.nullable(),
 });
@@ -38,17 +41,17 @@ export const Group = z
     emoji: z.string().min(1).max(16),
     color: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
     baseCurrency: CurrencyCode,
-    /** Zakres dat — grupa z datami to wyjazd. */
+    /** Date range — a group with dates is a trip. */
     startDate: LocalDate.nullable(),
     endDate: LocalDate.nullable(),
     simplifyDebts: z.boolean(),
     archivedAt: z.iso.datetime().nullable(),
   })
-  .refine((g) => (g.startDate === null) === (g.endDate === null), 'Podaj obie daty albo żadną')
-  .refine((g) => g.startDate === null || g.endDate === null || g.startDate <= g.endDate, 'Data początku po dacie końca');
+  .refine((g) => (g.startDate === null) === (g.endDate === null), 'Provide both dates or neither')
+  .refine((g) => g.startDate === null || g.endDate === null || g.startDate <= g.endDate, 'Start date after end date');
 export type Group = z.infer<typeof Group>;
 
-// ── Kategorie ────────────────────────────────────────────────────────────────
+// ── Categories ───────────────────────────────────────────────────────────────
 
 export const Category = z.enum([
   'groceries',
@@ -62,7 +65,7 @@ export const Category = z.enum([
 ]);
 export type Category = z.infer<typeof Category>;
 
-// ── Podział ──────────────────────────────────────────────────────────────────
+// ── Split ────────────────────────────────────────────────────────────────────
 
 const uniqueIds = (ids: readonly string[]) => new Set(ids).size === ids.length;
 
@@ -70,52 +73,52 @@ const MemberAmount = z.object({ memberId: Id, amount: PositiveMinorAmount });
 export type MemberAmount = z.infer<typeof MemberAmount>;
 
 /**
- * Tryb podziału — przechowujemy to, co wpisał użytkownik, a udziały są
- * wyliczane deterministycznie (ADR-0016).
+ * Split mode — we store what the user entered; shares are derived
+ * deterministically (ADR-0016).
  */
 export const Split = z.discriminatedUnion('mode', [
-  /** Po równo między wybranych członków. */
+  /** Equally between the selected members. */
   z.object({
     mode: z.literal('equal'),
-    memberIds: z.array(Id).min(1).refine(uniqueIds, 'Zduplikowany członek'),
+    memberIds: z.array(Id).min(1).refine(uniqueIds, 'Duplicate member'),
   }),
-  /** Dokładne kwoty — muszą sumować się do kwoty wpisu. */
+  /** Exact amounts — must add up to the entry amount. */
   z.object({
     mode: z.literal('exact'),
     amounts: z
       .array(MemberAmount)
       .min(1)
-      .refine((xs) => uniqueIds(xs.map((x) => x.memberId)), 'Zduplikowany członek'),
+      .refine((xs) => uniqueIds(xs.map((x) => x.memberId)), 'Duplicate member'),
   }),
-  /** Udziały / wagi, np. 2:1:1. */
+  /** Shares / weights, e.g. 2:1:1. */
   z.object({
     mode: z.literal('shares'),
     weights: z
       .array(z.object({ memberId: Id, weight: z.number().int().min(1).max(1000) }))
       .min(1)
-      .refine((xs) => uniqueIds(xs.map((x) => x.memberId)), 'Zduplikowany członek'),
+      .refine((xs) => uniqueIds(xs.map((x) => x.memberId)), 'Duplicate member'),
   }),
   /**
-   * Wspólne + osobiste: pozycje osobiste trafiają w całości do wskazanych
-   * członków, reszta jest dzielona po równo między `commonMemberIds`.
+   * Common + personal: personal items go entirely to the given members, the
+   * rest is split equally between `commonMemberIds`.
    */
   z.object({
     mode: z.literal('commonPlusPersonal'),
-    commonMemberIds: z.array(Id).refine(uniqueIds, 'Zduplikowany członek'),
+    commonMemberIds: z.array(Id).refine(uniqueIds, 'Duplicate member'),
     personal: z.array(MemberAmount).min(1),
   }),
 ]);
 export type Split = z.infer<typeof Split>;
 export type SplitMode = Split['mode'];
 
-// ── Wpisy ────────────────────────────────────────────────────────────────────
+// ── Entries ──────────────────────────────────────────────────────────────────
 
 const EntryMeta = {
   id: Id,
   groupId: Id,
-  /** Numer wersji do wykrywania konfliktów przy synchronizacji (ADR-0005). */
+  /** Version number for conflict detection during sync (ADR-0005). */
   version: z.number().int().min(1),
-  /** Użytkownik, który utworzył wpis — offline może go edytować tylko on. */
+  /** User who created the entry — only they may edit it offline. */
   createdBy: Id,
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
@@ -124,10 +127,10 @@ const EntryMeta = {
 
 const MoneyFields = {
   date: LocalDate,
-  /** Kwota w walucie wpisu, zawsze dodatnia — kierunek wynika z rodzaju wpisu. */
+  /** Amount in the entry currency, always positive — direction follows from the entry kind. */
   amount: PositiveMinorAmount,
   currency: CurrencyCode,
-  /** Zamrożony kurs: jednostki waluty bazowej grupy za 1 jednostkę `currency`. */
+  /** Frozen rate: units of the group's base currency per 1 unit of `currency`. */
   rateToBase: ExchangeRate,
 };
 
@@ -138,32 +141,32 @@ const SplitFields = {
   receiptPhotoId: Id.nullable(),
 };
 
-const payersField = z
+const holdersField = z
   .array(MemberAmount)
   .min(1)
-  .refine((xs) => uniqueIds(xs.map((x) => x.memberId)), 'Zduplikowany członek');
+  .refine((xs) => uniqueIds(xs.map((x) => x.memberId)), 'Duplicate member');
 
-/** Wydatek: płatnicy zapłacili, uczestnicy podziału konsumują. */
+/** Expense: payers paid, split participants consume. */
 export const Expense = z.object({
   kind: z.literal('expense'),
   ...EntryMeta,
   ...MoneyFields,
   ...SplitFields,
-  payers: payersField,
+  payers: holdersField,
 });
 export type Expense = z.infer<typeof Expense>;
 
-/** Wpływ: odbiorcy dostali pieniądze należące do uczestników podziału. */
+/** Income: recipients received money that belongs to the split participants. */
 export const Income = z.object({
   kind: z.literal('income'),
   ...EntryMeta,
   ...MoneyFields,
   ...SplitFields,
-  recipients: payersField,
+  recipients: holdersField,
 });
 export type Income = z.infer<typeof Income>;
 
-/** Spłata: `from` przekazał pieniądze `to`. */
+/** Settlement: `from` handed money over to `to`. */
 export const Settlement = z
   .object({
     kind: z.literal('settlement'),
@@ -172,21 +175,21 @@ export const Settlement = z
     from: Id,
     to: Id,
   })
-  .refine((s) => s.from !== s.to, 'Spłata do samego siebie');
+  .refine((s) => s.from !== s.to, 'Settlement to oneself');
 export type Settlement = z.infer<typeof Settlement>;
 
 const sumAmounts = (xs: readonly { amount: number }[]) => xs.reduce((acc, x) => acc + x.amount, 0);
 
 function checkSplitAgainstAmount(split: Split, amount: MinorAmount, ctx: z.RefinementCtx) {
   if (split.mode === 'exact' && sumAmounts(split.amounts) !== amount) {
-    ctx.addIssue({ code: 'custom', path: ['split'], message: 'Kwoty podziału nie sumują się do kwoty wpisu' });
+    ctx.addIssue({ code: 'custom', path: ['split'], message: 'Split amounts do not add up to the entry amount' });
   }
   if (split.mode === 'commonPlusPersonal') {
     const personal = sumAmounts(split.personal);
     if (personal > amount) {
-      ctx.addIssue({ code: 'custom', path: ['split'], message: 'Pozycje osobiste przekraczają kwotę wpisu' });
+      ctx.addIssue({ code: 'custom', path: ['split'], message: 'Personal items exceed the entry amount' });
     } else if (personal < amount && split.commonMemberIds.length === 0) {
-      ctx.addIssue({ code: 'custom', path: ['split'], message: 'Brak członków do podziału części wspólnej' });
+      ctx.addIssue({ code: 'custom', path: ['split'], message: 'No members to split the common part between' });
     }
   }
 }
@@ -200,7 +203,7 @@ export const Entry = z
       ctx.addIssue({
         code: 'custom',
         path: [entry.kind === 'expense' ? 'payers' : 'recipients'],
-        message: 'Suma płatników nie równa się kwocie wpisu',
+        message: 'Payer amounts do not add up to the entry amount',
       });
     }
     checkSplitAgainstAmount(entry.split, entry.amount, ctx);
@@ -208,7 +211,7 @@ export const Entry = z
 export type Entry = z.infer<typeof Entry>;
 export type EntryKind = Entry['kind'];
 
-/** Wszyscy członkowie, do których odwołuje się wpis. */
+/** All members referenced by an entry. */
 export function referencedMemberIds(entry: Entry): Set<Id> {
   if (entry.kind === 'settlement') return new Set([entry.from, entry.to]);
   const holders = entry.kind === 'expense' ? entry.payers : entry.recipients;
@@ -231,17 +234,17 @@ export function referencedMemberIds(entry: Entry): Set<Id> {
   return new Set(ids);
 }
 
-/** Sprawdza wpis względem grupy: członkowie, waluta bazowa, archiwizacja. */
+/** Validates an entry against its group: members, base currency, archiving. */
 export function validateEntryInGroup(entry: Entry, group: Group, members: readonly Member[]): string[] {
   const errors: string[] = [];
-  if (entry.groupId !== group.id) errors.push('Wpis należy do innej grupy');
-  if (group.archivedAt !== null) errors.push('Grupa jest zarchiwizowana');
+  if (entry.groupId !== group.id) errors.push('Entry belongs to another group');
+  if (group.archivedAt !== null) errors.push('Group is archived');
   if (entry.currency === group.baseCurrency && Number(entry.rateToBase) !== 1) {
-    errors.push('Kurs dla waluty bazowej musi wynosić 1');
+    errors.push('Rate for the base currency must be 1');
   }
   const known = new Set(members.filter((m) => m.groupId === group.id).map((m) => m.id));
   for (const id of referencedMemberIds(entry)) {
-    if (!known.has(id)) errors.push(`Nieznany członek: ${id}`);
+    if (!known.has(id)) errors.push(`Unknown member: ${id}`);
   }
   return errors;
 }

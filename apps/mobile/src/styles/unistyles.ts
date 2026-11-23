@@ -11,7 +11,7 @@ declare module 'react-native-unistyles' {
 StyleSheet.configure({
   themes,
   settings: {
-    // TODO: rodzina motywu (fresh/classic) z ustawień użytkownika.
+    // TODO: theme family (fresh/classic) from user settings.
     initialTheme: () => themeName('fresh', Appearance.getColorScheme() === 'dark' ? 'dark' : 'light'),
   },
 });

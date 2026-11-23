@@ -1,247 +1,247 @@
-# split-pay — specyfikacja produktu
+# split-pay — product specification
 
-> `split-pay` to nazwa robocza. Ostateczna nazwa i domena są otwartym zadaniem (patrz [Otwarte zadania](#otwarte-zadania)).
-> Słownictwo domenowe: [GLOSSARY.md](../GLOSSARY.md). Kluczowe decyzje architektoniczne: [docs/adr/](./adr/).
+> `split-pay` is a working name. The final name and domain are an open task (see [Open tasks](#open-tasks)).
+> Domain vocabulary: [GLOSSARY.md](../GLOSSARY.md). Key architecture decisions: [docs/adr/](./adr/).
 
-## Cel
+## Goal
 
-Aplikacja mobilna (iOS + Android) do dzielenia wydatków między znajomymi — od pojedynczego rachunku („pizza w piątek”) po kilkudniowy **wyjazd**, na którym każdego dnia ktoś inny robi wspólne zakupy. Aplikacja automatycznie dzieli wydatki, pokazuje kto ile wydał w poszczególne dni i wylicza minimalną liczbę przelewów do rozliczenia.
+A mobile app (iOS + Android) for splitting expenses between friends — from a single bill ("pizza on Friday") to a multi-day **trip** where someone else does the shared shopping every day. The app splits expenses automatically, shows who spent how much on each day and computes the minimum number of transfers needed to settle up.
 
-Nie każdy uczestnik zainstaluje aplikację — dlatego istnieją **członkowie bez konta**, za których wydatki wpisują inni, oraz **interfejs www** tylko do podglądu.
+Not every participant will install the app — hence **members without an account**, whose expenses are entered by others, and a view-only **web interface**.
 
-## Charakter produktu
+## Product character
 
-- Publiczny produkt w App Store i Google Play, ale MVP projektowane pod skalę „znajomych” — bez budowania skalowalności na zapas.
-- Od początku spełniamy wymogi sklepów i prawa UE: polityka prywatności, regulamin (DSA — procedura zgłoszeń), usuwanie konta w aplikacji, zgłaszanie treści.
-- Darmowa, bez reklam. Wsparcie przez GitHub Sponsors — link **tylko w www i README**, nie w aplikacji mobilnej (ryzyko odrzucenia w review, [ADR-0011](./adr/0011-github-sponsors-tylko-poza-aplikacja.md)). W aplikacji sekcja „O aplikacji” bez klikalnego linku do płatności. AdMob ewentualnie w przyszłości, za feature flagą.
-- Prosty mechanizm feature flags w kodzie od początku, żeby funkcje płatne/reklamy dało się dodać bez przebudowy.
+- A public product in the App Store and Google Play, but the MVP is designed for "friends" scale — no building scalability up front.
+- From the start we meet store and EU law requirements: privacy policy, terms of service (DSA — reporting procedure), in-app account deletion, content reporting.
+- Free, no ads. Support via GitHub Sponsors — link **only on the web and in the README**, not in the mobile app (review rejection risk, [ADR-0011](./adr/0011-github-sponsors-outside-the-app.md)). In the app, an "About" section without a clickable payment link. AdMob possibly in the future, behind a feature flag.
+- A simple feature flags mechanism in the code from the start, so paid features/ads can be added without a rebuild.
 
-## Model domeny (skrót)
+## Domain model (summary)
 
-- Jedynym kontenerem jest **Grupa** z opcjonalnym zakresem dat. Grupa z datami = wyjazd; bez dat = np. mieszkanie. **Szybki rachunek** to grupa z jednym wydatkiem tworzona jednym kliknięciem ([ADR-0002](./adr/0002-grupa-jako-jedyny-kontener.md)).
-- Grupa ma **członków** — z kontem lub bez konta. Członka bez konta może dodać każdy członek; później ktoś może go **przejąć** ([ADR-0007](./adr/0007-czlonkowie-bez-konta-i-przejecie.md)).
-- Na wyjeździe każdy członek ma **obecność** (zakres dni). Domyślny podział wydatku obejmuje członków obecnych w dniu wydatku.
-- W grupie są **wydatki**, **wpływy** i **spłaty**.
+- The only container is a **Group** with an optional date range. A group with dates = a trip; without dates = e.g. a shared flat. A **quick bill** is a group with one expense created with a single tap ([ADR-0002](./adr/0002-group-as-the-only-container.md)).
+- A group has **members** — with or without an account. Any member can add a member without an account; later someone can **claim** them ([ADR-0007](./adr/0007-members-without-account-and-claiming.md)).
+- On a trip every member has an **attendance** (a range of days). The default split of an expense covers the members present on the expense's date.
+- A group contains **expenses**, **incomes** and **settlements**.
 
-## Uprawnienia
+## Permissions
 
-- Każdy członek grupy może dodawać, edytować i usuwać każdy wydatek, wpływ i spłatę oraz zmieniać nazwę każdego członka bez konta. Brak ról ([ADR-0008](./adr/0008-brak-rol-pelna-historia-zmian.md)).
-- Każda zmiana trafia do **historii zmian** (kto, co, kiedy) z możliwością cofnięcia.
-- **Założyciel** ma tylko jedno dodatkowe uprawnienie: trwałe usunięcie grupy.
+- Every group member can add, edit and delete any expense, income and settlement, and rename any member without an account. No roles ([ADR-0008](./adr/0008-no-roles-full-change-history.md)).
+- Every change goes into the **change history** (who, what, when) with the ability to undo.
+- The **owner** has only one extra permission: permanently deleting the group.
 
-## Wydatki i podział
+## Expenses and splitting
 
-### Model kwot
+### Amount model
 
-- Kwoty jako liczby całkowite w najmniejszej jednostce waluty (grosze/centy; obsługa walut z 0 i 3 miejscami po przecinku). Zero floatów ([ADR-0003](./adr/0003-kwoty-w-jednostkach-minimalnych.md)).
-- Reszta z dzielenia (np. 100 zł / 3) przypisywana deterministycznie (np. wg kolejności ID członka) — identyczny wynik na telefonie, w www i na serwerze.
-- Cała logika podziału i rozliczeń to czyste funkcje w `packages/shared`, najmocniej testowana część systemu.
+- Amounts are integers in the currency's smallest unit (grosze/cents; supports currencies with 0 and 3 decimal places). Zero floats ([ADR-0003](./adr/0003-amounts-in-minor-units.md)).
+- The division remainder (e.g. 100 PLN / 3) is assigned deterministically (e.g. by member ID order) — identical results on the phone, on the web and on the server.
+- All split and settlement logic consists of pure functions in `packages/shared`, the most heavily tested part of the system.
 
-### Wydatek
+### Expense
 
-- Pola: tytuł, kwota, waluta, data, kategoria (opcjonalna), **lista płatników z kwotami**, **lista udziałów**, opcjonalne zdjęcie paragonu.
-- Wielu płatników jest w modelu danych od początku; w UI domyślnie jeden płatnik, „kilku płatników” pod opcją zaawansowaną ([ADR-0004](./adr/0004-wydatek-z-lista-platnikow-i-udzialow.md)).
+- Fields: title, amount, currency, date, category (optional), **list of payers with amounts**, **list of shares**, optional receipt photo.
+- Multiple payers are in the data model from the start; in the UI one payer by default, "multiple payers" behind an advanced option ([ADR-0004](./adr/0004-expense-with-payers-and-shares-lists.md)).
 
-### Tryby podziału (MVP)
+### Split modes (MVP)
 
-1. **Równo** między wybranych członków (domyślnie: obecnych w dniu wydatku).
-2. **Dokładne kwoty**.
-3. **Udziały / wagi** (np. 2:1:1).
-4. **Wspólne + osobiste**: kwota całkowita minus pozycje osobiste przypisane konkretnym osobom, reszta dzielona równo (np. „osobiste Tomka: 24 zł”).
+1. **Equal** among selected members (default: those present on the expense's date).
+2. **Exact amounts**.
+3. **Shares / weights** (e.g. 2:1:1).
+4. **Common + personal**: the total amount minus personal items assigned to specific people, the rest split equally (e.g. "Tomek's personal items: 24 PLN").
 
-Procenty — nie (to udziały w innej formie). Podział pozycjami z paragonu (OCR) — v2.
+Percentages — no (they are shares in another form). Splitting by receipt line items (OCR) — v2.
 
-### Wpływ
+### Income
 
-Odwrócony wydatek: ktoś otrzymał pieniądze należące do wielu osób (zwrot kaucji, sprzedaż wspólnej rzeczy).
+A reversed expense: someone received money belonging to several people (deposit refund, sale of a shared item).
 
-### Kategorie
+### Categories
 
-Stała, tłumaczona lista z ikonami (jedzenie, transport, nocleg, alkohol, paliwo, inne…). Opcjonalna; domyślnie „inne” lub podpowiedź na podstawie tytułu. Własne kategorie per grupa — v2.
+A fixed, translated list with icons (food, transport, accommodation, alcohol, fuel, other…). Optional; "other" by default or a suggestion based on the title. Custom categories per group — v2.
 
-### Waluty
+### Currencies
 
-- Grupa ma **walutę bazową**; wydatek może być w dowolnej walucie.
-- Kurs **zamrażany** w chwili dodania wydatku, z możliwością ręcznej edycji.
-- Jedno źródło kursów: ECB przez Frankfurter (self-hostowalny). Serwer pobiera kursy raz dziennie i cache'uje ([ADR-0014](./adr/0014-jedno-zrodlo-kursow-ecb.md)).
-- Offline: ostatni znany kurs z cache telefonu.
+- A group has a **base currency**; an expense can be in any currency.
+- The rate is **frozen** when the expense is added, and can be edited manually.
+- A single rate source: the ECB via Frankfurter (self-hostable). The server fetches rates once a day and caches them ([ADR-0014](./adr/0014-single-exchange-rate-source-ecb.md)).
+- Offline: the last known rate from the phone's cache.
 
-## Rozliczenie
+## Settle-up
 
-- **Saldo** każdego członka w walucie bazowej grupy.
-- **Upraszczanie długów** (minimalna liczba przelewów) domyślnie włączone, przełącznik w ustawieniach grupy.
-- **Spłata** zapisywana jako osobny typ operacji.
-- W profilu opcjonalnie **dane do spłaty** (numer konta, telefon BLIK) — widoczne tylko dla członków wspólnych grup, przycisk „kopiuj”. Bez integracji płatności.
+- Each member's **balance** in the group's base currency.
+- **Debt simplification** (minimum number of transfers) enabled by default, toggle in group settings.
+- A **settlement** is recorded as a separate operation type.
+- Optional **payout details** in the profile (bank account number, BLIK phone number) — visible only to members of shared groups, with a "copy" button. No payment integration.
 
-## Statystyki
+## Statistics
 
-- Tabela **dni × osoby**: ile kto wydał (zapłacił) i ile skonsumował (suma udziałów) każdego dnia.
-- Podział wg kategorii.
+- A **days × people** table: how much each person spent (paid) and consumed (sum of shares) on each day.
+- Breakdown by category.
 
-## Członkowie bez konta, zaproszenia, udostępnianie
+## Members without an account, invitations, sharing
 
-- **Link grupy** (sekretny token) wysyłany przez systemowy arkusz udostępniania (WhatsApp, Messenger, SMS…) + **kod QR** do pokazania na miejscu. Żadnej wysyłki maili/SMS z serwera w MVP ([ADR-0009](./adr/0009-udostepnianie-przez-link.md)).
-- Link to universal link / app link:
-  - aplikacja zainstalowana → ekran dołączenia: „Jesteś jednym z nich?” (lista członków bez konta) albo „Dołącz jako nowa osoba”;
-  - brak aplikacji → **podgląd www** + przycisk „pobierz aplikację”.
-- **Przejęcie** członka bez konta: przypisuje całą historię do konta. Pozostali członkowie dostają powiadomienie („Tomek przejął profil Tomek”), każdy może cofnąć.
-- Opcjonalnie **osobisty link przejęcia** dla konkretnego członka bez konta („Wyślij Tomkowi jego link”).
-- Link grupy można **unieważnić** i wygenerować nowy.
+- A **group link** (secret token) sent via the system share sheet (WhatsApp, Messenger, SMS…) + a **QR code** to show in person. No sending emails/SMS from the server in the MVP ([ADR-0009](./adr/0009-sharing-via-link.md)).
+- The link is a universal link / app link:
+  - app installed → join screen: "Jesteś jednym z nich?" ("Are you one of them?" — a list of members without an account) or "Dołącz jako nowa osoba" ("Join as a new person");
+  - no app → **web preview** + a "download the app" button.
+- **Claiming** a member without an account: assigns the whole history to the account. The other members get a notification ("Tomek przejął profil Tomek" — "Tomek claimed the Tomek profile"), and anyone can undo it.
+- Optionally a **personal claim link** for a specific member without an account ("Send Tomek his link").
+- The group link can be **revoked** and a new one generated.
 
-## Interfejs www
+## Web interface
 
-- Ta sama aplikacja Expo z targetem web (Expo Router), w trybie SPA (`web.output: "single"`) — Unistyles nie współpracuje z renderowaniem statycznym bez dodatkowej konfiguracji SSR, a SEO nie jest potrzebne.
-- Dostęp przez link grupy, bez logowania. Pokazuje: listę wydatków, salda, statystyki dzienne.
-- Opcja „to ja” — wybór członka, zapamiętany w przeglądarce, by widzieć „ile jestem winien”.
-- **Bez zdjęć i bez edycji.**
-- Podglądy linków (Open Graph) dla komunikatorów — prosty endpoint w API.
-- Tu (i w README) znajduje się link do GitHub Sponsors.
+- The same Expo app with a web target (Expo Router), in SPA mode (`web.output: "single"`) — Unistyles does not work with static rendering without additional SSR configuration, and SEO is not needed.
+- Access via the group link, without logging in. Shows: list of expenses, balances, daily stats.
+- A "this is me" option — choosing a member, remembered in the browser, to see "how much I owe".
+- **No photos and no editing.**
+- Link previews (Open Graph) for messengers — a simple API endpoint.
+- This is where (along with the README) the GitHub Sponsors link lives.
 
-## Zdjęcia
+## Photos
 
-- Tylko: **zdjęcie paragonu** przy wydatku i **avatar** użytkownika. Grupa ma emoji + kolor zamiast okładki. Żadnej galerii wyjazdu.
-- Storage: **Hetzner Object Storage** (S3-kompatybilny), prywatny bucket ([ADR-0006](./adr/0006-prywatne-zdjecia-na-hetzner-object-storage.md)).
-- Upload bezpośrednio z telefonu przez presigned URL; API tylko wydaje URL-e.
-- Na telefonie: zmniejszenie (np. 1600 px), kompresja, usunięcie EXIF (w tym GPS).
-- Dostęp tylko dla członków grupy przez krótkożyjące podpisane URL-e. Niezalogowani w www nie widzą zdjęć.
-- Limity: rozmiar pliku, liczba zdjęć na wydatek, dzienny limit na konto.
-- Przycisk „Zgłoś” na zdjęciu, panel admina do przeglądu zgłoszeń, blokada konta.
-- Retencja: zdjęcia paragonów usuwane np. rok po archiwizacji grupy.
-- Skanowanie CSAM: **brak w MVP**; wniosek o Microsoft PhotoDNA przy publicznym wejściu do sklepów.
+- Only: a **receipt photo** on an expense and a user **avatar**. A group has an emoji + color instead of a cover. No trip gallery.
+- Storage: **Hetzner Object Storage** (S3-compatible), private bucket ([ADR-0006](./adr/0006-private-photos-on-hetzner-object-storage.md)).
+- Upload directly from the phone via a presigned URL; the API only issues the URLs.
+- On the phone: downscaling (e.g. 1600 px), compression, EXIF stripping (including GPS).
+- Access only for group members via short-lived signed URLs. Logged-out web visitors do not see photos.
+- Limits: file size, number of photos per expense, daily limit per account.
+- A "Report" button on a photo, an admin panel for reviewing reports, account blocking.
+- Retention: receipt photos deleted e.g. one year after the group is archived.
+- CSAM scanning: **none in the MVP**; apply for Microsoft PhotoDNA at the public store launch.
 
-## Cykl życia grupy i konta
+## Group and account lifecycle
 
-- Nie można wyjść z grupy z niezerowym saldem (ostrzeżenie + blokada).
-- Grupę można **zarchiwizować** (tylko do odczytu). Trwale usuwa tylko założyciel.
-- **Usunięcie konta** (wymóg Apple): użytkownik staje się zwykłym członkiem bez konta o nazwie „Usunięty użytkownik” — dane osobowe znikają, wydatki i salda innych zostają. Nazwę może zmienić każdy członek grupy; profil może zostać przejęty ([ADR-0010](./adr/0010-usuniecie-konta-zamienia-w-czlonka-bez-konta.md)).
+- You cannot leave a group with a non-zero balance (warning + block).
+- A group can be **archived** (read-only). Only the owner can permanently delete it.
+- **Account deletion** (Apple requirement): the user becomes an ordinary member without an account named "Usunięty użytkownik" ("Deleted user") — personal data is removed, other people's expenses and balances remain. Any group member can rename it; the profile can be claimed ([ADR-0010](./adr/0010-account-deletion-turns-into-member-without-account.md)).
 
 ## Offline
 
-([ADR-0005](./adr/0005-offline-outbox-i-delta-sync.md))
+([ADR-0005](./adr/0005-offline-outbox-and-delta-sync.md))
 
-- **Dodawanie** wydatków offline: każdy członek (ID generowane na telefonie — UUID — więc dodawanie nie powoduje konfliktów).
-- **Edycja / usuwanie** offline: tylko wydatków dodanych przez siebie. Cudze — offline tylko do odczytu.
-- Każdy wydatek ma numer wersji; przy konflikcie serwer nie nadpisuje, użytkownik wybiera „zachowaj moją / ich wersję”.
-- Lokalny SQLite (expo-sqlite + Drizzle) jako trwały cache + kolejka operacji (outbox). Synchronizacja: wysłanie outboxu, potem pobranie zmian od `updatedAt` (delta sync per grupa).
+- **Adding** expenses offline: every member (IDs generated on the phone — UUID — so adding causes no conflicts).
+- **Editing / deleting** offline: only expenses you added yourself. Others' expenses are read-only offline.
+- Every expense has a version number; on conflict the server does not overwrite, the user chooses "keep my / their version".
+- Local SQLite (expo-sqlite + Drizzle) as a persistent cache + operation queue (outbox). Sync: send the outbox, then pull changes since `updatedAt` (delta sync per group).
 
-## Powiadomienia i odświeżanie
+## Notifications and refreshing
 
-- Push przez Expo Push (APNs + FCM): nowy wydatek z moim udziałem, edycja/usunięcie takiego wydatku, spłata na moją rzecz, ręczne „szturchnięcie” o saldo.
-- Grupowanie powiadomień („Kasia dodała 3 wydatki”).
-- Wyłączanie globalnie i per grupa.
-- Bez realtime (WebSocket/SSE) w MVP: odświeżanie przy wejściu na ekran, pull-to-refresh, ciche pushe wyzwalające synchronizację.
+- Push via Expo Push (APNs + FCM): a new expense I take part in, editing/deleting such an expense, a settlement in my favor, a manual "nudge" about a balance.
+- Notification grouping ("Kasia added 3 expenses").
+- Can be disabled globally and per group.
+- No realtime (WebSocket/SSE) in the MVP: refresh on entering a screen, pull-to-refresh, silent pushes triggering sync.
 
-## Wygląd
+## Look and feel
 
-- Dwa motywy: **Fresh** (młodzieżowy: żywe kolory, większe zaokrąglenia, emoji, mikroanimacje) i **Classic** (stonowany), każdy jasny i ciemny — 4 warianty.
-- Przełącznik per użytkownik. Ten sam układ ekranów w obu motywach — różnią się tylko tokenami.
-- Komponenty własne, minimalistyczne. Style RTL-safe (`start`/`end`, nie `left`/`right`) od pierwszego dnia.
+- Two themes: **Fresh** (youthful: vivid colors, larger corner radii, emoji, micro-animations) and **Classic** (subdued), each light and dark — 4 variants.
+- Toggle per user. The same screen layout in both themes — they differ only in tokens.
+- Custom, minimalist components. RTL-safe styles (`start`/`end`, not `left`/`right`) from day one.
 
-## Język
+## Language
 
-- MVP: **PL i EN**. Docelowo co najmniej 15 najpopularniejszych języków (bez rosyjskiego).
-- ICU MessageFormat (formy liczby mnogiej), `Intl` do kwot i dat, i18next lub Lingui.
-- RTL testowany przy dodaniu pierwszego języka RTL.
-- Nazwy w kodzie po angielsku; dokumentacja po polsku.
+- MVP: **PL and EN**. Eventually at least the 15 most popular languages (excluding Russian).
+- ICU MessageFormat (plural forms), `Intl` for amounts and dates, i18next or Lingui.
+- RTL tested when the first RTL language is added.
+- Code, names and documentation in English; UI copy is Polish-first with i18n.
 
-## Nawigacja i ekrany
+## Navigation and screens
 
-Expo Router, dolne zakładki:
+Expo Router, bottom tabs:
 
-1. **Grupy** — lista grup z saldem; FAB „+” → nowa grupa lub szybki rachunek.
-2. **Aktywność** — feed zmian ze wszystkich grup.
-3. **Profil** — motyw, język, dane do spłaty, powiadomienia, usunięcie konta.
+1. **Groups** — list of groups with balances; FAB "+" → new group or quick bill.
+2. **Activity** — feed of changes from all groups.
+3. **Profile** — theme, language, payout details, notifications, account deletion.
 
-Ekran grupy — zakładki:
+Group screen — tabs:
 
-- **Wydatki** — lista pogrupowana po dniach, suma dnia, kto płacił.
-- **Salda** — kto komu ile, przycisk „rozlicz”.
-- **Statystyki** — tabela dni × osoby, kategorie.
-- **Ludzie** — członkowie, członkowie bez konta, obecność per dzień, zaproszenie/QR.
+- **Expenses** — list grouped by day, daily total, who paid.
+- **Balances** — who owes whom how much, a "settle up" button.
+- **Stats** — days × people table, categories.
+- **People** — members, members without an account, attendance per day, invitation/QR.
 
-**Dodanie wydatku** — kluczowy flow, cel: **3 tapnięcia + kwota**. Duża kwota na górze, płatnik (domyślnie ja), data (domyślnie dziś), podział domyślnie „równo między obecnych tego dnia”. Tryby zaawansowane (dokładne kwoty, udziały, pozycje osobiste, kilku płatników) schowane pod rozwinięciem.
+**Adding an expense** — the key flow, goal: **3 taps + amount**. Large amount at the top, payer (me by default), date (today by default), split by default "equally among those present that day". Advanced modes (exact amounts, shares, personal items, multiple payers) hidden behind an expander.
 
-## Architektura techniczna
+## Technical architecture
 
-([ADR-0001](./adr/0001-typescript-w-calym-stacku.md), [ADR-0012](./adr/0012-self-hosting-na-coolify.md), [ADR-0013](./adr/0013-hono-rest-zamiast-trpc.md))
+([ADR-0001](./adr/0001-typescript-across-the-stack.md), [ADR-0012](./adr/0012-self-hosting-on-coolify.md), [ADR-0013](./adr/0013-hono-rest-instead-of-trpc.md))
 
-| Obszar | Wybór |
+| Area | Choice |
 | --- | --- |
 | Monorepo | pnpm + Turborepo |
-| `apps/mobile` | Expo (React Native) + Expo Router, target iOS/Android/web |
-| `apps/api` | Hono + Zod (`@hono/zod-validator`), REST, klient `hc` współdzielony |
-| `packages/shared` | typy, schematy Zod, logika podziału i rozliczeń (czyste funkcje + testy) |
-| `packages/ui` | design tokeny, 4 motywy |
-| Baza | PostgreSQL + Drizzle |
-| Auth | Better Auth: Sign in with Apple, Google, e-mail OTP (bez haseł); token w SecureStore |
-| Maile OTP | transakcyjny SMTP z darmowym planem (Resend / Brevo / SES) |
-| Dane w apce | TanStack Query + expo-sqlite/Drizzle (cache + outbox) |
-| Stylowanie | Unistyles 3 |
-| Storage plików | Hetzner Object Storage |
+| `apps/mobile` | Expo (React Native) + Expo Router, iOS/Android/web target |
+| `apps/api` | Hono + Zod (`@hono/zod-validator`), REST, shared `hc` client |
+| `packages/shared` | types, Zod schemas, split and settlement logic (pure functions + tests) |
+| `packages/ui` | design tokens, 4 themes |
+| Database | PostgreSQL + Drizzle |
+| Auth | Better Auth: Sign in with Apple, Google, email OTP (no passwords); token in SecureStore |
+| OTP emails | transactional SMTP with a free plan (Resend / Brevo / SES) |
+| App data | TanStack Query + expo-sqlite/Drizzle (cache + outbox) |
+| Styling | Unistyles 3 |
+| File storage | Hetzner Object Storage |
 | Push | Expo Push |
-| Błędy | Sentry (plan darmowy), bez danych osobowych |
-| Analityka | brak w MVP |
+| Errors | Sentry (free plan), no personal data |
+| Analytics | none in the MVP |
 
-### Infrastruktura
+### Infrastructure
 
-- Hetzner VPS (podstawowy, np. CX22) z Coolify, lokalizacja UE.
-- Staging i production jako osobne aplikacje w Coolify; **wspólna instancja PostgreSQL, osobne bazy**; osobne buckety.
-- Backup bazy co najmniej codziennie do Object Storage w **innej lokalizacji** Hetzner niż VPS; odtworzenie przetestowane.
-- Coolify buduje obraz API z Dockerfile: `main` → staging, tag → production. Jeśli na VPS zabraknie RAM — build obrazu w GitHub Actions i push do GHCR.
+- Hetzner VPS (basic, e.g. CX22) with Coolify, EU location.
+- Staging and production as separate apps in Coolify; **a shared PostgreSQL instance, separate databases**; separate buckets.
+- Database backup at least daily to Object Storage in a **different Hetzner location** than the VPS; restore tested.
+- Coolify builds the API image from the Dockerfile: `main` → staging, tag → production. If the VPS runs out of RAM — build the image in GitHub Actions and push to GHCR.
 
-### Repozytorium i CI/CD
+### Repository and CI/CD
 
-([ADR-0012](./adr/0012-self-hosting-na-coolify.md), [ADR-0015](./adr/0015-buildy-mobilne-lokalnie-ci-tylko-linux.md))
+([ADR-0012](./adr/0012-self-hosting-on-coolify.md), [ADR-0015](./adr/0015-local-mobile-builds-linux-only-ci.md))
 
-- **Publiczne** repo na GitHub, licencja AGPL. Sekrety tylko w Coolify i GitHub Secrets.
-- GitHub Actions: tylko Linux — typecheck, lint, testy; Turborepo uruchamia tylko zmienione pakiety; filtry ścieżek; `concurrency: cancel-in-progress`.
-- **Zero buildów mobilnych w CI.** Buildy lokalnie na MacBooku (`expo run:ios --configuration Release` / `eas build --local`), dystrybucja przez fastlane lub Xcode → TestFlight / Google Play.
-- OTA: expo-updates + darmowy EAS Update (publish z laptopa); self-hosted serwer aktualizacji dopiero przy problemach z limitami.
+- **Public** repo on GitHub, AGPL license. Secrets only in Coolify and GitHub Secrets.
+- GitHub Actions: Linux only — typecheck, lint, tests; Turborepo runs only changed packages; path filters; `concurrency: cancel-in-progress`.
+- **Zero mobile builds in CI.** Builds locally on the MacBook (`expo run:ios --configuration Release` / `eas build --local`), distribution via fastlane or Xcode → TestFlight / Google Play.
+- OTA: expo-updates + free EAS Update (publish from the laptop); a self-hosted update server only if limits become a problem.
 
-## Zakres
+## Scope
 
 ### MVP
 
-- Auth (Apple, Google, e-mail OTP)
-- Grupy z opcjonalnymi datami, obecność per dzień, szybki rachunek
-- Członkowie bez konta, przejęcie, link grupy + QR
-- Wydatki: równo, dokładne kwoty, udziały, wspólne + osobiste, wielu płatników; wpływy
-- Multi-waluta z zamrożonym kursem
-- Salda, upraszczanie długów, spłaty, dane do spłaty
-- Statystyki dni × osoby, kategorie
-- Zdjęcie paragonu, avatar
-- www tylko do podglądu
-- Motywy Fresh / Classic × jasny / ciemny
+- Auth (Apple, Google, email OTP)
+- Groups with optional dates, attendance per day, quick bill
+- Members without an account, claiming, group link + QR
+- Expenses: equal, exact amounts, shares, common + personal, multiple payers; incomes
+- Multi-currency with a frozen rate
+- Balances, debt simplification, settlements, payout details
+- Days × people stats, categories
+- Receipt photo, avatar
+- View-only web
+- Fresh / Classic × light / dark themes
 - PL + EN
 - Offline (outbox)
 - Push
-- Historia zmian z cofaniem
-- Archiwizacja grupy, usuwanie konta
-- Zgłaszanie treści, panel admina, regulamin, polityka prywatności
+- Change history with undo
+- Group archiving, account deletion
+- Content reporting, admin panel, terms of service, privacy policy
 
 ### v2
 
-- OCR paragonu (ewentualnie jako osobny mikroserwis w Pythonie)
-- Własne kategorie per grupa
-- Eksport CSV / PDF
-- Kolejne języki (do 15+), RTL
-- Powtarzalne wydatki (czynsz)
-- AdMob / funkcje płatne za feature flagami
+- Receipt OCR (possibly as a separate Python microservice)
+- Custom categories per group
+- CSV / PDF export
+- More languages (up to 15+), RTL
+- Recurring expenses (rent)
+- AdMob / paid features behind feature flags
 - PhotoDNA
-- Realtime (jeśli okaże się potrzebny)
-- Edycja z www dla osób bez konta (jeśli okaże się potrzebna)
+- Realtime (if it turns out to be needed)
+- Editing from the web for people without an account (if it turns out to be needed)
 
-### Poza zakresem
+### Out of scope
 
-- Galeria zdjęć wyjazdu, okładki grup ze zdjęć
-- Integracje płatności / bankowe
-- Role i uprawnienia w grupie
-- Wysyłka maili/SMS z zaproszeniami z serwera
-- Pełny offline-first z CRDT
+- Trip photo gallery, group covers from photos
+- Payment / banking integrations
+- Roles and permissions within a group
+- Sending invitation emails/SMS from the server
+- Full offline-first with CRDTs
 
-## Otwarte zadania
+## Open tasks
 
-- [ ] **Nazwa aplikacji i domena** — blokuje pierwszy build publiczny. Bundle ID nie zmienia się po publikacji, a domena jest wpisana w universal linki (zmiana psuje wysłane zaproszenia). Planowany układ: `app.<domena>` (www + linki), `api.<domena>` (API).
-- [ ] **Wniosek o PhotoDNA** — przy publicznym wejściu do sklepów.
-- [ ] Wybór i18next vs Lingui.
-- [ ] Wybór dostawcy SMTP dla maili OTP.
+- [ ] **App name and domain** — blocks the first public build. The bundle ID cannot change after publishing, and the domain is baked into universal links (changing it breaks already-sent invitations). Planned layout: `app.<domain>` (web + links), `api.<domain>` (API).
+- [ ] **PhotoDNA application** — at the public store launch.
+- [ ] Choose i18next vs Lingui.
+- [ ] Choose an SMTP provider for OTP emails.

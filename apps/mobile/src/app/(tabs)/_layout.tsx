@@ -12,7 +12,7 @@ export default function TabsLayout() {
         headerStyle: { backgroundColor: theme.colors.background },
         headerTintColor: theme.colors.text,
       }}>
-      {/* TODO: i18n — teksty tymczasowo po polsku */}
+      {/* TODO: i18n — Polish UI copy hardcoded for now */}
       <Tabs.Screen name="index" options={{ title: 'Grupy' }} />
       <Tabs.Screen name="activity" options={{ title: 'Aktywność' }} />
       <Tabs.Screen name="profile" options={{ title: 'Profil' }} />

@@ -1,3 +1,3 @@
-// Konfiguracja Unistyles musi się wykonać przed załadowaniem jakiegokolwiek ekranu.
+// Unistyles must be configured before any screen is loaded.
 import './src/styles/unistyles';
 import 'expo-router/entry';

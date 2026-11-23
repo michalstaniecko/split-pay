@@ -3,10 +3,10 @@ import type { Entry, LocalDate } from './model';
 import { mergeAllocations, resolveSplit } from './split';
 
 /**
- * Skutek wpisu w walucie bazowej grupy:
- * - `paid`: ile członek wyłożył (dla wpływu — ujemnie: ile otrzymał),
- * - `consumed`: ile członek skonsumował (dla wpływu — ujemnie: ile mu się należy).
- * Spłaty nie są ani wydawaniem, ani konsumpcją — patrz `entryBalanceDelta`.
+ * Effect of an entry in the group's base currency:
+ * - `paid`: how much the member paid out (for income — negative: how much they received),
+ * - `consumed`: how much the member consumed (for income — negative: how much they are owed).
+ * Settlements are neither spending nor consumption — see `entryBalanceDelta`.
  */
 export interface EntryEffect {
   paid: Allocation[];
@@ -25,7 +25,7 @@ export function entryEffect(entry: Entry, baseCurrency: CurrencyCode): EntryEffe
   return entry.kind === 'expense' ? { paid, consumed } : { paid: negate(paid), consumed: negate(consumed) };
 }
 
-/** Zmiana sald wywołana wpisem (dodatnie saldo = inni są winni temu członkowi). */
+/** Balance change caused by an entry (positive balance = others owe this member). */
 export function entryBalanceDelta(entry: Entry, baseCurrency: CurrencyCode): Allocation[] {
   if (entry.kind === 'settlement') {
     const [converted] = convertAllocations(
@@ -46,7 +46,7 @@ export function entryBalanceDelta(entry: Entry, baseCurrency: CurrencyCode): All
 
 const isActive = (entry: Entry) => entry.deletedAt === null;
 
-/** Salda członków w walucie bazowej. Suma sald zawsze wynosi 0. */
+/** Members' balances in the base currency. Balances always sum to 0. */
 export function computeBalances(entries: readonly Entry[], baseCurrency: CurrencyCode): Map<string, number> {
   const balances = new Map<string, number>();
   for (const entry of entries.filter(isActive)) {
@@ -58,13 +58,13 @@ export function computeBalances(entries: readonly Entry[], baseCurrency: Currenc
 }
 
 export interface MemberDayStats {
-  /** Ile członek wyłożył tego dnia (wydatki minus otrzymane wpływy). */
+  /** How much the member paid out that day (expenses minus income received). */
   paid: number;
-  /** Ile członek skonsumował tego dnia (udziały w wydatkach minus udziały we wpływach). */
+  /** How much the member consumed that day (expense shares minus income shares). */
   consumed: number;
 }
 
-/** Statystyki „dni × osoby” w walucie bazowej. Spłaty są pomijane. */
+/** "Days × people" statistics in the base currency. Settlements are skipped. */
 export function dailyStats(
   entries: readonly Entry[],
   baseCurrency: CurrencyCode,
@@ -96,8 +96,8 @@ const byAmountDescThenId = (a: Allocation, b: Allocation) =>
   b.amount - a.amount || (a.memberId < b.memberId ? -1 : a.memberId > b.memberId ? 1 : 0);
 
 /**
- * Rozliczenie uproszczone: minimalizuje liczbę przelewów, zachłannie łącząc
- * największego dłużnika z największym wierzycielem. Deterministyczne.
+ * Simplified settle-up: minimizes the number of transfers by greedily matching
+ * the largest debtor with the largest creditor. Deterministic.
  */
 export function simplifiedTransfers(balances: ReadonlyMap<string, number>): Transfer[] {
   const creditors: Allocation[] = [];
@@ -123,11 +123,11 @@ export function simplifiedTransfers(balances: ReadonlyMap<string, number>): Tran
 }
 
 /**
- * Rozliczenie bez upraszczania: każdy oddaje pieniądze tym, którzy faktycznie
- * za niego zapłacili (długi netto per para członków).
+ * Settle-up without simplification: everyone pays back those who actually
+ * paid for them (net debts per pair of members).
  */
 export function pairwiseTransfers(entries: readonly Entry[], baseCurrency: CurrencyCode): Transfer[] {
-  // debts[a][b] = ile a jest winien b
+  // debts[a][b] = how much a owes b
   const debts = new Map<string, Map<string, number>>();
   const addDebt = (debtor: string, creditor: string, amount: number) => {
     if (debtor === creditor || amount === 0) return;
@@ -138,7 +138,7 @@ export function pairwiseTransfers(entries: readonly Entry[], baseCurrency: Curre
 
   for (const entry of entries.filter(isActive)) {
     if (entry.kind === 'settlement') {
-      // Spłata zmniejsza dług `from` wobec `to` — równoważnie: `to` jest winien `from`.
+      // A settlement reduces what `from` owes `to` — equivalently: `to` owes `from`.
       const [delta] = entryBalanceDelta(entry, baseCurrency).filter((d) => d.memberId === entry.from);
       addDebt(entry.to, entry.from, delta!.amount);
       continue;
@@ -148,7 +148,7 @@ export function pairwiseTransfers(entries: readonly Entry[], baseCurrency: Curre
     const holderWeights = paid.map((p) => ({ memberId: p.memberId, weight: Math.abs(p.amount) }));
     for (const c of consumed) {
       for (const part of allocate(Math.abs(c.amount), holderWeights)) {
-        // wydatek: konsument → płatnik; wpływ: odbiorca → uczestnik
+        // expense: consumer → payer; income: recipient → participant
         if (sign > 0) addDebt(c.memberId, part.memberId, part.amount);
         else addDebt(part.memberId, c.memberId, part.amount);
       }

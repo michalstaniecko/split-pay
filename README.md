@@ -1,38 +1,38 @@
 # split-pay
 
-> Nazwa robocza.
+> Working name.
 
-Aplikacja mobilna (iOS + Android) i podgląd www do dzielenia wydatków między znajomymi — od jednego rachunku po kilkudniowy wyjazd.
+A mobile app (iOS + Android) and web preview for splitting expenses between friends — from a single bill to a multi-day trip.
 
-## Struktura
+## Structure
 
 ```
 apps/mobile      Expo (React Native) — iOS, Android, web
 apps/api         Hono API
-packages/shared  typy, schematy Zod, logika podziału i rozliczeń
-packages/ui      design tokeny i motywy
-docs/            specyfikacja i ADR-y
+packages/shared  types, Zod schemas, split and settlement logic
+packages/ui      design tokens and themes
+docs/            specification and ADRs
 ```
 
-## Start
+## Getting started
 
-Wymagania: Node 26 (`.nvmrc`, `nvm use`), pnpm 12.
+Requirements: Node 26 (`.nvmrc`, `nvm use`), pnpm 12.
 
 ```sh
 pnpm install
-pnpm api          # API na http://localhost:3000
-pnpm mobile       # Metro; aplikacja wymaga development builda (Unistyles = moduł natywny)
-pnpm --filter @split-pay/mobile ios   # lokalny build iOS
+pnpm api          # API at http://localhost:3000
+pnpm mobile       # Metro; the app requires a development build (Unistyles = native module)
+pnpm --filter @split-pay/mobile ios   # local iOS build
 pnpm typecheck
 pnpm test
 ```
 
-Expo Go nie wystarczy — aplikacja używa modułów natywnych, więc uruchamiaj ją przez development build (`expo run:ios|android`).
+Expo Go is not enough — the app uses native modules, so run it via a development build (`expo run:ios|android`).
 
-## Wsparcie
+## Support
 
-Projekt jest darmowy i open source. Jeśli chcesz go wesprzeć — GitHub Sponsors (link wkrótce).
+The project is free and open source. If you'd like to support it — GitHub Sponsors (link coming soon).
 
-## Licencja
+## License
 
 [AGPL-3.0](./LICENSE)

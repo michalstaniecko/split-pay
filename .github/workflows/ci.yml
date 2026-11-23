@@ -1,6 +1,6 @@
 name: CI
 
-# Zgodnie z ADR-0015: tylko Linux, bez buildów mobilnych.
+# Per ADR-0015: Linux only, no mobile builds.
 on:
   push:
     branches: [main]

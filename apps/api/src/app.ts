@@ -7,8 +7,8 @@ import { z } from 'zod';
 export const app = new Hono()
   .use(logger())
   .get('/health', (c) => c.json({ status: 'ok' as const }))
-  // Tymczasowy endpoint demonstracyjny — pokazuje, że logika z packages/shared
-  // działa na serwerze. Do usunięcia, gdy powstaną prawdziwe zasoby.
+  // Temporary demo endpoint — shows that packages/shared logic runs on the
+  // server. Remove once real resources exist.
   .post(
     '/dev/split-evenly',
     zValidator('json', z.object({ total: z.number().int(), memberIds: z.array(z.string()).min(1) })),

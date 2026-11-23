@@ -2,7 +2,7 @@ import type { Entry, Expense, Group, Income, Member, Settlement } from './model'
 
 export const uuid = (n: number) => `00000000-0000-4000-8000-${n.toString().padStart(12, '0')}`;
 
-// Kolejność ID = kolejność alfabetyczna imion, żeby testy były czytelne.
+// ID order = alphabetical order of names, to keep tests readable.
 export const ANIA = uuid(1);
 export const BARTEK = uuid(2);
 export const KASIA = uuid(3);
@@ -12,7 +12,7 @@ export const USER = uuid(200);
 
 export const group: Group = {
   id: GROUP,
-  name: 'Mazury 2026',
+  name: 'Lake trip 2026',
   emoji: '⛵',
   color: '#7C3AED',
   baseCurrency: 'PLN',
@@ -54,7 +54,7 @@ export const expense = (fields: Partial<Expense> & Pick<Expense, 'amount' | 'pay
   date: '2026-07-10',
   currency: 'PLN',
   rateToBase: '1',
-  title: 'Zakupy',
+  title: 'Groceries',
   category: 'groceries',
   receiptPhotoId: null,
   ...fields,
@@ -66,7 +66,7 @@ export const income = (fields: Partial<Income> & Pick<Income, 'amount' | 'recipi
   date: '2026-07-14',
   currency: 'PLN',
   rateToBase: '1',
-  title: 'Zwrot kaucji',
+  title: 'Deposit refund',
   category: 'accommodation',
   receiptPhotoId: null,
   ...fields,

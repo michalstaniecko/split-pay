@@ -8,7 +8,7 @@ describe('api', () => {
     expect(await res.json()).toEqual({ status: 'ok' });
   });
 
-  it('POST /dev/split-evenly waliduje wejście', async () => {
+  it('POST /dev/split-evenly validates input', async () => {
     const res = await app.request('/dev/split-evenly', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },

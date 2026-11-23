@@ -19,7 +19,7 @@ If any of these files don't exist, **proceed silently**. Don't flag their absenc
 ├── docs/
 │   ├── SPEC.md
 │   └── adr/
-│       ├── 0001-typescript-w-calym-stacku.md
+│       ├── 0001-typescript-across-the-stack.md
 │       └── ...
 ├── apps/
 │   ├── api/

@@ -1,7 +1,7 @@
 import { splitEvenly } from '@split-pay/shared';
 import { PlaceholderScreen } from '@/components/placeholder-screen';
 
-// Tymczasowo: dowód, że logika z packages/shared działa w aplikacji.
+// Temporary: proof that packages/shared logic runs in the app.
 const demo = splitEvenly(10_000, ['a', 'b', 'c'])
   .map((a) => (a.amount / 100).toFixed(2))
   .join(' + ');

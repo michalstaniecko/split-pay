@@ -29,7 +29,7 @@ Run lint and typecheck before declaring any task done.
 
 ## Building
 
-Per `docs/adr/0015-buildy-mobilne-lokalnie-ci-tylko-linux.md`, native builds run **locally** on the developer's Mac (`npx expo run:ios|android`, or `npx eas-cli@latest build --local`), never in EAS cloud builds or GitHub Actions. EAS Update (OTA) is fine. Use `pnpm`, not npm/bun — this app lives in a pnpm monorepo (`node-linker=hoisted`).
+Per `docs/adr/0015-local-mobile-builds-linux-only-ci.md`, native builds run **locally** on the developer's Mac (`npx expo run:ios|android`, or `npx eas-cli@latest build --local`), never in EAS cloud builds or GitHub Actions. EAS Update (OTA) is fine. Use `pnpm`, not npm/bun — this app lives in a pnpm monorepo (`nodeLinker: hoisted` in `pnpm-workspace.yaml`).
 
 ## Rules
 
