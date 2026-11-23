@@ -10,6 +10,7 @@ export * from './group-settings';
 export * from './ledger';
 export * from './model';
 export * from './money';
+export * from './notifications';
 export * from './payout-details';
 export * from './rates';
 export * from './settle-up';
