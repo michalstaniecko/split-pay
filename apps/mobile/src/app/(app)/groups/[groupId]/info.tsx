@@ -10,6 +10,7 @@ import { GroupNotFound } from '@/components/group-not-found';
 import { PersonalClaimLinkButton } from '@/features/claims/personal-claim-link-button';
 import { GroupLinkSection } from '@/features/group-link/group-link-section';
 import { AttendanceGridView } from '@/features/groups/attendance-grid-view';
+import { GroupLifecycleSection } from '@/features/groups/group-lifecycle-section';
 import { GroupSettingsSection } from '@/features/groups/group-settings-section';
 import { type GroupDetail, groupQuery } from '@/features/groups/groups-query';
 import { type MemberRow, memberRows } from '@/features/groups/member-form';
@@ -18,7 +19,7 @@ import { authClient } from '@/lib/auth-client';
 
 /**
  * Group info (GLOSSARY): members, group link, Stats, change history,
- * settings, leave/archive/delete. Skeleton — the sections fill in with later slices.
+ * settings, then leave / archive / delete at the bottom.
  */
 export default function GroupInfoScreen() {
   const { theme } = useUnistyles();
@@ -34,7 +35,9 @@ function GroupInfo({ group }: { group: GroupDetail }) {
   const { t } = useLingui();
   const format = useFormatters();
   const { data: session } = authClient.useSession();
-  const rows = memberRows(group, session?.user.id);
+  const archived = group.archivedAt !== null;
+  // Archived group: read-only, so no adding or renaming members.
+  const rows = memberRows(group, session?.user.id).map((row) => (archived ? { ...row, canRename: false } : row));
   const openMemberSheet = (memberId?: string) =>
     router.push({
       pathname: '/groups/[groupId]/member',
@@ -61,12 +64,14 @@ function GroupInfo({ group }: { group: GroupDetail }) {
             {row.withoutAccount ? <PersonalClaimLinkButton groupId={group.id} groupName={group.name} member={row} /> : null}
           </View>
         ))}
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => openMemberSheet()}
-          style={({ pressed }) => [styles.addRow, pressed && styles.pressed]}>
-          <Text style={styles.addLabel}>{t`+ Dodaj osobę bez konta`}</Text>
-        </Pressable>
+        {archived ? null : (
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => openMemberSheet()}
+            style={({ pressed }) => [styles.addRow, pressed && styles.pressed]}>
+            <Text style={styles.addLabel}>{t`+ Dodaj osobę bez konta`}</Text>
+          </Pressable>
+        )}
         <AttendanceGridView group={group} />
       </Section>
       <Section title={t`Link grupy`}>
@@ -84,7 +89,7 @@ function GroupInfo({ group }: { group: GroupDetail }) {
       <Section title={t`Ustawienia`}>
         <GroupSettingsSection group={group} />
       </Section>
-      <Section title={t`Opuść, archiwizuj lub usuń grupę`} subtitle={soon} />
+      <GroupLifecycleSection group={group} />
     </ScrollView>
   );
 }

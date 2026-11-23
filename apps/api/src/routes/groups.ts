@@ -10,6 +10,7 @@ import type { AuthEnv } from '../middleware/require-user';
 import { balancesRoutes, groupSettingsRoutes } from './balances';
 import { entriesRoutes, latestEntries } from './entries';
 import { claimLinkRoutes, claimRoutes } from './claims';
+import { groupLifecycleRoutes, rejectWritesToArchived } from './group-lifecycle';
 import { groupLinkRoutes } from './group-links';
 import { groupPushRoutes } from './notifications';
 import { memberPayoutDetailsRoutes } from './payout-details';
@@ -66,6 +67,10 @@ export const groupsRoutes = ({ db, requireUser }: { db: Db; requireUser: Middlew
   return (
     new Hono<AuthEnv>()
       .use(requireUser)
+      /** Archived groups are read-only: every write below answers 409 (`routes/group-lifecycle.ts`). */
+      .use('/:groupId/*', rejectWritesToArchived({ db }))
+      /** Archive / unarchive, leave, permanent deletion: `routes/group-lifecycle.ts`. */
+      .route('/:groupId', groupLifecycleRoutes({ db }))
       /** The group link (share, QR, revoke): `routes/group-links.ts`. */
       .route('/:groupId/link', groupLinkRoutes({ db }))
       /** Claims (system messages, undo) and personal claim links: `routes/claims.ts`. */

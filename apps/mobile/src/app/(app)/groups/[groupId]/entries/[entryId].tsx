@@ -8,7 +8,7 @@ import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { Button } from '@/components/button';
 import { GroupNotFound } from '@/components/group-not-found';
 import { CATEGORY_ICONS, entriesQuery } from '@/features/entries/entries-query';
-import { isEditableInForm } from '@/features/entries/entry-edit';
+import { editScreen } from '@/features/entries/entry-edit';
 import { useEntryLabels } from '@/features/entries/use-entry-labels';
 import { type GroupDetail, groupQuery } from '@/features/groups/groups-query';
 import { formatRate } from '@/features/rates/rate-format';
@@ -19,7 +19,8 @@ import { closeSheet } from '@/lib/close-sheet';
 /**
  * Entry detail — a read-only sheet opened from a bubble. A foreign-currency
  * entry shows its amount, the base amount and the frozen rate. "Edytuj" (#11)
- * replaces the sheet with the full form in edit mode.
+ * replaces the sheet with the full form in edit mode (the settle sheet for a
+ * settlement).
  * Later slices add: the receipt photo (#26) and the history link next to
  * "edytowano" (#20).
  */
@@ -93,12 +94,10 @@ function EntryDetail({ group, entry }: { group: GroupDetail; entry: Entry }) {
       )}
       <Text style={styles.meta}>{t`Dodał(a) ${addedBy}, ${format.dateTime(entry.createdAt)}`}</Text>
       {isEdited(entry) ? <Text style={styles.meta}>{t`edytowano ${format.dateTime(entry.updatedAt)}`}</Text> : null}
-      {group.archivedAt === null && isEditableInForm(entry) ? (
+      {group.archivedAt === null ? (
         <Button
           label={t`Edytuj`}
-          onPress={() =>
-            router.replace({ pathname: '/groups/[groupId]/expense-form', params: { groupId: group.id, entryId: entry.id } })
-          }
+          onPress={() => router.replace({ pathname: editScreen(entry), params: { groupId: group.id, entryId: entry.id } })}
         />
       ) : null}
       <Button variant="secondary" label={t`Zamknij`} onPress={closeSheet} />

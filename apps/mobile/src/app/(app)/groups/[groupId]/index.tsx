@@ -6,6 +6,7 @@ import { router, Stack, useLocalSearchParams } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AccessibilityInfo, ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Pressable, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { GroupAvatar } from '@/components/group-avatar';
 import { GroupNotFound } from '@/components/group-not-found';
@@ -23,7 +24,13 @@ import { entriesQuery, useDeleteEntry, useRestoreEntry } from '@/features/entrie
 import { EntryActionsMenu } from '@/features/entries/entry-actions-menu';
 import { DaySeparator, EntryBubble } from '@/features/entries/entry-bubble';
 import { useEntryConflicts } from '@/features/entries/entry-conflicts';
-import { amountForClipboard, type EntryAction, entryActions, versionConflictEntry } from '@/features/entries/entry-edit';
+import {
+  amountForClipboard,
+  type EntryAction,
+  editScreen,
+  entryActions,
+  versionConflictEntry,
+} from '@/features/entries/entry-edit';
 import { UndoSnackbar } from '@/features/entries/undo-snackbar';
 import { type GroupDetail, groupQuery } from '@/features/groups/groups-query';
 import { useFocusedEntry } from '@/features/notifications/use-focused-entry';
@@ -40,7 +47,7 @@ const HIGHLIGHT_MS = 2000;
  * payers by entry date, sticky day separators with the daily total, the
  * composer at the bottom, the balance banner on top. The header (emoji +
  * name) and `⋯` open Group info.
- * Long-press on a bubble: Edytuj, Usuń (with a "Cofnij" snackbar), Historia,
+ * Long-press on a bubble or a settlement: Edytuj, Usuń (with a "Cofnij" snackbar), Historia,
  * Kopiuj kwotę (#11).
  */
 export default function ConversationScreen() {
@@ -54,6 +61,7 @@ export default function ConversationScreen() {
   useRefreshOnFocus(group.refetch);
   useRefreshOnFocus(entries.refetch);
   useRefreshOnFocus(claims.refetch);
+  const insets = useSafeAreaInsets();
   const session = authClient.useSession();
   const me = group.data ? findMyMemberId(group.data.members, session.data?.user.id) : null;
 
@@ -124,7 +132,12 @@ export default function ConversationScreen() {
               myMemberId={me}
               onOpenForm={() => router.push({ pathname: '/groups/[groupId]/expense-form', params: { groupId } })}
             />
-          ) : null}
+          ) : (
+            // Archived group: read-only (SPEC "Conversation").
+            <View style={[styles.archivedBar, { paddingBottom: insets.bottom + theme.space(3) }]} accessibilityRole="text">
+              <Text style={styles.archivedText}>{t`Grupa zarchiwizowana`}</Text>
+            </View>
+          )}
         </KeyboardAvoidingView>
       )}
     </View>
@@ -196,6 +209,11 @@ function Conversation({
                 myMemberId={me}
                 highlighted={item.entry.id === highlightId}
                 onPress={() => openEntry(item.entry.id)}
+                onLongPress={() => actions.openMenu(item.entry)}
+                actions={entryActions(item.entry, group)}
+                onAction={(action) => actions.run(item.entry, action)}
+                conflict={conflicts.has(item.entry.id)}
+                onConflictPress={() => openConflict(item.entry.id)}
               />
             ) : (
               <EntryBubble
@@ -219,10 +237,13 @@ function Conversation({
 }
 
 /**
- * The bubbles' long-press menu and what its actions do: "Edytuj" opens the
- * full form for the entry, "Usuń" soft-deletes it and offers "Cofnij" in a
+ * The long-press menu of bubbles and settlement messages and what its actions
+ * do: "Edytuj" opens the full form for the entry (the settle sheet for a
+ * settlement), "Usuń" soft-deletes it and offers "Cofnij" in a
  * snackbar, "Kopiuj kwotę" copies the bare amount. `elements` (menu +
- * snackbar) go below the list. TODO(#20): "Historia" opens the entry's change history.
+ * snackbar) go below the list. "Historia" opens the entry detail until the
+ * change history exists (TODO(#20)). In an archived group only Historia and
+ * Kopiuj kwotę are offered (`entryActions`).
  */
 function useEntryActionHandler(group: GroupDetail) {
   const { t } = useLingui();
@@ -236,7 +257,7 @@ function useEntryActionHandler(group: GroupDetail) {
   const run = (entry: Entry, action: EntryAction) => {
     switch (action) {
       case 'edit':
-        router.push({ pathname: '/groups/[groupId]/expense-form', params: { groupId: group.id, entryId: entry.id } });
+        router.push({ pathname: editScreen(entry), params: { groupId: group.id, entryId: entry.id } });
         return;
       case 'delete':
         setUndo(null);
@@ -249,7 +270,9 @@ function useEntryActionHandler(group: GroupDetail) {
         });
         return;
       case 'history':
-        return; // TODO(#20)
+        // TODO(#20): the entry's change history; until then its detail.
+        router.push({ pathname: '/groups/[groupId]/entries/[entryId]', params: { groupId: group.id, entryId: entry.id } });
+        return;
       case 'copyAmount':
         void Clipboard.setStringAsync(amountForClipboard(entry.amount, entry.currency, locale)).then(() =>
           AccessibilityInfo.announceForAccessibility(t`Skopiowano kwotę`),
@@ -277,7 +300,6 @@ function useEntryActionHandler(group: GroupDetail) {
       <EntryActionsMenu
         title={menuEntry ? titleOf(menuEntry) : null}
         actions={menuEntry ? entryActions(menuEntry, group) : []}
-        disabled={['history']}
         onClose={() => setMenuEntry(null)}
         onSelect={(action) => menuEntry && run(menuEntry, action)}
       />
@@ -361,5 +383,20 @@ const styles = StyleSheet.create((theme) => ({
   link: {
     fontSize: theme.font.sizeMd,
     color: theme.colors.primary,
+  },
+  archivedBar: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 52,
+    paddingHorizontal: theme.space(4),
+    paddingTop: theme.space(3),
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.border,
+    backgroundColor: theme.colors.surface,
+  },
+  archivedText: {
+    fontSize: theme.font.sizeMd,
+    fontWeight: theme.font.weightBold,
+    color: theme.colors.textMuted,
   },
 }));

@@ -25,7 +25,8 @@ const auth = createAuth({
 });
 // FEATURE_FLAGS: JSON, e.g. {"ads":true}. Unknown or invalid flags fall back to off.
 const flags = parseFeatureFlagsJson(process.env.FEATURE_FLAGS);
-const app = createApp({ auth, db, flags });
+// WEB_URL: origin of the web app (e.g. https://app.example.com), used by link previews (/og/:token).
+const app = createApp({ auth, db, flags, webUrl: process.env.WEB_URL || undefined });
 // Daily ECB rates (ADR-0014); FRANKFURTER_URL points at a self-hosted instance if set.
 startRateJob({ db, source: frankfurterRateSource({ baseUrl: process.env.FRANKFURTER_URL || undefined }) });
 // Push notifications (#24): PUSH_SENDER=expo sends through the Expo push service
