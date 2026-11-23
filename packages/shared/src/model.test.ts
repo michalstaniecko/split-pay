@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { type AttendanceRange, Entry, Group, Member, normalizeAttendance, validateEntryInGroup } from './model';
+import { type AttendanceRange, Entry, Group, Member, NewGroup, normalizeAttendance, validateEntryInGroup } from './model';
 import { ANIA, BARTEK, KASIA, expense, group, member, members, settlement, uuid } from './test-fixtures';
 
 describe('Entry', () => {
@@ -64,6 +64,40 @@ describe('Group', () => {
     expect(Group.safeParse({ ...group, startDate: null, endDate: null }).success).toBe(true);
     expect(Group.safeParse({ ...group, endDate: null }).success).toBe(false);
     expect(Group.safeParse({ ...group, startDate: '2026-07-20' }).success).toBe(false);
+  });
+});
+
+describe('NewGroup', () => {
+  const trip = {
+    id: uuid(90),
+    name: 'Mazury',
+    emoji: '⛵',
+    color: '#1E88E5',
+    baseCurrency: 'PLN',
+    startDate: '2026-07-10',
+    endDate: '2026-07-14',
+  };
+
+  it('accepts what the create-group form sends, with or without dates', () => {
+    expect(NewGroup.safeParse(trip).success).toBe(true);
+    expect(NewGroup.safeParse({ ...trip, startDate: null, endDate: null }).success).toBe(true);
+  });
+
+  it('applies the Group rules: both dates or neither, start not after end, non-blank name', () => {
+    expect(NewGroup.safeParse({ ...trip, endDate: null }).success).toBe(false);
+    expect(NewGroup.safeParse({ ...trip, startDate: '2026-07-15' }).success).toBe(false);
+    expect(NewGroup.safeParse({ ...trip, name: '   ' }).success).toBe(false);
+    expect(NewGroup.safeParse({ ...trip, color: 'blue' }).success).toBe(false);
+    expect(NewGroup.safeParse({ ...trip, baseCurrency: 'pln' }).success).toBe(false);
+  });
+
+  it('accepts a one-day trip', () => {
+    expect(NewGroup.safeParse({ ...trip, endDate: trip.startDate }).success).toBe(true);
+  });
+
+  it('trims the name and drops fields the server decides (settings, archiving)', () => {
+    const parsed = NewGroup.parse({ ...trip, name: '  Mazury ', simplifyDebts: false, archivedAt: '2026-01-01T00:00:00Z' });
+    expect(parsed).toEqual({ ...trip, name: 'Mazury' });
   });
 });
 
