@@ -8,6 +8,7 @@ import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { GroupAvatar } from '@/components/group-avatar';
 import { GroupNotFound } from '@/components/group-not-found';
 import { GroupLinkSection } from '@/features/group-link/group-link-section';
+import { AttendanceGridView } from '@/features/groups/attendance-grid-view';
 import { type GroupDetail, groupQuery } from '@/features/groups/groups-query';
 import { type MemberRow, memberRows } from '@/features/groups/member-form';
 import { useFormatters } from '@/i18n/use-formatters';
@@ -61,8 +62,8 @@ function GroupInfo({ group }: { group: GroupDetail }) {
           style={({ pressed }) => [styles.addRow, pressed && styles.pressed]}>
           <Text style={styles.addLabel}>{t`+ Dodaj osobę bez konta`}</Text>
         </Pressable>
+        <AttendanceGridView group={group} />
       </Section>
-      {/* TODO: attendance per member (attendance slice). */}
       <Section title={t`Link grupy`}>
         <GroupLinkSection groupId={group.id} groupName={group.name} />
       </Section>

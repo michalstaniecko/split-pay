@@ -38,6 +38,7 @@ msgstr "Activity"
 #: src/app/(app)/new-group.tsx
 #: src/app/(app)/new.tsx
 #: src/features/group-link/group-link-section.tsx
+#: src/features/groups/attendance-grid-view.tsx
 msgid "Anuluj"
 msgstr "Cancel"
 
@@ -191,6 +192,10 @@ msgstr "Couldn't load the group link."
 msgid "Nie udało się wysłać kodu. Spróbuj ponownie."
 msgstr "Couldn't send the code. Please try again."
 
+#: src/features/groups/attendance-grid-view.tsx
+msgid "Nie udało się zapisać obecności. Spróbuj ponownie."
+msgstr "Couldn't save attendance. Please try again."
+
 #: src/app/(app)/groups/[groupId]/member.tsx
 msgid "Nie udało się zapisać. Spróbuj ponownie."
 msgstr "Couldn't save. Please try again."
@@ -216,6 +221,10 @@ msgstr "e.g. Lake trip 2026"
 #: src/features/profile/about-section.tsx
 msgid "O aplikacji"
 msgstr "About"
+
+#: src/features/groups/attendance-grid-view.tsx
+msgid "Obecność"
+msgstr "Attendance"
 
 #: src/app/(app)/new-group.tsx
 msgid "Od"
@@ -417,6 +426,15 @@ msgstr "Close"
 #: src/app/(app)/groups/[groupId]/member.tsx
 msgid "Zapisz"
 msgstr "Save"
+
+#: src/features/groups/attendance-grid-view.tsx
+msgid "Zapisz obecność"
+msgstr "Save attendance"
+
+#. placeholder {0}: emptyNames.join(', ')
+#: src/features/groups/attendance-grid-view.tsx
+msgid "Zaznacz co najmniej jeden dzień: {0}"
+msgstr "Tick at least one day: {0}"
 
 #: src/app/(app)/groups/[groupId]/info.tsx
 msgid "Zmień"

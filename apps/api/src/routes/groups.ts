@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { zValidator } from '@hono/zod-validator';
-import { canRenameMember, Id, type Member, MemberRename, NewGroup, NewMember } from '@split-pay/shared';
+import { canRenameMember, Id, type Member, MemberAttendanceUpdate, MemberRename, NewGroup, NewMember } from '@split-pay/shared';
 import { and, asc, desc, eq } from 'drizzle-orm';
 import { Hono, type MiddlewareHandler } from 'hono';
 import type { SessionUser } from '../auth';
@@ -159,6 +159,23 @@ export const groupsRoutes = ({ db, requireUser }: { db: Db; requireUser: Middlew
           .where(eq(members.id, member.id))
           .returning();
         return c.json(toMemberDto(renamed ?? member), 200);
+      })
+      /**
+       * Sets a member's attendance (canonical form, `null` = whole trip). Any
+       * member may edit anyone's attendance (ADR-0008). Existing entries keep
+       * their participants (ADR-0016) — only new entries' defaults follow it.
+       */
+      .put('/:groupId/members/:memberId/attendance', zValidator('json', MemberAttendanceUpdate), async (c) => {
+        const { groupId, memberId } = c.req.param();
+        const group = Id.safeParse(groupId).success ? await findMyGroup(groupId, c.get('user').id) : undefined;
+        if (!group || !Id.safeParse(memberId).success) return c.json({ error: 'not_found' as const }, 404);
+        const [updated] = await db
+          .update(members)
+          .set({ attendance: c.req.valid('json').attendance })
+          .where(and(eq(members.id, memberId), eq(members.groupId, group.id)))
+          .returning();
+        if (!updated) return c.json({ error: 'not_found' as const }, 404);
+        return c.json(toMemberDto(updated), 200);
       })
   );
 };
