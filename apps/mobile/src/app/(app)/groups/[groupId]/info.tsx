@@ -13,6 +13,7 @@ import { AttendanceGridView } from '@/features/groups/attendance-grid-view';
 import { GroupSettingsSection } from '@/features/groups/group-settings-section';
 import { type GroupDetail, groupQuery } from '@/features/groups/groups-query';
 import { type MemberRow, memberRows } from '@/features/groups/member-form';
+import { HistorySection } from '@/features/history/history-section';
 import { useFormatters } from '@/i18n/use-formatters';
 import { authClient } from '@/lib/auth-client';
 
@@ -80,7 +81,9 @@ function GroupInfo({ group }: { group: GroupDetail }) {
         <Text style={styles.sectionTitle}>{t`Statystyki`}</Text>
         <Text style={styles.chevron}>{t`Pokaż`}</Text>
       </Pressable>
-      <Section title={t`Historia zmian`} subtitle={soon} />
+      <Section title={t`Historia zmian`}>
+        <HistorySection group={group} />
+      </Section>
       <Section title={t`Ustawienia`}>
         <GroupSettingsSection group={group} />
       </Section>

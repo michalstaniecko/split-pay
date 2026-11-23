@@ -200,7 +200,7 @@ function Conversation({
  * The bubbles' long-press menu and what its actions do: "Edytuj" opens the
  * full form for the entry, "Usuń" soft-deletes it and offers "Cofnij" in a
  * snackbar, "Kopiuj kwotę" copies the bare amount. `elements` (menu +
- * snackbar) go below the list. TODO(#20): "Historia" opens the entry's change history.
+ * snackbar) go below the list. "Historia" opens the entry's change history (#20).
  */
 function useEntryActionHandler(group: GroupDetail) {
   const { t } = useLingui();
@@ -227,7 +227,8 @@ function useEntryActionHandler(group: GroupDetail) {
         });
         return;
       case 'history':
-        return; // TODO(#20)
+        router.push({ pathname: '/groups/[groupId]/history', params: { groupId: group.id, entryId: entry.id } });
+        return;
       case 'copyAmount':
         void Clipboard.setStringAsync(amountForClipboard(entry.amount, entry.currency, locale)).then(() =>
           AccessibilityInfo.announceForAccessibility(t`Skopiowano kwotę`),
@@ -255,7 +256,6 @@ function useEntryActionHandler(group: GroupDetail) {
       <EntryActionsMenu
         title={menuEntry ? titleOf(menuEntry) : null}
         actions={menuEntry ? entryActions(menuEntry, group) : []}
-        disabled={['history']}
         onClose={() => setMenuEntry(null)}
         onSelect={(action) => menuEntry && run(menuEntry, action)}
       />
