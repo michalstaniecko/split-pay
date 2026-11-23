@@ -1,13 +1,13 @@
 import { useLingui } from '@lingui/react/macro';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { StyleSheet } from 'react-native-unistyles';
 import { Button } from '@/components/button';
 import { LanguagePicker } from '@/components/language-picker';
-import { PlaceholderScreen } from '@/components/placeholder-screen';
 import { AboutSection } from '@/features/profile/about-section';
 import { meQuery } from '@/features/profile/me-query';
+import { PayoutDetailsSection } from '@/features/profile/payout-details-section';
 import { ThemePicker } from '@/features/theme/theme-picker';
 import { authClient } from '@/lib/auth-client';
 
@@ -28,22 +28,34 @@ export default function ProfileScreen() {
   };
 
   return (
-    <PlaceholderScreen title={t`Profil`}>
+    // Scrolls: the Profile is taller than a small phone screen.
+    <ScrollView style={styles.screen} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
       <View style={styles.account}>
         <Text style={styles.label}>{t`Zalogowano jako`}</Text>
         <Text style={styles.email} selectable>
           {email}
         </Text>
       </View>
+      <PayoutDetailsSection />
       <LanguagePicker />
       <ThemePicker />
       <Button variant="secondary" label={t`Wyloguj się`} onPress={() => void signOut()} loading={signingOut} />
       <AboutSection />
-    </PlaceholderScreen>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create((theme) => ({
+  screen: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
+  },
+  content: {
+    alignItems: 'center',
+    gap: theme.space(4),
+    padding: theme.space(6),
+    paddingBottom: theme.space(12),
+  },
   account: {
     alignSelf: 'stretch',
     gap: theme.space(1),

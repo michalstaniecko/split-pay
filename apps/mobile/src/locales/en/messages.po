@@ -7,6 +7,11 @@ msgstr ""
 "X-Generator: @lingui/cli\n"
 "Language: en\n"
 
+#. placeholder {0}: row.name
+#: src/app/(app)/groups/[groupId]/balances.tsx
+msgid "{0} (Ty)"
+msgstr "{0} (you)"
+
 #. placeholder {0}: group.data.name
 #: src/app/(app)/groups/[groupId]/index.tsx
 msgid "{0}, informacje o grupie"
@@ -16,9 +21,25 @@ msgstr "{0}, group info"
 msgid "{count, plural, one {# osoba} few {# osoby} many {# osób} other {# osoby}}"
 msgstr "{count, plural, one {# person} other {# people}}"
 
+#: src/app/(app)/groups/[groupId]/balances.tsx
+msgid "{from} → {to}: {amount}"
+msgstr "{from} → {to}: {amount}"
+
 #: src/app/(app)/g/[token].tsx
 msgid "{memberCount, plural, one {# osoba w grupie} few {# osoby w grupie} many {# osób w grupie} other {# osoby w grupie}}"
 msgstr "{memberCount, plural, one {# person in the group} other {# people in the group}}"
+
+#: src/app/(app)/groups/[groupId]/balances.tsx
+msgid "{name}: należy się {amount}"
+msgstr "{name}: is owed {amount}"
+
+#: src/app/(app)/groups/[groupId]/balances.tsx
+msgid "{name}: rozliczony"
+msgstr "{name}: settled up"
+
+#: src/app/(app)/groups/[groupId]/balances.tsx
+msgid "{name}: winien {amount}"
+msgstr "{name}: owes {amount}"
 
 #: src/features/entries/entry-bubble.tsx
 msgid "{payerName} + {otherPayers}"
@@ -56,6 +77,14 @@ msgstr "Cancel"
 msgid "bez konta"
 msgstr "no account"
 
+#: src/app/(app)/groups/[groupId]/balances.tsx
+msgid "Bez upraszczania długów"
+msgstr "Debts not simplified"
+
+#: src/app/(app)/groups/[groupId]/settle.tsx
+msgid "Brak danych do spłaty. Zapytaj o nie bezpośrednio."
+msgstr "No payout details. Ask for them directly."
+
 #: src/app/(app)/groups/[groupId]/index.tsx
 #: src/app/(app)/index.tsx
 msgid "Brak wpisów"
@@ -68,6 +97,11 @@ msgstr "Dark"
 #: src/app/(app)/groups/[groupId]/info.tsx
 msgid "Członkowie"
 msgstr "Members"
+
+#: src/app/(app)/groups/[groupId]/settle.tsx
+#: src/features/profile/payout-details-section.tsx
+msgid "Dane do spłaty"
+msgstr "Payout details"
 
 #: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
@@ -157,6 +191,10 @@ msgstr "One expense shared with a few people"
 msgid "Jedzenie"
 msgstr "Food"
 
+#: src/features/balances/balance-banner.tsx
+msgid "Jesteś winien {amount}"
+msgstr "You owe {amount}"
+
 #: src/components/language-picker.tsx
 msgid "Język"
 msgstr "Language"
@@ -194,12 +232,28 @@ msgstr "Source code on GitHub"
 msgid "Kolor"
 msgstr "Colour"
 
+#: src/app/(app)/groups/[groupId]/settle.tsx
+msgid "Kopiuj"
+msgstr "Copy"
+
+#: src/app/(app)/groups/[groupId]/settle.tsx
+msgid "Kopiuj: {label}"
+msgstr "Copy: {label}"
+
+#: src/app/(app)/groups/[groupId]/balances.tsx
+msgid "Kto komu oddaje"
+msgstr "Who pays whom"
+
 #: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
 #: src/app/(app)/quick-bill.tsx
 #: src/features/entries/composer.tsx
 msgid "Kwota"
 msgstr "Amount"
+
+#: src/app/(app)/groups/[groupId]/settle.tsx
+msgid "Kwota: {formatted}"
+msgstr "Amount: {formatted}"
 
 #: src/features/profile/about-section.tsx
 msgid "Licencja: GNU AGPL v3"
@@ -212,6 +266,14 @@ msgstr "Group link"
 #: src/features/theme/theme-picker.tsx
 msgid "Motyw"
 msgstr "Theme"
+
+#: src/features/groups/group-settings-section.tsx
+msgid "Najmniej przelewów przy rozliczeniu. Wyłączone: każdy oddaje temu, kto za niego zapłacił."
+msgstr "Fewest transfers when settling up. Off: everyone pays back whoever paid for them."
+
+#: src/features/balances/balance-banner.tsx
+msgid "Należy ci się {amount}"
+msgstr "You are owed {amount}"
 
 #: src/app/(app)/new-group.tsx
 msgid "Nazwa"
@@ -246,6 +308,11 @@ msgstr "Could not create the group. Try again."
 msgid "Nie udało się utworzyć rachunku. Spróbuj ponownie."
 msgstr "Couldn't create the bill. Try again."
 
+#: src/app/(app)/groups/[groupId]/settle.tsx
+#: src/features/profile/payout-details-section.tsx
+msgid "Nie udało się wczytać danych do spłaty."
+msgstr "Couldn't load the payout details."
+
 #: src/app/(app)/index.tsx
 msgid "Nie udało się wczytać grup."
 msgstr "Could not load groups."
@@ -271,6 +338,8 @@ msgid "Nie udało się zapisać obecności. Spróbuj ponownie."
 msgstr "Couldn't save attendance. Please try again."
 
 #: src/app/(app)/groups/[groupId]/member.tsx
+#: src/features/groups/group-settings-section.tsx
+#: src/features/profile/payout-details-section.tsx
 msgid "Nie udało się zapisać. Spróbuj ponownie."
 msgstr "Couldn't save. Please try again."
 
@@ -305,6 +374,11 @@ msgstr "New expense"
 msgid "np. Mazury 2026"
 msgstr "e.g. Lake trip 2026"
 
+#: src/app/(app)/groups/[groupId]/settle.tsx
+#: src/features/profile/payout-details-section.tsx
+msgid "Numer konta"
+msgstr "Bank account number"
+
 #: src/features/profile/about-section.tsx
 msgid "O aplikacji"
 msgstr "About"
@@ -317,6 +391,20 @@ msgstr "Attendance"
 #: src/app/(app)/new-group.tsx
 msgid "Od"
 msgstr "From"
+
+#: src/app/(app)/_layout.tsx
+#: src/app/(app)/groups/[groupId]/balances.tsx
+msgid "Oddaj"
+msgstr "Pay back"
+
+#. placeholder {0}: transfer.toName
+#: src/app/(app)/groups/[groupId]/balances.tsx
+msgid "Oddaj {amount} – {0}"
+msgstr "Pay back {amount} – {0}"
+
+#: src/app/(app)/groups/[groupId]/settle.tsx
+msgid "Oddaj {recipient}"
+msgstr "Pay back {recipient}"
 
 #: src/app/(app)/groups/[groupId]/info.tsx
 msgid "Opuść, archiwizuj lub usuń grupę"
@@ -384,8 +472,11 @@ msgstr "Enter a title."
 msgid "Podział"
 msgstr "Split"
 
+#: src/features/balances/balance-banner.tsx
+msgid "Pokazuje salda i kto komu ile oddaje"
+msgstr "Shows balances and who pays whom how much"
+
 #: src/app/(app)/_layout.tsx
-#: src/app/(app)/profile.tsx
 #: src/components/inbox-header-buttons.tsx
 msgid "Profil"
 msgstr "Profile"
@@ -399,6 +490,19 @@ msgstr "Entertainment"
 msgid "RRRR-MM-DD"
 msgstr "YYYY-MM-DD"
 
+#: src/app/(app)/_layout.tsx
+#: src/app/(app)/groups/[groupId]/balances.tsx
+msgid "Salda"
+msgstr "Balances"
+
+#: src/features/balances/balance-banner.tsx
+msgid "Salda ›"
+msgstr "Balances ›"
+
+#: src/app/(app)/groups/[groupId]/settle.tsx
+msgid "Skopiowano"
+msgstr "Copied"
+
 #: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
 #: src/app/(app)/index.tsx
 #: src/features/entries/entry-bubble.tsx
@@ -411,6 +515,7 @@ msgstr "split-pay, version {version}"
 
 #: src/app/(app)/g/[token].tsx
 #: src/app/(app)/groups/[groupId]/index.tsx
+#: src/app/(app)/groups/[groupId]/settle.tsx
 #: src/app/(app)/index.tsx
 #: src/components/group-not-found.tsx
 #: src/features/group-link/group-link-section.tsx
@@ -447,9 +552,26 @@ msgstr "This entry no longer exists."
 msgid "Tej osoby nie ma już w grupie."
 msgstr "This person is no longer in the group."
 
+#: src/app/(app)/groups/[groupId]/settle.tsx
+#: src/features/profile/payout-details-section.tsx
+msgid "Telefon BLIK"
+msgstr "BLIK phone number"
+
 #: src/app/(app)/g/[token].tsx
 msgid "Ten link grupy jest nieważny. Poproś kogoś z grupy o nowy."
 msgstr "This group link is no longer valid. Ask someone in the group for a new one."
+
+#: src/features/profile/payout-details-section.tsx
+msgid "To nie wygląda na numer konta."
+msgstr "That doesn't look like a bank account number."
+
+#: src/features/profile/payout-details-section.tsx
+msgid "To nie wygląda na numer telefonu."
+msgstr "That doesn't look like a phone number."
+
+#: src/app/(app)/groups/[groupId]/balances.tsx
+msgid "Tobie"
+msgstr "you"
 
 #: src/features/entries/use-entry-labels.ts
 msgid "Transport"
@@ -464,6 +586,7 @@ msgstr "Light/dark mode"
 msgid "twój udział {0}"
 msgstr "your share {0}"
 
+#: src/app/(app)/groups/[groupId]/balances.tsx
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
 #: src/app/(app)/groups/[groupId]/info.tsx
 msgid "Ty"
@@ -496,6 +619,14 @@ msgstr "Revoke and create a new one"
 msgid "Unieważnij link"
 msgstr "Revoke link"
 
+#: src/features/groups/group-settings-section.tsx
+msgid "Upraszczaj długi"
+msgstr "Simplify debts"
+
+#: src/app/(app)/groups/[groupId]/balances.tsx
+msgid "Uproszczone długi"
+msgstr "Debts simplified"
+
 #: src/app/(app)/groups/[groupId]/info.tsx
 msgid "Ustawienia"
 msgstr "Settings"
@@ -520,6 +651,10 @@ msgstr "Create a group for a trip, a flat or a single bill."
 #: src/app/(app)/new-group.tsx
 msgid "Waluta bazowa"
 msgstr "Base currency"
+
+#: src/features/profile/payout-details-section.tsx
+msgid "Widzą je tylko osoby z Twoich grup, gdy mają Ci oddać pieniądze."
+msgstr "Only people in your groups see them, when they owe you money."
 
 #: src/app/(app)/groups/[groupId]/info.tsx
 msgid "Wkrótce"
@@ -548,6 +683,14 @@ msgstr "Back"
 #: src/features/entries/use-entry-labels.ts
 msgid "Wspólne + osobiste"
 msgstr "Common + personal"
+
+#: src/app/(app)/groups/[groupId]/balances.tsx
+msgid "Wszyscy są rozliczeni."
+msgstr "Everyone is settled up."
+
+#: src/features/balances/balance-banner.tsx
+msgid "Wszystko rozliczone"
+msgstr "All settled up"
 
 #: src/app/(app)/new-group.tsx
 msgid "Wybierz emoji."
@@ -628,13 +771,22 @@ msgstr "owner"
 
 #: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
 #: src/app/(app)/groups/[groupId]/member.tsx
+#: src/app/(app)/groups/[groupId]/settle.tsx
 msgid "Zamknij"
 msgstr "Close"
+
+#: src/features/profile/payout-details-section.tsx
+msgid "Zapisano."
+msgstr "Saved."
 
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
 #: src/app/(app)/groups/[groupId]/member.tsx
 msgid "Zapisz"
 msgstr "Save"
+
+#: src/features/profile/payout-details-section.tsx
+msgid "Zapisz dane do spłaty"
+msgstr "Save payout details"
 
 #: src/features/groups/attendance-grid-view.tsx
 msgid "Zapisz obecność"
