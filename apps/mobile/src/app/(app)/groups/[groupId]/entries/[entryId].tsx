@@ -11,6 +11,7 @@ import { CATEGORY_ICONS, entriesQuery } from '@/features/entries/entries-query';
 import { isEditableInForm } from '@/features/entries/entry-edit';
 import { useEntryLabels } from '@/features/entries/use-entry-labels';
 import { type GroupDetail, groupQuery } from '@/features/groups/groups-query';
+import { ReceiptPhoto } from '@/features/photos/receipt-photo';
 import { formatRate } from '@/features/rates/rate-format';
 import { useLocale } from '@/i18n/locale-provider';
 import { useFormatters } from '@/i18n/use-formatters';
@@ -20,8 +21,8 @@ import { closeSheet } from '@/lib/close-sheet';
  * Entry detail — a read-only sheet opened from a bubble. A foreign-currency
  * entry shows its amount, the base amount and the frozen rate. "Edytuj" (#11)
  * replaces the sheet with the full form in edit mode.
- * Later slices add: the receipt photo (#26) and the history link next to
- * "edytowano" (#20).
+ * The receipt photo (#26) opens a full-screen viewer.
+ * Later slices add: the history link next to "edytowano" (#20).
  */
 export default function EntryDetailSheet() {
   const { t } = useLingui();
@@ -89,6 +90,7 @@ function EntryDetail({ group, entry }: { group: GroupDetail; entry: Entry }) {
               </Row>
             ))}
           </Section>
+          {entry.receiptPhotoId !== null ? <ReceiptPhoto groupId={group.id} entryId={entry.id} /> : null}
         </>
       )}
       <Text style={styles.meta}>{t`Dodał(a) ${addedBy}, ${format.dateTime(entry.createdAt)}`}</Text>

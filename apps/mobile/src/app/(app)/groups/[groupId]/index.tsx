@@ -27,6 +27,7 @@ import { useEntryConflicts } from '@/features/entries/entry-conflicts';
 import { amountForClipboard, type EntryAction, entryActions, versionConflictEntry } from '@/features/entries/entry-edit';
 import { UndoSnackbar } from '@/features/entries/undo-snackbar';
 import { type GroupDetail, groupQuery } from '@/features/groups/groups-query';
+import { groupAvatarsQuery, receiptsQuery } from '@/features/photos/photos-query';
 import { SettlementSystemMessage } from '@/features/settlements/settlement-system-message';
 import { useLocale } from '@/i18n/locale-provider';
 import { authClient } from '@/lib/auth-client';
@@ -151,6 +152,9 @@ function Conversation({
 
   const actions = useEntryActionHandler(group);
   const conflicts = useEntryConflicts(group.id);
+  // Receipt thumbnails and payer avatars (#26); without them bubbles show initials only.
+  const receipts = useQuery(receiptsQuery(group.id)).data;
+  const avatars = useQuery(groupAvatarsQuery(group.id)).data;
 
   const openEntry = (entryId: string) =>
     router.push({ pathname: '/groups/[groupId]/entries/[entryId]', params: { groupId: group.id, entryId } });
@@ -171,7 +175,7 @@ function Conversation({
           keyExtractor={(item) => item.key}
           getItemType={(item) => (item.type === 'entry' && item.entry.kind === 'settlement' ? 'settlement' : item.type)}
           stickyHeaderIndices={stickyHeaderIndices}
-          extraData={[highlightId, conflicts]}
+          extraData={[highlightId, conflicts, receipts, avatars]}
           // Opens at the newest entry; keeps following new ones while the user is near the bottom.
           maintainVisibleContentPosition={{ startRenderingFromBottom: true, autoscrollToBottomThreshold: 0.2 }}
           initialScrollIndex={items.length - 1}
@@ -203,6 +207,8 @@ function Conversation({
                 onAction={(action) => actions.run(item.entry, action)}
                 conflict={conflicts.has(item.entry.id)}
                 onConflictPress={() => openConflict(item.entry.id)}
+                receiptUrl={receipts?.get(item.entry.id)?.url}
+                payerAvatarUrl={avatars?.get(item.payerId)}
               />
             )
           }

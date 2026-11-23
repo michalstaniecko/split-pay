@@ -36,7 +36,15 @@
       "react-native-edge-to-edge",
       "expo-localization",
       "expo-sqlite",
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "split-pay uses the camera to photograph receipts and your profile picture.",
+          "photosPermission": "split-pay lets you pick a receipt photo or a profile picture from your library.",
+          "microphonePermission": false
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

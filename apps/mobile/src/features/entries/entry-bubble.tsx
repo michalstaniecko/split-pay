@@ -1,7 +1,9 @@
 import { useLingui } from '@lingui/react/macro';
+import { Image } from 'expo-image';
 import { Pressable, Text, View } from 'react-native';
 import { StyleSheet } from 'react-native-unistyles';
 import { useLocale } from '@/i18n/locale-provider';
+import { MemberAvatar, photoCacheKey } from '@/features/photos/member-avatar';
 import { useFormatters } from '@/i18n/use-formatters';
 import { entryBubbleLabel } from './bubble-label';
 import type { DayItem, EntryItem } from './conversation';
@@ -20,7 +22,8 @@ import type { EntryAction } from './entry-edit';
  * Long-press opens the entry actions (#11); screen readers get the same
  * actions as accessibility actions. Edited entries say "edytowano"; a change
  * rejected as a version conflict shows a red "!" that opens the conflict sheet.
- * Later slices add: the receipt thumbnail (#26).
+ * A receipt photo shows as a small thumbnail at the bubble's end edge; the
+ * payer's avatar photo replaces the initial when they set one (#26).
  */
 export function EntryBubble({
   item,
@@ -32,6 +35,8 @@ export function EntryBubble({
   onLongPress,
   conflict = false,
   onConflictPress,
+  receiptUrl,
+  payerAvatarUrl,
 }: {
   item: EntryItem;
   baseCurrency: string;
@@ -44,6 +49,10 @@ export function EntryBubble({
   /** The last change was rejected as a version conflict. */
   conflict?: boolean;
   onConflictPress?: () => void;
+  /** Signed URL of the entry's receipt photo. */
+  receiptUrl?: string | undefined;
+  /** Signed URL of the largest payer's avatar. */
+  payerAvatarUrl?: string | undefined;
 }) {
   const { t } = useLingui();
   const format = useFormatters();
@@ -63,6 +72,7 @@ export function EntryBubble({
   const approx = baseAmount !== null ? `≈ ${format.amount(baseAmount, baseCurrency)}` : null;
 
   const editedLabel = edited ? t`edytowano` : null;
+  const receiptLabel = entry.kind !== 'settlement' && entry.receiptPhotoId !== null ? t`ze zdjęciem paragonu` : null;
   const conflictLabel = conflict ? t`konflikt zmian` : null;
 
   const badge = conflict ? (
@@ -84,7 +94,7 @@ export function EntryBubble({
         <Pressable
           accessible
           accessibilityRole="button"
-          accessibilityLabel={[entryBubbleLabel(item, { baseCurrency, locale }), editedLabel, conflictLabel]
+          accessibilityLabel={[entryBubbleLabel(item, { baseCurrency, locale }), receiptLabel, editedLabel, conflictLabel]
             .filter(Boolean)
             .join(', ')}
           accessibilityActions={actions.map((name) => ({ name, label: actionLabels[name] }))}
@@ -99,10 +109,8 @@ export function EntryBubble({
             pressed && styles.pressed,
           ]}>
           <View style={styles.authorRow}>
-            {/* Avatar of the largest payer (initial until user avatars exist). */}
-            <View style={[styles.avatar, mine && styles.avatarMine]}>
-              <Text style={[styles.avatarText, mine && styles.avatarTextMine]}>{payerName.trim().charAt(0).toUpperCase()}</Text>
-            </View>
+            {/* Avatar of the largest payer: their photo, else the initial. */}
+            <MemberAvatar name={payerName} url={payerAvatarUrl} size={20} inverted={mine} />
             <Text style={[styles.author, mine && styles.mineMuted]} numberOfLines={1}>
               {author}
             </Text>
@@ -113,6 +121,15 @@ export function EntryBubble({
             <Text style={[styles.title, mine && styles.mineText]} numberOfLines={2}>
               {title}
             </Text>
+            {receiptUrl ? (
+              <Image
+                source={{ uri: receiptUrl, cacheKey: photoCacheKey(receiptUrl) }}
+                style={styles.receipt}
+                contentFit="cover"
+                accessibilityElementsHidden
+                importantForAccessibility="no-hide-descendants"
+              />
+            ) : null}
           </View>
           <Text style={[styles.amount, mine && styles.mineText, income && styles.incomeAmount]}>{amount}</Text>
           {approx ? <Text style={[styles.approx, mine && styles.mineMuted]}>{approx}</Text> : null}
@@ -214,25 +231,6 @@ const styles = StyleSheet.create((theme) => ({
     alignItems: 'center',
     gap: theme.space(1.5),
   },
-  avatar: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: theme.colors.border,
-  },
-  avatarMine: {
-    backgroundColor: theme.colors.onPrimary,
-  },
-  avatarTextMine: {
-    color: theme.colors.primary,
-  },
-  avatarText: {
-    fontSize: 11,
-    fontWeight: theme.font.weightBold,
-    color: theme.colors.text,
-  },
   author: {
     flexShrink: 1,
     fontSize: theme.font.sizeSm,
@@ -246,6 +244,12 @@ const styles = StyleSheet.create((theme) => ({
   },
   icon: {
     fontSize: theme.font.sizeMd,
+  },
+  receipt: {
+    width: 36,
+    height: 36,
+    marginStart: 'auto',
+    borderRadius: theme.radius.sm,
   },
   title: {
     flexShrink: 1,

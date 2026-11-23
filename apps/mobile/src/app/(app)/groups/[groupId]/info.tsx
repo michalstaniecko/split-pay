@@ -14,6 +14,8 @@ import { GroupLifecycleSection } from '@/features/groups/group-lifecycle-section
 import { GroupSettingsSection } from '@/features/groups/group-settings-section';
 import { type GroupDetail, groupQuery } from '@/features/groups/groups-query';
 import { type MemberRow, memberRows } from '@/features/groups/member-form';
+import { MemberAvatar } from '@/features/photos/member-avatar';
+import { groupAvatarsQuery } from '@/features/photos/photos-query';
 import { useFormatters } from '@/i18n/use-formatters';
 import { authClient } from '@/lib/auth-client';
 
@@ -46,6 +48,7 @@ function GroupInfo({ group }: { group: GroupDetail }) {
   const count = group.members.length;
   const dates = group.startDate && group.endDate ? `${format.date(group.startDate)} – ${format.date(group.endDate)}` : null;
   const soon = t`Wkrótce`;
+  const avatars = useQuery(groupAvatarsQuery(group.id)).data;
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -60,6 +63,7 @@ function GroupInfo({ group }: { group: GroupDetail }) {
         subtitle={t`${plural(count, { one: '# osoba', few: '# osoby', many: '# osób', other: '# osoby' })}`}>
         {rows.map((row) => (
           <View key={row.id} style={styles.memberLine}>
+            <MemberAvatar name={row.displayName} url={avatars?.get(row.id)} size={32} />
             <MemberItem row={row} onPress={() => openMemberSheet(row.id)} />
             {row.withoutAccount ? <PersonalClaimLinkButton groupId={group.id} groupName={group.name} member={row} /> : null}
           </View>
