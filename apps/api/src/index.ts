@@ -3,6 +3,8 @@ import { parseFeatureFlagsJson } from '@split-pay/shared';
 import { createApp } from './app';
 import { createAuth, devOtpSender } from './auth';
 import { createDb } from './db/client';
+import { frankfurterRateSource } from './rates/source';
+import { startRateJob } from './rates/sync';
 
 const requireEnv = (name: string): string => {
   const value = process.env[name];
@@ -22,6 +24,8 @@ const auth = createAuth({
 // FEATURE_FLAGS: JSON, e.g. {"ads":true}. Unknown or invalid flags fall back to off.
 const flags = parseFeatureFlagsJson(process.env.FEATURE_FLAGS);
 const app = createApp({ auth, db, flags });
+// Daily ECB rates (ADR-0014); FRANKFURTER_URL points at a self-hosted instance if set.
+startRateJob({ db, source: frankfurterRateSource({ baseUrl: process.env.FRANKFURTER_URL || undefined }) });
 
 serve({ fetch: app.fetch, port }, (info) => {
   console.log(`API listening on http://localhost:${info.port}`);
