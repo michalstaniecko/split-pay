@@ -1,6 +1,7 @@
 import { plural, t } from '@lingui/core/macro';
 import { type CurrencyCode, formatAmount, formatDate, type Income } from '@split-pay/shared';
 import type { EntryItem } from './conversation';
+import { spokenEntryAmount } from './spoken-amount';
 
 /**
  * The screen-reader label of an income bubble — one sentence for the whole
@@ -9,15 +10,16 @@ import type { EntryItem } from './conversation';
  * Twój udział 100,00 złotego polskiego."
  * Amounts spell the currency out; my share is read as a positive amount (the
  * part of the money that belongs to me) and left out when I have none.
+ * A foreign-currency income also reads its base amount (`baseAmount`, #14).
  */
 export function incomeBubbleLabel(
-  item: Pick<EntryItem, 'payerName' | 'otherPayers' | 'myShare'> & { entry: Income },
+  item: Pick<EntryItem, 'payerName' | 'otherPayers' | 'myShare'> & { entry: Income; baseAmount?: number | null },
   context: { baseCurrency: CurrencyCode; locale: string },
 ): string {
   const { entry, payerName, otherPayers, myShare } = item;
   const spoken = (amount: number, currency: CurrencyCode) =>
     formatAmount(amount, currency, context.locale, { currencyDisplay: 'name' });
-  const amount = spoken(entry.amount, entry.currency);
+  const amount = spokenEntryAmount(entry, item.baseAmount ?? null, context);
   const title = entry.title;
   const date = formatDate(entry.date, context.locale);
   const recipients =

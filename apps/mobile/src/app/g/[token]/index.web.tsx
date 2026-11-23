@@ -9,6 +9,7 @@ import { GroupAvatar } from '@/components/group-avatar';
 import { BalanceBannerView } from '@/features/balances/balance-banner';
 import { conversationItems } from '@/features/entries/conversation';
 import { DaySeparator, EntryBubble } from '@/features/entries/entry-bubble';
+import { SettlementSystemMessage } from '@/features/settlements/settlement-system-message';
 import { PublicError } from '@/features/web-view/public-error';
 import {
   type PublicEntry,
@@ -119,6 +120,9 @@ function EntryList({
     [entries, data.members, me, baseCurrency],
   );
 
+  const openEntry = (entryId: string) =>
+    router.push({ pathname: '/g/[token]/entries/[entryId]', params: { token, entryId } });
+
   if (items.length === 0) {
     return (
       <View style={styles.center}>
@@ -139,16 +143,23 @@ function EntryList({
       renderItem={({ item }) =>
         item.type === 'day' ? (
           <DaySeparator item={item} baseCurrency={baseCurrency} />
-        ) : item.type === 'entry' ? (
+        ) : item.type !== 'entry' ? null : item.entry.kind === 'settlement' ? (
+          // Settlements are system messages, not bubbles (ADR-0017).
+          <SettlementSystemMessage
+            entry={item.entry}
+            members={data.members}
+            myMemberId={me}
+            highlighted={false}
+            onPress={() => openEntry(item.entry.id)}
+          />
+        ) : (
           <EntryBubble
             item={item}
             baseCurrency={baseCurrency}
             highlighted={false}
-            onPress={() =>
-              router.push({ pathname: '/g/[token]/entries/[entryId]', params: { token, entryId: item.entry.id } })
-            }
+            onPress={() => openEntry(item.entry.id)}
           />
-        ) : null
+        )
       }
     />
   );

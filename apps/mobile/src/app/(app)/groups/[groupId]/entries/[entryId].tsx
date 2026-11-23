@@ -1,22 +1,27 @@
 import { useLingui } from '@lingui/react/macro';
-import { type Entry, resolveSplit } from '@split-pay/shared';
+import { convert, type Entry, isEdited, resolveSplit } from '@split-pay/shared';
 import { useQuery } from '@tanstack/react-query';
-import { useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import type { ReactNode } from 'react';
 import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { Button } from '@/components/button';
 import { GroupNotFound } from '@/components/group-not-found';
 import { CATEGORY_ICONS, entriesQuery } from '@/features/entries/entries-query';
+import { isEditableInForm } from '@/features/entries/entry-edit';
 import { useEntryLabels } from '@/features/entries/use-entry-labels';
 import { type GroupDetail, groupQuery } from '@/features/groups/groups-query';
+import { formatRate } from '@/features/rates/rate-format';
+import { useLocale } from '@/i18n/locale-provider';
 import { useFormatters } from '@/i18n/use-formatters';
 import { closeSheet } from '@/lib/close-sheet';
 
 /**
- * Entry detail — a read-only sheet opened from a bubble. Later slices add:
- * the entry currency with base amount and rate (#14), the receipt photo
- * (#26), "edytowano" + history link (#11, #20) and "Edytuj" (#11).
+ * Entry detail — a read-only sheet opened from a bubble. A foreign-currency
+ * entry shows its amount, the base amount and the frozen rate. "Edytuj" (#11)
+ * replaces the sheet with the full form in edit mode.
+ * Later slices add: the receipt photo (#26) and the history link next to
+ * "edytowano" (#20).
  */
 export default function EntryDetailSheet() {
   const { t } = useLingui();
@@ -48,6 +53,7 @@ function EntryDetail({ group, entry }: { group: GroupDetail; entry: Entry }) {
   const name = (memberId: string) => group.members.find((m) => m.id === memberId)?.displayName ?? '?';
   const addedBy = group.members.find((m) => m.userId === entry.createdBy)?.displayName ?? t`nieznana osoba`;
   const amount = (minor: number) => format.amount(minor, entry.currency);
+  const currencyRows = <CurrencyRows entry={entry} baseCurrency={group.baseCurrency} />;
 
   return (
     <ScrollView contentContainerStyle={styles.content}>
@@ -55,6 +61,7 @@ function EntryDetail({ group, entry }: { group: GroupDetail; entry: Entry }) {
         <>
           <Text style={styles.heading}>💸 {t`Spłata`}</Text>
           <Row label={t`Kwota`}>{amount(entry.amount)}</Row>
+          {currencyRows}
           <Row label={t`Data`}>{format.date(entry.date)}</Row>
           <Row label={t`Od`}>{name(entry.from)}</Row>
           <Row label={t`Do`}>{name(entry.to)}</Row>
@@ -65,6 +72,7 @@ function EntryDetail({ group, entry }: { group: GroupDetail; entry: Entry }) {
             {CATEGORY_ICONS[entry.category]} {entry.title}
           </Text>
           <Text style={styles.amount}>{amount(entry.amount)}</Text>
+          {currencyRows}
           <Row label={t`Kategoria`}>{labels.category[entry.category]}</Row>
           <Row label={t`Data`}>{format.date(entry.date)}</Row>
           <Section title={entry.kind === 'expense' ? t`Zapłacili` : t`Otrzymali`}>
@@ -84,8 +92,33 @@ function EntryDetail({ group, entry }: { group: GroupDetail; entry: Entry }) {
         </>
       )}
       <Text style={styles.meta}>{t`Dodał(a) ${addedBy}, ${format.dateTime(entry.createdAt)}`}</Text>
+      {isEdited(entry) ? <Text style={styles.meta}>{t`edytowano ${format.dateTime(entry.updatedAt)}`}</Text> : null}
+      {group.archivedAt === null && isEditableInForm(entry) ? (
+        <Button
+          label={t`Edytuj`}
+          onPress={() =>
+            router.replace({ pathname: '/groups/[groupId]/expense-form', params: { groupId: group.id, entryId: entry.id } })
+          }
+        />
+      ) : null}
       <Button variant="secondary" label={t`Zamknij`} onPress={closeSheet} />
     </ScrollView>
+  );
+}
+
+/** A foreign-currency entry: the amount in the base currency and the frozen rate ("1 EUR = 4,3215 PLN"). */
+function CurrencyRows({ entry, baseCurrency }: { entry: Entry; baseCurrency: string }) {
+  const { t } = useLingui();
+  const format = useFormatters();
+  const { locale } = useLocale();
+  if (entry.currency === baseCurrency) return null;
+  const base = convert(entry.amount, entry.rateToBase, entry.currency, baseCurrency);
+  const rate = `1 ${entry.currency} = ${formatRate(entry.rateToBase, locale)} ${baseCurrency}`;
+  return (
+    <>
+      <Row label={t`W walucie bazowej`}>≈ {format.amount(base, baseCurrency)}</Row>
+      <Row label={t`Kurs`}>{rate}</Row>
+    </>
   );
 }
 

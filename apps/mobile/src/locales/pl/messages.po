@@ -13,6 +13,11 @@ msgstr ""
 msgid "{0} (Ty)"
 msgstr "{0} (Ty)"
 
+#. placeholder {0}: labels[action]
+#: src/features/entries/entry-actions-menu.tsx
+msgid "{0} (wkrótce)"
+msgstr "{0} (wkrótce)"
+
 #. placeholder {0}: names[i]
 #. placeholder {1}: amount(cell.paid)
 #. placeholder {2}: amount(cell.consumed)
@@ -54,6 +59,10 @@ msgstr "{memberCount, plural, one {# osoba w grupie} few {# osoby w grupie} many
 msgid "{memberName} znowu będzie osobą bez konta."
 msgstr "{memberName} znowu będzie osobą bez konta."
 
+#: src/app/(app)/groups/[groupId]/settle.tsx
+msgid "{name} (Ty)"
+msgstr "{name} (Ty)"
+
 #: src/features/claims/personal-claim-link-button.tsx
 msgid "{name}, to Twój link do grupy „{groupName}” w split-pay: {url}"
 msgstr "{name}, to Twój link do grupy „{groupName}” w split-pay: {url}"
@@ -81,6 +90,10 @@ msgstr "{names} {count, plural, one {otrzymał(a)} few {otrzymali} many {otrzyma
 msgid "{names} {count, plural, one {zapłacił(a)} few {zapłacili} many {zapłacili} other {zapłacili}} {amount} za {title}, {date}."
 msgstr "{names} {count, plural, one {zapłacił(a)} few {zapłacili} many {zapłacili} other {zapłacili}} {amount} za {title}, {date}."
 
+#: src/features/entries/spoken-amount.ts
+msgid "{original}, czyli około {base}"
+msgstr "{original}, czyli około {base}"
+
 #: src/features/entries/entry-bubble.tsx
 msgid "{payerName} + {otherPayers}"
 msgstr "{payerName} + {otherPayers}"
@@ -92,6 +105,10 @@ msgstr "{payerName} i {otherPayers, plural, one {# inna osoba} few {# inne osoby
 #: src/features/entries/bubble-label.ts
 msgid "{rest} i {last}"
 msgstr "{rest} i {last}"
+
+#: src/app/(app)/groups/[groupId]/entry-conflict.tsx
+msgid "{title} — usunięty"
+msgstr "{title} — usunięty"
 
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
 #: src/features/entries/entry-bubble.tsx
@@ -105,6 +122,10 @@ msgstr "+ Dodaj osobę bez konta"
 #: src/app/(auth)/sign-in.tsx
 msgid "Adres e-mail"
 msgstr "Adres e-mail"
+
+#: src/app/(app)/groups/[groupId]/entry-conflict.tsx
+msgid "Aktualna wersja"
+msgstr "Aktualna wersja"
 
 #: src/app/(app)/_layout.tsx
 #: src/app/(app)/activity.tsx
@@ -146,6 +167,10 @@ msgstr "Błąd"
 msgid "Brak danych do spłaty. Zapytaj o nie bezpośrednio."
 msgstr "Brak danych do spłaty. Zapytaj o nie bezpośrednio."
 
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Brak kursu EBC dla tej daty — wpisz go ręcznie."
+msgstr "Brak kursu EBC dla tej daty — wpisz go ręcznie."
+
 #: src/app/(app)/groups/[groupId]/index.tsx
 #: src/app/(app)/index.tsx
 #: src/app/g/[token]/index.web.tsx
@@ -163,6 +188,10 @@ msgstr "Była osoba"
 #: src/features/theme/theme-picker.tsx
 msgid "Ciemny"
 msgstr "Ciemny"
+
+#: src/features/entries/undo-snackbar.tsx
+msgid "Cofnij"
+msgstr "Cofnij"
 
 #: src/features/claims/claim-messages.tsx
 msgid "Cofnij przejęcie"
@@ -245,6 +274,29 @@ msgstr "Dołącz jako nowa osoba"
 msgid "Dzień"
 msgstr "Dzień"
 
+#: src/features/entries/entry-bubble.tsx
+msgid "edytowano"
+msgstr "edytowano"
+
+#. placeholder {0}: format.dateTime(entry.updatedAt)
+#: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
+#: src/app/g/[token]/entries/[entryId].tsx
+msgid "edytowano {0}"
+msgstr "edytowano {0}"
+
+#: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
+#: src/features/entries/entry-actions-menu.tsx
+msgid "Edytuj"
+msgstr "Edytuj"
+
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Edytuj wpływ"
+msgstr "Edytuj wpływ"
+
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Edytuj wydatek"
+msgstr "Edytuj wydatek"
+
 #: src/app/(app)/new-group.tsx
 msgid "Emoji"
 msgstr "Emoji"
@@ -252,6 +304,10 @@ msgstr "Emoji"
 #: src/features/stats/stats-view.tsx
 msgid "Górna kwota: zapłacone, dolna: zużyte."
 msgstr "Górna kwota: zapłacone, dolna: zużyte."
+
+#: src/features/entries/entry-actions-menu.tsx
+msgid "Historia"
+msgstr "Historia"
 
 #: src/app/(app)/groups/[groupId]/info.tsx
 msgid "Historia zmian"
@@ -271,6 +327,11 @@ msgstr "Imię, potem Enter"
 #: src/app/g/[token]/index.web.tsx
 msgid "Informacje o grupie"
 msgstr "Informacje o grupie"
+
+#: src/app/(app)/groups/[groupId]/balances.tsx
+#: src/app/(app)/groups/[groupId]/settle.tsx
+msgid "Inna spłata"
+msgstr "Inna spłata"
 
 #: src/features/entries/use-entry-labels.ts
 msgid "Inne"
@@ -363,8 +424,28 @@ msgid "Kolor"
 msgstr "Kolor"
 
 #: src/app/(app)/groups/[groupId]/settle.tsx
+msgid "Komu"
+msgstr "Komu"
+
+#: src/features/entries/entry-bubble.tsx
+msgid "konflikt zmian"
+msgstr "konflikt zmian"
+
+#: src/app/(app)/_layout.tsx
+msgid "Konflikt zmian"
+msgstr "Konflikt zmian"
+
+#: src/features/entries/entry-bubble.tsx
+msgid "Konflikt zmian: {title}. Pokaż szczegóły"
+msgstr "Konflikt zmian: {title}. Pokaż szczegóły"
+
+#: src/app/(app)/groups/[groupId]/settle.tsx
 msgid "Kopiuj"
 msgstr "Kopiuj"
+
+#: src/features/entries/entry-actions-menu.tsx
+msgid "Kopiuj kwotę"
+msgstr "Kopiuj kwotę"
 
 #: src/app/(app)/groups/[groupId]/settle.tsx
 msgid "Kopiuj: {label}"
@@ -375,21 +456,46 @@ msgstr "Kopiuj: {label}"
 msgid "Kto komu oddaje"
 msgstr "Kto komu oddaje"
 
+#: src/app/(app)/groups/[groupId]/settle.tsx
+msgid "Kto oddaje"
+msgstr "Kto oddaje"
+
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Ktoś usunął ten wpis w międzyczasie. Twoje zmiany nie zostały zapisane."
+msgstr "Ktoś usunął ten wpis w międzyczasie. Twoje zmiany nie zostały zapisane."
+
 #: src/features/web-view/public-error.tsx
 msgid "Ktoś z grupy wygenerował nowy link. Poproś go o aktualny."
 msgstr "Ktoś z grupy wygenerował nowy link. Poproś go o aktualny."
 
+#: src/app/(app)/groups/[groupId]/entry-conflict.tsx
+msgid "Ktoś zmienił ten wpis w międzyczasie"
+msgstr "Ktoś zmienił ten wpis w międzyczasie"
+
+#: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
+#: src/app/g/[token]/entries/[entryId].tsx
+msgid "Kurs"
+msgstr "Kurs"
+
+#. placeholder {0}: format.date(rates.data.table.ratesDate)
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Kurs EBC z {0}."
+msgstr "Kurs EBC z {0}."
+
+#. placeholder {0}: form.currency
+#. placeholder {1}: group.baseCurrency
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Kurs: 1 {0} = ? {1}"
+msgstr "Kurs: 1 {0} = ? {1}"
+
 #: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
+#: src/app/(app)/groups/[groupId]/settle.tsx
 #: src/app/(app)/quick-bill.tsx
 #: src/app/g/[token]/entries/[entryId].tsx
 #: src/features/entries/composer.tsx
 msgid "Kwota"
 msgstr "Kwota"
-
-#: src/app/(app)/groups/[groupId]/settle.tsx
-msgid "Kwota: {formatted}"
-msgstr "Kwota: {formatted}"
 
 #: src/features/entries/split-fields.tsx
 msgid "Kwoty sumują się do {sum} z {total} — brakuje {diff}."
@@ -460,6 +566,10 @@ msgstr "Nie udało się otworzyć linku grupy."
 msgid "Nie udało się przejąć profilu. Spróbuj ponownie."
 msgstr "Nie udało się przejąć profilu. Spróbuj ponownie."
 
+#: src/app/(app)/groups/[groupId]/index.tsx
+msgid "Nie udało się przywrócić wpisu."
+msgstr "Nie udało się przywrócić wpisu."
+
 #: src/features/group-link/group-link-section.tsx
 msgid "Nie udało się unieważnić linku."
 msgstr "Nie udało się unieważnić linku."
@@ -467,6 +577,10 @@ msgstr "Nie udało się unieważnić linku."
 #: src/features/profile/delete-account-section.tsx
 msgid "Nie udało się usunąć konta. Spróbuj ponownie."
 msgstr "Nie udało się usunąć konta. Spróbuj ponownie."
+
+#: src/app/(app)/groups/[groupId]/index.tsx
+msgid "Nie udało się usunąć wpisu. Spróbuj ponownie."
+msgstr "Nie udało się usunąć wpisu. Spróbuj ponownie."
 
 #: src/app/(app)/new-group.tsx
 msgid "Nie udało się utworzyć grupy. Spróbuj ponownie."
@@ -509,6 +623,14 @@ msgstr "Nie udało się wysłać kodu. Spróbuj ponownie."
 #: src/features/groups/attendance-grid-view.tsx
 msgid "Nie udało się zapisać obecności. Spróbuj ponownie."
 msgstr "Nie udało się zapisać obecności. Spróbuj ponownie."
+
+#: src/app/(app)/groups/[groupId]/settle.tsx
+msgid "Nie udało się zapisać spłaty. Spróbuj ponownie."
+msgstr "Nie udało się zapisać spłaty. Spróbuj ponownie."
+
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Nie udało się zapisać zmian. Spróbuj ponownie."
+msgstr "Nie udało się zapisać zmian. Spróbuj ponownie."
 
 #: src/app/(app)/groups/[groupId]/member.tsx
 #: src/features/groups/group-settings-section.tsx
@@ -585,6 +707,11 @@ msgstr "Oddaj {amount} – {0}"
 msgid "Oddaj {recipient}"
 msgstr "Oddaj {recipient}"
 
+#. placeholder {0}: format.date(rates.data.table.ratesDate)
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Offline: ostatni zapisany kurs EBC z {0}."
+msgstr "Offline: ostatni zapisany kurs EBC z {0}."
+
 #: src/app/(app)/groups/[groupId]/info.tsx
 msgid "Opuść, archiwizuj lub usuń grupę"
 msgstr "Opuść, archiwizuj lub usuń grupę"
@@ -619,6 +746,10 @@ msgstr "Pełny formularz wydatku"
 msgid "Po równo"
 msgstr "Po równo"
 
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Pobieram kurs EBC…"
+msgstr "Pobieram kurs EBC…"
+
 #: src/features/web-view/web-footer.tsx
 msgid "Pobierz aplikację"
 msgstr "Pobierz aplikację"
@@ -640,6 +771,11 @@ msgid "Podaj imię."
 msgstr "Podaj imię."
 
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Podaj kurs większy od zera, np. 4,3215."
+msgstr "Podaj kurs większy od zera, np. 4,3215."
+
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+#: src/app/(app)/groups/[groupId]/settle.tsx
 #: src/app/(app)/quick-bill.tsx
 msgid "Podaj kwotę większą od zera."
 msgstr "Podaj kwotę większą od zera."
@@ -726,12 +862,30 @@ msgstr "Salda ›"
 msgid "Skopiowano"
 msgstr "Skopiowano"
 
+#: src/app/(app)/groups/[groupId]/index.tsx
+msgid "Skopiowano kwotę"
+msgstr "Skopiowano kwotę"
+
 #: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
+#: src/app/(app)/groups/[groupId]/entry-conflict.tsx
+#: src/app/(app)/groups/[groupId]/index.tsx
 #: src/app/(app)/index.tsx
 #: src/app/g/[token]/entries/[entryId].tsx
 #: src/features/entries/entry-bubble.tsx
 msgid "Spłata"
 msgstr "Spłata"
+
+#: src/features/entries/bubble-label.ts
+msgid "Spłata {amount}. Od: {payerName}. {date}."
+msgstr "Spłata {amount}. Od: {payerName}. {date}."
+
+#: src/features/settlements/settlement-message.ts
+msgid "Spłata {spoken}. Od: {from}. Dla: {to}. {date}."
+msgstr "Spłata {spoken}. Od: {from}. Dla: {to}. {date}."
+
+#: src/features/settlements/settlement-message.ts
+msgid "Spłata: {from} → {to} · {amount}"
+msgstr "Spłata: {from} → {to} · {amount}"
 
 #: src/features/profile/about-section.tsx
 msgid "split-pay, wersja {version}"
@@ -773,6 +927,7 @@ msgid "Ta grupa nie istnieje albo nie masz do niej dostępu."
 msgstr "Ta grupa nie istnieje albo nie masz do niej dostępu."
 
 #: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
 #: src/app/g/[token]/entries/[entryId].tsx
 msgid "Tego wpisu już nie ma."
 msgstr "Tego wpisu już nie ma."
@@ -785,6 +940,10 @@ msgstr "Tej osoby nie ma już w grupie."
 #: src/features/profile/payout-details-section.tsx
 msgid "Telefon BLIK"
 msgstr "Telefon BLIK"
+
+#: src/app/(app)/groups/[groupId]/entry-conflict.tsx
+msgid "Ten konflikt jest już rozwiązany."
+msgstr "Ten konflikt jest już rozwiązany."
 
 #: src/features/web-view/public-error.tsx
 msgid "Ten link grupy jest już nieważny"
@@ -853,11 +1012,16 @@ msgstr "twój udział {0}"
 msgid "Twój udział {share}."
 msgstr "Twój udział {share}."
 
+#: src/app/(app)/groups/[groupId]/entry-conflict.tsx
+msgid "Twoje zmiany nie zostały zapisane."
+msgstr "Twoje zmiany nie zostały zapisane."
+
 #: src/app/(app)/groups/[groupId]/balances.tsx
 #: src/app/(app)/groups/[groupId]/info.tsx
 #: src/app/g/[token]/balances.tsx
 #: src/app/g/[token]/info.tsx
 #: src/features/entries/split-fields.tsx
+#: src/features/settlements/settlement-message.ts
 msgid "Ty"
 msgstr "Ty"
 
@@ -906,6 +1070,10 @@ msgstr "Uproszczone długi"
 msgid "Ustawienia"
 msgstr "Ustawienia"
 
+#: src/features/entries/entry-actions-menu.tsx
+msgid "Usuń"
+msgstr "Usuń"
+
 #. placeholder {0}: person.displayName
 #: src/app/(app)/quick-bill.tsx
 msgid "Usuń {0}"
@@ -918,6 +1086,11 @@ msgstr "Usuń konto"
 #: src/features/profile/delete-account-section.tsx
 msgid "Usunąć konto?"
 msgstr "Usunąć konto?"
+
+#. placeholder {0}: titleOf(undo)
+#: src/app/(app)/groups/[groupId]/index.tsx
+msgid "Usunięto: {0}"
+msgstr "Usunięto: {0}"
 
 #: src/features/profile/delete-account-section.tsx
 msgid "Usuwanie konta…"
@@ -935,9 +1108,26 @@ msgstr "Utwórz grupę"
 msgid "Utwórz grupę dla wyjazdu, mieszkania albo jednego rachunku."
 msgstr "Utwórz grupę dla wyjazdu, mieszkania albo jednego rachunku."
 
+#: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
+#: src/app/g/[token]/entries/[entryId].tsx
+msgid "W walucie bazowej"
+msgstr "W walucie bazowej"
+
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Waluta"
+msgstr "Waluta"
+
 #: src/app/(app)/new-group.tsx
 msgid "Waluta bazowa"
 msgstr "Waluta bazowa"
+
+#: src/app/(app)/groups/[groupId]/entry-conflict.tsx
+msgid "Wczytaj i edytuj"
+msgstr "Wczytaj i edytuj"
+
+#: src/app/(app)/groups/[groupId]/entry-conflict.tsx
+msgid "Wczytaj ponownie"
+msgstr "Wczytaj ponownie"
 
 #: src/features/web-view/sponsor-link.web.tsx
 msgid "Wesprzyj split-pay na GitHub Sponsors"
@@ -955,6 +1145,14 @@ msgstr "Wkrótce"
 #: src/app/g/[token]/_layout.tsx
 msgid "Wpis"
 msgstr "Wpis"
+
+#: src/app/(app)/groups/[groupId]/entry-conflict.tsx
+msgid "Wpis nie został przywrócony."
+msgstr "Wpis nie został przywrócony."
+
+#: src/app/(app)/groups/[groupId]/entry-conflict.tsx
+msgid "Wpis nie został usunięty."
+msgstr "Wpis nie został usunięty."
 
 #: src/app/(app)/groups/[groupId]/member.tsx
 msgid "Wpisujesz za nią wydatki. Później może przejąć swój profil."
@@ -1017,9 +1215,17 @@ msgstr "Wybierz siebie, żeby zobaczyć, ile jesteś winien. Zapamiętamy to w t
 msgid "Wybierz walutę."
 msgstr "Wybierz walutę."
 
+#: src/app/(app)/groups/[groupId]/settle.tsx
+msgid "Wybierz, komu oddaje – inną osobę niż oddającą."
+msgstr "Wybierz, komu oddaje – inną osobę niż oddającą."
+
 #: src/features/entries/split-fields.tsx
 msgid "Wybierz, kto dzieli część wspólną."
 msgstr "Wybierz, kto dzieli część wspólną."
+
+#: src/app/(app)/groups/[groupId]/settle.tsx
+msgid "Wybierz, kto oddaje."
+msgstr "Wybierz, kto oddaje."
 
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
 msgid "Wybierz, kto otrzymał pieniądze."
@@ -1032,6 +1238,10 @@ msgstr "Wybierz, kto zapłacił."
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
 msgid "Wydatek"
 msgstr "Wydatek"
+
+#: src/features/entries/bubble-label.ts
+msgid "Wydatek {amount}: {title}. Zapłacił(a): {payerName}. {date}."
+msgstr "Wydatek {amount}: {title}. Zapłacił(a): {payerName}. {date}."
 
 #: src/app/(app)/new-group.tsx
 msgid "Wyjazd z datami"
@@ -1103,11 +1313,18 @@ msgid "założyciel"
 msgstr "założyciel"
 
 #: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
+#: src/app/(app)/groups/[groupId]/entry-conflict.tsx
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
 #: src/app/(app)/groups/[groupId]/member.tsx
 #: src/app/(app)/groups/[groupId]/settle.tsx
 #: src/app/g/[token]/entries/[entryId].tsx
+#: src/features/entries/entry-actions-menu.tsx
 msgid "Zamknij"
 msgstr "Zamknij"
+
+#: src/app/(app)/groups/[groupId]/entry-conflict.tsx
+msgid "Zanim twoja zmiana dotarła na serwer, ktoś inny zmienił ten wpis."
+msgstr "Zanim twoja zmiana dotarła na serwer, ktoś inny zmienił ten wpis."
 
 #: src/features/profile/payout-details-section.tsx
 msgid "Zapisano."
@@ -1125,6 +1342,10 @@ msgstr "Zapisz dane do spłaty"
 #: src/features/groups/attendance-grid-view.tsx
 msgid "Zapisz obecność"
 msgstr "Zapisz obecność"
+
+#: src/app/(app)/groups/[groupId]/settle.tsx
+msgid "Zapisz spłatę"
+msgstr "Zapisz spłatę"
 
 #: src/features/entries/split-fields.tsx
 msgid "Zapłacił(a)"
@@ -1157,3 +1378,8 @@ msgstr "Zmień imię"
 #: src/app/g/[token]/info.tsx
 msgid "Zmień, kim jestem"
 msgstr "Zmień, kim jestem"
+
+#. placeholder {0}: format.dateTime(current.updatedAt)
+#: src/app/(app)/groups/[groupId]/entry-conflict.tsx
+msgid "Zmieniono {0}"
+msgstr "Zmieniono {0}"

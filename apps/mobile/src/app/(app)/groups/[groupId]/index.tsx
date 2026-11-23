@@ -3,8 +3,9 @@ import { FlashList, type FlashListRef } from '@shopify/flash-list';
 import type { Entry } from '@split-pay/shared';
 import { useQuery } from '@tanstack/react-query';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, Text, View } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { AccessibilityInfo, ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Pressable, Text, View } from 'react-native';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { GroupAvatar } from '@/components/group-avatar';
 import { GroupNotFound } from '@/components/group-not-found';
@@ -18,9 +19,15 @@ import {
   myMemberId as findMyMemberId,
   newestAddedEntry,
 } from '@/features/entries/conversation';
-import { entriesQuery } from '@/features/entries/entries-query';
+import { entriesQuery, useDeleteEntry, useRestoreEntry } from '@/features/entries/entries-query';
+import { EntryActionsMenu } from '@/features/entries/entry-actions-menu';
 import { DaySeparator, EntryBubble } from '@/features/entries/entry-bubble';
+import { useEntryConflicts } from '@/features/entries/entry-conflicts';
+import { amountForClipboard, type EntryAction, entryActions, versionConflictEntry } from '@/features/entries/entry-edit';
+import { UndoSnackbar } from '@/features/entries/undo-snackbar';
 import { type GroupDetail, groupQuery } from '@/features/groups/groups-query';
+import { SettlementSystemMessage } from '@/features/settlements/settlement-system-message';
+import { useLocale } from '@/i18n/locale-provider';
 import { authClient } from '@/lib/auth-client';
 import { useRefreshOnFocus } from '@/lib/use-refresh-on-focus';
 
@@ -32,6 +39,8 @@ const HIGHLIGHT_MS = 2000;
  * payers by entry date, sticky day separators with the daily total, the
  * composer at the bottom, the balance banner on top. The header (emoji +
  * name) and `⋯` open Group info.
+ * Long-press on a bubble: Edytuj, Usuń (with a "Cofnij" snackbar), Historia,
+ * Kopiuj kwotę (#11).
  */
 export default function ConversationScreen() {
   const { t } = useLingui();
@@ -133,48 +142,137 @@ function Conversation({
   const listRef = useRef<FlashListRef<ConversationItem<Claim>>>(null);
   const highlightId = useNewEntryHighlight(items, listRef);
 
+  const actions = useEntryActionHandler(group);
+  const conflicts = useEntryConflicts(group.id);
+
   const openEntry = (entryId: string) =>
     router.push({ pathname: '/groups/[groupId]/entries/[entryId]', params: { groupId: group.id, entryId } });
-
-  if (items.length === 0) {
-    return (
-      <View style={styles.center}>
-        <Text style={styles.emptyTitle}>{t`Brak wpisów`}</Text>
-        <Text style={styles.muted}>{t`Wpisz kwotę i tytuł poniżej, żeby dodać pierwszy wydatek.`}</Text>
-      </View>
-    );
-  }
+  const openConflict = (entryId: string) =>
+    router.push({ pathname: '/groups/[groupId]/entry-conflict', params: { groupId: group.id, entryId } });
 
   return (
-    <FlashList
-      ref={listRef}
-      data={items}
-      keyExtractor={(item) => item.key}
-      getItemType={(item) => item.type}
-      stickyHeaderIndices={stickyHeaderIndices}
-      extraData={highlightId}
-      // Opens at the newest entry; keeps following new ones while the user is near the bottom.
-      maintainVisibleContentPosition={{ startRenderingFromBottom: true, autoscrollToBottomThreshold: 0.2 }}
-      initialScrollIndex={items.length - 1}
-      keyboardDismissMode="interactive"
-      keyboardShouldPersistTaps="handled"
-      contentContainerStyle={styles.list}
-      renderItem={({ item }) =>
-        item.type === 'day' ? (
-          <DaySeparator item={item} baseCurrency={group.baseCurrency} />
-        ) : item.type === 'claim' ? (
-          <ClaimMessage groupId={group.id} claim={item.claim} />
-        ) : (
-          <EntryBubble
-            item={item}
-            baseCurrency={group.baseCurrency}
-            highlighted={item.entry.id === highlightId}
-            onPress={() => openEntry(item.entry.id)}
-          />
-        )
-      }
-    />
+    <View style={styles.container}>
+      {items.length === 0 ? (
+        <View style={styles.center}>
+          <Text style={styles.emptyTitle}>{t`Brak wpisów`}</Text>
+          <Text style={styles.muted}>{t`Wpisz kwotę i tytuł poniżej, żeby dodać pierwszy wydatek.`}</Text>
+        </View>
+      ) : (
+        <FlashList
+          ref={listRef}
+          data={items}
+          keyExtractor={(item) => item.key}
+          getItemType={(item) => (item.type === 'entry' && item.entry.kind === 'settlement' ? 'settlement' : item.type)}
+          stickyHeaderIndices={stickyHeaderIndices}
+          extraData={[highlightId, conflicts]}
+          // Opens at the newest entry; keeps following new ones while the user is near the bottom.
+          maintainVisibleContentPosition={{ startRenderingFromBottom: true, autoscrollToBottomThreshold: 0.2 }}
+          initialScrollIndex={items.length - 1}
+          keyboardDismissMode="interactive"
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={styles.list}
+          renderItem={({ item }) =>
+            item.type === 'day' ? (
+              <DaySeparator item={item} baseCurrency={group.baseCurrency} />
+            ) : item.type === 'claim' ? (
+              <ClaimMessage groupId={group.id} claim={item.claim} />
+            ) : item.entry.kind === 'settlement' ? (
+              // Settlements are system messages, not bubbles (ADR-0017).
+              <SettlementSystemMessage
+                entry={item.entry}
+                members={group.members}
+                myMemberId={me}
+                highlighted={item.entry.id === highlightId}
+                onPress={() => openEntry(item.entry.id)}
+              />
+            ) : (
+              <EntryBubble
+                item={item}
+                baseCurrency={group.baseCurrency}
+                highlighted={item.entry.id === highlightId}
+                onPress={() => openEntry(item.entry.id)}
+                onLongPress={() => actions.openMenu(item.entry)}
+                actions={entryActions(item.entry, group)}
+                onAction={(action) => actions.run(item.entry, action)}
+                conflict={conflicts.has(item.entry.id)}
+                onConflictPress={() => openConflict(item.entry.id)}
+              />
+            )
+          }
+        />
+      )}
+      {actions.elements}
+    </View>
   );
+}
+
+/**
+ * The bubbles' long-press menu and what its actions do: "Edytuj" opens the
+ * full form for the entry, "Usuń" soft-deletes it and offers "Cofnij" in a
+ * snackbar, "Kopiuj kwotę" copies the bare amount. `elements` (menu +
+ * snackbar) go below the list. TODO(#20): "Historia" opens the entry's change history.
+ */
+function useEntryActionHandler(group: GroupDetail) {
+  const { t } = useLingui();
+  const { locale } = useLocale();
+  const [menuEntry, setMenuEntry] = useState<Entry | null>(null);
+  const [undo, setUndo] = useState<Entry | null>(null);
+  const deleteEntry = useDeleteEntry(group.id);
+  const restoreEntry = useRestoreEntry(group.id);
+  const hideUndo = useCallback(() => setUndo(null), []);
+
+  const run = (entry: Entry, action: EntryAction) => {
+    switch (action) {
+      case 'edit':
+        router.push({ pathname: '/groups/[groupId]/expense-form', params: { groupId: group.id, entryId: entry.id } });
+        return;
+      case 'delete':
+        setUndo(null);
+        deleteEntry.mutate(entry, {
+          onSuccess: (deleted) => setUndo(deleted),
+          onError: (error) => {
+            // A version conflict marks the bubble with "!" instead.
+            if (!versionConflictEntry(error)) Alert.alert(t`Nie udało się usunąć wpisu. Spróbuj ponownie.`);
+          },
+        });
+        return;
+      case 'history':
+        return; // TODO(#20)
+      case 'copyAmount':
+        void Clipboard.setStringAsync(amountForClipboard(entry.amount, entry.currency, locale)).then(() =>
+          AccessibilityInfo.announceForAccessibility(t`Skopiowano kwotę`),
+        );
+        return;
+    }
+  };
+
+  const titleOf = (entry: Entry) => (entry.kind === 'settlement' ? t`Spłata` : entry.title);
+  const elements = (
+    <>
+      {undo ? (
+        <UndoSnackbar
+          message={t`Usunięto: ${titleOf(undo)}`}
+          busy={restoreEntry.isPending}
+          onHide={hideUndo}
+          onUndo={() =>
+            restoreEntry.mutate(undo, {
+              onSuccess: hideUndo,
+              onError: () => Alert.alert(t`Nie udało się przywrócić wpisu.`),
+            })
+          }
+        />
+      ) : null}
+      <EntryActionsMenu
+        title={menuEntry ? titleOf(menuEntry) : null}
+        actions={menuEntry ? entryActions(menuEntry, group) : []}
+        disabled={['history']}
+        onClose={() => setMenuEntry(null)}
+        onSelect={(action) => menuEntry && run(menuEntry, action)}
+      />
+    </>
+  );
+
+  return { openMenu: setMenuEntry, run, elements };
 }
 
 /**

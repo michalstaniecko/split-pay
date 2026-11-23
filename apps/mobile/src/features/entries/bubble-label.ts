@@ -1,4 +1,8 @@
 import { plural, t } from '@lingui/core/macro';
+import { type CurrencyCode, formatAmount, formatDate } from '@split-pay/shared';
+import type { EntryItem } from './conversation';
+import { incomeBubbleLabel } from './income-bubble-label';
+import { spokenEntryAmount } from './spoken-amount';
 
 /** "Kasia, Ania i Bartek" / "Kasia, Ania and Bartek". */
 function nameList(names: readonly string[]): string {
@@ -33,5 +37,36 @@ export function payersBubbleLabel(input: {
       : t`${names} ${plural(count, { one: 'otrzymał(a)', few: 'otrzymali', many: 'otrzymali', other: 'otrzymali' })} ${amount} za ${title}, ${date}.`;
   if (input.myShare === null) return sentence;
   const share = input.myShare;
+  return `${sentence} ${t`Twój udział ${share}.`}`;
+}
+
+/**
+ * The screen-reader label of any bubble, one sentence for the whole bubble in
+ * the active UI language (#36 pattern): incomes via `incomeBubbleLabel`,
+ * several payers via `payersBubbleLabel`, otherwise "Wydatek 20,00 euro,
+ * czyli około 86,43 złotego polskiego: Kolacja. Zapłacił(a): Kasia.
+ * 11 lipca 2026. Twój udział 28,81 złotego polskiego."
+ * Amounts spell the currency out; a foreign-currency entry reads the
+ * original amount, then the base amount (#14).
+ */
+export function entryBubbleLabel(item: EntryItem, context: { baseCurrency: CurrencyCode; locale: string }): string {
+  const { entry, payerName, payerNames, otherPayers, myShare, baseAmount } = item;
+  if (entry.kind === 'income') return incomeBubbleLabel({ entry, payerName, otherPayers, myShare, baseAmount }, context);
+
+  const amount = spokenEntryAmount(entry, baseAmount, context);
+  const date = formatDate(entry.date, context.locale);
+  if (entry.kind === 'settlement') return t`Spłata ${amount}. Od: ${payerName}. ${date}.`;
+
+  const spokenShare =
+    myShare === null || myShare === 0
+      ? null
+      : formatAmount(myShare, context.baseCurrency, context.locale, { currencyDisplay: 'name' });
+  if (otherPayers > 0) {
+    return payersBubbleLabel({ kind: 'expense', payerNames, title: entry.title, amount, date, myShare: spokenShare });
+  }
+  const title = entry.title;
+  const sentence = t`Wydatek ${amount}: ${title}. Zapłacił(a): ${payerName}. ${date}.`;
+  if (spokenShare === null) return sentence;
+  const share = spokenShare;
   return `${sentence} ${t`Twój udział ${share}.`}`;
 }

@@ -1,47 +1,185 @@
 import { useLingui } from '@lingui/react/macro';
-import { formatBankAccount, hasPayoutDetails } from '@split-pay/shared';
+import { defaultEntryDate, formatBankAccount, hasPayoutDetails, minorUnitDigits } from '@split-pay/shared';
 import { useQuery } from '@tanstack/react-query';
 import * as Clipboard from 'expo-clipboard';
-import { useLocalSearchParams } from 'expo-router';
+import { randomUUID } from 'expo-crypto';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { Button } from '@/components/button';
 import { GroupNotFound } from '@/components/group-not-found';
 import { memberPayoutDetailsQuery } from '@/features/balances/balances-query';
-import { groupQuery } from '@/features/groups/groups-query';
-import { useFormatters } from '@/i18n/use-formatters';
+import { cleanAmountInput } from '@/features/entries/amount-input';
+import { myMemberId } from '@/features/entries/conversation';
+import { useCreateEntry } from '@/features/entries/entries-query';
+import { todayLocalDate } from '@/features/entries/expense-draft';
+import { type GroupDetail, groupQuery } from '@/features/groups/groups-query';
+import { parseSettleForm, type SettleForm, type SettleFormField, settleForm } from '@/features/settlements/settle-form';
+import { useLocale } from '@/i18n/locale-provider';
+import { authClient } from '@/lib/auth-client';
 import { closeSheet } from '@/lib/close-sheet';
 
 /** How long "Skopiowano" replaces a copy button's label. */
 const COPIED_MS = 2000;
 
+/** The locale's decimal separator, for prefilling the amount field. */
+const decimalSeparator = (locale: string) =>
+  new Intl.NumberFormat(locale).formatToParts(1.5).find((part) => part.type === 'decimal')?.value ?? '.';
+
 /**
- * "Oddaj" sheet (from my transfer in the balance drawer): the recipient's
- * payout details with copy buttons. No payment integration.
- * TODO(#10): editable prefilled amount + "Zapisz spłatę" (records the settlement).
+ * The settle sheet. "Oddaj" on my transfer in the balance drawer opens it with
+ * `?to=&amount=`: the recipient's payout details (copy buttons, no payment
+ * integration) and the suggested amount, prefilled and editable. "Inna
+ * spłata" opens it without params: from / to / amount pickers for any other
+ * settlement. "Zapisz spłatę" records a settlement entry (base currency,
+ * default date) and returns to the Conversation, where it shows as a system message.
  */
 export default function SettleSheet() {
-  const { t } = useLingui();
   const { theme } = useUnistyles();
-  const format = useFormatters();
-  const { groupId, to, amount } = useLocalSearchParams<{ groupId: string; to: string; amount: string }>();
+  const { groupId, to, amount } = useLocalSearchParams<{ groupId: string; to?: string; amount?: string }>();
   const group = useQuery(groupQuery(groupId));
-  const details = useQuery(memberPayoutDetailsQuery(groupId, to));
+  const { data: session } = authClient.useSession();
 
   if (group.isError) return <GroupNotFound error={group.error} onRetry={() => void group.refetch()} />;
   if (!group.data) return <ActivityIndicator style={styles.loading} color={theme.colors.primary} />;
+  const suggestedAmount = Number(amount);
+  return (
+    <SettleSheetForm
+      group={group.data}
+      me={myMemberId(group.data.members, session?.user.id)}
+      suggested={
+        to
+          ? { to, ...(Number.isSafeInteger(suggestedAmount) && suggestedAmount > 0 ? { amount: suggestedAmount } : {}) }
+          : null
+      }
+    />
+  );
+}
 
-  const recipient = group.data.members.find((m) => m.id === to)?.displayName ?? '?';
-  const formatted = format.amount(Number(amount) || 0, group.data.baseCurrency);
+function SettleSheetForm({
+  group,
+  me,
+  suggested,
+}: {
+  group: GroupDetail;
+  me: string | null;
+  suggested: { to: string; amount?: number } | null;
+}) {
+  const { t } = useLingui();
+  const { theme } = useUnistyles();
+  const { locale } = useLocale();
+  const currency = group.baseCurrency;
+  const digits = minorUnitDigits(currency);
+  const [form, setForm] = useState<SettleForm>(() =>
+    settleForm({ from: me, ...suggested, currency, separator: decimalSeparator(locale) }),
+  );
+  const [errors, setErrors] = useState<SettleFormField[]>([]);
+  // One id per sheet: a retry after a lost response can't record the settlement twice.
+  const [entryId] = useState(() => randomUUID());
+  const createEntry = useCreateEntry(group.id);
+  // Archived group: read-only, no new settlements (SPEC).
+  const archived = group.archivedAt !== null;
+
+  const update = (next: SettleForm, touched: SettleFormField[]) => {
+    setForm(next);
+    setErrors((current) => current.filter((field) => !touched.includes(field)));
+  };
+  const save = () => {
+    const parsed = parseSettleForm(form, {
+      id: entryId,
+      date: defaultEntryDate(todayLocalDate(), group),
+      currency,
+      members: group.members,
+    });
+    if (!parsed.ok) {
+      setErrors(parsed.errors);
+      return;
+    }
+    createEntry.mutate(parsed.value, {
+      // Back to the Conversation, where the settlement shows as a system message.
+      onSuccess: () => router.dismissTo({ pathname: '/groups/[groupId]', params: { groupId: group.id } }),
+    });
+  };
+
+  const recipient = group.members.find((m) => m.id === form.to)?.displayName ?? '?';
+  const fieldError: Record<SettleFormField, string> = {
+    from: t`Wybierz, kto oddaje.`,
+    to: t`Wybierz, komu oddaje – inną osobę niż oddającą.`,
+    amount: t`Podaj kwotę większą od zera.`,
+  };
+  const errorFor = (field: SettleFormField) =>
+    errors.includes(field) ? <Text style={styles.error}>{fieldError[field]}</Text> : null;
+
+  const memberPicker = (field: 'from' | 'to', label: string) => (
+    <View style={styles.field}>
+      <Text style={styles.label}>{label}</Text>
+      <View style={styles.chips} accessibilityRole="radiogroup" accessibilityLabel={label}>
+        {group.members.map((member) => {
+          const selected = form[field] === member.id;
+          const name = member.displayName;
+          return (
+            <Pressable
+              key={member.id}
+              accessibilityRole="radio"
+              accessibilityState={{ checked: selected }}
+              onPress={() => update({ ...form, [field]: member.id }, [field])}
+              style={[styles.chip, selected && styles.chipSelected]}>
+              <Text style={styles.chipLabel}>{member.id === me ? t`${name} (Ty)` : name}</Text>
+            </Pressable>
+          );
+        })}
+      </View>
+      {errorFor(field)}
+    </View>
+  );
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>{t`Oddaj ${recipient}`}</Text>
-      <Text style={styles.amount} accessibilityLabel={t`Kwota: ${formatted}`}>
-        {formatted}
-      </Text>
+    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <ScrollView style={styles.container} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        <Text style={styles.title}>{suggested ? t`Oddaj ${recipient}` : t`Inna spłata`}</Text>
 
+        {suggested ? null : (
+          <>
+            {memberPicker('from', t`Kto oddaje`)}
+            {memberPicker('to', t`Komu`)}
+          </>
+        )}
+
+        <View style={styles.field}>
+          <Text style={styles.label}>{t`Kwota`}</Text>
+          <View style={[styles.amountRow, errors.includes('amount') && styles.inputInvalid]}>
+            <TextInput
+              value={form.amount}
+              onChangeText={(text) => update({ ...form, amount: cleanAmountInput(text, digits) }, ['amount'])}
+              placeholder="0"
+              accessibilityLabel={t`Kwota`}
+              placeholderTextColor={theme.colors.textMuted}
+              keyboardType="decimal-pad"
+              style={styles.amountInput}
+            />
+            <Text style={styles.muted}>{currency}</Text>
+          </View>
+          {errorFor('amount')}
+        </View>
+
+        {form.to !== '' ? <PayoutDetailsBox groupId={group.id} memberId={form.to} /> : null}
+
+        {createEntry.isError ? <Text style={styles.error}>{t`Nie udało się zapisać spłaty. Spróbuj ponownie.`}</Text> : null}
+        {archived ? null : <Button label={t`Zapisz spłatę`} onPress={save} loading={createEntry.isPending} />}
+        <Button variant="secondary" label={t`Zamknij`} onPress={closeSheet} />
+      </ScrollView>
+    </KeyboardAvoidingView>
+  );
+}
+
+/** The recipient's payout details with copy buttons (or why there are none). */
+function PayoutDetailsBox({ groupId, memberId }: { groupId: string; memberId: string }) {
+  const { t } = useLingui();
+  const { theme } = useUnistyles();
+  const details = useQuery(memberPayoutDetailsQuery(groupId, memberId));
+  return (
+    <>
       <Text style={styles.heading}>{t`Dane do spłaty`}</Text>
       {details.isPending ? (
         <ActivityIndicator color={theme.colors.primary} />
@@ -68,8 +206,7 @@ export default function SettleSheet() {
           ) : null}
         </View>
       )}
-      <Button variant="secondary" label={t`Zamknij`} onPress={closeSheet} />
-    </ScrollView>
+    </>
   );
 }
 
@@ -130,9 +267,57 @@ const styles = StyleSheet.create((theme) => ({
     fontWeight: theme.font.weightBold,
     color: theme.colors.text,
   },
-  amount: {
+  field: {
+    gap: theme.space(2),
+  },
+  label: {
+    fontSize: theme.font.sizeSm,
+    color: theme.colors.textMuted,
+  },
+  amountRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.space(2),
+    minHeight: 48,
+    paddingHorizontal: theme.space(3),
+    borderRadius: theme.radius.md,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.surface,
+  },
+  amountInput: {
+    flex: 1,
+    paddingVertical: theme.space(2),
+    color: theme.colors.text,
     fontSize: theme.font.sizeXl,
     fontWeight: theme.font.weightBold,
+  },
+  inputInvalid: {
+    borderColor: theme.colors.negative,
+  },
+  error: {
+    fontSize: theme.font.sizeSm,
+    color: theme.colors.negative,
+  },
+  chips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: theme.space(2),
+  },
+  chip: {
+    minHeight: 36,
+    justifyContent: 'center',
+    paddingHorizontal: theme.space(3),
+    borderRadius: theme.radius.pill,
+    borderWidth: 2,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.surface,
+  },
+  chipSelected: {
+    borderColor: theme.colors.primary,
+  },
+  chipLabel: {
+    fontSize: theme.font.sizeSm,
     color: theme.colors.text,
   },
   heading: {

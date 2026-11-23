@@ -12,6 +12,7 @@ import { openGraphRoutes } from './routes/open-graph';
 import { myPayoutDetailsRoutes } from './routes/payout-details';
 import { publicViewRoutes } from './routes/public-view';
 import { quickBillsRoutes } from './routes/quick-bills';
+import { ratesRoutes } from './routes/rates';
 
 export interface AppDeps {
   auth: Auth;
@@ -58,6 +59,8 @@ export const createApp = ({ auth, db, flags = defaultFeatureFlags, webUrl }: App
       /** The view-only web for a group link (no session) and its link previews. */
       .route('/public/links', publicViewRoutes({ db }))
       .route('/og', openGraphRoutes({ db, webUrl }))
+      /** ECB exchange rates for a date (ADR-0014). */
+      .route('/rates', ratesRoutes({ db, requireUser }))
   );
 };
 
