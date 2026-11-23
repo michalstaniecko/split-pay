@@ -1,6 +1,9 @@
 import type { MemberRename, NewGroup, NewMember } from '@split-pay/shared';
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import { type InferResponseType, parseResponse } from 'hono/client';
+import { localDb } from '@/features/offline/local-session';
+import { isGroupSynced, readGroupDetail, readGroupList } from '@/features/offline/local-store';
+import { attemptSync, syncGroup, syncGroupList } from '@/features/offline/sync';
 import { api } from '@/lib/api';
 
 /**
@@ -14,19 +17,42 @@ export const groupKeys = {
   detail: (groupId: string) => [...groupKeys.all, groupId] as const,
 };
 
-/** The inbox: my groups, most recent activity first (GET /groups). */
+/**
+ * The inbox: my groups, most recent activity first (GET /groups), read from
+ * the offline cache after a sync attempt (ADR-0005) — works offline.
+ */
 export const groupsQuery = () =>
   queryOptions({
     queryKey: groupKeys.list(),
-    queryFn: () => parseResponse(api.groups.$get()),
+    queryFn: async (): Promise<GroupListItem[]> => {
+      const syncError = await attemptSync(syncGroupList);
+      // The cache holds exactly what GET /groups returned (+ my queued entries).
+      const groups = (await readGroupList(await localDb())) as GroupListItem[];
+      if (groups.length === 0 && syncError) throw syncError;
+      return groups;
+    },
+    // Reads the device cache, so it must also run offline.
+    networkMode: 'always',
   });
 export type GroupListItem = InferResponseType<typeof api.groups.$get, 200>[number];
 
-/** One group with its members (GET /groups/:groupId). */
+/**
+ * One group with its members (GET /groups/:groupId shape), from the offline
+ * cache after a delta sync attempt. Not cached + sync failed → that error
+ * (404 = not a member any more; the cache forgot the group).
+ */
 export const groupQuery = (groupId: string) =>
   queryOptions({
     queryKey: groupKeys.detail(groupId),
-    queryFn: () => parseResponse(api.groups[':groupId'].$get({ param: { groupId } })),
+    queryFn: async (): Promise<GroupDetail> => {
+      const syncError = await attemptSync(() => syncGroup(groupId));
+      const db = await localDb();
+      // Only the inbox row (no members yet) doesn't count as cached.
+      const group = (await isGroupSynced(db, groupId)) ? await readGroupDetail(db, groupId) : undefined;
+      if (group) return group as GroupDetail;
+      throw syncError ?? new Error('Group not cached');
+    },
+    networkMode: 'always',
   });
 export type GroupDetail = InferResponseType<(typeof api.groups)[':groupId']['$get'], 200>;
 

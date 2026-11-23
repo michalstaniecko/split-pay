@@ -9,6 +9,7 @@ import { groups, members } from '../db/schema';
 import type { AuthEnv } from '../middleware/require-user';
 import { balancesRoutes, groupSettingsRoutes } from './balances';
 import { memberIdOfUser, recordChange } from './change-log';
+import { deltaSyncRoutes } from './delta-sync';
 import { entriesRoutes, latestEntries } from './entries';
 import { historyRoutes } from './history';
 import { claimLinkRoutes, claimRoutes } from './claims';
@@ -37,7 +38,7 @@ export const toGroupDto = (g: GroupRow) => ({
   lastActivityAt: g.lastActivityAt.toISOString(),
 });
 
-const toMemberDto = (m: MemberRow): Member => ({
+export const toMemberDto = (m: MemberRow): Member => ({
   id: m.id,
   groupId: m.groupId,
   displayName: m.displayName,
@@ -93,6 +94,8 @@ export const groupsRoutes = ({ db, requireUser }: { db: Db; requireUser: Middlew
         return c.json(rows.map((r) => ({ ...toGroupDto(r.group), lastEntry: previews.get(r.group.id) ?? null })));
       })
       .route('/:groupId/entries', entriesRoutes({ db }))
+      /** Delta sync for the offline cache (ADR-0005): `routes/delta-sync.ts`. */
+      .route('/:groupId/sync', deltaSyncRoutes({ db }))
       /** Balances + settle-up (balance drawer) and group settings: `routes/balances.ts`. */
       .route('/:groupId/balances', balancesRoutes({ db }))
       .route('/:groupId/settings', groupSettingsRoutes({ db }))

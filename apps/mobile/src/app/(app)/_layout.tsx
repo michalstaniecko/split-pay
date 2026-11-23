@@ -4,6 +4,7 @@ import { useUnistyles } from 'react-native-unistyles';
 import { InboxHeaderButtons } from '@/components/inbox-header-buttons';
 import { usePendingJoin } from '@/features/group-link/use-pending-join';
 import { usePushNotifications } from '@/features/notifications/push';
+import { useOfflineSync } from '@/features/offline/use-offline-sync';
 
 /** Deep links (group link → Conversation) keep the inbox underneath, so "back" leads home. */
 export const unstable_settings = { anchor: 'index' };
@@ -18,6 +19,7 @@ export default function AppLayout() {
   const { theme } = useUnistyles();
   usePendingJoin();
   usePushNotifications();
+  useOfflineSync();
   return (
     <Stack
       screenOptions={{
@@ -75,6 +77,16 @@ export default function AppLayout() {
         name="groups/[groupId]/entry-conflict"
         options={{
           title: t`Konflikt zmian`,
+          presentation: 'formSheet',
+          sheetAllowedDetents: 'fitToContents',
+          sheetGrabberVisible: true,
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="groups/[groupId]/unsent-entry"
+        options={{
+          title: t`Nie wysłano`,
           presentation: 'formSheet',
           sheetAllowedDetents: 'fitToContents',
           sheetGrabberVisible: true,

@@ -14,6 +14,7 @@ import { settlementMessage } from './settlement-message';
  * Long-press opens the same entry actions as a bubble (#11; `entryActions`),
  * also offered as accessibility actions. Edited settlements say "edytowano";
  * a change rejected as a version conflict shows a red "!" after the pill.
+ * Outbox state (#22): 🕓 while queued; a refused send also shows the red "!".
  */
 export function SettlementSystemMessage({
   entry,
@@ -26,6 +27,8 @@ export function SettlementSystemMessage({
   onLongPress,
   conflict = false,
   onConflictPress,
+  queued = false,
+  failed = false,
 }: {
   entry: Settlement;
   members: readonly Pick<Member, 'id' | 'displayName'>[];
@@ -38,7 +41,12 @@ export function SettlementSystemMessage({
   onLongPress?: () => void;
   /** The last change was rejected as a version conflict. */
   conflict?: boolean;
+  /** Pressing the red "!" (conflict or failed send). */
   onConflictPress?: () => void;
+  /** Waiting in the outbox to be sent (🕓). */
+  queued?: boolean;
+  /** The server refused it from the outbox (red "!" → retry sheet). */
+  failed?: boolean;
 }) {
   const { t } = useLingui();
   const { locale } = useLocale();
@@ -50,7 +58,7 @@ export function SettlementSystemMessage({
     <View style={styles.row}>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={[label, edited, conflict ? t`konflikt zmian` : null].filter(Boolean).join(', ')}
+        accessibilityLabel={[label, edited, conflict ? t`konflikt zmian` : null, failed ? t`nie wysłano` : queued ? t`czeka na wysłanie` : null].filter(Boolean).join(', ')}
         accessibilityActions={actions.map((name) => ({ name, label: actionLabels[name] }))}
         onAccessibilityAction={(event) => onAction?.(event.nativeEvent.actionName as EntryAction)}
         onPress={onPress}
@@ -59,12 +67,13 @@ export function SettlementSystemMessage({
         <Text style={styles.text}>
           💸 {text}
           {edited ? <Text style={styles.edited}> · {edited}</Text> : null}
+          {queued && !failed ? ' 🕓' : null}
         </Text>
       </Pressable>
-      {conflict ? (
+      {conflict || failed ? (
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={t`Konflikt zmian: ${title}. Pokaż szczegóły`}
+          accessibilityLabel={conflict ? t`Konflikt zmian: ${title}. Pokaż szczegóły` : t`Nie wysłano: ${title}. Pokaż szczegóły`}
           hitSlop={8}
           onPress={onConflictPress}
           style={styles.conflict}>
