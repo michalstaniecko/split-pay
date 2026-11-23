@@ -6,7 +6,9 @@ import { StyleSheet } from 'react-native-unistyles';
 import { Button } from '@/components/button';
 import { LanguagePicker } from '@/components/language-picker';
 import { PlaceholderScreen } from '@/components/placeholder-screen';
+import { AboutSection } from '@/features/profile/about-section';
 import { meQuery } from '@/features/profile/me-query';
+import { ThemePicker } from '@/features/theme/theme-picker';
 import { authClient } from '@/lib/auth-client';
 
 export default function ProfileScreen() {
@@ -34,7 +36,9 @@ export default function ProfileScreen() {
         </Text>
       </View>
       <LanguagePicker />
+      <ThemePicker />
       <Button variant="secondary" label={t`Wyloguj się`} onPress={() => void signOut()} loading={signingOut} />
+      <AboutSection />
     </PlaceholderScreen>
   );
 }
