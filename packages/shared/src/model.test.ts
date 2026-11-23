@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Entry, Group, Member, validateEntryInGroup } from './model';
+import { type AttendanceRange, Entry, Group, Member, normalizeAttendance, validateEntryInGroup } from './model';
 import { ANIA, BARTEK, KASIA, expense, group, member, members, settlement, uuid } from './test-fixtures';
 
 describe('Entry', () => {
@@ -124,6 +124,58 @@ describe('Member', () => {
 
   it('does not check attendance against the trip dates', () => {
     expect(withAttendance([{ from: '2025-01-01', to: '2027-12-31' }]).success).toBe(true);
+  });
+});
+
+describe('normalizeAttendance', () => {
+  const r = (from: string, to: string): AttendanceRange => ({ from, to });
+  const isValidAttendance = (attendance: AttendanceRange[]) =>
+    Member.safeParse({ ...member(ANIA, 'Ania'), attendance }).success;
+
+  it('sorts ranges by start date', () => {
+    expect(normalizeAttendance([r('2026-07-13', '2026-07-14'), r('2026-07-10', '2026-07-11')])).toEqual([
+      r('2026-07-10', '2026-07-11'),
+      r('2026-07-13', '2026-07-14'),
+    ]);
+  });
+
+  it('merges overlapping ranges', () => {
+    expect(normalizeAttendance([r('2026-07-10', '2026-07-12'), r('2026-07-11', '2026-07-14')])).toEqual([
+      r('2026-07-10', '2026-07-14'),
+    ]);
+    expect(normalizeAttendance([r('2026-07-10', '2026-07-14'), r('2026-07-11', '2026-07-12')])).toEqual([
+      r('2026-07-10', '2026-07-14'),
+    ]);
+  });
+
+  it('merges touching ranges, also across a month boundary', () => {
+    expect(normalizeAttendance([r('2026-07-10', '2026-07-11'), r('2026-07-12', '2026-07-14')])).toEqual([
+      r('2026-07-10', '2026-07-14'),
+    ]);
+    expect(normalizeAttendance([r('2026-08-01', '2026-08-02'), r('2026-07-30', '2026-07-31')])).toEqual([
+      r('2026-07-30', '2026-08-02'),
+    ]);
+  });
+
+  it('turns a per-day grid into ranges', () => {
+    const days = ['2026-07-14', '2026-07-10', '2026-07-11', '2026-07-13'];
+    expect(normalizeAttendance(days.map((d) => r(d, d)))).toEqual([
+      r('2026-07-10', '2026-07-11'),
+      r('2026-07-13', '2026-07-14'),
+    ]);
+  });
+
+  it('leaves a canonical list unchanged', () => {
+    const canonical = [r('2026-07-10', '2026-07-10'), r('2026-07-12', '2026-07-12'), r('2026-07-14', '2026-07-20')];
+    expect(normalizeAttendance(canonical)).toEqual(canonical);
+  });
+
+  it('returns attendance that passes the Member schema', () => {
+    const inputs = [
+      [r('2026-07-14', '2026-07-14'), r('2026-07-10', '2026-07-13'), r('2026-07-12', '2026-07-12')],
+      [r('2026-12-31', '2027-01-01'), r('2026-12-30', '2026-12-30'), r('2027-01-03', '2027-01-04')],
+    ];
+    for (const input of inputs) expect(isValidAttendance(normalizeAttendance(input))).toBe(true);
   });
 });
 

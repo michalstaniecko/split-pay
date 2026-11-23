@@ -53,6 +53,26 @@ export const Attendance = z
   });
 export type Attendance = z.infer<typeof Attendance>;
 
+/**
+ * Turns any list of valid ranges (any order, overlapping or touching — e.g.
+ * built from the per-day grid) into canonical attendance covering the same
+ * days. Call before saving. An empty input stays empty, which the schema
+ * rejects: zero days is not an attendance.
+ */
+export function normalizeAttendance(ranges: readonly AttendanceRange[]): AttendanceRange[] {
+  const sorted = [...ranges].sort((a, b) => (a.from < b.from ? -1 : a.from > b.from ? 1 : 0));
+  const result: AttendanceRange[] = [];
+  for (const range of sorted) {
+    const last = result.at(-1);
+    if (last && range.from <= nextDay(last.to)) {
+      if (range.to > last.to) last.to = range.to;
+    } else {
+      result.push({ from: range.from, to: range.to });
+    }
+  }
+  return result;
+}
+
 export const Member = z.object({
   id: Id,
   groupId: Id,
