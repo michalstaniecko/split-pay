@@ -124,11 +124,24 @@ export type EntryAction = 'edit' | 'delete' | 'history' | 'copyAmount';
  * An entry's long-press actions in menu order (SPEC: Edytuj, Usuń, Historia,
  * Kopiuj kwotę) — bubbles and settlement system messages alike ("Edytuj" on
  * a settlement opens the settle sheet). An archived group is read-only: only
- * Historia and Kopiuj kwotę.
+ * Historia and Kopiuj kwotę. Offline, the same holds for entries I didn't add (`lockedOffline`).
  */
-export function entryActions(_entry: Entry, group: { archivedAt: string | null }): EntryAction[] {
-  if (group.archivedAt !== null) return ['history', 'copyAmount'];
+export function entryActions(
+  entry: Entry,
+  group: { archivedAt: string | null },
+  device?: { offline: boolean; userId: string | undefined },
+): EntryAction[] {
+  if (group.archivedAt !== null || (device && lockedOffline(entry, device))) return ['history', 'copyAmount'];
   return ['edit', 'delete', 'history', 'copyAmount'];
+}
+
+/**
+ * Offline, only entries I added can be edited or deleted; others' are
+ * read-only until the connection is back (ADR-0005, #23) — that keeps
+ * conflicts to my own entries.
+ */
+export function lockedOffline(entry: Pick<Entry, 'createdBy'>, device: { offline: boolean; userId: string | undefined }): boolean {
+  return device.offline && entry.createdBy !== device.userId;
 }
 
 /** Where "Edytuj" opens with `?entryId=`: the settle sheet for a settlement, else the full form. */
