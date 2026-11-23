@@ -20,6 +20,12 @@ msgstr "{count, plural, one {# osoba} few {# osoby} many {# osób} other {# osob
 msgid "{memberCount, plural, one {# osoba w grupie} few {# osoby w grupie} many {# osób w grupie} other {# osoby w grupie}}"
 msgstr "{memberCount, plural, one {# osoba w grupie} few {# osoby w grupie} many {# osób w grupie} other {# osoby w grupie}}"
 
+#. placeholder {0}: spoken(baseAmount, context.baseCurrency)
+#: src/features/entries/bubble-label.ts
+msgid "{original}, czyli około {0}"
+msgstr "{original}, czyli około {0}"
+
+#: src/features/entries/bubble-label.ts
 #: src/features/entries/entry-bubble.tsx
 msgid "{payerName} + {otherPayers}"
 msgstr "{payerName} + {otherPayers}"
@@ -55,6 +61,10 @@ msgstr "Anuluj"
 #: src/app/(app)/groups/[groupId]/info.tsx
 msgid "bez konta"
 msgstr "bez konta"
+
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Brak kursu EBC dla tej daty — wpisz go ręcznie."
+msgstr "Brak kursu EBC dla tej daty — wpisz go ręcznie."
 
 #: src/app/(app)/groups/[groupId]/index.tsx
 #: src/app/(app)/index.tsx
@@ -195,6 +205,21 @@ msgid "Kolor"
 msgstr "Kolor"
 
 #: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
+msgid "Kurs"
+msgstr "Kurs"
+
+#. placeholder {0}: format.date(rates.data.table.ratesDate)
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Kurs EBC z {0}."
+msgstr "Kurs EBC z {0}."
+
+#. placeholder {0}: form.currency
+#. placeholder {1}: group.baseCurrency
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Kurs: 1 {0} = ? {1}"
+msgstr "Kurs: 1 {0} = ? {1}"
+
+#: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
 #: src/app/(app)/quick-bill.tsx
 #: src/features/entries/composer.tsx
@@ -318,6 +343,11 @@ msgstr "Obecność"
 msgid "Od"
 msgstr "Od"
 
+#. placeholder {0}: format.date(rates.data.table.ratesDate)
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Offline: ostatni zapisany kurs EBC z {0}."
+msgstr "Offline: ostatni zapisany kurs EBC z {0}."
+
 #: src/app/(app)/groups/[groupId]/info.tsx
 msgid "Opuść, archiwizuj lub usuń grupę"
 msgstr "Opuść, archiwizuj lub usuń grupę"
@@ -346,6 +376,10 @@ msgstr "Po równo"
 msgid "Po równo między obecnych tego dnia: {participantCount, plural, one {# osoba} few {# osoby} many {# osób} other {# osoby}}"
 msgstr "Po równo między obecnych tego dnia: {participantCount, plural, one {# osoba} few {# osoby} many {# osób} other {# osoby}}"
 
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Pobieram kurs EBC…"
+msgstr "Pobieram kurs EBC…"
+
 #: src/app/(app)/new-group.tsx
 msgid "Podaj datę końca (RRRR-MM-DD), nie wcześniejszą niż początek."
 msgstr "Podaj datę końca (RRRR-MM-DD), nie wcześniejszą niż początek."
@@ -361,6 +395,10 @@ msgstr "Podaj datę w formacie RRRR-MM-DD."
 #: src/app/(app)/groups/[groupId]/member.tsx
 msgid "Podaj imię."
 msgstr "Podaj imię."
+
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Podaj kurs większy od zera, np. 4,3215."
+msgstr "Podaj kurs większy od zera, np. 4,3215."
 
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
 #: src/app/(app)/quick-bill.tsx
@@ -401,6 +439,7 @@ msgstr "RRRR-MM-DD"
 
 #: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
 #: src/app/(app)/index.tsx
+#: src/features/entries/bubble-label.ts
 #: src/features/entries/entry-bubble.tsx
 msgid "Spłata"
 msgstr "Spłata"
@@ -460,6 +499,8 @@ msgid "Tryb jasny/ciemny"
 msgstr "Tryb jasny/ciemny"
 
 #. placeholder {0}: format.amount(myShare, baseCurrency)
+#. placeholder {0}: spoken(myShare, context.baseCurrency)
+#: src/features/entries/bubble-label.ts
 #: src/features/entries/entry-bubble.tsx
 msgid "twój udział {0}"
 msgstr "twój udział {0}"
@@ -516,6 +557,14 @@ msgstr "Utwórz grupę"
 #: src/app/(app)/index.tsx
 msgid "Utwórz grupę dla wyjazdu, mieszkania albo jednego rachunku."
 msgstr "Utwórz grupę dla wyjazdu, mieszkania albo jednego rachunku."
+
+#: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
+msgid "W walucie bazowej"
+msgstr "W walucie bazowej"
+
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Waluta"
+msgstr "Waluta"
 
 #: src/app/(app)/new-group.tsx
 msgid "Waluta bazowa"

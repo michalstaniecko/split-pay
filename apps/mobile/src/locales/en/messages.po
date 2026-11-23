@@ -20,6 +20,12 @@ msgstr "{count, plural, one {# person} other {# people}}"
 msgid "{memberCount, plural, one {# osoba w grupie} few {# osoby w grupie} many {# osób w grupie} other {# osoby w grupie}}"
 msgstr "{memberCount, plural, one {# person in the group} other {# people in the group}}"
 
+#. placeholder {0}: spoken(baseAmount, context.baseCurrency)
+#: src/features/entries/bubble-label.ts
+msgid "{original}, czyli około {0}"
+msgstr "{original}, about {0}"
+
+#: src/features/entries/bubble-label.ts
 #: src/features/entries/entry-bubble.tsx
 msgid "{payerName} + {otherPayers}"
 msgstr "{payerName} + {otherPayers}"
@@ -55,6 +61,10 @@ msgstr "Cancel"
 #: src/app/(app)/groups/[groupId]/info.tsx
 msgid "bez konta"
 msgstr "no account"
+
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Brak kursu EBC dla tej daty — wpisz go ręcznie."
+msgstr "No ECB rate for this date — enter it manually."
 
 #: src/app/(app)/groups/[groupId]/index.tsx
 #: src/app/(app)/index.tsx
@@ -195,6 +205,21 @@ msgid "Kolor"
 msgstr "Colour"
 
 #: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
+msgid "Kurs"
+msgstr "Rate"
+
+#. placeholder {0}: format.date(rates.data.table.ratesDate)
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Kurs EBC z {0}."
+msgstr "ECB rate from {0}."
+
+#. placeholder {0}: form.currency
+#. placeholder {1}: group.baseCurrency
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Kurs: 1 {0} = ? {1}"
+msgstr "Rate: 1 {0} = ? {1}"
+
+#: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
 #: src/app/(app)/quick-bill.tsx
 #: src/features/entries/composer.tsx
@@ -318,6 +343,11 @@ msgstr "Attendance"
 msgid "Od"
 msgstr "From"
 
+#. placeholder {0}: format.date(rates.data.table.ratesDate)
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Offline: ostatni zapisany kurs EBC z {0}."
+msgstr "Offline: last saved ECB rate from {0}."
+
 #: src/app/(app)/groups/[groupId]/info.tsx
 msgid "Opuść, archiwizuj lub usuń grupę"
 msgstr "Leave, archive or delete the group"
@@ -346,6 +376,10 @@ msgstr "Equally"
 msgid "Po równo między obecnych tego dnia: {participantCount, plural, one {# osoba} few {# osoby} many {# osób} other {# osoby}}"
 msgstr "Equally among those present that day: {participantCount, plural, one {# person} other {# people}}"
 
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Pobieram kurs EBC…"
+msgstr "Fetching the ECB rate…"
+
 #: src/app/(app)/new-group.tsx
 msgid "Podaj datę końca (RRRR-MM-DD), nie wcześniejszą niż początek."
 msgstr "Enter an end date (YYYY-MM-DD) no earlier than the start."
@@ -361,6 +395,10 @@ msgstr "Enter the date as YYYY-MM-DD."
 #: src/app/(app)/groups/[groupId]/member.tsx
 msgid "Podaj imię."
 msgstr "Enter a name."
+
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Podaj kurs większy od zera, np. 4,3215."
+msgstr "Enter a rate greater than zero, e.g. 4.3215."
 
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
 #: src/app/(app)/quick-bill.tsx
@@ -401,6 +439,7 @@ msgstr "YYYY-MM-DD"
 
 #: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
 #: src/app/(app)/index.tsx
+#: src/features/entries/bubble-label.ts
 #: src/features/entries/entry-bubble.tsx
 msgid "Spłata"
 msgstr "Settlement"
@@ -460,6 +499,8 @@ msgid "Tryb jasny/ciemny"
 msgstr "Light/dark mode"
 
 #. placeholder {0}: format.amount(myShare, baseCurrency)
+#. placeholder {0}: spoken(myShare, context.baseCurrency)
+#: src/features/entries/bubble-label.ts
 #: src/features/entries/entry-bubble.tsx
 msgid "twój udział {0}"
 msgstr "your share {0}"
@@ -516,6 +557,14 @@ msgstr "Create group"
 #: src/app/(app)/index.tsx
 msgid "Utwórz grupę dla wyjazdu, mieszkania albo jednego rachunku."
 msgstr "Create a group for a trip, a flat or a single bill."
+
+#: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
+msgid "W walucie bazowej"
+msgstr "In the base currency"
+
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Waluta"
+msgstr "Currency"
 
 #: src/app/(app)/new-group.tsx
 msgid "Waluta bazowa"

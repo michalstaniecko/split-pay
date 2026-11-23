@@ -1,7 +1,9 @@
 import { useLingui } from '@lingui/react/macro';
 import { Pressable, Text, View } from 'react-native';
 import { StyleSheet } from 'react-native-unistyles';
+import { useLocale } from '@/i18n/locale-provider';
 import { useFormatters } from '@/i18n/use-formatters';
+import { entryBubbleLabel } from './bubble-label';
 import type { DayItem, EntryItem } from './conversation';
 import { CATEGORY_ICONS } from './entries-query';
 
@@ -9,8 +11,10 @@ import { CATEGORY_ICONS } from './entries-query';
  * One entry in the Conversation, from its payer: end edge when it's mine,
  * start edge otherwise (`alignSelf` follows the layout direction, so RTL
  * mirrors it). Read as one element by screen readers.
- * Later slices add: "edytowano" (#11), income styling (#13), the base amount
- * of a foreign currency (#14), the receipt thumbnail (#26).
+ * A foreign-currency bubble shows the original amount large and the base
+ * amount small ("≈ 86,43 zł").
+ * Later slices add: "edytowano" (#11), income styling (#13), the receipt
+ * thumbnail (#26).
  */
 export function EntryBubble({
   item,
@@ -25,20 +29,22 @@ export function EntryBubble({
 }) {
   const { t } = useLingui();
   const format = useFormatters();
-  const { entry, side, payerName, otherPayers, myShare } = item;
+  const { locale } = useLocale();
+  const { entry, side, payerName, otherPayers, myShare, baseAmount } = item;
   const mine = side === 'end';
   const title = entry.kind === 'settlement' ? t`Spłata` : entry.title;
   const icon = entry.kind === 'settlement' ? '💸' : CATEGORY_ICONS[entry.category];
   const author = otherPayers > 0 ? t`${payerName} + ${otherPayers}` : payerName;
   const amount = format.amount(entry.amount, entry.currency);
   const share = myShare !== null && myShare !== 0 ? t`twój udział ${format.amount(myShare, baseCurrency)}` : null;
+  const approx = baseAmount !== null ? `≈ ${format.amount(baseAmount, baseCurrency)}` : null;
 
   return (
     <View style={[styles.row, mine ? styles.rowEnd : styles.rowStart]}>
       <Pressable
         accessible
         accessibilityRole="button"
-        accessibilityLabel={[author, title, amount, share].filter(Boolean).join(', ')}
+        accessibilityLabel={entryBubbleLabel(item, { baseCurrency, locale })}
         onPress={onPress}
         style={({ pressed }) => [
           styles.bubble,
@@ -56,6 +62,7 @@ export function EntryBubble({
           </Text>
         </View>
         <Text style={[styles.amount, mine && styles.mineText]}>{amount}</Text>
+        {approx ? <Text style={[styles.approx, mine && styles.mineMuted]}>{approx}</Text> : null}
         {share ? <Text style={[styles.share, mine && styles.mineMuted]}>{share}</Text> : null}
       </Pressable>
     </View>
@@ -132,6 +139,10 @@ const styles = StyleSheet.create((theme) => ({
     fontSize: theme.font.sizeLg,
     fontWeight: theme.font.weightBold,
     color: theme.colors.text,
+  },
+  approx: {
+    fontSize: theme.font.sizeSm,
+    color: theme.colors.textMuted,
   },
   share: {
     fontSize: theme.font.sizeSm,

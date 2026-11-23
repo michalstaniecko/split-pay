@@ -1,8 +1,10 @@
 import {
   type Category,
+  convert,
   type CurrencyCode,
   defaultEntryDate,
   equalExpenseDefaults,
+  ExchangeRate,
   type Group,
   LocalDate,
   type Member,
@@ -11,7 +13,7 @@ import {
   NewEntry,
   suggestCategory,
 } from '@split-pay/shared';
-import { parseAmountInput } from './amount-input';
+import { cleanAmountInput, parseAmountInput } from './amount-input';
 
 /** What the group needs to provide for building an expense. */
 export type ExpenseGroup = Pick<Group, 'id' | 'startDate' | 'endDate'> & { baseCurrency: CurrencyCode };
@@ -64,7 +66,7 @@ export function composerExpense(input: {
 /**
  * The full expense form while editing. This slice exposes payer, date and
  * category with an equal split in the base currency; later slices add their
- * fields here (split modes #12, income #13, currency #14) and to `parseExpenseForm`.
+ * fields here (split modes #12, income #13) and to `parseExpenseForm`.
  */
 export interface ExpenseForm {
   amount: string;
@@ -75,10 +77,16 @@ export interface ExpenseForm {
   category: Category;
   /** The user picked a category — stop suggesting it from the title. */
   categoryChosen: boolean;
+  /** The entry currency (#14); the group's base currency by default. */
+  currency: CurrencyCode;
+  /** Frozen rate as typed: units of the base currency per 1 unit of `currency` ("1" for the base currency). */
+  rate: string;
+  /** The user typed the rate — stop prefilling the ECB rate. */
+  rateEdited: boolean;
 }
 
-export type ExpenseFormField = 'amount' | 'title' | 'payer' | 'date';
-const FIELDS: readonly ExpenseFormField[] = ['amount', 'title', 'payer', 'date'];
+export type ExpenseFormField = 'amount' | 'title' | 'payer' | 'date' | 'rate';
+const FIELDS: readonly ExpenseFormField[] = ['amount', 'title', 'payer', 'date', 'rate'];
 
 /** The form opened by "+": the composer's values, me as payer, the default date, the suggested category. */
 export function expenseFormFromComposer(input: {
@@ -94,7 +102,60 @@ export function expenseFormFromComposer(input: {
     date: defaultEntryDate(input.today, input.group),
     category: suggestCategory(input.draft.title),
     categoryChosen: false,
+    currency: input.group.baseCurrency,
+    rate: '1',
+    rateEdited: false,
   };
+}
+
+/**
+ * Changes the entry currency: the amount is trimmed to its minor digits; the
+ * rate is "1" for the base currency, else empty until the ECB rate for the
+ * date is prefilled (`withSuggestedRate`).
+ */
+export function withCurrency(form: ExpenseForm, currency: CurrencyCode, baseCurrency: CurrencyCode): ExpenseForm {
+  return {
+    ...form,
+    currency,
+    amount: cleanAmountInput(form.amount, minorUnitDigits(currency)),
+    rate: currency === baseCurrency ? '1' : '',
+    rateEdited: false,
+  };
+}
+
+/** Common travel currencies the ECB publishes rates for. */
+const TRAVEL_CURRENCIES: readonly CurrencyCode[] = [
+  'EUR', 'USD', 'GBP', 'CHF', 'PLN', 'CZK', 'HUF', 'SEK', 'NOK', 'DKK', 'ISK', 'RON', 'TRY', 'JPY', 'THB', 'AUD', 'CAD',
+];
+
+/** Currencies offered in the full expense form: the base currency first. */
+export function entryCurrencies(baseCurrency: CurrencyCode): CurrencyCode[] {
+  return [baseCurrency, ...TRAVEL_CURRENCIES.filter((c) => c !== baseCurrency)];
+}
+
+/** The user typed a rate; it is frozen on the entry as typed. */
+export function withRate(form: ExpenseForm, rate: string): ExpenseForm {
+  return { ...form, rate, rateEdited: true };
+}
+
+/** Prefills the ECB rate for the form's date and currency, unless the user typed one. */
+export function withSuggestedRate(form: ExpenseForm, rate: ExchangeRate): ExpenseForm {
+  return form.rateEdited ? form : { ...form, rate };
+}
+
+/** A typed rate ("4,3157" or "4.3157") as a decimal string, or `null` when it isn't a valid rate. */
+function parseRateInput(text: string): ExchangeRate | null {
+  const rate = text.trim().replace(',', '.');
+  return ExchangeRate.safeParse(rate).success ? rate : null;
+}
+
+/** The form's amount in the base currency at the typed rate ("≈ …"); `null` in the base currency or while incomplete. */
+export function formBaseAmount(form: ExpenseForm, baseCurrency: CurrencyCode): number | null {
+  if (form.currency === baseCurrency) return null;
+  const amount = parseAmountInput(form.amount, minorUnitDigits(form.currency));
+  const rate = parseRateInput(form.rate);
+  if (amount === null || rate === null) return null;
+  return convert(amount, rate, form.currency, baseCurrency);
 }
 
 /** Changes the title; the category follows the title until the user picks one. */
@@ -110,29 +171,35 @@ export function parseExpenseForm(
   context: { id: string; group: ExpenseGroup; members: readonly Member[] },
 ): ParsedExpenseForm {
   const errors = new Set<ExpenseFormField>();
-  const amount = parseAmountInput(form.amount, minorUnitDigits(context.group.baseCurrency));
+  const amount = parseAmountInput(form.amount, minorUnitDigits(form.currency));
   if (amount === null) errors.add('amount');
   if (form.title.trim() === '') errors.add('title');
   if (!context.members.some((m) => m.id === form.payerMemberId)) errors.add('payer');
   const date = form.date.trim();
   if (!LocalDate.safeParse(date).success) errors.add('date');
-  if (errors.size > 0 || amount === null) return { ok: false, errors: FIELDS.filter((f) => errors.has(f)) };
+  const rateToBase = form.currency === context.group.baseCurrency ? '1' : parseRateInput(form.rate);
+  if (rateToBase === null) errors.add('rate');
+  if (errors.size > 0 || amount === null || rateToBase === null) {
+    return { ok: false, errors: FIELDS.filter((f) => errors.has(f)) };
+  }
 
-  const value = equalExpenseDefaults({
+  const defaults = equalExpenseDefaults({
     id: context.id,
     title: form.title,
     amount,
-    currency: context.group.baseCurrency,
+    currency: form.currency,
     date,
     payerMemberId: form.payerMemberId,
     members: context.members,
     category: form.category,
   });
+  const value: NewExpense = { ...defaults, rateToBase };
   // Same schema as the API; catches limits like the title length.
   const checked = NewEntry.safeParse(value);
   if (!checked.success) {
     const invalid = new Set(checked.error.issues.map((i) => i.path[0]));
-    return { ok: false, errors: FIELDS.filter((f) => invalid.has(f === 'payer' ? 'payers' : f)) };
+    const path = (f: ExpenseFormField) => (f === 'payer' ? 'payers' : f === 'rate' ? 'rateToBase' : f);
+    return { ok: false, errors: FIELDS.filter((f) => invalid.has(path(f))) };
   }
   return { ok: true, value };
 }

@@ -1,4 +1,5 @@
 import {
+  convert,
   type CurrencyCode,
   dailyTotals,
   type Entry,
@@ -35,6 +36,8 @@ export interface EntryItem {
   otherPayers: number;
   /** My share in the base currency ("twój udział"); `null` without a member of mine. */
   myShare: number | null;
+  /** A foreign-currency entry's amount in the base currency at its frozen rate ("≈ …"); `null` in the base currency. */
+  baseAmount: number | null;
 }
 
 export type ConversationItem = DayItem | EntryItem;
@@ -82,6 +85,10 @@ export function conversationItems(
       payerName: names.get(senders[0]!.memberId) ?? '?',
       otherPayers: senders.length - 1,
       myShare: me === null ? null : memberShare(entry, me, context.baseCurrency),
+      baseAmount:
+        entry.currency === context.baseCurrency
+          ? null
+          : convert(entry.amount, entry.rateToBase, entry.currency, context.baseCurrency),
     });
   }
   return { items, stickyHeaderIndices };
