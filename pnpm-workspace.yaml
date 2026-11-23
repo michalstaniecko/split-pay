@@ -1,8 +1,13 @@
 packages:
   - apps/*
   - packages/*
+
+# React Native / Metro działa najpewniej z płaskim node_modules
+nodeLinker: hoisted
+
 allowBuilds:
   esbuild: true
+
 permissions:
   tsdown:
     skills: false
