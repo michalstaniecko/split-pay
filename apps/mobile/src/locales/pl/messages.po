@@ -49,6 +49,10 @@ msgstr "{memberCount, plural, one {# osoba w grupie} few {# osoby w grupie} many
 msgid "{memberName} znowu będzie osobą bez konta."
 msgstr "{memberName} znowu będzie osobą bez konta."
 
+#: src/app/(app)/groups/[groupId]/settle.tsx
+msgid "{name} (Ty)"
+msgstr "{name} (Ty)"
+
 #: src/features/claims/personal-claim-link-button.tsx
 msgid "{name}, to Twój link do grupy „{groupName}” w split-pay: {url}"
 msgstr "{name}, to Twój link do grupy „{groupName}” w split-pay: {url}"
@@ -250,6 +254,11 @@ msgstr "Imię, potem Enter"
 msgid "Informacje o grupie"
 msgstr "Informacje o grupie"
 
+#: src/app/(app)/groups/[groupId]/balances.tsx
+#: src/app/(app)/groups/[groupId]/settle.tsx
+msgid "Inna spłata"
+msgstr "Inna spłata"
+
 #: src/features/entries/use-entry-labels.ts
 msgid "Inne"
 msgstr "Inne"
@@ -336,6 +345,10 @@ msgid "Kolor"
 msgstr "Kolor"
 
 #: src/app/(app)/groups/[groupId]/settle.tsx
+msgid "Komu"
+msgstr "Komu"
+
+#: src/app/(app)/groups/[groupId]/settle.tsx
 msgid "Kopiuj"
 msgstr "Kopiuj"
 
@@ -347,16 +360,17 @@ msgstr "Kopiuj: {label}"
 msgid "Kto komu oddaje"
 msgstr "Kto komu oddaje"
 
+#: src/app/(app)/groups/[groupId]/settle.tsx
+msgid "Kto oddaje"
+msgstr "Kto oddaje"
+
 #: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
+#: src/app/(app)/groups/[groupId]/settle.tsx
 #: src/app/(app)/quick-bill.tsx
 #: src/features/entries/composer.tsx
 msgid "Kwota"
 msgstr "Kwota"
-
-#: src/app/(app)/groups/[groupId]/settle.tsx
-msgid "Kwota: {formatted}"
-msgstr "Kwota: {formatted}"
 
 #: src/features/entries/split-fields.tsx
 msgid "Kwoty sumują się do {sum} z {total} — brakuje {diff}."
@@ -467,6 +481,10 @@ msgstr "Nie udało się wysłać kodu. Spróbuj ponownie."
 #: src/features/groups/attendance-grid-view.tsx
 msgid "Nie udało się zapisać obecności. Spróbuj ponownie."
 msgstr "Nie udało się zapisać obecności. Spróbuj ponownie."
+
+#: src/app/(app)/groups/[groupId]/settle.tsx
+msgid "Nie udało się zapisać spłaty. Spróbuj ponownie."
+msgstr "Nie udało się zapisać spłaty. Spróbuj ponownie."
 
 #: src/app/(app)/groups/[groupId]/member.tsx
 #: src/features/groups/group-settings-section.tsx
@@ -587,6 +605,7 @@ msgid "Podaj imię."
 msgstr "Podaj imię."
 
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
+#: src/app/(app)/groups/[groupId]/settle.tsx
 #: src/app/(app)/quick-bill.tsx
 msgid "Podaj kwotę większą od zera."
 msgstr "Podaj kwotę większą od zera."
@@ -675,6 +694,14 @@ msgstr "Skopiowano"
 #: src/features/entries/entry-bubble.tsx
 msgid "Spłata"
 msgstr "Spłata"
+
+#: src/features/settlements/settlement-message.ts
+msgid "Spłata {spoken}. Od: {from}. Dla: {to}. {date}."
+msgstr "Spłata {spoken}. Od: {from}. Dla: {to}. {date}."
+
+#: src/features/settlements/settlement-message.ts
+msgid "Spłata: {from} → {to} · {amount}"
+msgstr "Spłata: {from} → {to} · {amount}"
 
 #: src/features/profile/about-section.tsx
 msgid "split-pay, wersja {version}"
@@ -778,6 +805,7 @@ msgstr "Twój udział {share}."
 #: src/app/(app)/groups/[groupId]/balances.tsx
 #: src/app/(app)/groups/[groupId]/info.tsx
 #: src/features/entries/split-fields.tsx
+#: src/features/settlements/settlement-message.ts
 msgid "Ty"
 msgstr "Ty"
 
@@ -925,9 +953,17 @@ msgstr "Wybierz kolor."
 msgid "Wybierz walutę."
 msgstr "Wybierz walutę."
 
+#: src/app/(app)/groups/[groupId]/settle.tsx
+msgid "Wybierz, komu oddaje – inną osobę niż oddającą."
+msgstr "Wybierz, komu oddaje – inną osobę niż oddającą."
+
 #: src/features/entries/split-fields.tsx
 msgid "Wybierz, kto dzieli część wspólną."
 msgstr "Wybierz, kto dzieli część wspólną."
+
+#: src/app/(app)/groups/[groupId]/settle.tsx
+msgid "Wybierz, kto oddaje."
+msgstr "Wybierz, kto oddaje."
 
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
 msgid "Wybierz, kto otrzymał pieniądze."
@@ -1032,6 +1068,10 @@ msgstr "Zapisz dane do spłaty"
 #: src/features/groups/attendance-grid-view.tsx
 msgid "Zapisz obecność"
 msgstr "Zapisz obecność"
+
+#: src/app/(app)/groups/[groupId]/settle.tsx
+msgid "Zapisz spłatę"
+msgstr "Zapisz spłatę"
 
 #: src/features/entries/split-fields.tsx
 msgid "Zapłacił(a)"
