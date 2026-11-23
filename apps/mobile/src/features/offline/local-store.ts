@@ -8,8 +8,8 @@ import { type CachedGroup, type EntryPreview, localEntries, localGroups, localMe
 export type CachedGroupListItem = CachedGroup & { lastEntry: EntryPreview | null };
 /** A group with its members (API `GET /groups/:groupId`). */
 export type CachedGroupDetail = CachedGroup & { members: Member[] };
-/** One delta sync response (API `GET /groups/:groupId/changes`). */
-export interface GroupChanges {
+/** One delta sync response (API `GET /groups/:groupId/sync`). */
+export interface GroupDelta {
   group: CachedGroupDetail;
   entries: Entry[];
   cursor: string | null;
@@ -92,8 +92,8 @@ export async function readSyncCursor(db: LocalDb, groupId: string): Promise<stri
  * copy: the outbox is sent before pulling, so whatever remains there wins
  * until the server accepts or the user resolves it (#23).
  */
-export async function applyGroupChanges(db: LocalDb, changes: GroupChanges, now = new Date()): Promise<void> {
-  const { group, entries, cursor } = changes;
+export async function applyGroupDelta(db: LocalDb, delta: GroupDelta, now = new Date()): Promise<void> {
+  const { group, entries, cursor } = delta;
   const pending = new Set(
     entries.length === 0
       ? []

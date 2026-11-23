@@ -1,7 +1,7 @@
 import type { Entry } from '@split-pay/shared';
 import { DetailedError } from 'hono/client';
 import { describe, expect, it } from 'vitest';
-import { applyGroupChanges, enqueueCreate, readEntries } from './local-store';
+import { applyGroupDelta, enqueueCreate, readEntries } from './local-store';
 import {
   classifySendError,
   discardOutbox,
@@ -49,7 +49,7 @@ const stored = (e: Entry): Entry => ({ ...e, updatedAt: '2026-07-05T00:00:00.000
 /** A local database with group G1 cached, holding `entries` as synced from the server. */
 async function setup(entries: Entry[] = []) {
   const db = await nodeLocalDb();
-  await applyGroupChanges(db, {
+  await applyGroupDelta(db, {
     group: {
       id: G1,
       name: 'Mazury',

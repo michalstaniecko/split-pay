@@ -17,10 +17,10 @@ import { toGroupDto, toMemberDto } from './groups';
  */
 export const DELTA_SYNC_OVERLAP_MS = 60_000;
 
-const ChangesQuery = z.object({ since: z.iso.datetime({ offset: true }).optional() });
+const DeltaSyncQuery = z.object({ since: z.iso.datetime({ offset: true }).optional() });
 
 /**
- * Delta sync of one group (ADR-0005), mounted at `/groups/:groupId/changes`.
+ * Delta sync of one group (ADR-0005), mounted at `/groups/:groupId/sync`.
  * `GET ?since=<ISO>` → `{ group, entries, cursor }`:
  * - `group`: the group with all its members (same shape as `GET /groups/:groupId`) — always whole, it is small and
  *   member removals need no tombstones;
@@ -29,8 +29,8 @@ const ChangesQuery = z.object({ since: z.iso.datetime({ offset: true }).optional
  * - `cursor`: pass as the next `since` — the newest `updatedAt` returned, else `since` (null for an empty first sync).
  * 404 when the caller is not a member (left, removed, group deleted) — clients drop their copy.
  */
-export const changesRoutes = ({ db }: { db: Db }) =>
-  new Hono<AuthEnv>().get('/', zValidator('query', ChangesQuery), async (c) => {
+export const deltaSyncRoutes = ({ db }: { db: Db }) =>
+  new Hono<AuthEnv>().get('/', zValidator('query', DeltaSyncQuery), async (c) => {
     const group = await findMyGroup(db, c.req.param('groupId'), c.get('user').id);
     if (!group) return c.json({ error: 'not_found' as const }, 404);
     const { since } = c.req.valid('query');

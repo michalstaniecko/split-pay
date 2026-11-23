@@ -2,7 +2,7 @@ import type { Entry, Member } from '@split-pay/shared';
 import { describe, expect, it } from 'vitest';
 import type { CachedGroup, EntryPreview } from './local-schema';
 import {
-  applyGroupChanges,
+  applyGroupDelta,
   enqueueCreate,
   groupsNeedingSync,
   readEntries,
@@ -93,7 +93,7 @@ describe('local store: inbox', () => {
       { ...group(G1), lastEntry: null },
       { ...group(G2), lastEntry: null },
     ]);
-    await applyGroupChanges(db, {
+    await applyGroupDelta(db, {
       group: { ...group(G1), members: [member(ANIA, G1, 'Ania')] },
       entries: [entry(G1)],
       cursor: '2026-07-02T10:00:00.000Z',
@@ -110,7 +110,7 @@ describe('local store: inbox', () => {
     const db = await nodeLocalDb();
     const serverLast = entry(G1, { title: 'Z serwera' });
     await saveGroupList(db, [{ ...group(G1), lastEntry: preview(serverLast) }]);
-    await applyGroupChanges(db, {
+    await applyGroupDelta(db, {
       group: { ...group(G1), members: [member(ANIA, G1, 'Ania')] },
       entries: [entry(G1, { createdAt: '2026-07-01T09:00:00.000Z', title: 'Starszy' })],
       cursor: '2026-07-03T10:00:00.000Z',
@@ -126,8 +126,8 @@ describe('local store: inbox', () => {
       { ...group(G1), lastEntry: null },
       { ...group(G2), lastEntry: null },
     ]);
-    await applyGroupChanges(db, { group: { ...group(G1), members: [] }, entries: [], cursor: null });
-    await applyGroupChanges(db, { group: { ...group(G2), members: [] }, entries: [], cursor: null });
+    await applyGroupDelta(db, { group: { ...group(G1), members: [] }, entries: [], cursor: null });
+    await applyGroupDelta(db, { group: { ...group(G2), members: [] }, entries: [], cursor: null });
 
     const listed = [
       { ...group(G1), lastEntry: null },
@@ -158,19 +158,19 @@ describe('local store: group and entries', () => {
   it('delta sync stores the group with its members in server order', async () => {
     const db = await nodeLocalDb();
     const members = [member(BARTEK, G1, 'Bartek'), member(ANIA, G1, 'Ania')];
-    await applyGroupChanges(db, { group: { ...group(G1), members }, entries: [], cursor: null });
+    await applyGroupDelta(db, { group: { ...group(G1), members }, entries: [], cursor: null });
 
     expect(await readGroupDetail(db, G1)).toEqual({ ...group(G1), members });
   });
 
   it('replaces the member list on every sync (removed members disappear)', async () => {
     const db = await nodeLocalDb();
-    await applyGroupChanges(db, {
+    await applyGroupDelta(db, {
       group: { ...group(G1), members: [member(ANIA, G1, 'Ania'), member(BARTEK, G1, 'Bartek')] },
       entries: [],
       cursor: null,
     });
-    await applyGroupChanges(db, {
+    await applyGroupDelta(db, {
       group: { ...group(G1), members: [member(ANIA, G1, 'Ania K.')] },
       entries: [],
       cursor: null,
@@ -185,12 +185,12 @@ describe('local store: group and entries', () => {
     const earlySecond = entry(G1, { date: '2026-07-02', createdAt: '2026-07-02T12:00:00.000Z' });
     const earlyFirst = entry(G1, { date: '2026-07-02', createdAt: '2026-07-02T09:00:00.000Z' });
     const otherGroup = entry(G2);
-    await applyGroupChanges(db, {
+    await applyGroupDelta(db, {
       group: { ...group(G1), members: [] },
       entries: [late, earlySecond, earlyFirst],
       cursor: null,
     });
-    await applyGroupChanges(db, { group: { ...group(G2), members: [] }, entries: [otherGroup], cursor: null });
+    await applyGroupDelta(db, { group: { ...group(G2), members: [] }, entries: [otherGroup], cursor: null });
 
     expect(await readEntries(db, G1)).toEqual([earlyFirst, earlySecond, late]);
   });
@@ -199,23 +199,23 @@ describe('local store: group and entries', () => {
     const db = await nodeLocalDb();
     const pizza = entry(G1, { title: 'Pizza' });
     const beer = entry(G1, { title: 'Piwo' });
-    await applyGroupChanges(db, { group: { ...group(G1), members: [] }, entries: [pizza, beer], cursor: 'c1' });
+    await applyGroupDelta(db, { group: { ...group(G1), members: [] }, entries: [pizza, beer], cursor: 'c1' });
 
     const editedPizza = { ...pizza, title: 'Pizza i cola', version: 2, updatedAt: '2026-07-03T10:00:00.000Z' };
     const deletedBeer = { ...beer, deletedAt: '2026-07-03T10:00:00.000Z', updatedAt: '2026-07-03T10:00:00.000Z' };
-    await applyGroupChanges(db, { group: { ...group(G1), members: [] }, entries: [editedPizza, deletedBeer], cursor: 'c2' });
+    await applyGroupDelta(db, { group: { ...group(G1), members: [] }, entries: [editedPizza, deletedBeer], cursor: 'c2' });
 
     expect(await readEntries(db, G1)).toEqual([editedPizza]);
   });
 
   it('a queued entry is listed right away and is not overwritten by a delta while it waits', async () => {
     const db = await nodeLocalDb();
-    await applyGroupChanges(db, { group: { ...group(G1), members: [] }, entries: [], cursor: null });
+    await applyGroupDelta(db, { group: { ...group(G1), members: [] }, entries: [], cursor: null });
     const queued = entry(G1, { title: 'Moje' });
     await enqueueCreate(db, queued);
     expect(await readEntries(db, G1)).toEqual([queued]);
 
-    await applyGroupChanges(db, {
+    await applyGroupDelta(db, {
       group: { ...group(G1), members: [] },
       entries: [{ ...queued, title: 'Ktoś inny?' } as Entry],
       cursor: null,

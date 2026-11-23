@@ -1,10 +1,11 @@
 import { zValidator } from '@hono/zod-validator';
-import { GroupSettingsUpdate, settleUp } from '@split-pay/shared';
+import { GroupSettingsUpdate, type GroupSettingsSnapshot, settleUp } from '@split-pay/shared';
 import { and, asc, eq, isNull } from 'drizzle-orm';
 import { Hono } from 'hono';
 import type { Db } from '../db/client';
 import { entries, groups, members } from '../db/schema';
 import type { AuthEnv } from '../middleware/require-user';
+import { memberIdOfUser, recordChange } from './change-log';
 import { toEntryDto } from './entries';
 import { findMyGroup } from './group-access';
 
@@ -52,10 +53,31 @@ export const groupSettingsRoutes = ({ db }: { db: Db }) =>
       const group = await findMyGroup(db, c.req.param('groupId'), c.get('user').id);
       if (!group) return c.json({ error: 'not_found' as const }, 404);
       const update = c.req.valid('json');
-      const [updated] =
-        Object.keys(update).length > 0
-          ? await db.update(groups).set(update).where(eq(groups.id, group.id)).returning()
-          : [group];
-      const current = updated ?? group;
+      const userId = c.get('user').id;
+      const current = await db.transaction(async (tx) => {
+        const [row] = await tx.select().from(groups).where(eq(groups.id, group.id)).for('update');
+        if (!row) return group;
+        // Only the settings that really change go into the change history.
+        const keys = (Object.keys(update) as (keyof GroupSettingsUpdate)[]).filter(
+          (k) => update[k] !== undefined && update[k] !== row[k],
+        );
+        if (keys.length === 0) return row;
+        const before: GroupSettingsSnapshot = {};
+        const after: GroupSettingsSnapshot = {};
+        for (const k of keys) {
+          before[k] = row[k];
+          after[k] = update[k]!;
+        }
+        const [updated] = await tx.update(groups).set(after).where(eq(groups.id, group.id)).returning();
+        await recordChange(tx, {
+          kind: 'settings.update',
+          groupId: group.id,
+          targetId: group.id,
+          actorMemberId: await memberIdOfUser(tx, group.id, userId),
+          before,
+          after,
+        });
+        return updated ?? row;
+      });
       return c.json({ simplifyDebts: current.simplifyDebts }, 200);
     });

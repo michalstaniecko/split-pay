@@ -4,9 +4,9 @@ import { DetailedError, parseResponse } from 'hono/client';
 import { api } from '@/lib/api';
 import { localDb } from './local-session';
 import {
-  applyGroupChanges,
+  applyGroupDelta,
   type CachedGroupListItem,
-  type GroupChanges,
+  type GroupDelta,
   groupsNeedingSync,
   readSyncCursor,
   removeGroup,
@@ -106,7 +106,7 @@ export function flushNow(): Promise<void> {
 const groupSyncs = new Map<string, Promise<void>>();
 
 /**
- * Sends the outbox, then pulls the group's changes since its cursor. 404 (I
+ * Sends the outbox, then pulls what changed in the group since its cursor. 404 (I
  * left it, it was deleted) forgets the group locally and rethrows. Concurrent
  * calls for one group share a run.
  */
@@ -119,10 +119,10 @@ export function syncGroup(groupId: string): Promise<void> {
     const db = await localDb();
     const since = await readSyncCursor(db, groupId);
     try {
-      const changes = await parseResponse(
-        api.groups[':groupId'].changes.$get({ param: { groupId }, query: since ? { since } : {} }),
+      const delta = await parseResponse(
+        api.groups[':groupId'].sync.$get({ param: { groupId }, query: since ? { since } : {} }),
       );
-      await applyGroupChanges(db, changes as GroupChanges);
+      await applyGroupDelta(db, delta as GroupDelta);
     } catch (error) {
       if (isNotFound(error)) await removeGroup(db, groupId);
       throw error;

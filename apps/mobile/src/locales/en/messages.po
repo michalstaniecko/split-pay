@@ -7,6 +7,10 @@ msgstr ""
 "X-Generator: @lingui/cli\n"
 "Language: en\n"
 
+#: src/features/history/describe-change.ts
+msgid "„{title}”"
+msgstr "“{title}”"
+
 #. placeholder {0}: row.name
 #: src/app/(app)/groups/[groupId]/balances.tsx
 #: src/app/g/[token]/balances.tsx
@@ -146,6 +150,7 @@ msgstr "Alcohol"
 #: src/features/group-link/group-link-section.tsx
 #: src/features/groups/attendance-grid-view.tsx
 #: src/features/groups/group-lifecycle-section.tsx
+#: src/features/history/change-row.tsx
 #: src/features/profile/delete-account-section.tsx
 msgid "Anuluj"
 msgstr "Cancel"
@@ -186,15 +191,40 @@ msgstr "No entries"
 msgid "Brak wydatków — statystyki pojawią się po dodaniu pierwszego."
 msgstr "No expenses yet — stats appear once the first one is added."
 
+#: src/app/(app)/groups/[groupId]/history.tsx
+msgid "Brak zmian."
+msgstr "No changes."
+
 #: src/features/stats/stats-view.tsx
 msgid "Była osoba"
 msgstr "Former member"
+
+#: src/features/history/describe-change.ts
+msgid "cały wyjazd"
+msgstr "whole trip"
 
 #: src/features/theme/theme-picker.tsx
 msgid "Ciemny"
 msgstr "Dark"
 
+#: src/features/history/change-row.tsx
+msgid "Cofnąć tę zmianę?"
+msgstr "Undo this change?"
+
+#: src/features/history/change-row.tsx
+msgid "cofnięcie"
+msgstr "undo"
+
+#: src/features/history/change-row.tsx
+msgid "cofnięto"
+msgstr "undone"
+
+#: src/features/history/describe-change.ts
+msgid "Cofnięto przejęcie profilu {name}"
+msgstr "Undid claiming the {name} profile"
+
 #: src/features/entries/undo-snackbar.tsx
+#: src/features/history/change-row.tsx
 msgid "Cofnij"
 msgstr "Undo"
 
@@ -223,6 +253,10 @@ msgstr "Payout details"
 msgid "Data"
 msgstr "Date"
 
+#: src/features/history/describe-change.ts
+msgid "Data: {value}"
+msgstr "Date: {value}"
+
 #: src/app/(app)/new-group.tsx
 msgid "Daty pozwalają dzielić koszty według obecności."
 msgstr "Dates let you split costs by attendance."
@@ -241,6 +275,10 @@ msgstr "Days × people and categories"
 #: src/app/g/[token]/entries/[entryId].tsx
 msgid "Do"
 msgstr "To"
+
+#: src/features/history/describe-change.ts
+msgid "Do: {value}"
+msgstr "To: {value}"
 
 #: src/app/(app)/groups/[groupId]/member.tsx
 msgid "Dodaj"
@@ -264,6 +302,14 @@ msgstr "Add a person without an account"
 msgid "Dodał(a) {addedBy}, {0}"
 msgstr "Added by {addedBy}, {0}"
 
+#: src/features/history/describe-change.ts
+msgid "Dodano {what}"
+msgstr "Added {what}"
+
+#: src/features/history/describe-change.ts
+msgid "Dodano osobę bez konta: {name}"
+msgstr "Added a member without an account: {name}"
+
 #: src/features/entries/use-entry-labels.ts
 msgid "Dokładne kwoty"
 msgstr "Exact amounts"
@@ -279,6 +325,10 @@ msgstr "Join “{groupName}” on split-pay: {url}"
 #: src/app/g/[token]/index.tsx
 msgid "Dołącz jako nowa osoba"
 msgstr "Join as a new person"
+
+#: src/features/history/describe-change.ts
+msgid "Dołączenie do grupy: {name}"
+msgstr "Joined the group: {name}"
 
 #: src/features/stats/stats-view.tsx
 msgid "Dzień"
@@ -348,6 +398,12 @@ msgstr "The group was archived, so nothing in it can be changed any more."
 msgid "Historia"
 msgstr "History"
 
+#: src/app/(app)/groups/[groupId]/history.tsx
+msgid "Historia wpisu"
+msgstr "Entry history"
+
+#: src/app/(app)/_layout.tsx
+#: src/app/(app)/groups/[groupId]/history.tsx
 #: src/app/(app)/groups/[groupId]/info.tsx
 msgid "Historia zmian"
 msgstr "Change history"
@@ -425,6 +481,10 @@ msgstr "System language"
 #: src/app/g/[token]/entries/[entryId].tsx
 msgid "Kategoria"
 msgstr "Category"
+
+#: src/features/history/describe-change.ts
+msgid "Kategoria: {value}"
+msgstr "Category: {value}"
 
 #: src/features/stats/stats-view.tsx
 msgid "Kategorie"
@@ -528,6 +588,10 @@ msgstr "Rate"
 msgid "Kurs EBC z {0}."
 msgstr "ECB rate from {0}."
 
+#: src/features/history/describe-change.ts
+msgid "Kurs: {value}"
+msgstr "Rate: {value}"
+
 #. placeholder {0}: form.currency
 #. placeholder {1}: group.baseCurrency
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
@@ -542,6 +606,10 @@ msgstr "Rate: 1 {0} = ? {1}"
 #: src/features/entries/composer.tsx
 msgid "Kwota"
 msgstr "Amount"
+
+#: src/features/history/describe-change.ts
+msgid "Kwota: {value}"
+msgstr "Amount: {value}"
 
 #: src/features/entries/split-fields.tsx
 msgid "Kwoty sumują się do {sum} z {total} — brakuje {diff}."
@@ -591,9 +659,21 @@ msgstr "You have no groups yet"
 msgid "Nie możesz opuścić grupy, dopóki Twoje saldo nie wynosi zero (teraz {balanceText}). Najpierw się rozlicz."
 msgstr "You can't leave the group until your balance is zero (now {balanceText}). Settle up first."
 
+#: src/features/history/change-row.tsx
+msgid "Nie można cofnąć tej zmiany w tej grupie."
+msgstr "This change can't be undone in this group."
+
+#: src/features/history/change-row.tsx
+msgid "Nie można cofnąć: później ktoś to jeszcze zmienił. Cofnij najpierw nowsze zmiany."
+msgstr "Can't undo: someone changed it again later. Undo the newer changes first."
+
 #: src/features/claims/claim-messages.tsx
 msgid "Nie udało się cofnąć przejęcia."
 msgstr "Couldn't undo the claim."
+
+#: src/features/history/change-row.tsx
+msgid "Nie udało się cofnąć zmiany. Spróbuj ponownie."
+msgstr "Couldn't undo the change. Try again."
 
 #: src/app/(app)/groups/[groupId]/unsent-entry.tsx
 msgid "Nie udało się dodać wpisu"
@@ -670,6 +750,10 @@ msgstr "Could not load groups."
 msgid "Nie udało się wczytać grupy."
 msgstr "Could not load the group."
 
+#: src/features/history/history-section.tsx
+msgid "Nie udało się wczytać historii."
+msgstr "Couldn't load the history."
+
 #: src/features/group-link/group-link-section.tsx
 msgid "Nie udało się wczytać linku grupy."
 msgstr "Couldn't load the group link."
@@ -719,12 +803,17 @@ msgstr "Not sent"
 msgid "Nie wysłano: {title}. Pokaż szczegóły"
 msgstr "Not sent: {title}. Show details"
 
+#: src/features/history/describe-change.ts
+msgid "nieobecność"
+msgstr "absent"
+
 #: src/app/(auth)/sign-in.tsx
 msgid "Nieprawidłowy lub wygasły kod."
 msgstr "Invalid or expired code."
 
 #: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
 #: src/app/g/[token]/entries/[entryId].tsx
+#: src/features/history/change-row.tsx
 msgid "nieznana osoba"
 msgstr "unknown person"
 
@@ -774,6 +863,10 @@ msgstr "Attendance"
 msgid "Od"
 msgstr "From"
 
+#: src/features/history/describe-change.ts
+msgid "Od: {value}"
+msgstr "From: {value}"
+
 #: src/app/(app)/_layout.tsx
 #: src/app/(app)/groups/[groupId]/balances.tsx
 msgid "Oddaj"
@@ -805,6 +898,10 @@ msgstr "Leave group"
 msgid "Opuścić grupę „{name}”?"
 msgstr "Leave “{name}”?"
 
+#: src/features/history/describe-change.ts
+msgid "Opuszczenie grupy: {name}"
+msgstr "Left the group: {name}"
+
 #: src/app/(app)/_layout.tsx
 msgid "Osoba"
 msgstr "Person"
@@ -819,6 +916,14 @@ msgstr "Received by"
 msgid "Otrzymali"
 msgstr "Received by"
 
+#: src/features/history/describe-change.ts
+msgid "Otrzymujący: {value}"
+msgstr "Received by: {value}"
+
+#: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
+msgid "Otwiera historię wpisu"
+msgstr "Opens the entry's history"
+
 #: src/features/web-view/web-footer.tsx
 msgid "Otwórz w aplikacji"
 msgstr "Open in the app"
@@ -830,6 +935,10 @@ msgstr "Fuel"
 #: src/features/entries/composer.tsx
 msgid "Pełny formularz wydatku"
 msgstr "Full expense form"
+
+#: src/features/history/describe-change.ts
+msgid "Płacący: {value}"
+msgstr "Paid by: {value}"
 
 #: src/features/entries/use-entry-labels.ts
 msgid "Po równo"
@@ -886,10 +995,18 @@ msgstr "Enter a title."
 msgid "Podział"
 msgstr "Split"
 
+#: src/features/history/describe-change.ts
+msgid "Podział: {value}"
+msgstr "Split: {value}"
+
 #: src/app/(app)/groups/[groupId]/info.tsx
 #: src/app/g/[token]/info.tsx
 msgid "Pokaż"
 msgstr "Show"
+
+#: src/features/history/history-section.tsx
+msgid "Pokaż całą historię"
+msgstr "Show the whole history"
 
 #: src/features/balances/balance-banner.tsx
 msgid "Pokazuje salda i kto komu ile oddaje"
@@ -911,6 +1028,10 @@ msgstr "Personal items ({0}) exceed the expense amount ({1})."
 msgid "Profil"
 msgstr "Profile"
 
+#: src/features/history/describe-change.ts
+msgid "Przejęto profil {name}"
+msgstr "Claimed the {name} profile"
+
 #: src/app/g/[token]/index.tsx
 msgid "Przejmij profil osoby bez konta razem z historią wydatków."
 msgstr "Claim the profile of a member without an account, with their expense history."
@@ -918,6 +1039,14 @@ msgstr "Claim the profile of a member without an account, with their expense his
 #: src/features/groups/group-lifecycle-section.tsx
 msgid "Przywróć z archiwum"
 msgstr "Unarchive"
+
+#: src/features/history/describe-change.ts
+msgid "Przywrócono {what}"
+msgstr "Restored {what}"
+
+#: src/features/history/describe-change.ts
+msgid "Przywrócono grupę z archiwum"
+msgstr "Unarchived the group"
 
 #: src/features/stats/stats-view.tsx
 msgid "Razem"
@@ -930,6 +1059,10 @@ msgstr "The rest is split equally between"
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
 msgid "Rodzaj wpisu"
 msgstr "Entry type"
+
+#: src/features/history/describe-change.ts
+msgid "Rodzaj: {value}"
+msgstr "Type: {value}"
 
 #: src/features/entries/use-entry-labels.ts
 msgid "Rozrywka"
@@ -967,6 +1100,10 @@ msgstr "Copied"
 msgid "Skopiowano kwotę"
 msgstr "Amount copied"
 
+#: src/features/history/describe-change.ts
+msgid "spłata"
+msgstr "settlement"
+
 #: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
 #: src/app/(app)/groups/[groupId]/entry-conflict.tsx
 #: src/app/(app)/groups/[groupId]/index.tsx
@@ -989,6 +1126,10 @@ msgstr "Settlement {spoken}. From: {from}. To: {to}. {date}."
 #: src/features/settlements/settlement-message.ts
 msgid "Spłata: {from} → {to} · {amount}"
 msgstr "Settlement: {from} → {to} · {amount}"
+
+#: src/features/history/describe-change.ts
+msgid "spłatę {from} → {to}"
+msgstr "settlement {from} → {to}"
 
 #: src/features/profile/about-section.tsx
 msgid "split-pay, wersja {version}"
@@ -1040,6 +1181,10 @@ msgstr "This entry no longer exists."
 #: src/app/(app)/groups/[groupId]/member.tsx
 msgid "Tej osoby nie ma już w grupie."
 msgstr "This person is no longer in the group."
+
+#: src/features/history/change-row.tsx
+msgid "Tej zmiany nie można cofnąć."
+msgstr "This change can't be undone."
 
 #: src/app/(app)/groups/[groupId]/settle.tsx
 #: src/features/profile/payout-details-section.tsx
@@ -1134,11 +1279,19 @@ msgstr "Your changes were not saved."
 msgid "Ty"
 msgstr "You"
 
+#: src/features/history/change-row.tsx
+msgid "Tylko ta osoba może zmienić swoje imię."
+msgstr "Only this person can change their own name."
+
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
 #: src/app/(app)/quick-bill.tsx
 #: src/features/entries/composer.tsx
 msgid "Tytuł"
 msgstr "Title"
+
+#: src/features/history/describe-change.ts
+msgid "Tytuł: {value}"
+msgstr "Title: {value}"
 
 #: src/features/group-link/group-link-section.tsx
 msgid "Udostępnij link"
@@ -1212,6 +1365,10 @@ msgstr "Delete “{name}” permanently?"
 msgid "Usunąć konto?"
 msgstr "Delete account?"
 
+#: src/features/history/describe-change.ts
+msgid "Usunięto {what}"
+msgstr "Deleted {what}"
+
 #. placeholder {0}: titleOf(undo)
 #: src/app/(app)/groups/[groupId]/index.tsx
 msgid "Usunięto: {0}"
@@ -1232,6 +1389,10 @@ msgstr "Create group"
 #: src/app/(app)/index.tsx
 msgid "Utwórz grupę dla wyjazdu, mieszkania albo jednego rachunku."
 msgstr "Create a group for a trip, a flat or a single bill."
+
+#: src/features/history/describe-change.ts
+msgid "Utworzono grupę {group}"
+msgstr "Created the group {group}"
 
 #: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
 #: src/app/g/[token]/entries/[entryId].tsx
@@ -1265,6 +1426,10 @@ msgstr "Only people in your groups see them, when they owe you money."
 #: src/app/(app)/groups/[groupId]/info.tsx
 msgid "Wkrótce"
 msgstr "Coming soon"
+
+#: src/features/history/describe-change.ts
+msgid "Włączono upraszczanie długów"
+msgstr "Debt simplification turned on"
 
 #: src/app/(app)/_layout.tsx
 #: src/app/g/[token]/_layout.tsx
@@ -1306,6 +1471,14 @@ msgstr "Type an amount and a title below to add the first expense."
 #: src/features/entries/split-fields.tsx
 msgid "Wpisz, ile zapłaciła co najmniej jedna osoba."
 msgstr "Enter how much at least one person paid."
+
+#: src/features/history/describe-change.ts
+msgid "wpływ"
+msgstr "income"
+
+#: src/features/history/describe-change.ts
+msgid "wpływ „{title}”"
+msgstr "income “{title}”"
 
 #: src/features/entries/income-bubble-label.ts
 msgid "Wpływ {amount}: {title}. Otrzymał(a): {recipients}. {date}."
@@ -1372,9 +1545,17 @@ msgstr "Choose who received the money."
 msgid "Wybierz, kto zapłacił."
 msgstr "Choose who paid."
 
+#: src/features/history/describe-change.ts
+msgid "wydatek"
+msgstr "expense"
+
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
 msgid "Wydatek"
 msgstr "Expense"
+
+#: src/features/history/describe-change.ts
+msgid "wydatek „{title}”"
+msgstr "expense “{title}”"
 
 #: src/features/entries/bubble-label.ts
 msgid "Wydatek {amount}: {title}. Zapłacił(a): {payerName}. {date}."
@@ -1387,6 +1568,10 @@ msgstr "Trip with dates"
 #: src/app/(app)/new.tsx
 msgid "Wyjazd, mieszkanie albo inne wspólne wydatki"
 msgstr "A trip, a flat or other shared expenses"
+
+#: src/features/history/describe-change.ts
+msgid "Wyłączono upraszczanie długów"
+msgstr "Debt simplification turned off"
 
 #: src/app/(app)/profile.tsx
 msgid "Wyloguj się"
@@ -1499,6 +1684,10 @@ msgstr "Paid by"
 msgid "Zarchiwizowane"
 msgstr "Archived"
 
+#: src/features/history/describe-change.ts
+msgid "Zarchiwizowano grupę"
+msgstr "Archived the group"
+
 #. placeholder {0}: emptyNames.join(', ')
 #: src/features/groups/attendance-grid-view.tsx
 msgid "Zaznacz co najmniej jeden dzień: {0}"
@@ -1525,3 +1714,23 @@ msgstr "Change who I am"
 #: src/app/(app)/groups/[groupId]/entry-conflict.tsx
 msgid "Zmieniono {0}"
 msgstr "Changed {0}"
+
+#: src/features/history/describe-change.ts
+msgid "Zmieniono {what}"
+msgstr "Changed {what}"
+
+#: src/features/history/describe-change.ts
+msgid "Zmieniono imię: {before} → {after}"
+msgstr "Renamed: {before} → {after}"
+
+#: src/features/history/describe-change.ts
+msgid "Zmieniono obecność: {name}"
+msgstr "Changed attendance: {name}"
+
+#: src/features/history/describe-change.ts
+msgid "Zmieniono ustawienia grupy"
+msgstr "Changed group settings"
+
+#: src/features/history/describe-change.ts
+msgid "Zmieniono zdjęcie paragonu"
+msgstr "Changed the receipt photo"

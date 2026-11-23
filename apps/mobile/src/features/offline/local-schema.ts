@@ -45,7 +45,7 @@ export const localGroups = sqliteTable('groups', {
   lastEntry: text({ mode: 'json' }).$type<EntryPreview | null>(),
   lastActivityAt: text().notNull(),
   createdAt: text().notNull(),
-  /** Delta sync cursor (`GET /groups/:groupId/changes?since=`); null until the first delta sync. */
+  /** Delta sync cursor (`GET /groups/:groupId/sync?since=`); null until the first delta sync. */
   cursor: text(),
   /** When the group's members and entries were last pulled; null = only the inbox row is cached. */
   syncedAt: text(),

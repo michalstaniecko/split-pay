@@ -4,11 +4,11 @@ import { eq } from 'drizzle-orm';
 import { parseResponse } from 'hono/client';
 import { describe, expect, it } from 'vitest';
 import { entries } from './db/schema';
-import { DELTA_SYNC_OVERLAP_MS } from './routes/changes';
+import { DELTA_SYNC_OVERLAP_MS } from './routes/delta-sync';
 import { createTestApp } from '../test/app';
 import { testDb } from '../test/db';
 
-describe('delta sync (GET /groups/:groupId/changes)', () => {
+describe('delta sync (GET /groups/:groupId/sync)', () => {
   const { app, signIn, client } = createTestApp();
 
   async function setup() {
@@ -45,7 +45,7 @@ describe('delta sync (GET /groups/:groupId/changes)', () => {
         }),
       );
     const changes = (since?: string, session = ania) =>
-      client(session).groups[':groupId'].changes.$get({ param: { groupId }, query: since ? { since } : {} });
+      client(session).groups[':groupId'].sync.$get({ param: { groupId }, query: since ? { since } : {} });
     /** Moves an entry's `updatedAt` into the past, as if it changed long ago. */
     const age = (entry: Entry, updatedAt: string) =>
       testDb.db.update(entries).set({ updatedAt: new Date(updatedAt) }).where(eq(entries.id, entry.id));
@@ -114,6 +114,6 @@ describe('delta sync (GET /groups/:groupId/changes)', () => {
     const { changes, groupId } = await setup();
     const bartek = await signIn('bartek@example.com');
     expect((await changes(undefined, bartek)).status).toBe(404);
-    expect((await app.request(`/groups/${groupId}/changes`)).status).toBe(401);
+    expect((await app.request(`/groups/${groupId}/sync`)).status).toBe(401);
   });
 });
