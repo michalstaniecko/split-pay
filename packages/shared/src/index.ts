@@ -1,6 +1,7 @@
 export * from './attendance';
 export * from './category';
 export * from './entry-defaults';
+export * from './claims';
 export * from './flags';
 export * from './format';
 export * from './ledger';
