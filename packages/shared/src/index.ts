@@ -5,6 +5,7 @@ export * from './entry-defaults';
 export * from './claims';
 export * from './flags';
 export * from './format';
+export * from './group-lifecycle';
 export * from './group-settings';
 export * from './ledger';
 export * from './model';
