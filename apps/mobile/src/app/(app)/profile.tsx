@@ -6,6 +6,8 @@ import { StyleSheet } from 'react-native-unistyles';
 import { Button } from '@/components/button';
 import { LanguagePicker } from '@/components/language-picker';
 import { PlaceholderScreen } from '@/components/placeholder-screen';
+import { NotificationsSection } from '@/features/notifications/notification-switches';
+import { unregisterFromPush } from '@/features/notifications/push';
 import { AboutSection } from '@/features/profile/about-section';
 import { DeleteAccountSection } from '@/features/profile/delete-account-section';
 import { meQuery } from '@/features/profile/me-query';
@@ -24,6 +26,8 @@ export default function ProfileScreen() {
 
   const signOut = async () => {
     setSigningOut(true);
+    // This phone stops getting the account's pushes (the API also drops the token with the session).
+    await unregisterFromPush();
     await authClient.signOut();
     // Nothing from this account may leak into the next one.
     queryClient.clear();
@@ -40,6 +44,7 @@ export default function ProfileScreen() {
           </Text>
         </View>
         <PayoutDetailsSection />
+        <NotificationsSection />
         <LanguagePicker />
         <ThemePicker />
         <Button variant="secondary" label={t`Wyloguj się`} onPress={() => void signOut()} loading={signingOut} />

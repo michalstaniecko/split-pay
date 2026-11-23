@@ -29,6 +29,11 @@ msgstr "{0}, {label}: paid {1}, consumed {2}"
 msgid "{0}, informacje o grupie"
 msgstr "{0}, group info"
 
+#. placeholder {0}: transfer.fromName
+#: src/features/notifications/nudge-button.tsx
+msgid "{0}: przypomniano dziś"
+msgstr "{0}: reminded today"
+
 #: src/features/claims/claim-messages.tsx
 msgid "{claimerName} przejął profil {memberName}"
 msgstr "{claimerName} claimed the {memberName} profile"
@@ -590,6 +595,7 @@ msgstr "Couldn't save the changes. Try again."
 
 #: src/app/(app)/groups/[groupId]/member.tsx
 #: src/features/groups/group-settings-section.tsx
+#: src/features/notifications/notification-switches.tsx
 #: src/features/profile/payout-details-section.tsx
 msgid "Nie udało się zapisać. Spróbuj ponownie."
 msgstr "Couldn't save. Please try again."
@@ -610,6 +616,10 @@ msgstr "Accommodation"
 #: src/app/(app)/new.tsx
 msgid "Nowa grupa"
 msgstr "New group"
+
+#: src/features/notifications/notification-switches.tsx
+msgid "Nowe i zmienione wydatki z Twoim udziałem, spłaty dla Ciebie, przypomnienia."
+msgstr "New and changed expenses you take part in, settlements to you, reminders."
 
 #: src/app/(app)/_layout.tsx
 #: src/app/(app)/index.tsx
@@ -750,6 +760,18 @@ msgstr "Show"
 msgid "Pokazuje salda i kto komu ile oddaje"
 msgstr "Shows balances and who pays whom how much"
 
+#: src/features/notifications/notification-switches.tsx
+msgid "Powiadomienia"
+msgstr "Notifications"
+
+#: src/features/notifications/notification-switches.tsx
+msgid "Powiadomienia push"
+msgstr "Push notifications"
+
+#: src/features/notifications/notification-switches.tsx
+msgid "Powiadomienia z tej grupy"
+msgstr "Notifications from this group"
+
 #: src/features/entries/split-fields.tsx
 msgid "Pozycje osobiste"
 msgstr "Personal items"
@@ -769,6 +791,19 @@ msgstr "Profile"
 #: src/app/(app)/g/[token].tsx
 msgid "Przejmij profil osoby bez konta razem z historią wydatków."
 msgstr "Claim the profile of a member without an account, with their expense history."
+
+#: src/features/notifications/nudge-button.tsx
+msgid "przypomniano dziś"
+msgstr "reminded today"
+
+#: src/features/notifications/nudge-button.tsx
+msgid "Przypomnij"
+msgstr "Remind"
+
+#. placeholder {0}: transfer.fromName
+#: src/features/notifications/nudge-button.tsx
+msgid "Przypomnij: {0}"
+msgstr "Remind: {0}"
 
 #: src/features/stats/stats-view.tsx
 msgid "Razem"
@@ -838,6 +873,7 @@ msgstr "split-pay, version {version}"
 #: src/app/(app)/index.tsx
 #: src/components/group-not-found.tsx
 #: src/features/group-link/group-link-section.tsx
+#: src/features/notifications/nudge-button.tsx
 msgid "Spróbuj ponownie"
 msgstr "Try again"
 
@@ -1155,6 +1191,10 @@ msgstr "Trip with dates"
 #: src/app/(app)/new.tsx
 msgid "Wyjazd, mieszkanie albo inne wspólne wydatki"
 msgstr "A trip, a flat or other shared expenses"
+
+#: src/features/notifications/notification-switches.tsx
+msgid "Wyłączone: grupa odświeża się w tle, ale bez powiadomień."
+msgstr "Off: the group still refreshes in the background, without notifications."
 
 #: src/app/(app)/profile.tsx
 msgid "Wyloguj się"

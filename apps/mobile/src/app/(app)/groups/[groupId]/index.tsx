@@ -26,6 +26,7 @@ import { useEntryConflicts } from '@/features/entries/entry-conflicts';
 import { amountForClipboard, type EntryAction, entryActions, versionConflictEntry } from '@/features/entries/entry-edit';
 import { UndoSnackbar } from '@/features/entries/undo-snackbar';
 import { type GroupDetail, groupQuery } from '@/features/groups/groups-query';
+import { useFocusedEntry } from '@/features/notifications/use-focused-entry';
 import { SettlementSystemMessage } from '@/features/settlements/settlement-system-message';
 import { useLocale } from '@/i18n/locale-provider';
 import { authClient } from '@/lib/auth-client';
@@ -45,7 +46,8 @@ const HIGHLIGHT_MS = 2000;
 export default function ConversationScreen() {
   const { t } = useLingui();
   const { theme } = useUnistyles();
-  const { groupId } = useLocalSearchParams<{ groupId: string }>();
+  // `entryId`: opened from a notification — scroll to that bubble and highlight it.
+  const { groupId, entryId } = useLocalSearchParams<{ groupId: string; entryId?: string }>();
   const group = useQuery(groupQuery(groupId));
   const entries = useQuery(entriesQuery(groupId));
   const claims = useQuery(claimsQuery(groupId));
@@ -107,7 +109,13 @@ export default function ConversationScreen() {
               </Pressable>
             </View>
           ) : (
-            <Conversation group={group.data} entries={entries.data} claims={claims.data ?? []} me={me} />
+            <Conversation
+              group={group.data}
+              entries={entries.data}
+              claims={claims.data ?? []}
+              me={me}
+              focusEntryId={entryId}
+            />
           )}
           {group.data.archivedAt === null ? (
             <Composer
@@ -128,11 +136,13 @@ function Conversation({
   entries,
   claims,
   me,
+  focusEntryId,
 }: {
   group: GroupDetail;
   entries: Entry[];
   claims: Claim[];
   me: string | null;
+  focusEntryId: string | undefined;
 }) {
   const { t } = useLingui();
   const { items, stickyHeaderIndices } = useMemo(
@@ -140,7 +150,9 @@ function Conversation({
     [entries, group.members, me, group.baseCurrency, claims],
   );
   const listRef = useRef<FlashListRef<ConversationItem<Claim>>>(null);
-  const highlightId = useNewEntryHighlight(items, listRef);
+  const newHighlightId = useNewEntryHighlight(items, listRef);
+  const focusedId = useFocusedEntry(items, listRef, focusEntryId);
+  const highlightId = focusedId ?? newHighlightId;
 
   const actions = useEntryActionHandler(group);
   const conflicts = useEntryConflicts(group.id);
