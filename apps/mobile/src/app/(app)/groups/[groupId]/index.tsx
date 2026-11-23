@@ -35,7 +35,9 @@ import { UndoSnackbar } from '@/features/entries/undo-snackbar';
 import { type GroupDetail, groupQuery } from '@/features/groups/groups-query';
 import { useFocusedEntry } from '@/features/notifications/use-focused-entry';
 import { OfflineBanner } from '@/features/offline/offline-banner';
+import { OutboxBlockedError } from '@/features/offline/offline-changes';
 import { useOutboxState } from '@/features/offline/outbox-query';
+import { useIsOnline } from '@/features/offline/use-offline-sync';
 import { SettlementSystemMessage } from '@/features/settlements/settlement-system-message';
 import { useLocale } from '@/i18n/locale-provider';
 import { authClient } from '@/lib/auth-client';
@@ -216,7 +218,7 @@ function Conversation({
                 highlighted={item.entry.id === highlightId}
                 onPress={() => openEntry(item.entry.id)}
                 onLongPress={() => actions.openMenu(item.entry)}
-                actions={entryActions(item.entry, group)}
+                actions={actions.actionsFor(item.entry)}
                 onAction={(action) => actions.run(item.entry, action)}
                 conflict={conflicts.has(item.entry.id)}
                 queued={outbox.get(item.entry.id)?.status === 'queued'}
@@ -232,7 +234,7 @@ function Conversation({
                 highlighted={item.entry.id === highlightId}
                 onPress={() => openEntry(item.entry.id)}
                 onLongPress={() => actions.openMenu(item.entry)}
-                actions={entryActions(item.entry, group)}
+                actions={actions.actionsFor(item.entry)}
                 onAction={(action) => actions.run(item.entry, action)}
                 conflict={conflicts.has(item.entry.id)}
                 queued={outbox.get(item.entry.id)?.status === 'queued'}
@@ -256,7 +258,8 @@ function Conversation({
  * settlement), "Usuń" soft-deletes it and offers "Cofnij" in a
  * snackbar, "Kopiuj kwotę" copies the bare amount. `elements` (menu +
  * snackbar) go below the list. "Historia" opens the entry's change history (#20).
- * In an archived group only Historia and Kopiuj kwotę are offered (`entryActions`).
+ * In an archived group only Historia and Kopiuj kwotę are offered (`entryActions`); offline, the same
+ * for entries someone else added. Offline edits and deletions of my entries go through the outbox (#23).
  */
 function useEntryActionHandler(group: GroupDetail) {
   const { t } = useLingui();
@@ -266,6 +269,10 @@ function useEntryActionHandler(group: GroupDetail) {
   const deleteEntry = useDeleteEntry(group.id);
   const restoreEntry = useRestoreEntry(group.id);
   const hideUndo = useCallback(() => setUndo(null), []);
+  const online = useIsOnline();
+  const userId = authClient.useSession().data?.user.id;
+  // Offline, others' entries are read-only (ADR-0005): no Edytuj / Usuń on them.
+  const actionsFor = (entry: Entry) => entryActions(entry, group, { offline: !online, userId });
 
   const run = (entry: Entry, action: EntryAction) => {
     switch (action) {
@@ -278,7 +285,8 @@ function useEntryActionHandler(group: GroupDetail) {
           onSuccess: (deleted) => setUndo(deleted),
           onError: (error) => {
             // A version conflict marks the bubble with "!" instead.
-            if (!versionConflictEntry(error)) Alert.alert(t`Nie udało się usunąć wpisu. Spróbuj ponownie.`);
+            if (error instanceof OutboxBlockedError) Alert.alert(t`Najpierw rozwiąż konflikt tego wpisu (czerwony „!”).`);
+            else if (!versionConflictEntry(error)) Alert.alert(t`Nie udało się usunąć wpisu. Spróbuj ponownie.`);
           },
         });
         return;
@@ -311,14 +319,14 @@ function useEntryActionHandler(group: GroupDetail) {
       ) : null}
       <EntryActionsMenu
         title={menuEntry ? titleOf(menuEntry) : null}
-        actions={menuEntry ? entryActions(menuEntry, group) : []}
+        actions={menuEntry ? actionsFor(menuEntry) : []}
         onClose={() => setMenuEntry(null)}
         onSelect={(action) => menuEntry && run(menuEntry, action)}
       />
     </>
   );
 
-  return { openMenu: setMenuEntry, run, elements };
+  return { openMenu: setMenuEntry, run, actionsFor, elements };
 }
 
 /**

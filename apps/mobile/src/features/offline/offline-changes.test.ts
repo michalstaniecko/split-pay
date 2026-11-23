@@ -1,4 +1,4 @@
-import { type Entry, toNewEntry } from '@split-pay/shared';
+import { type Entry, type Expense, toNewEntry } from '@split-pay/shared';
 import { describe, expect, it } from 'vitest';
 import { applyGroupDelta, enqueueCreate, readEntries } from './local-store';
 import {
@@ -18,7 +18,7 @@ const ANIA = '00000000-0000-4000-8000-0000000000a1';
 const NOW = '2026-07-03T12:00:00.000Z';
 
 let n = 0;
-const entry = (overrides: Partial<Entry> = {}): Entry => {
+const entry = (overrides: Partial<Expense> = {}): Expense => {
   n += 1;
   const at = `2026-07-02T10:00:${String(n % 60).padStart(2, '0')}.000Z`;
   return {
@@ -40,8 +40,10 @@ const entry = (overrides: Partial<Entry> = {}): Entry => {
     payers: [{ memberId: ANIA, amount: 1_000 }],
     split: { mode: 'equal', memberIds: [ANIA] },
     ...overrides,
-  } as Entry;
+  } as Expense;
 };
+
+const titleOf = (e: Entry | undefined) => (e && e.kind !== 'settlement' ? e.title : undefined);
 
 /** The entered fields of `e` with another title — what the edit form sends. */
 const retitled = (e: Entry, title: string) => ({ ...toNewEntry(e), title }) as ReturnType<typeof toNewEntry>;
@@ -110,7 +112,7 @@ describe('offline edit of my entry', () => {
 
     await enqueueEdit(db, mine, retitled(mine, 'Pizza'), NOW);
 
-    expect((await readEntries(db, G1)).map((e) => e.title)).toEqual(['Pizza']);
+    expect((await readEntries(db, G1)).map(titleOf)).toEqual(['Pizza']);
     expect((await readOutboxState(db, G1)).get(mine.id)).toMatchObject({ change: 'edit', status: 'queued' });
 
     const api = server([mine]);
@@ -186,11 +188,11 @@ describe('offline edit of my entry', () => {
       return outcome;
     });
     expect((await readOutboxState(db, G1)).get(added.id)).toMatchObject({ change: 'edit', status: 'queued' });
-    expect((await readEntries(db, G1)).map((e) => e.title)).toEqual(['Pizza']);
+    expect((await readEntries(db, G1)).map(titleOf)).toEqual(['Pizza']);
 
     await flushOutbox(db, api.send);
     expect(api.sent.at(-1)).toEqual({ change: 'edit', baseVersion: 1, payload: retitled(added, 'Pizza') });
-    expect(api.stored.get(added.id)?.title).toBe('Pizza');
+    expect(titleOf(api.stored.get(added.id))).toBe('Pizza');
   });
 });
 
@@ -350,7 +352,7 @@ describe('resolving a version conflict', () => {
     await flushOutbox(db, api.send);
 
     expect(api.sent).toEqual([{ change: 'edit', baseVersion: 2, payload: retitled(mine, 'Moja wersja') }]);
-    expect((await readEntries(db, G1)).map((e) => e.title)).toEqual(['Moja wersja']);
+    expect((await readEntries(db, G1)).map(titleOf)).toEqual(['Moja wersja']);
   });
 
   it('"keep theirs" drops my changes and shows the current version', async () => {

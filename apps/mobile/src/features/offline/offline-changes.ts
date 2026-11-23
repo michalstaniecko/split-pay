@@ -23,6 +23,22 @@ export class OutboxBlockedError extends Error {
   }
 }
 
+/** An entry someone else added can't be changed offline (ADR-0005). */
+export class LockedOfflineError extends Error {
+  constructor() {
+    super('locked_offline');
+  }
+}
+
+/**
+ * Whether a change of the entry must go through the outbox: offline, or
+ * while earlier changes of it still wait to be sent (they must go first).
+ */
+export async function mustQueueChange(db: LocalDb, entryId: string, online: boolean): Promise<boolean> {
+  if (!online) return true;
+  return (await opsOf(db, entryId)).some((op) => op.status === 'queued');
+}
+
 /** The entry with `content` entered over it (server-owned fields kept) — the optimistic local copy. */
 function withContent(entry: Entry, content: NewEntry, updatedAt: string): Entry {
   return {

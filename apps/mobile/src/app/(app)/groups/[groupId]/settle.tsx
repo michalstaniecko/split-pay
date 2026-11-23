@@ -31,6 +31,7 @@ import {
   settleFormFromEntry,
 } from '@/features/settlements/settle-form';
 import { useLocale } from '@/i18n/locale-provider';
+import { LockedOfflineError, OutboxBlockedError } from '@/features/offline/offline-changes';
 import { authClient } from '@/lib/auth-client';
 import { closeSheet } from '@/lib/close-sheet';
 
@@ -234,6 +235,10 @@ function SettleSheetForm({
 
         {deletedMeanwhile ? (
           <Text style={styles.error}>{t`Ktoś usunął ten wpis w międzyczasie. Twoje zmiany nie zostały zapisane.`}</Text>
+        ) : saving.error instanceof OutboxBlockedError ? (
+          <Text style={styles.error}>{t`Najpierw rozwiąż konflikt tego wpisu (czerwony „!”).`}</Text>
+        ) : saving.error instanceof LockedOfflineError ? (
+          <Text style={styles.error}>{t`Bez internetu możesz edytować tylko wpisy dodane przez siebie.`}</Text>
         ) : saving.isError && !versionConflictEntry(saving.error) ? (
           <Text style={styles.error}>{t`Nie udało się zapisać spłaty. Spróbuj ponownie.`}</Text>
         ) : null}
