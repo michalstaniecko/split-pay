@@ -12,6 +12,7 @@ export * from './ledger';
 export * from './model';
 export * from './money';
 export * from './payout-details';
+export * from './photos';
 export * from './rates';
 export * from './settle-up';
 export * from './split';
