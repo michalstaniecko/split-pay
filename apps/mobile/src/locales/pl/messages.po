@@ -7,6 +7,13 @@ msgstr ""
 "X-Generator: @lingui/cli\n"
 "Language: pl\n"
 
+#. placeholder {0}: names[i]
+#. placeholder {1}: amount(cell.paid)
+#. placeholder {2}: amount(cell.consumed)
+#: src/features/stats/stats-view.tsx
+msgid "{0}, {label}: zapłacone {1}, zużyte {2}"
+msgstr "{0}, {label}: zapłacone {1}, zużyte {2}"
+
 #. placeholder {0}: group.data.name
 #: src/app/(app)/groups/[groupId]/index.tsx
 msgid "{0}, informacje o grupie"
@@ -15,6 +22,11 @@ msgstr "{0}, informacje o grupie"
 #: src/app/(app)/groups/[groupId]/info.tsx
 msgid "{count, plural, one {# osoba} few {# osoby} many {# osób} other {# osoby}}"
 msgstr "{count, plural, one {# osoba} few {# osoby} many {# osób} other {# osoby}}"
+
+#. placeholder {0}: amount(total)
+#: src/features/stats/stats-view.tsx
+msgid "{label}, razem {0}"
+msgstr "{label}, razem {0}"
 
 #: src/app/(app)/g/[token].tsx
 msgid "{memberCount, plural, one {# osoba w grupie} few {# osoby w grupie} many {# osób w grupie} other {# osoby w grupie}}"
@@ -61,6 +73,14 @@ msgstr "bez konta"
 msgid "Brak wpisów"
 msgstr "Brak wpisów"
 
+#: src/features/stats/stats-view.tsx
+msgid "Brak wydatków — statystyki pojawią się po dodaniu pierwszego."
+msgstr "Brak wydatków — statystyki pojawią się po dodaniu pierwszego."
+
+#: src/features/stats/stats-view.tsx
+msgid "Była osoba"
+msgstr "Była osoba"
+
 #: src/features/theme/theme-picker.tsx
 msgid "Ciemny"
 msgstr "Ciemny"
@@ -77,6 +97,14 @@ msgstr "Data"
 #: src/app/(app)/new-group.tsx
 msgid "Daty pozwalają dzielić koszty według obecności."
 msgstr "Daty pozwalają dzielić koszty według obecności."
+
+#: src/features/stats/stats-view.tsx
+msgid "Dni × osoby"
+msgstr "Dni × osoby"
+
+#: src/app/(app)/groups/[groupId]/info.tsx
+msgid "Dni × osoby i kategorie"
+msgstr "Dni × osoby i kategorie"
 
 #: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
 #: src/app/(app)/new-group.tsx
@@ -120,9 +148,17 @@ msgstr "Dołącz do grupy „{groupName}” w split-pay: {url}"
 msgid "Dołącz jako nowa osoba"
 msgstr "Dołącz jako nowa osoba"
 
+#: src/features/stats/stats-view.tsx
+msgid "Dzień"
+msgstr "Dzień"
+
 #: src/app/(app)/new-group.tsx
 msgid "Emoji"
 msgstr "Emoji"
+
+#: src/features/stats/stats-view.tsx
+msgid "Górna kwota: zapłacone, dolna: zużyte."
+msgstr "Górna kwota: zapłacone, dolna: zużyte."
 
 #: src/app/(app)/groups/[groupId]/info.tsx
 msgid "Historia zmian"
@@ -169,6 +205,10 @@ msgstr "Język systemu"
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
 msgid "Kategoria"
 msgstr "Kategoria"
+
+#: src/features/stats/stats-view.tsx
+msgid "Kategorie"
+msgstr "Kategorie"
 
 #: src/app/(app)/quick-bill.tsx
 msgid "Każda osoba trafi do grupy jako osoba bez konta. Płacisz Ty, dzielimy po równo."
@@ -384,11 +424,19 @@ msgstr "Podaj tytuł."
 msgid "Podział"
 msgstr "Podział"
 
+#: src/app/(app)/groups/[groupId]/info.tsx
+msgid "Pokaż"
+msgstr "Pokaż"
+
 #: src/app/(app)/_layout.tsx
 #: src/app/(app)/profile.tsx
 #: src/components/inbox-header-buttons.tsx
 msgid "Profil"
 msgstr "Profil"
+
+#: src/features/stats/stats-view.tsx
+msgid "Razem"
+msgstr "Razem"
 
 #: src/features/entries/use-entry-labels.ts
 msgid "Rozrywka"
@@ -421,6 +469,7 @@ msgstr "Spróbuj ponownie"
 msgid "Stary link i kod QR przestaną działać. Osoby w grupie zostają."
 msgstr "Stary link i kod QR przestaną działać. Osoby w grupie zostają."
 
+#: src/app/(app)/_layout.tsx
 #: src/app/(app)/groups/[groupId]/info.tsx
 msgid "Statystyki"
 msgstr "Statystyki"

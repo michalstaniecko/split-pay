@@ -70,6 +70,7 @@ export default function AppLayout() {
         }}
       />
       <Stack.Screen name="groups/[groupId]/info" options={{ title: t`Informacje o grupie` }} />
+      <Stack.Screen name="groups/[groupId]/stats" options={{ title: t`Statystyki` }} />
       <Stack.Screen
         name="groups/[groupId]/member"
         options={{
