@@ -18,7 +18,7 @@ Not every participant will install the app — hence **members without an accoun
 
 ## Domain model (summary)
 
-- The only container is a **Group** with an optional date range. A group with dates = a trip; without dates = e.g. a shared flat. A **quick bill** is a group with one expense created with a single tap ([ADR-0002](./adr/0002-group-as-the-only-container.md)).
+- The only container is a **Group** with an optional date range. A group with dates = a trip; without dates = e.g. a shared flat. A **quick bill** is a group with a single expense, created from one sheet in a single step ([ADR-0002](./adr/0002-group-as-the-only-container.md)).
 - A group has **members** — with or without an account. Any member can add a member without an account; later someone can **claim** them ([ADR-0007](./adr/0007-members-without-account-and-claiming.md)).
 - On a trip every member has an **attendance** (a range of days). The default split of an expense covers the members present on the expense's date.
 - A group contains **expenses**, **incomes** and **settlements**.
@@ -84,7 +84,7 @@ A fixed, translated list with icons (food, transport, accommodation, alcohol, fu
 - The link is a universal link / app link:
   - app installed → join screen: "Jesteś jednym z nich?" ("Are you one of them?" — a list of members without an account) or "Dołącz jako nowa osoba" ("Join as a new person");
   - no app → **web preview** + a "download the app" button.
-- **Claiming** a member without an account: assigns the whole history to the account. The other members get a notification ("Tomek przejął profil Tomek" — "Tomek claimed the Tomek profile"), and anyone can undo it.
+- **Claiming** a member without an account: assigns the whole history to the account. The other members get a notification ("Tomek przejął profil Tomek" — "Tomek claimed the Tomek profile"), and anyone can undo it — from the long-press menu on the "Tomek przejął profil" system message or from the change history.
 - Optionally a **personal claim link** for a specific member without an account ("Send Tomek his link").
 - The group link can be **revoked** and a new one generated.
 
@@ -94,6 +94,7 @@ A fixed, translated list with icons (food, transport, accommodation, alcohol, fu
 - Access via the group link, without logging in. The same layout as the app, read-only: the **Conversation** with the balance banner and drawer (no composer, no edit menu; the drawer shows transfers without "Oddaj", "Przypomnij" or "Inna spłata").
 - The header opens a limited **Group info**: members and Stats only (no group link, settings or change history).
 - A "this is me" option — choosing a member, remembered in the browser. It decides which bubbles sit on the end edge and drives the balance banner ("how much I owe").
+- **Entry detail** on the web: the same sheet without the receipt photo, the change history link and "Edytuj".
 - **No photos and no editing.**
 - Link previews (Open Graph) for messengers — a simple API endpoint.
 - This is where (along with the README) the GitHub Sponsors link lives.
@@ -112,7 +113,7 @@ A fixed, translated list with icons (food, transport, accommodation, alcohol, fu
 
 ## Group and account lifecycle
 
-- You cannot leave a group with a non-zero balance (warning + block).
+- **"Opuść grupę"** in Group info, above archive / delete. You cannot leave a group with a non-zero balance (warning + block).
 - A group can be **archived** (read-only). Only the owner can permanently delete it.
 - **Account deletion** (Apple requirement): the user becomes an ordinary member without an account named "Usunięty użytkownik" ("Deleted user") — personal data is removed, other people's expenses and balances remain. Any group member can rename it; the profile can be claimed ([ADR-0010](./adr/0010-account-deletion-turns-into-member-without-account.md)).
 
@@ -156,7 +157,7 @@ Expo Router, chat-style layout — no bottom tabs, no group tabs ([ADR-0017](./a
 
 - Groups sorted by **last activity** (latest entry created/edited); the preview shows the most recently added entry. Archived groups in a collapsed "Zarchiwizowane" section at the bottom.
 - Unread: bold row + dot when others added entries since I last opened the group; no counters. "Last seen" stored locally on the device in the MVP.
-- Search ("Szukaj grup i wydatków"): group names and entry titles across all groups; an entry result opens the Conversation scrolled to that bubble, highlighted.
+- Search ("Szukaj grup i wydatków"): group names and entry titles across all groups; an entry result opens the Conversation scrolled to that bubble, highlighted. Runs locally on SQLite, so it works offline and needs no API endpoint.
 - Header: bell → **Activity** (feed of changes from all groups); avatar → **Profile** (theme, language, payout details, notifications, account deletion). Both full screens.
 - Activity unread: the device stores when Activity was last opened; the bell shows a dot when others changed something since then.
 - **"Nowy"** → sheet: **Szybki rachunek** or **Nowa grupa** (name, emoji/colour, optional dates).
@@ -164,7 +165,8 @@ Expo Router, chat-style layout — no bottom tabs, no group tabs ([ADR-0017](./a
 
 **Conversation** (group screen)
 
-- Entries as bubbles from their payers, ordered by **entry date**, then creation time within a day. Opens at the bottom (newest); sticky day separators with the group's daily total; tapping a separator opens a day strip to jump to a day; virtualized list. A new entry outside the viewport → scroll to it and highlight briefly.
+- Entries as bubbles from their payers, ordered by **entry date**, then creation time within a day. Opens at the bottom (newest); sticky day separators with the group's daily total; tapping a separator opens a day strip to jump to a day; virtualized list.
+- Day strip: a group with dates shows every day of the range (days without entries greyed out); a group without dates shows only days with entries. A new entry outside the viewport → scroll to it and highlight briefly.
 - Current state only: edited bubbles marked "edytowano"; edits and deletions are not messages. System messages only for settlements and claims.
 - Bubble side: end edge when I am among the payers (income: the recipients), start edge otherwise; mirrors in RTL. Multiple payers: "Kasia + 2", avatar of the largest payer.
 - Bubble content: title (max 2 lines), amount (foreign currency: original large, base "≈" small), category icon, receipt thumbnail, "twój udział …"; income → "↓ Wpływ" and the positive colour. Tap → entry detail.
@@ -172,10 +174,10 @@ Expo Router, chat-style layout — no bottom tabs, no group tabs ([ADR-0017](./a
 - Long-press: Edytuj, Usuń, Historia, Kopiuj kwotę. After Usuń a "Cofnij" snackbar restores the just-deleted entry; older changes are undone from the change history.
 - Outbox state: 🕓 while queued, nothing once synced, red **!** on failure or conflict → retry or "keep my / their version".
 - Push notifications and Activity items open the Conversation scrolled to the bubble, highlighted.
-- **Balance banner** on top → **drawer** with balances and suggested transfers. My transfer: **"Oddaj"** → recipient's payout details with copy buttons, editable prefilled amount, "Zapisz spłatę" (posts a settlement message). A transfer owed to me: **"Przypomnij"** (nudge). **"Inna spłata"** at the bottom of the drawer opens the same sheet with from / to / amount pickers, for a settlement outside the suggested transfers.
-- Archived group: the composer is replaced by a "Grupa zarchiwizowana" bar; long-press offers only Historia and Kopiuj kwotę.
+- **Balance banner** on top → **drawer** with balances and suggested transfers. My transfer: **"Oddaj"** → recipient's payout details with copy buttons, editable prefilled amount, "Zapisz spłatę" (posts a settlement message). A transfer owed to me: **"Przypomnij"** (nudge) — hidden for members without an account (no push); once per 24 h per member and group, until then disabled with "przypomniano dziś". **"Inna spłata"** at the bottom of the drawer opens the same sheet with from / to / amount pickers, for a settlement outside the suggested transfers.
+- Archived group: the composer is replaced by a "Grupa zarchiwizowana" bar; long-press offers only Historia and Kopiuj kwotę; the drawer hides "Oddaj", "Inna spłata" and "Przypomnij".
 
-**Group info** — tapping the group header or `⋯`: members and members without an account (with attendance), group link + QR, **Stats** (days × people table, categories), change history, settings (debt simplification, base currency, dates, notifications), archive / delete.
+**Group info** — tapping the group header or `⋯`: members and members without an account (with attendance), group link + QR, **Stats** (days × people table, categories), change history, settings (debt simplification, base currency, dates, notifications), "Opuść grupę", archive / delete.
 
 **Adding an expense** — the key flow, goal: **3 taps + amount**.
 

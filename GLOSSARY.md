@@ -15,7 +15,7 @@ A group with a date range. Not a separate entity — just the everyday name for 
 _Avoid_: Journey, excursion, event
 
 **Quick bill** (PL: Szybki rachunek):
-A group created with a single tap to split one expense.
+A group with a single expense, created from one sheet in a single step.
 _Avoid_: Bill, shared bill
 
 **User** (PL: Użytkownik):
