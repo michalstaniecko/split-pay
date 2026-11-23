@@ -3,6 +3,7 @@ import { Pressable, Text, View } from 'react-native';
 import { StyleSheet } from 'react-native-unistyles';
 import { useLocale } from '@/i18n/locale-provider';
 import { useFormatters } from '@/i18n/use-formatters';
+import { payersBubbleLabel } from './bubble-label';
 import type { DayItem, EntryItem } from './conversation';
 import { CATEGORY_ICONS } from './entries-query';
 import { incomeBubbleLabel } from './income-bubble-label';
@@ -30,7 +31,7 @@ export function EntryBubble({
   const { t } = useLingui();
   const format = useFormatters();
   const { locale } = useLocale();
-  const { entry, side, payerName, otherPayers, myShare } = item;
+  const { entry, side, payerName, payerNames, otherPayers, myShare } = item;
   const income = entry.kind === 'income';
   // Income bubbles keep the surface background so the positive colour reads on both edges.
   const mine = side === 'end' && !income;
@@ -41,10 +42,21 @@ export function EntryBubble({
   // An income share is money that belongs to me — shown without the minus.
   const shareAmount = myShare !== null && income ? Math.abs(myShare) : myShare;
   const share = shareAmount !== null && shareAmount !== 0 ? t`twój udział ${format.amount(shareAmount, baseCurrency)}` : null;
+  // Income: its own sentence (#13, names extra recipients). Multiple payers:
+  // one sentence naming all of them (#12); single-payer wording is #36's.
   const label =
     entry.kind === 'income'
       ? incomeBubbleLabel({ entry, payerName, otherPayers, myShare }, { baseCurrency, locale })
-      : [author, title, amount, share].filter(Boolean).join(', ');
+      : entry.kind !== 'settlement' && otherPayers > 0
+        ? payersBubbleLabel({
+            kind: entry.kind,
+            payerNames,
+            title,
+            amount,
+            date: format.date(entry.date),
+            myShare: myShare !== null && myShare !== 0 ? format.amount(myShare, baseCurrency) : null,
+          })
+        : [author, title, amount, share].filter(Boolean).join(', ');
 
   return (
     <View style={[styles.row, side === 'end' ? styles.rowEnd : styles.rowStart]}>
@@ -60,9 +72,15 @@ export function EntryBubble({
           highlighted && styles.highlighted,
           pressed && styles.pressed,
         ]}>
-        <Text style={[styles.author, mine && styles.mineMuted]} numberOfLines={1}>
-          {author}
-        </Text>
+        <View style={styles.authorRow}>
+          {/* Avatar of the largest payer (initial until user avatars exist). */}
+          <View style={[styles.avatar, mine && styles.avatarMine]}>
+            <Text style={[styles.avatarText, mine && styles.avatarTextMine]}>{payerName.trim().charAt(0).toUpperCase()}</Text>
+          </View>
+          <Text style={[styles.author, mine && styles.mineMuted]} numberOfLines={1}>
+            {author}
+          </Text>
+        </View>
         {income ? <Text style={styles.incomeLabel}>{t`↓ Wpływ`}</Text> : null}
         <View style={styles.main}>
           <Text style={styles.icon}>{icon}</Text>
@@ -136,7 +154,32 @@ const styles = StyleSheet.create((theme) => ({
   pressed: {
     opacity: 0.7,
   },
+  authorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.space(1.5),
+  },
+  avatar: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.border,
+  },
+  avatarMine: {
+    backgroundColor: theme.colors.onPrimary,
+  },
+  avatarTextMine: {
+    color: theme.colors.primary,
+  },
+  avatarText: {
+    fontSize: 11,
+    fontWeight: theme.font.weightBold,
+    color: theme.colors.text,
+  },
   author: {
+    flexShrink: 1,
     fontSize: theme.font.sizeSm,
     fontWeight: theme.font.weightBold,
     color: theme.colors.textMuted,

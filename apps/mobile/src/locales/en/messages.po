@@ -65,6 +65,14 @@ msgstr "{name}: settled up"
 msgid "{name}: winien {amount}"
 msgstr "{name}: owes {amount}"
 
+#: src/features/entries/bubble-label.ts
+msgid "{names} {count, plural, one {otrzymał(a)} few {otrzymali} many {otrzymali} other {otrzymali}} {amount} za {title}, {date}."
+msgstr "{names} received {amount} for {title}, {date}."
+
+#: src/features/entries/bubble-label.ts
+msgid "{names} {count, plural, one {zapłacił(a)} few {zapłacili} many {zapłacili} other {zapłacili}} {amount} za {title}, {date}."
+msgstr "{names} paid {amount} for {title}, {date}."
+
 #: src/features/entries/entry-bubble.tsx
 msgid "{payerName} + {otherPayers}"
 msgstr "{payerName} + {otherPayers}"
@@ -72,6 +80,10 @@ msgstr "{payerName} + {otherPayers}"
 #: src/features/entries/income-bubble-label.ts
 msgid "{payerName} i {otherPayers, plural, one {# inna osoba} few {# inne osoby} many {# innych osób} other {# innej osoby}}"
 msgstr "{payerName} and {otherPayers, plural, one {# other person} other {# other people}}"
+
+#: src/features/entries/bubble-label.ts
+msgid "{rest} i {last}"
+msgstr "{rest} and {last}"
 
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
 #: src/features/entries/entry-bubble.tsx
@@ -250,6 +262,14 @@ msgstr "Light"
 msgid "Jeden wydatek z kilkoma osobami"
 msgstr "One expense shared with a few people"
 
+#: src/features/entries/split-fields.tsx
+msgid "Jedna osoba otrzymała"
+msgstr "One person received it"
+
+#: src/features/entries/split-fields.tsx
+msgid "Jedna osoba zapłaciła"
+msgstr "One person paid"
+
 #: src/features/entries/use-entry-labels.ts
 msgid "Jedzenie"
 msgstr "Food"
@@ -291,6 +311,14 @@ msgstr "Each person joins the group as a member without an account. You pay, spl
 msgid "Każdy, kto ma ten link, może dołączyć do grupy."
 msgstr "Anyone with this link can join the group."
 
+#: src/features/entries/split-fields.tsx
+msgid "Kilka osób otrzymało"
+msgstr "Several people received it"
+
+#: src/features/entries/split-fields.tsx
+msgid "Kilka osób płaciło"
+msgstr "Several people paid"
+
 #: src/app/(auth)/sign-in.tsx
 msgid "Kod jednorazowy"
 msgstr "One-time code"
@@ -329,6 +357,14 @@ msgstr "Amount"
 #: src/app/(app)/groups/[groupId]/settle.tsx
 msgid "Kwota: {formatted}"
 msgstr "Amount: {formatted}"
+
+#: src/features/entries/split-fields.tsx
+msgid "Kwoty sumują się do {sum} z {total} — brakuje {diff}."
+msgstr "Amounts add up to {sum} of {total} — {diff} missing."
+
+#: src/features/entries/split-fields.tsx
+msgid "Kwoty sumują się do {sum} z {total} — o {diff} za dużo."
+msgstr "Amounts add up to {sum} of {total} — {diff} too much."
 
 #: src/features/profile/about-section.tsx
 msgid "Licencja: GNU AGPL v3"
@@ -513,11 +549,12 @@ msgstr "Leave, archive or delete the group"
 msgid "Osoba"
 msgstr "Person"
 
-#: src/app/(app)/groups/[groupId]/expense-form.tsx
+#: src/features/entries/split-fields.tsx
 msgid "Otrzymał(a)"
 msgstr "Received by"
 
 #: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
+#: src/features/entries/split-fields.tsx
 msgid "Otrzymali"
 msgstr "Received by"
 
@@ -532,10 +569,6 @@ msgstr "Full expense form"
 #: src/features/entries/use-entry-labels.ts
 msgid "Po równo"
 msgstr "Equally"
-
-#: src/app/(app)/groups/[groupId]/expense-form.tsx
-msgid "Po równo między obecnych tego dnia: {participantCount, plural, one {# osoba} few {# osoby} many {# osób} other {# osoby}}"
-msgstr "Equally among those present that day: {participantCount, plural, one {# person} other {# people}}"
 
 #: src/app/(app)/new-group.tsx
 msgid "Podaj datę końca (RRRR-MM-DD), nie wcześniejszą niż początek."
@@ -571,7 +604,7 @@ msgstr "Enter a valid email address."
 msgid "Podaj tytuł."
 msgstr "Enter a title."
 
-#: src/app/(app)/groups/[groupId]/expense-form.tsx
+#: src/features/entries/split-fields.tsx
 msgid "Podział"
 msgstr "Split"
 
@@ -582,6 +615,16 @@ msgstr "Show"
 #: src/features/balances/balance-banner.tsx
 msgid "Pokazuje salda i kto komu ile oddaje"
 msgstr "Shows balances and who pays whom how much"
+
+#: src/features/entries/split-fields.tsx
+msgid "Pozycje osobiste"
+msgstr "Personal items"
+
+#. placeholder {0}: money(problem.sum)
+#. placeholder {1}: money(problem.amount)
+#: src/features/entries/split-fields.tsx
+msgid "Pozycje osobiste ({0}) przekraczają kwotę wydatku ({1})."
+msgstr "Personal items ({0}) exceed the expense amount ({1})."
 
 #: src/app/(app)/_layout.tsx
 #: src/app/(app)/profile.tsx
@@ -596,6 +639,10 @@ msgstr "Claim the profile of a member without an account, with their expense his
 #: src/features/stats/stats-view.tsx
 msgid "Razem"
 msgstr "Total"
+
+#: src/features/entries/split-fields.tsx
+msgid "Resztę dzielą po równo"
+msgstr "The rest is split equally between"
 
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
 msgid "Rodzaj wpisu"
@@ -723,13 +770,14 @@ msgstr "Your email and account data will be deleted. In your groups you will bec
 msgid "twój udział {0}"
 msgstr "your share {0}"
 
+#: src/features/entries/bubble-label.ts
 #: src/features/entries/income-bubble-label.ts
 msgid "Twój udział {share}."
 msgstr "Your share {share}."
 
 #: src/app/(app)/groups/[groupId]/balances.tsx
-#: src/app/(app)/groups/[groupId]/expense-form.tsx
 #: src/app/(app)/groups/[groupId]/info.tsx
+#: src/features/entries/split-fields.tsx
 msgid "Ty"
 msgstr "You"
 
@@ -742,6 +790,10 @@ msgstr "Title"
 #: src/features/group-link/group-link-section.tsx
 msgid "Udostępnij link"
 msgstr "Share link"
+
+#: src/features/entries/split-fields.tsx
+msgid "udz."
+msgstr "shares"
 
 #: src/features/entries/use-entry-labels.ts
 msgid "Udziały"
@@ -821,6 +873,10 @@ msgstr "Entry"
 msgid "Wpisujesz za nią wydatki. Później może przejąć swój profil."
 msgstr "You enter their expenses. They can claim their profile later."
 
+#: src/features/entries/split-fields.tsx
+msgid "Wpisz co najmniej jedną pozycję osobistą."
+msgstr "Enter at least one personal item."
+
 #: src/app/(auth)/sign-in.tsx
 msgid "Wpisz kod wysłany na {email}."
 msgstr "Enter the code sent to {email}."
@@ -828,6 +884,10 @@ msgstr "Enter the code sent to {email}."
 #: src/app/(app)/groups/[groupId]/index.tsx
 msgid "Wpisz kwotę i tytuł poniżej, żeby dodać pierwszy wydatek."
 msgstr "Type an amount and a title below to add the first expense."
+
+#: src/features/entries/split-fields.tsx
+msgid "Wpisz, ile zapłaciła co najmniej jedna osoba."
+msgstr "Enter how much at least one person paid."
 
 #: src/features/entries/income-bubble-label.ts
 msgid "Wpływ {amount}: {title}. Otrzymał(a): {recipients}. {date}."
@@ -849,6 +909,10 @@ msgstr "Everyone is settled up."
 msgid "Wszystko rozliczone"
 msgstr "All settled up"
 
+#: src/features/entries/split-fields.tsx
+msgid "Wybierz co najmniej jedną osobę."
+msgstr "Pick at least one person."
+
 #: src/app/(app)/new-group.tsx
 msgid "Wybierz emoji."
 msgstr "Choose an emoji."
@@ -860,6 +924,10 @@ msgstr "Choose a colour."
 #: src/app/(app)/new-group.tsx
 msgid "Wybierz walutę."
 msgstr "Choose a currency."
+
+#: src/features/entries/split-fields.tsx
+msgid "Wybierz, kto dzieli część wspólną."
+msgstr "Pick who shares the common part."
 
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
 msgid "Wybierz, kto otrzymał pieniądze."
@@ -965,11 +1033,12 @@ msgstr "Save payout details"
 msgid "Zapisz obecność"
 msgstr "Save attendance"
 
-#: src/app/(app)/groups/[groupId]/expense-form.tsx
+#: src/features/entries/split-fields.tsx
 msgid "Zapłacił(a)"
 msgstr "Paid by"
 
 #: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
+#: src/features/entries/split-fields.tsx
 msgid "Zapłacili"
 msgstr "Paid by"
 
