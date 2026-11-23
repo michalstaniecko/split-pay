@@ -18,11 +18,60 @@ export type LocalDate = z.infer<typeof LocalDate>;
 
 // ── Group and members ────────────────────────────────────────────────────────
 
-/** Attendance: inclusive range of days. `null` = present for the whole trip. */
-export const Attendance = z
+/** The calendar day after `date`. */
+function nextDay(date: LocalDate): LocalDate {
+  const d = new Date(`${date}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + 1);
+  return d.toISOString().slice(0, 10);
+}
+
+/** Inclusive range of days. */
+export const AttendanceRange = z
   .object({ from: LocalDate, to: LocalDate })
   .refine((a) => a.from <= a.to, 'Attendance starts after it ends');
+export type AttendanceRange = z.infer<typeof AttendanceRange>;
+
+/**
+ * Attendance: one or more ranges of days in canonical form — sorted, with no
+ * overlapping or touching ranges (ADR-0018). Not checked against the trip
+ * dates. `null` on a member = present for the whole trip.
+ */
+export const Attendance = z
+  .array(AttendanceRange)
+  .min(1, 'Attendance needs at least one range')
+  .superRefine((ranges, ctx) => {
+    for (let i = 1; i < ranges.length; i++) {
+      // Canonical: each range starts at least two days after the previous one ends.
+      if (ranges[i]!.from <= nextDay(ranges[i - 1]!.to)) {
+        ctx.addIssue({
+          code: 'custom',
+          path: [i],
+          message: 'Attendance ranges must be sorted, without overlapping or touching ranges',
+        });
+      }
+    }
+  });
 export type Attendance = z.infer<typeof Attendance>;
+
+/**
+ * Turns any list of valid ranges (any order, overlapping or touching — e.g.
+ * built from the per-day grid) into canonical attendance covering the same
+ * days. Call before saving. An empty input stays empty, which the schema
+ * rejects: zero days is not an attendance.
+ */
+export function normalizeAttendance(ranges: readonly AttendanceRange[]): AttendanceRange[] {
+  const sorted = [...ranges].sort((a, b) => (a.from < b.from ? -1 : a.from > b.from ? 1 : 0));
+  const result: AttendanceRange[] = [];
+  for (const range of sorted) {
+    const last = result.at(-1);
+    if (last && range.from <= nextDay(last.to)) {
+      if (range.to > last.to) last.to = range.to;
+    } else {
+      result.push({ from: range.from, to: range.to });
+    }
+  }
+  return result;
+}
 
 export const Member = z.object({
   id: Id,

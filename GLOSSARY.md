@@ -39,7 +39,7 @@ Linking a member without account to a user, transferring their whole history in 
 _Avoid_: Merge, link-up
 
 **Attendance** (PL: Obecność):
-The range of trip days on which a member is present; it determines the default split participants.
+One or more ranges of trip days on which a member is present (a member can leave and come back); it determines the default split participants. No attendance means present for the whole trip.
 _Avoid_: Availability, stay
 
 **Conversation** (PL: Rozmowa):
@@ -68,11 +68,11 @@ A payment made by one or more payers, split into members' shares.
 _Avoid_: Bill, transaction, cost
 
 **Income** (PL: Wpływ):
-Money received by a member that belongs to several members (e.g. a deposit refund); the reverse of an expense.
+Money received by a member that belongs to several members (e.g. a deposit refund); the reverse of an expense. The members who received the money are its recipients.
 _Avoid_: Negative expense, refund (as a type)
 
 **Settlement** (PL: Spłata):
-A transfer of money from one member to another to even out balances.
+A transfer of money from one member to another to even out balances. It may be in a foreign currency, with a frozen rate like any other entry.
 _Avoid_: Payment, transfer (as a type)
 
 **Payer** (PL: Płatnik):
