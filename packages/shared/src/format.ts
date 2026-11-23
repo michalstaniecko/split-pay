@@ -5,8 +5,8 @@ import { type CurrencyCode, type MinorAmount, minorUnitDigits } from './money';
  * Formats an amount in minor units (ADR-0003) as a localised currency string,
  * e.g. `formatAmount(1234567, 'PLN', 'pl')` → "12 345,67 zł".
  * The minor units are turned into a decimal string without float arithmetic.
- * `currencyDisplay: 'name'` spells the currency for screen readers
- * ("20,00 euro", "86.43 Polish zlotys").
+ * `currencyDisplay: 'name'` spells the currency out for screen readers
+ * ("45,50 złotego polskiego").
  */
 export function formatAmount(
   amount: MinorAmount,

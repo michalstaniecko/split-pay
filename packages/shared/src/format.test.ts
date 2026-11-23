@@ -28,13 +28,15 @@ describe('formatAmount', () => {
     expect(plain(formatAmount(Number.MAX_SAFE_INTEGER, 'PLN', 'pl'))).toBe('90 071 992 547 409,91 zł');
   });
 
-  it('spells the currency name for screen readers', () => {
-    expect(plain(formatAmount(2_000, 'EUR', 'pl', { currencyDisplay: 'name' }))).toBe('20,00 euro');
-    expect(plain(formatAmount(8_643, 'PLN', 'en', { currencyDisplay: 'name' }))).toBe('86.43 Polish zlotys');
-  });
-
   it('rejects non-integer amounts', () => {
     expect(() => formatAmount(10.5, 'PLN', 'pl')).toThrow(RangeError);
+  });
+});
+
+describe('formatAmount for screen readers', () => {
+  it('spells out the currency name', () => {
+    expect(plain(formatAmount(4550, 'PLN', 'pl', { currencyDisplay: 'name' }))).toBe('45,50 złotego polskiego');
+    expect(plain(formatAmount(120_000, 'EUR', 'en', { currencyDisplay: 'name' }))).toBe('1,200.00 euros');
   });
 });
 

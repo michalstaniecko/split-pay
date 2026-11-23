@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { defaultParticipants, equalExpenseDefaults } from '@split-pay/shared';
 import { parseResponse } from 'hono/client';
 import { describe, expect, it } from 'vitest';
 import { createTestApp } from '../test/app';
@@ -103,8 +104,30 @@ describe('member attendance', () => {
     expect(res.status).toBe(401);
   });
 
-  // Entries arrive with #8. Once they exist: create an expense with default
-  // participants, change attendance, assert the entry's split/memberIds and
-  // version are unchanged (ADR-0016 snapshot rule).
-  it.todo('changing attendance does not modify existing entries');
+  it('changing attendance does not modify existing entries (ADR-0016)', async () => {
+    const { ania, group, tomek, attendance, detail } = await setup();
+    const entries = client(ania).groups[':groupId'].entries;
+    // Tomek is present on the 12th (whole trip), so the default participants include him.
+    const expense = equalExpenseDefaults({
+      id: randomUUID(),
+      title: 'Pizza',
+      amount: 12_000,
+      currency: 'PLN',
+      date: '2026-07-12',
+      payerMemberId: group.ownerMemberId,
+      members: (await detail()).members,
+    });
+    expect(expense.split).toEqual({ mode: 'equal', memberIds: expect.arrayContaining([group.ownerMemberId, tomek]) });
+    const created = await parseResponse(entries.$post({ param: { groupId: group.id }, json: expense }));
+
+    // Tomek leaves on the 12th: new expenses that day would skip him…
+    await parseResponse(
+      attendance(ania).$put({ param: { groupId: group.id, memberId: tomek }, json: { attendance: leaveAndReturn } }),
+    );
+    expect(defaultParticipants((await detail()).members, '2026-07-12')).toEqual([group.ownerMemberId]);
+
+    // …but the existing entry keeps its snapshot of participants and its version.
+    const [after] = await parseResponse(entries.$get({ param: { groupId: group.id } }));
+    expect(after).toEqual(created);
+  });
 });

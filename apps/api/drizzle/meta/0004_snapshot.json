@@ -1,5 +1,5 @@
 {
-  "id": "c7273299-8b65-4e23-ab2b-0c41ff95b03d",
+  "id": "aa288d7c-644b-4cbc-9ea6-6c193fe5e219",
   "prevId": "aefb0ab4-997f-45e8-b5b4-ad4341a06023",
   "version": "7",
   "dialect": "postgresql",
@@ -879,41 +879,199 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.ecb_rates": {
-      "name": "ecb_rates",
+    "public.claims": {
+      "name": "claims",
       "schema": "",
       "columns": {
-        "date": {
-          "name": "date",
-          "type": "date",
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "group_id": {
+          "name": "group_id",
+          "type": "uuid",
           "primaryKey": false,
           "notNull": true
         },
-        "currency": {
-          "name": "currency",
+        "member_id": {
+          "name": "member_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "claimer_name": {
+          "name": "claimer_name",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "rate_per_eur": {
-          "name": "rate_per_eur",
+        "claimed_at": {
+          "name": "claimed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "undone_at": {
+          "name": "undone_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "undone_by_member_id": {
+          "name": "undone_by_member_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "claims_group_id_claimed_at_idx": {
+          "name": "claims_group_id_claimed_at_idx",
+          "columns": [
+            {
+              "expression": "group_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "claimed_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "claims_group_id_groups_id_fk": {
+          "name": "claims_group_id_groups_id_fk",
+          "tableFrom": "claims",
+          "tableTo": "groups",
+          "columnsFrom": [
+            "group_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "claims_member_id_members_id_fk": {
+          "name": "claims_member_id_members_id_fk",
+          "tableFrom": "claims",
+          "tableTo": "members",
+          "columnsFrom": [
+            "member_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "claims_user_id_user_id_fk": {
+          "name": "claims_user_id_user_id_fk",
+          "tableFrom": "claims",
+          "tableTo": "user",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.member_claim_links": {
+      "name": "member_claim_links",
+      "schema": "",
+      "columns": {
+        "member_id": {
+          "name": "member_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "group_id": {
+          "name": "group_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "token": {
+          "name": "token",
           "type": "text",
           "primaryKey": false,
           "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
         }
       },
       "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {
-        "ecb_rates_date_currency_pk": {
-          "name": "ecb_rates_date_currency_pk",
+      "foreignKeys": {
+        "member_claim_links_member_id_members_id_fk": {
+          "name": "member_claim_links_member_id_members_id_fk",
+          "tableFrom": "member_claim_links",
+          "tableTo": "members",
+          "columnsFrom": [
+            "member_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "member_claim_links_group_id_groups_id_fk": {
+          "name": "member_claim_links_group_id_groups_id_fk",
+          "tableFrom": "member_claim_links",
+          "tableTo": "groups",
+          "columnsFrom": [
+            "group_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "member_claim_links_token_unique": {
+          "name": "member_claim_links_token_unique",
+          "nullsNotDistinct": false,
           "columns": [
-            "date",
-            "currency"
+            "token"
           ]
         }
       },
-      "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false

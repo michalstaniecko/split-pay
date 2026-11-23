@@ -8,6 +8,8 @@ import {
   type MemberAmount,
   memberShare,
 } from '@split-pay/shared';
+import { activeClaims, type ClaimLike } from '../claims/claims';
+import { todayLocalDate } from './expense-draft';
 
 /** My member in a group: the one linked to my account (`null` when signed out or not found). */
 export function myMemberId(members: readonly Pick<Member, 'id' | 'userId'>[], userId: string | undefined): string | null {
@@ -15,7 +17,10 @@ export function myMemberId(members: readonly Pick<Member, 'id' | 'userId'>[], us
   return members.find((m) => m.userId === userId)?.id ?? null;
 }
 
-/** Sticky day separator. `total`: the group's spending that day in the base currency. */
+/**
+ * Sticky day separator. `total`: the group's net spending that day in the
+ * base currency — expenses minus incomes (`dailyTotals`), so it can be negative.
+ */
 export interface DayItem {
   type: 'day';
   key: string;
@@ -40,7 +45,14 @@ export interface EntryItem {
   baseAmount: number | null;
 }
 
-export type ConversationItem = DayItem | EntryItem;
+/** A claim system message ("Tomek przejął profil Tomek", #18). */
+export interface ClaimItem<C extends ClaimLike = ClaimLike> {
+  type: 'claim';
+  key: string;
+  claim: C;
+}
+
+export type ConversationItem<C extends ClaimLike = ClaimLike> = DayItem | EntryItem | ClaimItem<C>;
 
 /** Who "sent" an entry, largest amount first (ties by member id — deterministic). */
 function holders(entry: Entry): MemberAmount[] {
@@ -49,32 +61,58 @@ function holders(entry: Entry): MemberAmount[] {
   return [...list].sort((a, b) => b.amount - a.amount || (a.memberId < b.memberId ? -1 : 1));
 }
 
-const byConversationOrder = (a: Entry, b: Entry) =>
-  a.date.localeCompare(b.date) || a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id);
+/** A row before day separators: its day, the time it happened, a tie-breaker. */
+type Message<C> = { date: LocalDate; at: string; id: string } & ({ entry: Entry } | { claim: C });
+
+const byConversationOrder = (a: Message<unknown>, b: Message<unknown>) =>
+  a.date.localeCompare(b.date) || a.at.localeCompare(b.at) || a.id.localeCompare(b.id);
 
 /**
  * The Conversation as list rows: entries ordered by entry date, then creation
  * time (ADR-0017), each day opened by a separator with the day's total.
- * `stickyHeaderIndices` are the separators' indices (FlashList prop).
- * Deleted entries are not shown.
+ * Active claims are system messages on the (device-local) day they happened,
+ * placed by claim time. `stickyHeaderIndices` are the separators' indices
+ * (FlashList prop). Deleted entries and undone claims are not shown.
  */
-export function conversationItems(
+export function conversationItems<C extends ClaimLike = ClaimLike>(
   entries: readonly Entry[],
-  context: { members: readonly Member[]; myMemberId: string | null; baseCurrency: CurrencyCode },
-): { items: ConversationItem[]; stickyHeaderIndices: number[] } {
-  const live = entries.filter((e) => e.deletedAt === null).sort(byConversationOrder);
+  context: {
+    members: readonly Member[];
+    myMemberId: string | null;
+    baseCurrency: CurrencyCode;
+    claims?: readonly C[];
+    /** A timestamp's calendar day; defaults to the device's local date. */
+    localDate?: (iso: string) => LocalDate;
+  },
+): { items: ConversationItem<C>[]; stickyHeaderIndices: number[] } {
+  const live = entries.filter((e) => e.deletedAt === null);
+  const localDate = context.localDate ?? ((iso: string) => todayLocalDate(new Date(iso)));
+  const messages: Message<C>[] = [
+    ...live.map((entry) => ({ date: entry.date, at: entry.createdAt, id: entry.id, entry })),
+    ...activeClaims(context.claims ?? []).map((claim) => ({
+      date: localDate(claim.claimedAt),
+      at: claim.claimedAt,
+      id: claim.id,
+      claim,
+    })),
+  ].sort(byConversationOrder);
   const totals = dailyTotals(live, context.baseCurrency);
   const names = new Map(context.members.map((m) => [m.id, m.displayName]));
-  const items: ConversationItem[] = [];
+  const items: ConversationItem<C>[] = [];
   const stickyHeaderIndices: number[] = [];
 
   let day: LocalDate | null = null;
-  for (const entry of live) {
-    if (entry.date !== day) {
-      day = entry.date;
+  for (const message of messages) {
+    if (message.date !== day) {
+      day = message.date;
       stickyHeaderIndices.push(items.length);
-      items.push({ type: 'day', key: `day-${entry.date}`, date: entry.date, total: totals.get(entry.date) ?? 0 });
+      items.push({ type: 'day', key: `day-${day}`, date: day, total: totals.get(day) ?? 0 });
     }
+    if ('claim' in message) {
+      items.push({ type: 'claim', key: `claim-${message.claim.id}`, claim: message.claim });
+      continue;
+    }
+    const { entry } = message;
     const senders = holders(entry);
     const me = context.myMemberId;
     items.push({
@@ -102,7 +140,7 @@ export function conversationItems(
  */
 export function newestAddedEntry(
   previousIds: ReadonlySet<string> | null,
-  items: readonly ConversationItem[],
+  items: readonly ConversationItem<ClaimLike>[],
 ): { id: string; index: number } | null {
   if (previousIds === null) return null;
   let newest: EntryItem | null = null;
