@@ -1,14 +1,16 @@
 import { plural } from '@lingui/core/macro';
 import { useLingui } from '@lingui/react/macro';
 import { useQuery } from '@tanstack/react-query';
-import { useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import type { ReactNode } from 'react';
-import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { GroupAvatar } from '@/components/group-avatar';
 import { GroupNotFound } from '@/components/group-not-found';
 import { type GroupDetail, groupQuery } from '@/features/groups/groups-query';
+import { type MemberRow, memberRows } from '@/features/groups/member-form';
 import { useFormatters } from '@/i18n/use-formatters';
+import { authClient } from '@/lib/auth-client';
 
 /**
  * Group info (GLOSSARY): members, group link, Stats, change history,
@@ -27,6 +29,13 @@ export default function GroupInfoScreen() {
 function GroupInfo({ group }: { group: GroupDetail }) {
   const { t } = useLingui();
   const format = useFormatters();
+  const { data: session } = authClient.useSession();
+  const rows = memberRows(group, session?.user.id);
+  const openMemberSheet = (memberId?: string) =>
+    router.push({
+      pathname: '/groups/[groupId]/member',
+      params: memberId ? { groupId: group.id, memberId } : { groupId: group.id },
+    });
   const count = group.members.length;
   const dates = group.startDate && group.endDate ? `${format.date(group.startDate)} – ${format.date(group.endDate)}` : null;
   const soon = t`Wkrótce`;
@@ -42,19 +51,64 @@ function GroupInfo({ group }: { group: GroupDetail }) {
       <Section
         title={t`Członkowie`}
         subtitle={t`${plural(count, { one: '# osoba', few: '# osoby', many: '# osób', other: '# osoby' })}`}>
-        {group.members.map((member) => (
-          <Text key={member.id} style={styles.row}>
-            {member.id === group.ownerMemberId ? t`${member.displayName} (założyciel)` : member.displayName}
-          </Text>
+        {rows.map((row) => (
+          <MemberItem key={row.id} row={row} onPress={() => openMemberSheet(row.id)} />
         ))}
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => openMemberSheet()}
+          style={({ pressed }) => [styles.addRow, pressed && styles.pressed]}>
+          <Text style={styles.addLabel}>{t`+ Dodaj osobę bez konta`}</Text>
+        </Pressable>
       </Section>
-      {/* TODO(#7): group link + QR, members without an account, attendance. */}
+      {/* TODO: attendance per member (attendance slice), group link + QR. */}
       <Section title={t`Link grupy`} subtitle={soon} />
       <Section title={t`Statystyki`} subtitle={soon} />
       <Section title={t`Historia zmian`} subtitle={soon} />
       <Section title={t`Ustawienia`} subtitle={soon} />
       <Section title={t`Opuść, archiwizuj lub usuń grupę`} subtitle={soon} />
     </ScrollView>
+  );
+}
+
+/** A member: name, badges (owner, me, without account); tappable when I may rename them. */
+function MemberItem({ row, onPress }: { row: MemberRow; onPress: () => void }) {
+  const { t } = useLingui();
+  const badges = [
+    row.isMe ? t`Ty` : null,
+    row.isOwner ? t`założyciel` : null,
+    row.withoutAccount ? t`bez konta` : null,
+  ].filter((badge): badge is string => badge !== null);
+  const content = (
+    <>
+      <Text style={styles.memberName} numberOfLines={1}>
+        {row.displayName}
+      </Text>
+      {badges.map((badge) => (
+        <Text key={badge} style={styles.badge}>
+          {badge}
+        </Text>
+      ))}
+      {row.canRename ? <Text style={styles.chevron}>{t`Zmień`}</Text> : null}
+    </>
+  );
+  const label = [row.displayName, ...badges].join(', ');
+  if (!row.canRename) {
+    return (
+      <View style={styles.memberRow} accessible accessibilityLabel={label}>
+        {content}
+      </View>
+    );
+  }
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityHint={t`Zmień imię`}
+      onPress={onPress}
+      style={({ pressed }) => [styles.memberRow, pressed && styles.pressed]}>
+      {content}
+    </Pressable>
   );
 }
 
@@ -112,9 +166,42 @@ const styles = StyleSheet.create((theme) => ({
     fontWeight: theme.font.weightBold,
     color: theme.colors.text,
   },
-  row: {
+  memberRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.space(2),
+    minHeight: 44,
+  },
+  memberName: {
+    flexShrink: 1,
     fontSize: theme.font.sizeMd,
     color: theme.colors.text,
+  },
+  badge: {
+    paddingHorizontal: theme.space(2),
+    paddingVertical: theme.space(0.5),
+    borderRadius: theme.radius.pill,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    fontSize: theme.font.sizeSm,
+    color: theme.colors.textMuted,
+  },
+  chevron: {
+    marginStart: 'auto',
+    fontSize: theme.font.sizeSm,
+    color: theme.colors.primary,
+  },
+  addRow: {
+    justifyContent: 'center',
+    minHeight: 44,
+  },
+  addLabel: {
+    fontSize: theme.font.sizeMd,
+    fontWeight: theme.font.weightBold,
+    color: theme.colors.primary,
+  },
+  pressed: {
+    opacity: 0.6,
   },
   muted: {
     fontSize: theme.font.sizeSm,
