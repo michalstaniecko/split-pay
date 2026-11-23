@@ -7,6 +7,7 @@ import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-nati
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { GroupAvatar } from '@/components/group-avatar';
 import { GroupNotFound } from '@/components/group-not-found';
+import { GroupLinkSection } from '@/features/group-link/group-link-section';
 import { type GroupDetail, groupQuery } from '@/features/groups/groups-query';
 import { type MemberRow, memberRows } from '@/features/groups/member-form';
 import { useFormatters } from '@/i18n/use-formatters';
@@ -61,8 +62,10 @@ function GroupInfo({ group }: { group: GroupDetail }) {
           <Text style={styles.addLabel}>{t`+ Dodaj osobę bez konta`}</Text>
         </Pressable>
       </Section>
-      {/* TODO: attendance per member (attendance slice), group link + QR. */}
-      <Section title={t`Link grupy`} subtitle={soon} />
+      {/* TODO: attendance per member (attendance slice). */}
+      <Section title={t`Link grupy`}>
+        <GroupLinkSection groupId={group.id} groupName={group.name} />
+      </Section>
       <Section title={t`Statystyki`} subtitle={soon} />
       <Section title={t`Historia zmian`} subtitle={soon} />
       <Section title={t`Ustawienia`} subtitle={soon} />

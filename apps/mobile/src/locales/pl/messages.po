@@ -16,6 +16,10 @@ msgstr "{0}, informacje o grupie"
 msgid "{count, plural, one {# osoba} few {# osoby} many {# osób} other {# osoby}}"
 msgstr "{count, plural, one {# osoba} few {# osoby} many {# osób} other {# osoby}}"
 
+#: src/app/(app)/g/[token].tsx
+msgid "{memberCount, plural, one {# osoba w grupie} few {# osoby w grupie} many {# osób w grupie} other {# osoby w grupie}}"
+msgstr "{memberCount, plural, one {# osoba w grupie} few {# osoby w grupie} many {# osób w grupie} other {# osoby w grupie}}"
+
 #: src/app/(app)/groups/[groupId]/info.tsx
 msgid "+ Dodaj osobę bez konta"
 msgstr "+ Dodaj osobę bez konta"
@@ -33,6 +37,7 @@ msgstr "Aktywność"
 #: src/app/(app)/groups/[groupId]/member.tsx
 #: src/app/(app)/new-group.tsx
 #: src/app/(app)/new.tsx
+#: src/features/group-link/group-link-section.tsx
 msgid "Anuluj"
 msgstr "Anuluj"
 
@@ -69,6 +74,18 @@ msgstr "Dodaj"
 msgid "Dodaj osobę bez konta"
 msgstr "Dodaj osobę bez konta"
 
+#: src/app/(app)/g/[token].tsx
+msgid "Dołącz do grupy"
+msgstr "Dołącz do grupy"
+
+#: src/features/group-link/group-link-section.tsx
+msgid "Dołącz do grupy „{groupName}” w split-pay: {url}"
+msgstr "Dołącz do grupy „{groupName}” w split-pay: {url}"
+
+#: src/app/(app)/g/[token].tsx
+msgid "Dołącz jako nowa osoba"
+msgstr "Dołącz jako nowa osoba"
+
 #: src/app/(app)/new-group.tsx
 msgid "Emoji"
 msgstr "Emoji"
@@ -102,9 +119,17 @@ msgstr "Język"
 msgid "Język systemu"
 msgstr "Język systemu"
 
+#: src/features/group-link/group-link-section.tsx
+msgid "Każdy, kto ma ten link, może dołączyć do grupy."
+msgstr "Każdy, kto ma ten link, może dołączyć do grupy."
+
 #: src/app/(auth)/sign-in.tsx
 msgid "Kod jednorazowy"
 msgstr "Kod jednorazowy"
+
+#: src/features/group-link/group-link-section.tsx
+msgid "Kod QR linku grupy"
+msgstr "Kod QR linku grupy"
 
 #: src/features/profile/about-section.tsx
 msgid "Kod źródłowy na GitHubie"
@@ -134,6 +159,18 @@ msgstr "Nazwa"
 msgid "Nie masz jeszcze grup"
 msgstr "Nie masz jeszcze grup"
 
+#: src/app/(app)/g/[token].tsx
+msgid "Nie udało się dołączyć. Spróbuj ponownie."
+msgstr "Nie udało się dołączyć. Spróbuj ponownie."
+
+#: src/app/(app)/g/[token].tsx
+msgid "Nie udało się otworzyć linku grupy."
+msgstr "Nie udało się otworzyć linku grupy."
+
+#: src/features/group-link/group-link-section.tsx
+msgid "Nie udało się unieważnić linku."
+msgstr "Nie udało się unieważnić linku."
+
 #: src/app/(app)/new-group.tsx
 msgid "Nie udało się utworzyć grupy. Spróbuj ponownie."
 msgstr "Nie udało się utworzyć grupy. Spróbuj ponownie."
@@ -145,6 +182,10 @@ msgstr "Nie udało się wczytać grup."
 #: src/components/group-not-found.tsx
 msgid "Nie udało się wczytać grupy."
 msgstr "Nie udało się wczytać grupy."
+
+#: src/features/group-link/group-link-section.tsx
+msgid "Nie udało się wczytać linku grupy."
+msgstr "Nie udało się wczytać linku grupy."
 
 #: src/app/(auth)/sign-in.tsx
 msgid "Nie udało się wysłać kodu. Spróbuj ponownie."
@@ -222,10 +263,16 @@ msgstr "RRRR-MM-DD"
 msgid "split-pay, wersja {version}"
 msgstr "split-pay, wersja {version}"
 
+#: src/app/(app)/g/[token].tsx
 #: src/app/(app)/index.tsx
 #: src/components/group-not-found.tsx
+#: src/features/group-link/group-link-section.tsx
 msgid "Spróbuj ponownie"
 msgstr "Spróbuj ponownie"
+
+#: src/features/group-link/group-link-section.tsx
+msgid "Stary link i kod QR przestaną działać. Osoby w grupie zostają."
+msgstr "Stary link i kod QR przestaną działać. Osoby w grupie zostają."
 
 #: src/app/(app)/groups/[groupId]/info.tsx
 msgid "Statystyki"
@@ -249,6 +296,10 @@ msgstr "Ta grupa nie istnieje albo nie masz do niej dostępu."
 msgid "Tej osoby nie ma już w grupie."
 msgstr "Tej osoby nie ma już w grupie."
 
+#: src/app/(app)/g/[token].tsx
+msgid "Ten link grupy jest nieważny. Poproś kogoś z grupy o nowy."
+msgstr "Ten link grupy jest nieważny. Poproś kogoś z grupy o nowy."
+
 #: src/features/theme/theme-picker.tsx
 msgid "Tryb jasny/ciemny"
 msgstr "Tryb jasny/ciemny"
@@ -256,6 +307,18 @@ msgstr "Tryb jasny/ciemny"
 #: src/app/(app)/groups/[groupId]/info.tsx
 msgid "Ty"
 msgstr "Ty"
+
+#: src/features/group-link/group-link-section.tsx
+msgid "Udostępnij link"
+msgstr "Udostępnij link"
+
+#: src/features/group-link/group-link-section.tsx
+msgid "Unieważnij i utwórz nowy"
+msgstr "Unieważnij i utwórz nowy"
+
+#: src/features/group-link/group-link-section.tsx
+msgid "Unieważnij link"
+msgstr "Unieważnij link"
 
 #: src/app/(app)/groups/[groupId]/info.tsx
 msgid "Ustawienia"
@@ -285,6 +348,10 @@ msgstr "Wpisujesz za nią wydatki. Później może przejąć swój profil."
 #: src/app/(auth)/sign-in.tsx
 msgid "Wpisz kod wysłany na {email}."
 msgstr "Wpisz kod wysłany na {email}."
+
+#: src/app/(app)/g/[token].tsx
+msgid "Wróć"
+msgstr "Wróć"
 
 #: src/app/(app)/new-group.tsx
 msgid "Wybierz emoji."
