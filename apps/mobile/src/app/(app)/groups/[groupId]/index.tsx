@@ -8,6 +8,7 @@ import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, Text, Vie
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { GroupAvatar } from '@/components/group-avatar';
 import { GroupNotFound } from '@/components/group-not-found';
+import { ClaimMessages } from '@/features/claims/claim-messages';
 import { Composer } from '@/features/entries/composer';
 import {
   type ConversationItem,
@@ -82,6 +83,8 @@ export default function ConversationScreen() {
           style={styles.container}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}>
+          {/* Claim system messages (#18). */}
+          <ClaimMessages groupId={groupId} />
           {entries.isPending ? (
             <ActivityIndicator style={styles.center} color={theme.colors.primary} />
           ) : entries.isError ? (
