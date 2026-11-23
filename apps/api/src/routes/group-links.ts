@@ -5,6 +5,7 @@ import { asc, eq } from 'drizzle-orm';
 import { Hono, type MiddlewareHandler } from 'hono';
 import type { Db } from '../db/client';
 import { groupLinks, members } from '../db/schema';
+import { recordChange } from './change-log';
 import type { AuthEnv } from '../middleware/require-user';
 import { claimMember, findMyMember, newLinkToken, resolveLinkToken } from './claims';
 import { ownerDisplayName } from './groups';
@@ -95,11 +96,24 @@ export const linksRoutes = ({ db, requireUser }: { db: Db; requireUser: Middlewa
       const { group } = link;
       const user = c.get('user');
       // The partial unique index (group_id, user_id) makes concurrent joins add one member.
-      const [created] = await db
-        .insert(members)
-        .values({ id: randomUUID(), groupId: group.id, displayName: ownerDisplayName(user), userId: user.id })
-        .onConflictDoNothing()
-        .returning();
+      const created = await db.transaction(async (tx) => {
+        const [member] = await tx
+          .insert(members)
+          .values({ id: randomUUID(), groupId: group.id, displayName: ownerDisplayName(user), userId: user.id })
+          .onConflictDoNothing()
+          .returning();
+        if (member) {
+          await recordChange(tx, {
+            kind: 'member.join',
+            groupId: group.id,
+            targetId: member.id,
+            actorMemberId: member.id,
+            before: null,
+            after: { displayName: member.displayName },
+          });
+        }
+        return member;
+      });
       if (created) return c.json({ groupId: group.id, memberId: created.id }, 201);
 
       const existing = await findMyMember(db, group.id, user.id);
