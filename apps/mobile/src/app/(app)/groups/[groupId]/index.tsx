@@ -8,7 +8,8 @@ import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, Text, Vie
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { GroupAvatar } from '@/components/group-avatar';
 import { GroupNotFound } from '@/components/group-not-found';
-import { ClaimMessages } from '@/features/claims/claim-messages';
+import { ClaimMessage } from '@/features/claims/claim-messages';
+import { type Claim, claimsQuery } from '@/features/claims/claims-query';
 import { Composer } from '@/features/entries/composer';
 import {
   type ConversationItem,
@@ -37,8 +38,10 @@ export default function ConversationScreen() {
   const { groupId } = useLocalSearchParams<{ groupId: string }>();
   const group = useQuery(groupQuery(groupId));
   const entries = useQuery(entriesQuery(groupId));
+  const claims = useQuery(claimsQuery(groupId));
   useRefreshOnFocus(group.refetch);
   useRefreshOnFocus(entries.refetch);
+  useRefreshOnFocus(claims.refetch);
   const session = authClient.useSession();
   const me = group.data ? findMyMemberId(group.data.members, session.data?.user.id) : null;
 
@@ -83,8 +86,6 @@ export default function ConversationScreen() {
           style={styles.container}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}>
-          {/* Claim system messages (#18). */}
-          <ClaimMessages groupId={groupId} />
           {entries.isPending ? (
             <ActivityIndicator style={styles.center} color={theme.colors.primary} />
           ) : entries.isError ? (
@@ -95,7 +96,7 @@ export default function ConversationScreen() {
               </Pressable>
             </View>
           ) : (
-            <Conversation group={group.data} entries={entries.data} me={me} />
+            <Conversation group={group.data} entries={entries.data} claims={claims.data ?? []} me={me} />
           )}
           {group.data.archivedAt === null ? (
             <Composer
@@ -111,13 +112,23 @@ export default function ConversationScreen() {
   );
 }
 
-function Conversation({ group, entries, me }: { group: GroupDetail; entries: Entry[]; me: string | null }) {
+function Conversation({
+  group,
+  entries,
+  claims,
+  me,
+}: {
+  group: GroupDetail;
+  entries: Entry[];
+  claims: Claim[];
+  me: string | null;
+}) {
   const { t } = useLingui();
   const { items, stickyHeaderIndices } = useMemo(
-    () => conversationItems(entries, { members: group.members, myMemberId: me, baseCurrency: group.baseCurrency }),
-    [entries, group.members, me, group.baseCurrency],
+    () => conversationItems(entries, { members: group.members, myMemberId: me, baseCurrency: group.baseCurrency, claims }),
+    [entries, group.members, me, group.baseCurrency, claims],
   );
-  const listRef = useRef<FlashListRef<ConversationItem>>(null);
+  const listRef = useRef<FlashListRef<ConversationItem<Claim>>>(null);
   const highlightId = useNewEntryHighlight(items, listRef);
 
   const openEntry = (entryId: string) =>
@@ -149,6 +160,8 @@ function Conversation({ group, entries, me }: { group: GroupDetail; entries: Ent
       renderItem={({ item }) =>
         item.type === 'day' ? (
           <DaySeparator item={item} baseCurrency={group.baseCurrency} />
+        ) : item.type === 'claim' ? (
+          <ClaimMessage groupId={group.id} claim={item.claim} />
         ) : (
           <EntryBubble
             item={item}
@@ -167,8 +180,8 @@ function Conversation({ group, entries, me }: { group: GroupDetail; entries: Ent
  * the viewport) and highlights it briefly. Returns the highlighted entry id.
  */
 function useNewEntryHighlight(
-  items: ConversationItem[],
-  listRef: React.RefObject<FlashListRef<ConversationItem> | null>,
+  items: ConversationItem<Claim>[],
+  listRef: React.RefObject<FlashListRef<ConversationItem<Claim>> | null>,
 ): string | null {
   const known = useRef<Set<string> | null>(null);
   const [highlightId, setHighlightId] = useState<string | null>(null);

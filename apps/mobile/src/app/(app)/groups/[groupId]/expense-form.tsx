@@ -1,6 +1,6 @@
 import { plural } from '@lingui/core/macro';
 import { useLingui } from '@lingui/react/macro';
-import { Category, defaultParticipants, minorUnitDigits } from '@split-pay/shared';
+import { Category, minorUnitDigits } from '@split-pay/shared';
 import { useQuery } from '@tanstack/react-query';
 import { randomUUID } from 'expo-crypto';
 import { useLocalSearchParams } from 'expo-router';
@@ -19,6 +19,7 @@ import {
   expenseFormFromComposer,
   parseExpenseForm,
   todayLocalDate,
+  withDate,
   withTitle,
 } from '@/features/entries/expense-draft';
 import { useEntryLabels } from '@/features/entries/use-entry-labels';
@@ -52,7 +53,13 @@ function ExpenseFormView({ group }: { group: GroupDetail }) {
   // One id per form: a retry after a lost response can't add the expense twice.
   const [id] = useState(() => randomUUID());
   const [form, setForm] = useState<ExpenseForm>(() =>
-    expenseFormFromComposer({ draft: composerStore.get(group.id), group, myMemberId: me, today: todayLocalDate() }),
+    expenseFormFromComposer({
+      draft: composerStore.get(group.id),
+      group,
+      members: group.members,
+      myMemberId: me,
+      today: todayLocalDate(),
+    }),
   );
   const [errors, setErrors] = useState<ExpenseFormField[]>([]);
   const createEntry = useCreateEntry(group.id);
@@ -63,8 +70,7 @@ function ExpenseFormView({ group }: { group: GroupDetail }) {
     setErrors((current) => current.filter((f) => !fields.includes(f)));
   };
 
-  const participants = defaultParticipants(group.members, form.date);
-  const participantCount = participants.length > 0 ? participants.length : group.members.length;
+  const participantCount = form.participantIds.length > 0 ? form.participantIds.length : group.members.length;
 
   const submit = () => {
     const parsed = parseExpenseForm(form, { id, group, members: group.members });
@@ -165,7 +171,7 @@ function ExpenseFormView({ group }: { group: GroupDetail }) {
           <Text style={styles.label}>{t`Data`}</Text>
           <TextInput
             value={form.date}
-            onChangeText={(date) => update({ ...form, date }, ['date'])}
+            onChangeText={(date) => update(withDate(form, date, group.members), ['date'])}
             placeholder={t`RRRR-MM-DD`}
             accessibilityLabel={t`Data`}
             placeholderTextColor={theme.colors.textMuted}

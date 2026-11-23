@@ -1,31 +1,16 @@
 import { useLingui } from '@lingui/react/macro';
-import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { Alert, Pressable, Text, View } from 'react-native';
+import { Alert, Pressable, Text } from 'react-native';
 import { StyleSheet } from 'react-native-unistyles';
 import { authClient } from '@/lib/auth-client';
-import { activeClaims } from './claims';
-import { type Claim, claimsQuery, useUndoClaim } from './claims-query';
+import { type Claim, useUndoClaim } from './claims-query';
 
 /**
- * Claims as system messages in the Conversation (ADR-0017): "Tomek przejął
- * profil Tomek". Long-press (or the accessibility action) → undo, open to any
- * member. Undone claims disappear (the Conversation shows the current state).
- * TODO(#8): interleave with the entry bubbles by time once the list exists.
+ * A claim as a system message in the Conversation (ADR-0017): "Tomek przejął
+ * profil Tomek", placed among the entries by claim time (`conversationItems`).
+ * Long-press (or the accessibility action) → undo, open to any member. Undone
+ * claims disappear (the Conversation shows the current state).
  */
-export function ClaimMessages({ groupId }: { groupId: string }) {
-  const claims = useQuery(claimsQuery(groupId));
-  const active = activeClaims(claims.data ?? []);
-  if (active.length === 0) return null;
-  return (
-    <View style={styles.list}>
-      {active.map((claim) => (
-        <ClaimMessage key={claim.id} groupId={groupId} claim={claim} />
-      ))}
-    </View>
-  );
-}
-
 export function ClaimMessage({ groupId, claim }: { groupId: string; claim: Claim }) {
   const { t } = useLingui();
   const undo = useUndoClaim(groupId);
@@ -65,14 +50,10 @@ export function ClaimMessage({ groupId, claim }: { groupId: string; claim: Claim
 }
 
 const styles = StyleSheet.create((theme) => ({
-  list: {
-    gap: theme.space(2),
-    paddingVertical: theme.space(2),
-    alignItems: 'center',
-  },
   message: {
     alignSelf: 'center',
     maxWidth: '90%',
+    marginVertical: theme.space(1),
     paddingHorizontal: theme.space(3),
     paddingVertical: theme.space(1.5),
     borderRadius: theme.radius.pill,

@@ -2,6 +2,7 @@ import {
   type Category,
   type CurrencyCode,
   defaultEntryDate,
+  defaultParticipants,
   equalExpenseDefaults,
   type Group,
   LocalDate,
@@ -9,6 +10,7 @@ import {
   minorUnitDigits,
   type NewExpense,
   NewEntry,
+  participantsOnDateChange,
   suggestCategory,
 } from '@split-pay/shared';
 import { parseAmountInput } from './amount-input';
@@ -75,25 +77,55 @@ export interface ExpenseForm {
   category: Category;
   /** The user picked a category — stop suggesting it from the title. */
   categoryChosen: boolean;
+  /**
+   * Equal-split participants. They start as the members present on the date
+   * and follow attendance when it changes, unless hand-picked (#15). Empty =
+   * nobody present that day, which saves as everyone.
+   */
+  participantIds: string[];
+  /** The last valid date `participantIds` were resolved for (`date` may be half-typed). */
+  participantsDate: LocalDate;
 }
 
 export type ExpenseFormField = 'amount' | 'title' | 'payer' | 'date';
 const FIELDS: readonly ExpenseFormField[] = ['amount', 'title', 'payer', 'date'];
 
-/** The form opened by "+": the composer's values, me as payer, the default date, the suggested category. */
+/**
+ * The form opened by "+": the composer's values, me as payer, the default
+ * date, the members present that day, the suggested category.
+ */
 export function expenseFormFromComposer(input: {
   draft: ComposerDraft;
   group: ExpenseGroup;
+  members: readonly Member[];
   myMemberId: string | null;
   today: LocalDate;
 }): ExpenseForm {
+  const date = defaultEntryDate(input.today, input.group);
   return {
     amount: input.draft.amount,
     title: input.draft.title,
     payerMemberId: input.myMemberId ?? '',
-    date: defaultEntryDate(input.today, input.group),
+    date,
     category: suggestCategory(input.draft.title),
     categoryChosen: false,
+    participantIds: defaultParticipants(input.members, date),
+    participantsDate: date,
+  };
+}
+
+/**
+ * Changes the date as typed. Once it is a valid date, participants follow
+ * attendance on it unless they were hand-picked (`participantsOnDateChange`).
+ */
+export function withDate(form: ExpenseForm, date: string, members: readonly Member[]): ExpenseForm {
+  const next = date.trim();
+  if (!LocalDate.safeParse(next).success || next === form.participantsDate) return { ...form, date };
+  return {
+    ...form,
+    date,
+    participantIds: participantsOnDateChange(members, form.participantIds, form.participantsDate, next),
+    participantsDate: next,
   };
 }
 
@@ -104,7 +136,7 @@ export function withTitle(form: ExpenseForm, title: string): ExpenseForm {
 
 export type ParsedExpenseForm = { ok: true; value: NewExpense } | { ok: false; errors: ExpenseFormField[] };
 
-/** Validates the form and builds the equal-split expense (participants: present on the form's date). */
+/** Validates the form and builds the equal-split expense among the form's participants. */
 export function parseExpenseForm(
   form: ExpenseForm,
   context: { id: string; group: ExpenseGroup; members: readonly Member[] },
@@ -128,6 +160,9 @@ export function parseExpenseForm(
     members: context.members,
     category: form.category,
   });
+  // Nobody present that day: everyone takes part, as in `equalExpenseDefaults`.
+  const memberIds = form.participantIds.length > 0 ? form.participantIds : context.members.map((m) => m.id);
+  value.split = { mode: 'equal', memberIds: [...memberIds] };
   // Same schema as the API; catches limits like the title length.
   const checked = NewEntry.safeParse(value);
   if (!checked.success) {
