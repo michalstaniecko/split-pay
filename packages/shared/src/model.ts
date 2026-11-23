@@ -19,7 +19,7 @@ export type LocalDate = z.infer<typeof LocalDate>;
 // ── Group and members ────────────────────────────────────────────────────────
 
 /** The calendar day after `date`. */
-function nextDay(date: LocalDate): LocalDate {
+export function nextDay(date: LocalDate): LocalDate {
   const d = new Date(`${date}T00:00:00Z`);
   d.setUTCDate(d.getUTCDate() + 1);
   return d.toISOString().slice(0, 10);

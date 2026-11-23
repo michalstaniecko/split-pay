@@ -1,3 +1,4 @@
+export * from './attendance';
 export * from './category';
 export * from './entry-defaults';
 export * from './flags';

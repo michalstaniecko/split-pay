@@ -2,6 +2,10 @@ import { useLingui } from '@lingui/react/macro';
 import { Stack } from 'expo-router';
 import { useUnistyles } from 'react-native-unistyles';
 import { InboxHeaderButtons } from '@/components/inbox-header-buttons';
+import { usePendingJoin } from '@/features/group-link/use-pending-join';
+
+/** Deep links (group link → Conversation) keep the inbox underneath, so "back" leads home. */
+export const unstable_settings = { anchor: 'index' };
 
 /**
  * The signed-in app: one native stack, no tabs (ADR-0017). The inbox is home;
@@ -11,6 +15,7 @@ import { InboxHeaderButtons } from '@/components/inbox-header-buttons';
 export default function AppLayout() {
   const { t } = useLingui();
   const { theme } = useUnistyles();
+  usePendingJoin();
   return (
     <Stack
       screenOptions={{

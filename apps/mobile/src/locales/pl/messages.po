@@ -16,6 +16,10 @@ msgstr "{0}, informacje o grupie"
 msgid "{count, plural, one {# osoba} few {# osoby} many {# osób} other {# osoby}}"
 msgstr "{count, plural, one {# osoba} few {# osoby} many {# osób} other {# osoby}}"
 
+#: src/app/(app)/g/[token].tsx
+msgid "{memberCount, plural, one {# osoba w grupie} few {# osoby w grupie} many {# osób w grupie} other {# osoby w grupie}}"
+msgstr "{memberCount, plural, one {# osoba w grupie} few {# osoby w grupie} many {# osób w grupie} other {# osoby w grupie}}"
+
 #: src/features/entries/entry-bubble.tsx
 msgid "{payerName} + {otherPayers}"
 msgstr "{payerName} + {otherPayers}"
@@ -43,6 +47,8 @@ msgstr "Alkohol"
 #: src/app/(app)/new-group.tsx
 #: src/app/(app)/new.tsx
 #: src/app/(app)/quick-bill.tsx
+#: src/features/group-link/group-link-section.tsx
+#: src/features/groups/attendance-grid-view.tsx
 msgid "Anuluj"
 msgstr "Anuluj"
 
@@ -102,6 +108,18 @@ msgstr "Dodał(a) {addedBy}, {0}"
 msgid "Dokładne kwoty"
 msgstr "Dokładne kwoty"
 
+#: src/app/(app)/g/[token].tsx
+msgid "Dołącz do grupy"
+msgstr "Dołącz do grupy"
+
+#: src/features/group-link/group-link-section.tsx
+msgid "Dołącz do grupy „{groupName}” w split-pay: {url}"
+msgstr "Dołącz do grupy „{groupName}” w split-pay: {url}"
+
+#: src/app/(app)/g/[token].tsx
+msgid "Dołącz jako nowa osoba"
+msgstr "Dołącz jako nowa osoba"
+
 #: src/app/(app)/new-group.tsx
 msgid "Emoji"
 msgstr "Emoji"
@@ -156,9 +174,17 @@ msgstr "Kategoria"
 msgid "Każda osoba trafi do grupy jako osoba bez konta. Płacisz Ty, dzielimy po równo."
 msgstr "Każda osoba trafi do grupy jako osoba bez konta. Płacisz Ty, dzielimy po równo."
 
+#: src/features/group-link/group-link-section.tsx
+msgid "Każdy, kto ma ten link, może dołączyć do grupy."
+msgstr "Każdy, kto ma ten link, może dołączyć do grupy."
+
 #: src/app/(auth)/sign-in.tsx
 msgid "Kod jednorazowy"
 msgstr "Kod jednorazowy"
+
+#: src/features/group-link/group-link-section.tsx
+msgid "Kod QR linku grupy"
+msgstr "Kod QR linku grupy"
 
 #: src/features/profile/about-section.tsx
 msgid "Kod źródłowy na GitHubie"
@@ -200,6 +226,18 @@ msgstr "Nie masz jeszcze grup"
 msgid "Nie udało się dodać wydatku. Spróbuj ponownie."
 msgstr "Nie udało się dodać wydatku. Spróbuj ponownie."
 
+#: src/app/(app)/g/[token].tsx
+msgid "Nie udało się dołączyć. Spróbuj ponownie."
+msgstr "Nie udało się dołączyć. Spróbuj ponownie."
+
+#: src/app/(app)/g/[token].tsx
+msgid "Nie udało się otworzyć linku grupy."
+msgstr "Nie udało się otworzyć linku grupy."
+
+#: src/features/group-link/group-link-section.tsx
+msgid "Nie udało się unieważnić linku."
+msgstr "Nie udało się unieważnić linku."
+
 #: src/app/(app)/new-group.tsx
 msgid "Nie udało się utworzyć grupy. Spróbuj ponownie."
 msgstr "Nie udało się utworzyć grupy. Spróbuj ponownie."
@@ -216,6 +254,10 @@ msgstr "Nie udało się wczytać grup."
 msgid "Nie udało się wczytać grupy."
 msgstr "Nie udało się wczytać grupy."
 
+#: src/features/group-link/group-link-section.tsx
+msgid "Nie udało się wczytać linku grupy."
+msgstr "Nie udało się wczytać linku grupy."
+
 #: src/app/(app)/groups/[groupId]/index.tsx
 msgid "Nie udało się wczytać wpisów."
 msgstr "Nie udało się wczytać wpisów."
@@ -223,6 +265,10 @@ msgstr "Nie udało się wczytać wpisów."
 #: src/app/(auth)/sign-in.tsx
 msgid "Nie udało się wysłać kodu. Spróbuj ponownie."
 msgstr "Nie udało się wysłać kodu. Spróbuj ponownie."
+
+#: src/features/groups/attendance-grid-view.tsx
+msgid "Nie udało się zapisać obecności. Spróbuj ponownie."
+msgstr "Nie udało się zapisać obecności. Spróbuj ponownie."
 
 #: src/app/(app)/groups/[groupId]/member.tsx
 msgid "Nie udało się zapisać. Spróbuj ponownie."
@@ -262,6 +308,10 @@ msgstr "np. Mazury 2026"
 #: src/features/profile/about-section.tsx
 msgid "O aplikacji"
 msgstr "O aplikacji"
+
+#: src/features/groups/attendance-grid-view.tsx
+msgid "Obecność"
+msgstr "Obecność"
 
 #: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
 #: src/app/(app)/new-group.tsx
@@ -359,11 +409,17 @@ msgstr "Spłata"
 msgid "split-pay, wersja {version}"
 msgstr "split-pay, wersja {version}"
 
+#: src/app/(app)/g/[token].tsx
 #: src/app/(app)/groups/[groupId]/index.tsx
 #: src/app/(app)/index.tsx
 #: src/components/group-not-found.tsx
+#: src/features/group-link/group-link-section.tsx
 msgid "Spróbuj ponownie"
 msgstr "Spróbuj ponownie"
+
+#: src/features/group-link/group-link-section.tsx
+msgid "Stary link i kod QR przestaną działać. Osoby w grupie zostają."
+msgstr "Stary link i kod QR przestaną działać. Osoby w grupie zostają."
 
 #: src/app/(app)/groups/[groupId]/info.tsx
 msgid "Statystyki"
@@ -391,6 +447,10 @@ msgstr "Tego wpisu już nie ma."
 msgid "Tej osoby nie ma już w grupie."
 msgstr "Tej osoby nie ma już w grupie."
 
+#: src/app/(app)/g/[token].tsx
+msgid "Ten link grupy jest nieważny. Poproś kogoś z grupy o nowy."
+msgstr "Ten link grupy jest nieważny. Poproś kogoś z grupy o nowy."
+
 #: src/features/entries/use-entry-labels.ts
 msgid "Transport"
 msgstr "Transport"
@@ -415,6 +475,10 @@ msgstr "Ty"
 msgid "Tytuł"
 msgstr "Tytuł"
 
+#: src/features/group-link/group-link-section.tsx
+msgid "Udostępnij link"
+msgstr "Udostępnij link"
+
 #: src/features/entries/use-entry-labels.ts
 msgid "Udziały"
 msgstr "Udziały"
@@ -423,6 +487,14 @@ msgstr "Udziały"
 #: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
 msgid "Udziały · {0}"
 msgstr "Udziały · {0}"
+
+#: src/features/group-link/group-link-section.tsx
+msgid "Unieważnij i utwórz nowy"
+msgstr "Unieważnij i utwórz nowy"
+
+#: src/features/group-link/group-link-section.tsx
+msgid "Unieważnij link"
+msgstr "Unieważnij link"
 
 #: src/app/(app)/groups/[groupId]/info.tsx
 msgid "Ustawienia"
@@ -468,6 +540,10 @@ msgstr "Wpisz kod wysłany na {email}."
 #: src/app/(app)/groups/[groupId]/index.tsx
 msgid "Wpisz kwotę i tytuł poniżej, żeby dodać pierwszy wydatek."
 msgstr "Wpisz kwotę i tytuł poniżej, żeby dodać pierwszy wydatek."
+
+#: src/app/(app)/g/[token].tsx
+msgid "Wróć"
+msgstr "Wróć"
 
 #: src/features/entries/use-entry-labels.ts
 msgid "Wspólne + osobiste"
@@ -560,6 +636,10 @@ msgstr "Zamknij"
 msgid "Zapisz"
 msgstr "Zapisz"
 
+#: src/features/groups/attendance-grid-view.tsx
+msgid "Zapisz obecność"
+msgstr "Zapisz obecność"
+
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
 msgid "Zapłacił(a)"
 msgstr "Zapłacił(a)"
@@ -567,6 +647,11 @@ msgstr "Zapłacił(a)"
 #: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
 msgid "Zapłacili"
 msgstr "Zapłacili"
+
+#. placeholder {0}: emptyNames.join(', ')
+#: src/features/groups/attendance-grid-view.tsx
+msgid "Zaznacz co najmniej jeden dzień: {0}"
+msgstr "Zaznacz co najmniej jeden dzień: {0}"
 
 #: src/app/(app)/groups/[groupId]/info.tsx
 msgid "Zmień"

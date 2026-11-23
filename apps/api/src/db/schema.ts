@@ -3,3 +3,4 @@
 export * from './auth-schema';
 export * from './entries';
 export * from './groups';
+export * from './group-links';
