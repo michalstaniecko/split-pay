@@ -7,7 +7,10 @@ import {
   Member,
   MemberRename,
   NewGroup,
+  NewEntry,
   NewMember,
+  NewQuickBill,
+  entryFromNew,
   normalizeAttendance,
   validateEntryInGroup,
 } from './model';
@@ -292,5 +295,80 @@ describe('validateEntryInGroup', () => {
     expect(validateEntryInGroup(e, { ...group, archivedAt: '2026-08-01T00:00:00Z' }, members)).toEqual([
       'Group is archived',
     ]);
+  });
+});
+
+describe('NewQuickBill', () => {
+  const valid = {
+    groupId: uuid(910),
+    expenseId: uuid(911),
+    title: ' Pizza ',
+    amount: 12_000,
+    currency: 'PLN',
+    date: '2026-11-23',
+    color: '#1E88E5',
+    people: [
+      { id: uuid(912), displayName: 'Kasia' },
+      { id: uuid(913), displayName: 'Tomek' },
+    ],
+  };
+
+  it('accepts a title, an amount and people without an account, trimming the title', () => {
+    const r = NewQuickBill.safeParse(valid);
+    expect(r.success && r.data.title).toBe('Pizza');
+  });
+
+  it('needs at least one other person, a positive amount and a title', () => {
+    expect(NewQuickBill.safeParse({ ...valid, people: [] }).success).toBe(false);
+    expect(NewQuickBill.safeParse({ ...valid, amount: 0 }).success).toBe(false);
+    expect(NewQuickBill.safeParse({ ...valid, title: '  ' }).success).toBe(false);
+  });
+
+  it('rejects repeated ids', () => {
+    expect(NewQuickBill.safeParse({ ...valid, expenseId: valid.groupId }).success).toBe(false);
+    const people = [valid.people[0], { ...valid.people[1], id: valid.people[0]!.id }];
+    expect(NewQuickBill.safeParse({ ...valid, people }).success).toBe(false);
+  });
+});
+
+describe('NewEntry / entryFromNew', () => {
+  const input = {
+    kind: 'expense' as const,
+    id: uuid(901),
+    date: '2026-07-10',
+    title: 'Pizza',
+    amount: 10_000,
+    currency: 'PLN',
+    rateToBase: '1',
+    category: 'food' as const,
+    receiptPhotoId: null,
+    payers: [{ memberId: ANIA, amount: 10_000 }],
+    split: { mode: 'equal' as const, memberIds: [ANIA, BARTEK] },
+  };
+  const meta = { groupId: group.id, createdBy: USER, now: '2026-07-10T12:00:00.000Z' };
+
+  it('accepts every entry kind without the server-owned fields', () => {
+    expect(NewEntry.safeParse(input).success).toBe(true);
+    const income = { ...input, kind: 'income', payers: undefined, recipients: input.payers };
+    expect(NewEntry.safeParse(income).success).toBe(true);
+    const settlement = { kind: 'settlement', id: uuid(902), date: '2026-07-10', amount: 500, currency: 'PLN', rateToBase: '1', from: ANIA, to: BARTEK };
+    expect(NewEntry.safeParse(settlement).success).toBe(true);
+  });
+
+  it('completes it into version 1 of an Entry', () => {
+    const r = entryFromNew(input, meta);
+    expect(r.success && r.data).toEqual({
+      ...input,
+      groupId: group.id,
+      version: 1,
+      createdBy: USER,
+      createdAt: meta.now,
+      updatedAt: meta.now,
+      deletedAt: null,
+    });
+  });
+
+  it('runs the Entry cross-field checks', () => {
+    expect(entryFromNew({ ...input, payers: [{ memberId: ANIA, amount: 1 }] }, meta).success).toBe(false);
   });
 });
