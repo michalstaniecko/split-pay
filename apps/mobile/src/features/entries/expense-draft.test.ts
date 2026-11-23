@@ -9,6 +9,7 @@ import {
   withDate,
   withTitle,
 } from './expense-draft';
+import { initialPayersForm, initialSplitForm } from './split-form';
 
 const id = (n: number) => `00000000-0000-4000-8000-${n.toString().padStart(12, '0')}`;
 const GROUP = id(100);
@@ -104,6 +105,8 @@ describe('expense form', () => {
       categoryChosen: false,
       participantIds: [ANIA, BARTEK],
       participantsDate: '2026-07-11',
+      split: initialSplitForm,
+      payers: initialPayersForm,
     });
   });
 
@@ -161,6 +164,45 @@ describe('expense form', () => {
     );
     expect(parsed).toEqual({ ok: false, errors: ['amount', 'title', 'payer', 'date'] });
   });
+
+  it('builds the split mode and multiple payers the form describes', () => {
+    const parsed = parseExpenseForm(
+      {
+        ...form,
+        split: { ...form.split, mode: 'shares', weights: { [ANIA]: '2', [TOMEK]: '1' } },
+        payers: { multiple: true, amounts: { [ANIA]: '40', [BARTEK]: '5,5' } },
+      },
+      { id: ENTRY, group: trip, members },
+    );
+    expect(parsed).toMatchObject({
+      ok: true,
+      value: {
+        payers: [
+          { memberId: ANIA, amount: 4000 },
+          { memberId: BARTEK, amount: 550 },
+        ],
+        split: {
+          mode: 'shares',
+          weights: [
+            { memberId: ANIA, weight: 2 },
+            { memberId: TOMEK, weight: 1 },
+          ],
+        },
+      },
+    });
+  });
+
+  it('blocks saving when split or payer amounts do not add up', () => {
+    const parsed = parseExpenseForm(
+      {
+        ...form,
+        split: { ...form.split, mode: 'exact', exact: { [ANIA]: '40' } },
+        payers: { multiple: true, amounts: { [ANIA]: '40' } },
+      },
+      { id: ENTRY, group: trip, members },
+    );
+    expect(parsed).toEqual({ ok: false, errors: ['payerAmounts', 'split'] });
+  });
 });
 
 describe('income in the expense form', () => {
@@ -201,6 +243,44 @@ describe('income in the expense form', () => {
       ok: true,
       value: expect.objectContaining({ kind: 'expense', payers: [{ memberId: ANIA, amount: 40_000 }] }),
     });
+  });
+
+  it('builds an income with several recipients and a split mode (#12)', () => {
+    const parsed = parseExpenseForm(
+      {
+        ...form,
+        kind: 'income',
+        split: { ...form.split, mode: 'exact', exact: { [ANIA]: '300', [TOMEK]: '100' } },
+        payers: { multiple: true, amounts: { [ANIA]: '250', [BARTEK]: '150' } },
+      },
+      { id: ENTRY, group: trip, members },
+    );
+    expect(parsed).toMatchObject({
+      ok: true,
+      value: {
+        kind: 'income',
+        recipients: [
+          { memberId: ANIA, amount: 25_000 },
+          { memberId: BARTEK, amount: 15_000 },
+        ],
+        split: {
+          mode: 'exact',
+          amounts: [
+            { memberId: ANIA, amount: 30_000 },
+            { memberId: TOMEK, amount: 10_000 },
+          ],
+        },
+      },
+    });
+    expect(parsed.ok && 'payers' in parsed.value).toBe(false);
+  });
+
+  it('reports recipient amounts that do not add up on the payer amounts field', () => {
+    const parsed = parseExpenseForm(
+      { ...form, kind: 'income', payers: { multiple: true, amounts: { [ANIA]: '100' } } },
+      { id: ENTRY, group: trip, members },
+    );
+    expect(parsed).toEqual({ ok: false, errors: ['payerAmounts'] });
   });
 
   it('reports a missing recipient on the payer field', () => {

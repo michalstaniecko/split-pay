@@ -14,6 +14,14 @@ import {
   suggestCategory,
 } from '@split-pay/shared';
 import { parseAmountInput } from './amount-input';
+import {
+  buildPayers,
+  buildSplit,
+  initialPayersForm,
+  initialSplitForm,
+  type PayersForm,
+  type SplitForm,
+} from './split-form';
 
 /** What the group needs to provide for building an expense. */
 export type ExpenseGroup = Pick<Group, 'id' | 'startDate' | 'endDate'> & { baseCurrency: CurrencyCode };
@@ -64,9 +72,9 @@ export function composerExpense(input: {
 }
 
 /**
- * The full expense form while editing. This slice exposes payer, date and
- * category with an equal split in the base currency; later slices add their
- * fields here (split modes #12, income #13, currency #14) and to `parseExpenseForm`.
+ * The full expense form while editing: payer(s), date, category and the split
+ * in the base currency; later slices add their fields here (income #13,
+ * currency #14) and to `parseExpenseForm`.
  */
 export interface ExpenseForm {
   amount: string;
@@ -78,16 +86,21 @@ export interface ExpenseForm {
   /** The user picked a category — stop suggesting it from the title. */
   categoryChosen: boolean;
   /**
-   * Equal-split participants. They start as the members present on the date
+   * Participants of an equal split (common + personal: who shares the common
+   * part). They start as the members present on the date
    * and follow attendance when it changes, unless hand-picked (#15). Empty =
    * nobody present that day, which saves as everyone.
    */
   participantIds: string[];
   /** The last valid date `participantIds` were resolved for (`date` may be half-typed). */
   participantsDate: LocalDate;
+  /** Split mode and its values (#12). */
+  split: SplitForm;
+  /** Multiple payers behind an advanced option; `payerMemberId` is the single payer (#12). */
+  payers: PayersForm;
   /**
-   * Expense (default) or income (#13): for an income `payerMemberId` is the
-   * recipient — the person chips read "Otrzymał(a)" instead of "Zapłacił(a)".
+   * Expense (default) or income (#13): for an income `payerMemberId` (or
+   * `payers`) are the recipients — the person chips read "Otrzymał(a)" instead of "Zapłacił(a)".
    */
   kind?: ExpenseFormKind;
 }
@@ -104,8 +117,8 @@ export function asIncome(expense: NewExpense): NewIncome {
   return { kind: 'income', ...fields, recipients: payers };
 }
 
-export type ExpenseFormField = 'amount' | 'title' | 'payer' | 'date';
-const FIELDS: readonly ExpenseFormField[] = ['amount', 'title', 'payer', 'date'];
+export type ExpenseFormField = 'amount' | 'title' | 'payer' | 'payerAmounts' | 'date' | 'split';
+const FIELDS: readonly ExpenseFormField[] = ['amount', 'title', 'payer', 'payerAmounts', 'date', 'split'];
 
 /**
  * The form opened by "+": the composer's values, me as payer, the default
@@ -126,6 +139,8 @@ export function expenseFormFromComposer(input: {
     date,
     category: suggestCategory(input.draft.title),
     categoryChosen: false,
+    split: initialSplitForm,
+    payers: initialPayersForm,
     participantIds: defaultParticipants(input.members, date),
     participantsDate: date,
   };
@@ -154,8 +169,8 @@ export function withTitle(form: ExpenseForm, title: string): ExpenseForm {
 export type ParsedExpenseForm = { ok: true; value: NewExpense | NewIncome } | { ok: false; errors: ExpenseFormField[] };
 
 /**
- * Validates the form and builds the equal-split expense among the form's
- * participants — or income, with the payer as its recipient.
+ * Validates the form and builds the expense with the form's split mode and
+ * payers — or income, with the payers as its recipients.
  */
 export function parseExpenseForm(
   form: ExpenseForm,
@@ -165,12 +180,19 @@ export function parseExpenseForm(
   const amount = parseAmountInput(form.amount, minorUnitDigits(context.group.baseCurrency));
   if (amount === null) errors.add('amount');
   if (form.title.trim() === '') errors.add('title');
-  if (!context.members.some((m) => m.id === form.payerMemberId)) errors.add('payer');
+  if (!form.payers.multiple && !context.members.some((m) => m.id === form.payerMemberId)) errors.add('payer');
+  const digits = minorUnitDigits(context.group.baseCurrency);
+  const payers = buildPayers(form.payerMemberId, form.payers, { amount, digits });
+  if (form.payers.multiple && !payers.ok) errors.add('payerAmounts');
   const date = form.date.trim();
   if (!LocalDate.safeParse(date).success) errors.add('date');
-  if (errors.size > 0 || amount === null) return { ok: false, errors: FIELDS.filter((f) => errors.has(f)) };
+  const split = buildSplit(form.split, { amount, digits, members: context.members, participantIds: form.participantIds });
+  if (amount !== null && !split.ok) errors.add('split');
+  if (errors.size > 0 || amount === null || !payers.ok || !split.ok) {
+    return { ok: false, errors: FIELDS.filter((f) => errors.has(f)) };
+  }
 
-  const expense = equalExpenseDefaults({
+  const defaults = equalExpenseDefaults({
     id: context.id,
     title: form.title,
     amount,
@@ -180,15 +202,16 @@ export function parseExpenseForm(
     members: context.members,
     category: form.category,
   });
-  // Nobody present that day: everyone takes part, as in `equalExpenseDefaults`.
-  const memberIds = form.participantIds.length > 0 ? form.participantIds : context.members.map((m) => m.id);
-  expense.split = { mode: 'equal', memberIds: [...memberIds] };
+  const expense: NewExpense = { ...defaults, payers: payers.payers, split: split.split };
   const value = form.kind === 'income' ? asIncome(expense) : expense;
   // Same schema as the API; catches limits like the title length.
   const checked = NewEntry.safeParse(value);
   if (!checked.success) {
     const invalid = new Set(checked.error.issues.map((i) => i.path[0]));
-    return { ok: false, errors: FIELDS.filter((f) => invalid.has(f === 'payer' ? (value.kind === 'income' ? 'recipients' : 'payers') : f)) };
+    const payersField = form.payers.multiple ? 'payerAmounts' : 'payer';
+    const payersPath = value.kind === 'income' ? 'recipients' : 'payers';
+    const pathOf = (f: ExpenseFormField) => (f === payersField ? payersPath : f);
+    return { ok: false, errors: FIELDS.filter((f) => invalid.has(pathOf(f))) };
   }
   return { ok: true, value };
 }

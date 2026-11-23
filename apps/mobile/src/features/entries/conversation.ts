@@ -36,6 +36,10 @@ export interface EntryItem {
   side: 'start' | 'end';
   /** The largest payer (recipient, settlement sender) — the bubble's author. */
   payerName: string;
+  /** The largest payer's member id (avatar). */
+  payerId: string;
+  /** All payers' names, largest amount first (screen-reader label). */
+  payerNames: string[];
   /** How many other payers ("Kasia + 2"). */
   otherPayers: number;
   /** My share in the base currency ("twój udział"); `null` without a member of mine. */
@@ -118,6 +122,8 @@ export function conversationItems<C extends ClaimLike = ClaimLike>(
       entry,
       side: me !== null && senders.some((h) => h.memberId === me) ? 'end' : 'start',
       payerName: names.get(senders[0]!.memberId) ?? '?',
+      payerId: senders[0]!.memberId,
+      payerNames: senders.map((h) => names.get(h.memberId) ?? '?'),
       otherPayers: senders.length - 1,
       myShare: me === null ? null : memberShare(entry, me, context.baseCurrency),
     });
