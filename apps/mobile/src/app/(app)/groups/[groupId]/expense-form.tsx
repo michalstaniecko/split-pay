@@ -1,6 +1,6 @@
 import { plural } from '@lingui/core/macro';
 import { useLingui } from '@lingui/react/macro';
-import { Category, defaultParticipants, minorUnitDigits } from '@split-pay/shared';
+import { Category, defaultParticipants, type Expense, minorUnitDigits } from '@split-pay/shared';
 import { useQuery } from '@tanstack/react-query';
 import { randomUUID } from 'expo-crypto';
 import { useLocalSearchParams } from 'expo-router';
@@ -12,7 +12,8 @@ import { GroupNotFound } from '@/components/group-not-found';
 import { cleanAmountInput } from '@/features/entries/amount-input';
 import { composerStore } from '@/features/entries/composer-store';
 import { myMemberId } from '@/features/entries/conversation';
-import { CATEGORY_ICONS, useCreateEntry } from '@/features/entries/entries-query';
+import { CATEGORY_ICONS, entriesQuery, useCreateEntry, useEditEntry } from '@/features/entries/entries-query';
+import { editedExpense, editedSplit, expenseFormFromEntry, versionConflictEntry } from '@/features/entries/entry-edit';
 import {
   type ExpenseForm,
   type ExpenseFormField,
@@ -32,18 +33,35 @@ import { closeSheet } from '@/lib/close-sheet';
  * leaves the composer's values where they were.
  * This slice: payer, date, category; equal split among those present on the
  * date, base currency. Later: split modes (#12), income (#13), currency (#14),
- * receipt (#26), and editing with `?entryId=` (#11).
+ * receipt (#26).
+ * With `?entryId=` it is the edit screen (#11, long-press "Edytuj" or "Edytuj"
+ * in the entry detail): prefilled from the cached entry, saved with the
+ * version it was based on; a version conflict closes it and marks the bubble.
  */
 export default function ExpenseFormSheet() {
+  const { t } = useLingui();
   const { theme } = useUnistyles();
-  const { groupId } = useLocalSearchParams<{ groupId: string }>();
+  const { groupId, entryId } = useLocalSearchParams<{ groupId: string; entryId?: string }>();
   const group = useQuery(groupQuery(groupId));
-  if (group.isPending) return <ActivityIndicator style={styles.loading} color={theme.colors.primary} />;
+  const entries = useQuery({ ...entriesQuery(groupId), enabled: entryId !== undefined });
+  if (group.isPending || (entryId !== undefined && entries.isPending)) {
+    return <ActivityIndicator style={styles.loading} color={theme.colors.primary} />;
+  }
   if (group.isError) return <GroupNotFound error={group.error} onRetry={() => void group.refetch()} />;
-  return <ExpenseFormView group={group.data} />;
+  if (entryId === undefined) return <ExpenseFormView group={group.data} />;
+  const entry = entries.data?.find((e) => e.id === entryId);
+  if (entry?.kind !== 'expense') {
+    return (
+      <View style={styles.content}>
+        <Text style={styles.value}>{t`Tego wpisu już nie ma.`}</Text>
+        <Button variant="secondary" label={t`Zamknij`} onPress={closeSheet} />
+      </View>
+    );
+  }
+  return <ExpenseFormView group={group.data} editing={entry} />;
 }
 
-function ExpenseFormView({ group }: { group: GroupDetail }) {
+function ExpenseFormView({ group, editing }: { group: GroupDetail; editing?: Expense }) {
   const { t } = useLingui();
   const { theme } = useUnistyles();
   const labels = useEntryLabels();
@@ -52,10 +70,15 @@ function ExpenseFormView({ group }: { group: GroupDetail }) {
   // One id per form: a retry after a lost response can't add the expense twice.
   const [id] = useState(() => randomUUID());
   const [form, setForm] = useState<ExpenseForm>(() =>
-    expenseFormFromComposer({ draft: composerStore.get(group.id), group, myMemberId: me, today: todayLocalDate() }),
+    editing
+      ? expenseFormFromEntry(editing)
+      : expenseFormFromComposer({ draft: composerStore.get(group.id), group, myMemberId: me, today: todayLocalDate() }),
   );
   const [errors, setErrors] = useState<ExpenseFormField[]>([]);
   const createEntry = useCreateEntry(group.id);
+  const editEntry = useEditEntry(group.id);
+  const [deletedMeanwhile, setDeletedMeanwhile] = useState(false);
+  const saving = editing ? editEntry : createEntry;
   const digits = minorUnitDigits(group.baseCurrency);
 
   const update = (next: ExpenseForm, fields: ExpenseFormField[]) => {
@@ -64,9 +87,35 @@ function ExpenseFormView({ group }: { group: GroupDetail }) {
   };
 
   const participants = defaultParticipants(group.members, form.date);
-  const participantCount = participants.length > 0 ? participants.length : group.members.length;
+  const editedEqual = editing ? editedSplit(editing, form.date, group.members) : null;
+  const participantCount =
+    editedEqual?.mode === 'equal'
+      ? editedEqual.memberIds.length
+      : participants.length > 0
+        ? participants.length
+        : group.members.length;
 
   const submit = () => {
+    if (editing) {
+      const parsed = editedExpense(editing, form, { group, members: group.members });
+      if (!parsed.ok) {
+        setErrors(parsed.errors);
+        return;
+      }
+      editEntry.mutate(
+        { base: editing, input: parsed.value },
+        {
+          onSuccess: closeSheet,
+          onError: (error) => {
+            const current = versionConflictEntry(error);
+            // Changed by someone else: the bubble shows "!" (useEditEntry marked it).
+            if (current && current.deletedAt === null) closeSheet();
+            else if (current) setDeletedMeanwhile(true);
+          },
+        },
+      );
+      return;
+    }
     const parsed = parseExpenseForm(form, { id, group, members: group.members });
     if (!parsed.ok) {
       setErrors(parsed.errors);
@@ -92,7 +141,7 @@ function ExpenseFormView({ group }: { group: GroupDetail }) {
   return (
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView style={styles.flex} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <Text style={styles.heading}>{t`Nowy wydatek`}</Text>
+        <Text style={styles.heading}>{editing ? t`Edytuj wydatek` : t`Nowy wydatek`}</Text>
 
         <View style={styles.field}>
           <Text style={styles.label}>{t`Kwota`}</Text>
@@ -179,13 +228,21 @@ function ExpenseFormView({ group }: { group: GroupDetail }) {
         <View style={styles.field}>
           <Text style={styles.label}>{t`Podział`}</Text>
           <Text style={styles.value}>
-            {t`Po równo między obecnych tego dnia: ${plural(participantCount, { one: '# osoba', few: '# osoby', many: '# osób', other: '# osoby' })}`}
+            {editedEqual && editedEqual.mode !== 'equal'
+              ? labels.splitMode[editedEqual.mode]
+              : t`Po równo między obecnych tego dnia: ${plural(participantCount, { one: '# osoba', few: '# osoby', many: '# osób', other: '# osoby' })}`}
           </Text>
         </View>
 
-        {createEntry.isError ? <Text style={styles.error}>{t`Nie udało się dodać wydatku. Spróbuj ponownie.`}</Text> : null}
+        {deletedMeanwhile ? (
+          <Text style={styles.error}>{t`Ktoś usunął ten wpis w międzyczasie. Twoje zmiany nie zostały zapisane.`}</Text>
+        ) : saving.isError && !versionConflictEntry(saving.error) ? (
+          <Text style={styles.error}>
+            {editing ? t`Nie udało się zapisać zmian. Spróbuj ponownie.` : t`Nie udało się dodać wydatku. Spróbuj ponownie.`}
+          </Text>
+        ) : null}
 
-        <Button label={t`Zapisz`} onPress={submit} loading={createEntry.isPending} />
+        <Button label={t`Zapisz`} onPress={submit} loading={saving.isPending} disabled={deletedMeanwhile} />
         <Button variant="secondary" label={t`Anuluj`} onPress={closeSheet} />
       </ScrollView>
     </KeyboardAvoidingView>

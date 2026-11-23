@@ -7,6 +7,11 @@ msgstr ""
 "X-Generator: @lingui/cli\n"
 "Language: en\n"
 
+#. placeholder {0}: labels[action]
+#: src/features/entries/entry-actions-menu.tsx
+msgid "{0} (wkrótce)"
+msgstr "{0} (coming soon)"
+
 #. placeholder {0}: group.data.name
 #: src/app/(app)/groups/[groupId]/index.tsx
 msgid "{0}, informacje o grupie"
@@ -24,6 +29,10 @@ msgstr "{memberCount, plural, one {# person in the group} other {# people in the
 msgid "{payerName} + {otherPayers}"
 msgstr "{payerName} + {otherPayers}"
 
+#: src/app/(app)/groups/[groupId]/entry-conflict.tsx
+msgid "{title} — usunięty"
+msgstr "{title} — deleted"
+
 #: src/app/(app)/groups/[groupId]/info.tsx
 msgid "+ Dodaj osobę bez konta"
 msgstr "+ Add a person without an account"
@@ -31,6 +40,10 @@ msgstr "+ Add a person without an account"
 #: src/app/(auth)/sign-in.tsx
 msgid "Adres e-mail"
 msgstr "Email address"
+
+#: src/app/(app)/groups/[groupId]/entry-conflict.tsx
+msgid "Aktualna wersja"
+msgstr "Current version"
 
 #: src/app/(app)/_layout.tsx
 #: src/app/(app)/activity.tsx
@@ -64,6 +77,10 @@ msgstr "No entries"
 #: src/features/theme/theme-picker.tsx
 msgid "Ciemny"
 msgstr "Dark"
+
+#: src/features/entries/undo-snackbar.tsx
+msgid "Cofnij"
+msgstr "Undo"
 
 #: src/app/(app)/groups/[groupId]/info.tsx
 msgid "Członkowie"
@@ -120,9 +137,31 @@ msgstr "Join “{groupName}” on split-pay: {url}"
 msgid "Dołącz jako nowa osoba"
 msgstr "Join as a new person"
 
+#: src/features/entries/entry-bubble.tsx
+msgid "edytowano"
+msgstr "edited"
+
+#. placeholder {0}: format.dateTime(entry.updatedAt)
+#: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
+msgid "edytowano {0}"
+msgstr "edited {0}"
+
+#: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
+#: src/features/entries/entry-actions-menu.tsx
+msgid "Edytuj"
+msgstr "Edit"
+
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Edytuj wydatek"
+msgstr "Edit expense"
+
 #: src/app/(app)/new-group.tsx
 msgid "Emoji"
 msgstr "Emoji"
+
+#: src/features/entries/entry-actions-menu.tsx
+msgid "Historia"
+msgstr "History"
 
 #: src/app/(app)/groups/[groupId]/info.tsx
 msgid "Historia zmian"
@@ -194,6 +233,30 @@ msgstr "Source code on GitHub"
 msgid "Kolor"
 msgstr "Colour"
 
+#: src/features/entries/entry-bubble.tsx
+msgid "konflikt zmian"
+msgstr "conflicting change"
+
+#: src/app/(app)/_layout.tsx
+msgid "Konflikt zmian"
+msgstr "Conflicting change"
+
+#: src/features/entries/entry-bubble.tsx
+msgid "Konflikt zmian: {title}. Pokaż szczegóły"
+msgstr "Conflicting change: {title}. Show details"
+
+#: src/features/entries/entry-actions-menu.tsx
+msgid "Kopiuj kwotę"
+msgstr "Copy amount"
+
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Ktoś usunął ten wpis w międzyczasie. Twoje zmiany nie zostały zapisane."
+msgstr "Someone deleted this entry in the meantime. Your changes were not saved."
+
+#: src/app/(app)/groups/[groupId]/entry-conflict.tsx
+msgid "Ktoś zmienił ten wpis w międzyczasie"
+msgstr "Someone changed this entry in the meantime"
+
 #: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
 #: src/app/(app)/quick-bill.tsx
@@ -234,9 +297,17 @@ msgstr "Couldn't join. Please try again."
 msgid "Nie udało się otworzyć linku grupy."
 msgstr "Couldn't open the group link."
 
+#: src/app/(app)/groups/[groupId]/index.tsx
+msgid "Nie udało się przywrócić wpisu."
+msgstr "Couldn't restore the entry."
+
 #: src/features/group-link/group-link-section.tsx
 msgid "Nie udało się unieważnić linku."
 msgstr "Couldn't revoke the link."
+
+#: src/app/(app)/groups/[groupId]/index.tsx
+msgid "Nie udało się usunąć wpisu. Spróbuj ponownie."
+msgstr "Couldn't delete the entry. Try again."
 
 #: src/app/(app)/new-group.tsx
 msgid "Nie udało się utworzyć grupy. Spróbuj ponownie."
@@ -269,6 +340,10 @@ msgstr "Couldn't send the code. Please try again."
 #: src/features/groups/attendance-grid-view.tsx
 msgid "Nie udało się zapisać obecności. Spróbuj ponownie."
 msgstr "Couldn't save attendance. Please try again."
+
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Nie udało się zapisać zmian. Spróbuj ponownie."
+msgstr "Couldn't save the changes. Try again."
 
 #: src/app/(app)/groups/[groupId]/member.tsx
 msgid "Nie udało się zapisać. Spróbuj ponownie."
@@ -399,7 +474,13 @@ msgstr "Entertainment"
 msgid "RRRR-MM-DD"
 msgstr "YYYY-MM-DD"
 
+#: src/app/(app)/groups/[groupId]/index.tsx
+msgid "Skopiowano kwotę"
+msgstr "Amount copied"
+
 #: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
+#: src/app/(app)/groups/[groupId]/entry-conflict.tsx
+#: src/app/(app)/groups/[groupId]/index.tsx
 #: src/app/(app)/index.tsx
 #: src/features/entries/entry-bubble.tsx
 msgid "Spłata"
@@ -440,12 +521,17 @@ msgid "Ta grupa nie istnieje albo nie masz do niej dostępu."
 msgstr "This group does not exist or you do not have access to it."
 
 #: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
 msgid "Tego wpisu już nie ma."
 msgstr "This entry no longer exists."
 
 #: src/app/(app)/groups/[groupId]/member.tsx
 msgid "Tej osoby nie ma już w grupie."
 msgstr "This person is no longer in the group."
+
+#: src/app/(app)/groups/[groupId]/entry-conflict.tsx
+msgid "Ten konflikt jest już rozwiązany."
+msgstr "This conflict is already resolved."
 
 #: src/app/(app)/g/[token].tsx
 msgid "Ten link grupy jest nieważny. Poproś kogoś z grupy o nowy."
@@ -463,6 +549,10 @@ msgstr "Light/dark mode"
 #: src/features/entries/entry-bubble.tsx
 msgid "twój udział {0}"
 msgstr "your share {0}"
+
+#: src/app/(app)/groups/[groupId]/entry-conflict.tsx
+msgid "Twoje zmiany nie zostały zapisane."
+msgstr "Your changes were not saved."
 
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
 #: src/app/(app)/groups/[groupId]/info.tsx
@@ -500,10 +590,19 @@ msgstr "Revoke link"
 msgid "Ustawienia"
 msgstr "Settings"
 
+#: src/features/entries/entry-actions-menu.tsx
+msgid "Usuń"
+msgstr "Delete"
+
 #. placeholder {0}: person.displayName
 #: src/app/(app)/quick-bill.tsx
 msgid "Usuń {0}"
 msgstr "Remove {0}"
+
+#. placeholder {0}: titleOf(undo)
+#: src/app/(app)/groups/[groupId]/index.tsx
+msgid "Usunięto: {0}"
+msgstr "Deleted: {0}"
 
 #: src/app/(app)/quick-bill.tsx
 msgid "Utwórz"
@@ -521,6 +620,14 @@ msgstr "Create a group for a trip, a flat or a single bill."
 msgid "Waluta bazowa"
 msgstr "Base currency"
 
+#: src/app/(app)/groups/[groupId]/entry-conflict.tsx
+msgid "Wczytaj i edytuj"
+msgstr "Reload and edit"
+
+#: src/app/(app)/groups/[groupId]/entry-conflict.tsx
+msgid "Wczytaj ponownie"
+msgstr "Reload"
+
 #: src/app/(app)/groups/[groupId]/info.tsx
 msgid "Wkrótce"
 msgstr "Coming soon"
@@ -528,6 +635,14 @@ msgstr "Coming soon"
 #: src/app/(app)/_layout.tsx
 msgid "Wpis"
 msgstr "Entry"
+
+#: src/app/(app)/groups/[groupId]/entry-conflict.tsx
+msgid "Wpis nie został przywrócony."
+msgstr "The entry was not restored."
+
+#: src/app/(app)/groups/[groupId]/entry-conflict.tsx
+msgid "Wpis nie został usunięty."
+msgstr "The entry was not deleted."
 
 #: src/app/(app)/groups/[groupId]/member.tsx
 msgid "Wpisujesz za nią wydatki. Później może przejąć swój profil."
@@ -627,9 +742,16 @@ msgid "założyciel"
 msgstr "owner"
 
 #: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
+#: src/app/(app)/groups/[groupId]/entry-conflict.tsx
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
 #: src/app/(app)/groups/[groupId]/member.tsx
+#: src/features/entries/entry-actions-menu.tsx
 msgid "Zamknij"
 msgstr "Close"
+
+#: src/app/(app)/groups/[groupId]/entry-conflict.tsx
+msgid "Zanim twoja zmiana dotarła na serwer, ktoś inny zmienił ten wpis."
+msgstr "Before your change reached the server, someone else changed this entry."
 
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
 #: src/app/(app)/groups/[groupId]/member.tsx
@@ -665,3 +787,8 @@ msgstr "Change email address"
 #: src/app/(app)/groups/[groupId]/member.tsx
 msgid "Zmień imię"
 msgstr "Rename"
+
+#. placeholder {0}: format.dateTime(current.updatedAt)
+#: src/app/(app)/groups/[groupId]/entry-conflict.tsx
+msgid "Zmieniono {0}"
+msgstr "Changed {0}"

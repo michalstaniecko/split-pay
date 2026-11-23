@@ -85,6 +85,12 @@ describe('conversationItems', () => {
     expect(items[1]).toMatchObject({ type: 'entry', side: 'end', payerName: 'Ania', otherPayers: 1 });
   });
 
+  it('marks edited entries ("edytowano")', () => {
+    const edited = { ...aniaEarly, version: 2 };
+    const { items } = conversationItems([edited, bartekLate], { members, myMemberId: ANIA, baseCurrency: 'PLN' });
+    expect(items.flatMap((i) => (i.type === 'entry' ? [i.edited] : []))).toEqual([true, false]);
+  });
+
   it('without a member of mine every bubble is on the start edge and has no share', () => {
     const { items } = conversationItems([aniaEarly], { members, myMemberId: null, baseCurrency: 'PLN' });
     expect(items[1]).toMatchObject({ side: 'start', myShare: null });

@@ -2,6 +2,7 @@ import {
   type CurrencyCode,
   dailyTotals,
   type Entry,
+  isEdited,
   type LocalDate,
   type Member,
   type MemberAmount,
@@ -35,6 +36,8 @@ export interface EntryItem {
   otherPayers: number;
   /** My share in the base currency ("twój udział"); `null` without a member of mine. */
   myShare: number | null;
+  /** The content was edited after it was added ("edytowano", #11). */
+  edited: boolean;
 }
 
 export type ConversationItem = DayItem | EntryItem;
@@ -82,6 +85,7 @@ export function conversationItems(
       payerName: names.get(senders[0]!.memberId) ?? '?',
       otherPayers: senders.length - 1,
       myShare: me === null ? null : memberShare(entry, me, context.baseCurrency),
+      edited: isEdited(entry),
     });
   }
   return { items, stickyHeaderIndices };
