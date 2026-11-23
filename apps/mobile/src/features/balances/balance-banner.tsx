@@ -1,4 +1,5 @@
 import { useLingui } from '@lingui/react/macro';
+import type { Allocation } from '@split-pay/shared';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
@@ -14,14 +15,32 @@ import { balancesQuery } from './balances-query';
  * grows to two lines with large Dynamic Type instead of truncating the amount.
  */
 export function BalanceBanner({ groupId, myMemberId }: { groupId: string; myMemberId: string | null }) {
-  const { t } = useLingui();
-  const format = useFormatters();
   const balances = useQuery(balancesQuery(groupId));
   useRefreshOnFocus(balances.refetch);
   if (!balances.data) return null;
+  return (
+    <BalanceBannerView
+      balances={balances.data}
+      myMemberId={myMemberId}
+      onPress={() => router.push({ pathname: '/groups/[groupId]/balances', params: { groupId } })}
+    />
+  );
+}
 
-  const state = bannerState(balances.data, myMemberId);
-  const amount = format.amount(state.amount, balances.data.baseCurrency);
+/** The banner itself, for given balances (also used by the view-only web). */
+export function BalanceBannerView({
+  balances,
+  myMemberId,
+  onPress,
+}: {
+  balances: { baseCurrency: string; balances: readonly Allocation[] };
+  myMemberId: string | null;
+  onPress: () => void;
+}) {
+  const { t } = useLingui();
+  const format = useFormatters();
+  const state = bannerState(balances, myMemberId);
+  const amount = format.amount(state.amount, balances.baseCurrency);
   const text =
     state.kind === 'owe' ? t`Jesteś winien ${amount}` : state.kind === 'owed' ? t`Należy ci się ${amount}` : t`Wszystko rozliczone`;
 
@@ -30,7 +49,7 @@ export function BalanceBanner({ groupId, myMemberId }: { groupId: string; myMemb
       accessibilityRole="button"
       accessibilityLabel={text}
       accessibilityHint={t`Pokazuje salda i kto komu ile oddaje`}
-      onPress={() => router.push({ pathname: '/groups/[groupId]/balances', params: { groupId } })}
+      onPress={onPress}
       style={({ pressed }) => [styles.banner, pressed && styles.pressed]}>
       <View style={styles.row}>
         <Text style={[styles.text, state.kind === 'owe' && styles.owe, state.kind === 'owed' && styles.owed]}>
