@@ -16,6 +16,7 @@ import { CATEGORY_ICONS, useCreateEntry } from '@/features/entries/entries-query
 import {
   type ExpenseForm,
   type ExpenseFormField,
+  type ExpenseFormKind,
   expenseFormFromComposer,
   parseExpenseForm,
   todayLocalDate,
@@ -30,8 +31,9 @@ import { closeSheet } from '@/lib/close-sheet';
  * The full expense form ("+" in the composer), prefilled from the composer's
  * draft. Saving creates the expense and clears the composer; dismissing
  * leaves the composer's values where they were.
- * This slice: payer, date, category; equal split among those present on the
- * date, base currency. Later: split modes (#12), income (#13), currency (#14),
+ * This slice: expense or income (#13; the payer chips pick the recipient),
+ * payer, date, category; equal split among those present on the
+ * date, base currency. Later: split modes (#12), currency (#14),
  * receipt (#26), and editing with `?entryId=` (#11).
  */
 export default function ExpenseFormSheet() {
@@ -63,6 +65,12 @@ function ExpenseFormView({ group }: { group: GroupDetail }) {
     setErrors((current) => current.filter((f) => !fields.includes(f)));
   };
 
+  const income = form.kind === 'income';
+  const kinds: { kind: ExpenseFormKind; label: string }[] = [
+    { kind: 'expense', label: t`Wydatek` },
+    { kind: 'income', label: t`↓ Wpływ` },
+  ];
+
   const participants = defaultParticipants(group.members, form.date);
   const participantCount = participants.length > 0 ? participants.length : group.members.length;
 
@@ -83,7 +91,7 @@ function ExpenseFormView({ group }: { group: GroupDetail }) {
   const fieldError: Record<ExpenseFormField, string> = {
     amount: t`Podaj kwotę większą od zera.`,
     title: t`Podaj tytuł.`,
-    payer: t`Wybierz, kto zapłacił.`,
+    payer: income ? t`Wybierz, kto otrzymał pieniądze.` : t`Wybierz, kto zapłacił.`,
     date: t`Podaj datę w formacie RRRR-MM-DD.`,
   };
   const errorFor = (field: ExpenseFormField) =>
@@ -92,7 +100,23 @@ function ExpenseFormView({ group }: { group: GroupDetail }) {
   return (
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView style={styles.flex} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <Text style={styles.heading}>{t`Nowy wydatek`}</Text>
+        <Text style={styles.heading}>{income ? t`Nowy wpływ` : t`Nowy wydatek`}</Text>
+
+        <View style={styles.chips} accessibilityRole="radiogroup" accessibilityLabel={t`Rodzaj wpisu`}>
+          {kinds.map(({ kind, label }) => {
+            const selected = (form.kind ?? 'expense') === kind;
+            return (
+              <Pressable
+                key={kind}
+                accessibilityRole="radio"
+                accessibilityState={{ checked: selected }}
+                onPress={() => update({ ...form, kind }, [])}
+                style={[styles.chip, selected && (kind === 'income' ? styles.chipIncome : styles.chipSelected)]}>
+                <Text style={styles.chipLabel}>{label}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
 
         <View style={styles.field}>
           <Text style={styles.label}>{t`Kwota`}</Text>
@@ -144,7 +168,7 @@ function ExpenseFormView({ group }: { group: GroupDetail }) {
         </View>
 
         <View style={styles.field}>
-          <Text style={styles.label}>{t`Zapłacił(a)`}</Text>
+          <Text style={styles.label}>{income ? t`Otrzymał(a)` : t`Zapłacił(a)`}</Text>
           <View style={styles.chips} accessibilityRole="radiogroup">
             {group.members.map((member) => (
               <Pressable
@@ -183,7 +207,11 @@ function ExpenseFormView({ group }: { group: GroupDetail }) {
           </Text>
         </View>
 
-        {createEntry.isError ? <Text style={styles.error}>{t`Nie udało się dodać wydatku. Spróbuj ponownie.`}</Text> : null}
+        {createEntry.isError ? (
+          <Text style={styles.error}>
+            {income ? t`Nie udało się dodać wpływu. Spróbuj ponownie.` : t`Nie udało się dodać wydatku. Spróbuj ponownie.`}
+          </Text>
+        ) : null}
 
         <Button label={t`Zapisz`} onPress={submit} loading={createEntry.isPending} />
         <Button variant="secondary" label={t`Anuluj`} onPress={closeSheet} />
@@ -276,6 +304,9 @@ const styles = StyleSheet.create((theme) => ({
   },
   chipSelected: {
     borderColor: theme.colors.primary,
+  },
+  chipIncome: {
+    borderColor: theme.colors.positive,
   },
   chipLabel: {
     fontSize: theme.font.sizeSm,

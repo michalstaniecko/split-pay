@@ -130,3 +130,48 @@ describe('expense form', () => {
     expect(parsed).toEqual({ ok: false, errors: ['amount', 'title', 'payer', 'date'] });
   });
 });
+
+describe('income in the expense form', () => {
+  const form = expenseFormFromComposer({
+    draft: { amount: '400', title: 'Zwrot kaucji' },
+    group: trip,
+    myMemberId: ANIA,
+    today: '2026-07-14',
+  });
+
+  it('builds an equal-split income received by the chosen recipient', () => {
+    const parsed = parseExpenseForm(
+      { ...form, kind: 'income', payerMemberId: BARTEK, category: 'accommodation', categoryChosen: true },
+      { id: ENTRY, group: trip, members },
+    );
+    expect(parsed).toEqual({
+      ok: true,
+      value: {
+        kind: 'income',
+        id: ENTRY,
+        date: '2026-07-14',
+        title: 'Zwrot kaucji',
+        amount: 40_000,
+        currency: 'PLN',
+        rateToBase: '1',
+        category: 'accommodation',
+        receiptPhotoId: null,
+        recipients: [{ memberId: BARTEK, amount: 40_000 }],
+        split: { mode: 'equal', memberIds: [ANIA, BARTEK, TOMEK] },
+      },
+    });
+  });
+
+  it('switching back to an expense builds an expense again', () => {
+    const parsed = parseExpenseForm({ ...form, kind: 'expense' }, { id: ENTRY, group: trip, members });
+    expect(parsed).toEqual({
+      ok: true,
+      value: expect.objectContaining({ kind: 'expense', payers: [{ memberId: ANIA, amount: 40_000 }] }),
+    });
+  });
+
+  it('reports a missing recipient on the payer field', () => {
+    const parsed = parseExpenseForm({ ...form, kind: 'income', payerMemberId: '' }, { id: ENTRY, group: trip, members });
+    expect(parsed).toEqual({ ok: false, errors: ['payer'] });
+  });
+});
