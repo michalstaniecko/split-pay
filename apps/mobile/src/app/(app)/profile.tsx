@@ -1,12 +1,13 @@
 import { useLingui } from '@lingui/react/macro';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { StyleSheet } from 'react-native-unistyles';
 import { Button } from '@/components/button';
 import { LanguagePicker } from '@/components/language-picker';
 import { PlaceholderScreen } from '@/components/placeholder-screen';
 import { AboutSection } from '@/features/profile/about-section';
+import { DeleteAccountSection } from '@/features/profile/delete-account-section';
 import { meQuery } from '@/features/profile/me-query';
 import { ThemePicker } from '@/features/theme/theme-picker';
 import { authClient } from '@/lib/auth-client';
@@ -28,22 +29,29 @@ export default function ProfileScreen() {
   };
 
   return (
-    <PlaceholderScreen title={t`Profil`}>
-      <View style={styles.account}>
-        <Text style={styles.label}>{t`Zalogowano jako`}</Text>
-        <Text style={styles.email} selectable>
-          {email}
-        </Text>
-      </View>
-      <LanguagePicker />
-      <ThemePicker />
-      <Button variant="secondary" label={t`Wyloguj się`} onPress={() => void signOut()} loading={signingOut} />
-      <AboutSection />
-    </PlaceholderScreen>
+    // Scrolls: Profile is taller than a small phone screen ("Usuń konto" is last).
+    <ScrollView contentContainerStyle={styles.scroll}>
+      <PlaceholderScreen title={t`Profil`}>
+        <View style={styles.account}>
+          <Text style={styles.label}>{t`Zalogowano jako`}</Text>
+          <Text style={styles.email} selectable>
+            {email}
+          </Text>
+        </View>
+        <LanguagePicker />
+        <ThemePicker />
+        <Button variant="secondary" label={t`Wyloguj się`} onPress={() => void signOut()} loading={signingOut} />
+        <AboutSection />
+        <DeleteAccountSection />
+      </PlaceholderScreen>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create((theme) => ({
+  scroll: {
+    flexGrow: 1,
+  },
   account: {
     alignSelf: 'stretch',
     gap: theme.space(1),

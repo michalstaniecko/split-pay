@@ -71,6 +71,7 @@ msgstr "Alcohol"
 #: src/features/claims/claim-messages.tsx
 #: src/features/group-link/group-link-section.tsx
 #: src/features/groups/attendance-grid-view.tsx
+#: src/features/profile/delete-account-section.tsx
 msgid "Anuluj"
 msgstr "Cancel"
 
@@ -283,6 +284,10 @@ msgstr "Couldn't claim the profile. Try again."
 #: src/features/group-link/group-link-section.tsx
 msgid "Nie udało się unieważnić linku."
 msgstr "Couldn't revoke the link."
+
+#: src/features/profile/delete-account-section.tsx
+msgid "Nie udało się usunąć konta. Spróbuj ponownie."
+msgstr "Couldn't delete the account. Please try again."
 
 #: src/app/(app)/new-group.tsx
 msgid "Nie udało się utworzyć grupy. Spróbuj ponownie."
@@ -537,6 +542,10 @@ msgstr "Transport"
 msgid "Tryb jasny/ciemny"
 msgstr "Light/dark mode"
 
+#: src/features/profile/delete-account-section.tsx
+msgid "Twój e-mail i dane konta zostaną usunięte. W grupach zostaniesz osobą bez konta „Usunięty użytkownik”, a wydatki i salda się nie zmienią. Tego nie można cofnąć."
+msgstr "Your email and account data will be deleted. In your groups you will become a member without an account called “Deleted user”; expenses and balances stay the same. This can't be undone."
+
 #. placeholder {0}: format.amount(shareAmount, baseCurrency)
 #: src/features/entries/entry-bubble.tsx
 msgid "twój udział {0}"
@@ -586,6 +595,18 @@ msgstr "Settings"
 #: src/app/(app)/quick-bill.tsx
 msgid "Usuń {0}"
 msgstr "Remove {0}"
+
+#: src/features/profile/delete-account-section.tsx
+msgid "Usuń konto"
+msgstr "Delete account"
+
+#: src/features/profile/delete-account-section.tsx
+msgid "Usunąć konto?"
+msgstr "Delete account?"
+
+#: src/features/profile/delete-account-section.tsx
+msgid "Usuwanie konta…"
+msgstr "Deleting account…"
 
 #: src/app/(app)/quick-bill.tsx
 msgid "Utwórz"
