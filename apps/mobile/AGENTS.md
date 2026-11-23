@@ -27,6 +27,10 @@ Run lint and typecheck before declaring any task done.
 - Import `Link`, `router`, and `useLocalSearchParams` from `expo-router`.
 - Docs: https://docs.expo.dev/router/introduction.md
 
+## Styling
+
+Unistyles 3. On web, Unistyles compiles theme values inside `StyleSheet.create` into CSS variables, so a stylesheet cannot branch on them. Put theme-dependent choices (e.g. `theme.family === 'fresh'`) in the component, or express them as a theme token; keep stylesheets to plain token reads.
+
 ## Building
 
 Per `docs/adr/0015-local-mobile-builds-linux-only-ci.md`, native builds run **locally** on the developer's Mac (`npx expo run:ios|android`, or `npx eas-cli@latest build --local`), never in EAS cloud builds or GitHub Actions. EAS Update (OTA) is fine. Use `pnpm`, not npm/bun — this app lives in a pnpm monorepo (`nodeLinker: hoisted` in `pnpm-workspace.yaml`).
