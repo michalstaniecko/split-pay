@@ -76,6 +76,24 @@ describe('computeBalances', () => {
     });
   });
 
+  it('counts a foreign-currency entry at its frozen rate, converted total split exactly', () => {
+    // 10.00 EUR × 4.3157 = 43.157 → 43.16 PLN. Shares in EUR 3.34 / 3.33 / 3.33, converted in
+    // proportion to them so they add up to 43.16: 14.42 / 14.37 / 14.37.
+    const balances = computeBalances(
+      [
+        expense({
+          amount: 1_000,
+          currency: 'EUR',
+          rateToBase: '4.3157',
+          payers: [{ memberId: KASIA, amount: 1_000 }],
+          split: { mode: 'equal', memberIds: [ANIA, BARTEK, KASIA] },
+        }),
+      ],
+      'PLN',
+    );
+    expect(Object.fromEntries(balances)).toEqual({ [ANIA]: -1_442, [BARTEK]: -1_437, [KASIA]: 4_316 - 1_437 });
+  });
+
   it('skips deleted entries', () => {
     const [first] = trip;
     expect(computeBalances([{ ...first!, deletedAt: '2026-07-11T00:00:00Z' }], 'PLN').size).toBe(0);
