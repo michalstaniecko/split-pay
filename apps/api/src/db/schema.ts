@@ -7,3 +7,4 @@ export * from './group-links';
 export * from './claims';
 export * from './payout-details';
 export * from './rates';
+export * from './photos';

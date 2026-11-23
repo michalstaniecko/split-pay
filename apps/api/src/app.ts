@@ -9,14 +9,18 @@ import { deleteAccount } from './routes/account';
 import { linksRoutes } from './routes/group-links';
 import { groupsRoutes } from './routes/groups';
 import { myPayoutDetailsRoutes } from './routes/payout-details';
+import { myAvatarRoutes } from './routes/photos';
 import { quickBillsRoutes } from './routes/quick-bills';
 import { ratesRoutes } from './routes/rates';
+import type { ObjectStorage } from './storage/object-storage';
 
 export interface AppDeps {
   auth: Auth;
   db: Db;
   /** Feature flags served to the apps; defaults (all off) when omitted. */
   flags?: FeatureFlags;
+  /** Photo bucket (ADR-0006); photo routes answer 503 when omitted. */
+  storage?: ObjectStorage;
 }
 
 /**
@@ -25,7 +29,7 @@ export interface AppDeps {
  * Keep routes chained in one expression (or `.route()` chained sub-apps) —
  * the typed client (`hc`) infers its types from this chain.
  */
-export const createApp = ({ auth, db, flags = defaultFeatureFlags }: AppDeps) => {
+export const createApp = ({ auth, db, flags = defaultFeatureFlags, storage }: AppDeps) => {
   const requireUser = createRequireUser(auth);
 
   return (
@@ -42,12 +46,14 @@ export const createApp = ({ auth, db, flags = defaultFeatureFlags }: AppDeps) =>
       })
       /** Account deletion (ADR-0010): personal data goes, the user's members stay without an account. */
       .delete('/me', requireUser, zValidator('json', AccountDeletion), async (c) => {
-        await deleteAccount(db, c.get('user'), c.req.valid('json').locale);
+        await deleteAccount(db, c.get('user'), c.req.valid('json').locale, storage);
         return c.json({ deleted: true as const });
       })
       /** My payout details (Profile). */
       .route('/me/payout-details', myPayoutDetailsRoutes({ db, requireUser }))
-      .route('/groups', groupsRoutes({ db, requireUser }))
+      /** My avatar (Profile): upload, set, remove. */
+      .route('/me/avatar', myAvatarRoutes({ db, requireUser, storage }))
+      .route('/groups', groupsRoutes({ db, requireUser, storage }))
       /** Quick bill: group + members without an account + its expense in one step. */
       .route('/quick-bills', quickBillsRoutes({ db, requireUser }))
       /** Opening a group link in the app: preview + join. */

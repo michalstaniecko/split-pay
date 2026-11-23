@@ -17,6 +17,7 @@ import type { Db } from '../db/client';
 import { entries, groups, members } from '../db/schema';
 import type { AuthEnv } from '../middleware/require-user';
 import { findMyGroup, toSharedGroup } from './group-access';
+import { attachReceipt } from './photos';
 
 type EntryRow = typeof entries.$inferSelect;
 type EntryInsert = typeof entries.$inferInsert;
@@ -114,12 +115,25 @@ export async function createEntry(
 
   const issues = validateEntryInGroup(parsed.data, context.group, context.members);
   if (issues.length > 0) return { status: 'invalid', issues };
+  if (!(await receiptIsUsable(tx, parsed.data, context.group.id))) return { status: 'invalid', issues: [unknownReceipt] };
 
   const [created] = await tx.insert(entries).values(toEntryRow(parsed.data)).onConflictDoNothing().returning();
   // Lost a race with the same id: report it like a repeated create.
   if (!created) return createEntry(tx, input, context);
   await tx.update(groups).set({ lastActivityAt: now }).where(eq(groups.id, context.group.id));
   return { status: 'created', entry: toEntryDto(created) };
+}
+
+const unknownReceipt = 'receiptPhotoId: not a receipt photo of this group';
+
+/**
+ * A new or changed receipt must be a receipt photo uploaded into this group
+ * (#26); it is marked attached. An unchanged one passes as it is.
+ */
+async function receiptIsUsable(tx: Tx, entry: Entry, groupId: Id, current?: Entry): Promise<boolean> {
+  if (entry.kind === 'settlement' || entry.receiptPhotoId === null) return true;
+  if (current && current.kind !== 'settlement' && current.receiptPhotoId === entry.receiptPhotoId) return true;
+  return attachReceipt(tx, groupId, entry.receiptPhotoId);
 }
 
 /** The most recently added live entry of each group — the inbox preview. */
@@ -304,6 +318,9 @@ export async function editEntry(
   }
   const issues = validateEntryInGroup(parsed.data, context.group, context.members);
   if (issues.length > 0) return { status: 'invalid', issues };
+  if (!(await receiptIsUsable(tx, parsed.data, context.group.id, current))) {
+    return { status: 'invalid', issues: [unknownReceipt] };
+  }
 
   // Every kind-specific column is rewritten, so a changed kind leaves no stale values behind.
   const { id: _id, groupId: _groupId, createdBy: _by, createdAt: _at, ...changes } = toEntryRow(parsed.data);

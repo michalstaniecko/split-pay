@@ -3,6 +3,8 @@ import { eq, inArray } from 'drizzle-orm';
 import type { OtpType } from '../auth';
 import type { Db } from '../db/client';
 import { claims, members, user, verification } from '../db/schema';
+import type { ObjectStorage } from '../storage/object-storage';
+import { avatarPhotosOf, deletePhotos } from './photos';
 
 const otpTypes: readonly OtpType[] = ['sign-in', 'email-verification', 'forget-password', 'change-email'];
 
@@ -14,11 +16,20 @@ const otpTypes: readonly OtpType[] = ['sign-in', 'email-verification', 'forget-p
  * named "Usunięty użytkownik" in `locale` — entries reference member ids, so
  * expenses and balances are untouched. Anyone can rename or claim it later.
  *
- * Future personal data (payout details, push tokens, avatars in storage) must
- * be removed here too, or reference `user` with `onDelete: 'cascade'`.
+ * Avatars are deleted from the bucket (#26); receipt photos the user took
+ * stay with the group's entries.
+ *
+ * Future personal data (payout details, push tokens) must be removed here
+ * too, or reference `user` with `onDelete: 'cascade'`.
  */
-export async function deleteAccount(db: Db, account: { id: string; email: string }, locale: string) {
+export async function deleteAccount(
+  db: Db,
+  account: { id: string; email: string },
+  locale: string,
+  storage?: ObjectStorage,
+) {
   const name = deletedUserName(locale);
+  const avatars = await avatarPhotosOf(db, account.id);
   await db.transaction(async (tx) => {
     await tx.update(members).set({ userId: null, displayName: name }).where(eq(members.userId, account.id));
     await tx.update(claims).set({ userId: null, claimerName: name }).where(eq(claims.userId, account.id));
@@ -30,4 +41,11 @@ export async function deleteAccount(db: Db, account: { id: string; email: string
     );
     await tx.delete(user).where(eq(user.id, account.id));
   });
+  // After the account is gone: if the bucket fails now, the retention job
+  // removes these avatars later (their uploader is null).
+  try {
+    await deletePhotos(db, storage, avatars);
+  } catch (error) {
+    console.error('[photos] avatar deletion failed; the retention job retries', error);
+  }
 }

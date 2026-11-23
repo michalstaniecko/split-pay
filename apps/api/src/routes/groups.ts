@@ -7,12 +7,14 @@ import type { SessionUser } from '../auth';
 import type { Db } from '../db/client';
 import { groups, members } from '../db/schema';
 import type { AuthEnv } from '../middleware/require-user';
+import type { ObjectStorage } from '../storage/object-storage';
 import { balancesRoutes, groupSettingsRoutes } from './balances';
 import { entriesRoutes, latestEntries } from './entries';
 import { claimLinkRoutes, claimRoutes } from './claims';
 import { groupLifecycleRoutes, rejectWritesToArchived } from './group-lifecycle';
 import { groupLinkRoutes } from './group-links';
 import { memberPayoutDetailsRoutes } from './payout-details';
+import { groupAvatarRoutes, receiptRoutes } from './photos';
 import { statsRoutes } from './stats';
 
 type GroupRow = typeof groups.$inferSelect;
@@ -52,7 +54,15 @@ export function ownerDisplayName(user: Pick<SessionUser, 'name' | 'email'>): str
  * Groups of the signed-in user. Every query is scoped by membership: a group
  * the user is not a member of answers 404, as if it did not exist.
  */
-export const groupsRoutes = ({ db, requireUser }: { db: Db; requireUser: MiddlewareHandler<AuthEnv> }) => {
+export const groupsRoutes = ({
+  db,
+  requireUser,
+  storage,
+}: {
+  db: Db;
+  requireUser: MiddlewareHandler<AuthEnv>;
+  storage?: ObjectStorage | undefined;
+}) => {
   /** The group, if the user is one of its members. */
   async function findMyGroup(groupId: string, userId: string) {
     const [row] = await db
@@ -96,6 +106,9 @@ export const groupsRoutes = ({ db, requireUser }: { db: Db; requireUser: Middlew
       /** A member's payout details ("Oddaj" sheet): `routes/payout-details.ts`. */
       .route('/:groupId/members/:memberId/payout-details', memberPayoutDetailsRoutes({ db }))
       .route('/:groupId/stats', statsRoutes({ db }))
+      /** Receipt photos and member avatars (ADR-0006): `routes/photos.ts`. */
+      .route('/:groupId/receipts', receiptRoutes({ db, storage }))
+      .route('/:groupId/avatars', groupAvatarRoutes({ db, storage }))
       /**
        * Creates a group with the caller as owner and first member, in one
        * transaction. Idempotent on the client-generated id: repeating the same

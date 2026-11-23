@@ -2,6 +2,7 @@ import type { FeatureFlags } from '@split-pay/shared';
 import { createApp } from '../src/app';
 import { createAuth, type OtpSender, type OtpType } from '../src/auth';
 import { createApiClient } from '../src/client';
+import { memoryStorage, type MemoryStorage } from '../src/storage/object-storage';
 import { testDb } from './db';
 
 export interface SentOtp {
@@ -14,7 +15,10 @@ export interface SentOtp {
  * The real app wired to the test database. OTP codes are captured in `sentOtps`
  * instead of being logged.
  */
-export function createTestApp(options: { flags?: FeatureFlags } = {}) {
+export function createTestApp(options: { flags?: FeatureFlags; storage?: MemoryStorage | null } = {}) {
+  // Photos go to an in-memory bucket (ADR-0006); `storage.objects` shows what is stored.
+  // `storage: null` = photos not configured.
+  const { storage = memoryStorage(), ...appOptions } = options;
   const sentOtps: SentOtp[] = [];
   const otpSender: OtpSender = {
     async send(message) {
@@ -27,7 +31,7 @@ export function createTestApp(options: { flags?: FeatureFlags } = {}) {
     baseURL: 'http://localhost:3000',
     secret: 'test-secret-test-secret-test-secret!!',
   });
-  const app = createApp({ auth, db: testDb.db, ...options });
+  const app = createApp({ auth, db: testDb.db, ...(storage ? { storage } : {}), ...appOptions });
 
   const json = (body: unknown, headers: Record<string, string> = {}): RequestInit => ({
     method: 'POST',
@@ -63,7 +67,7 @@ export function createTestApp(options: { flags?: FeatureFlags } = {}) {
     });
   }
 
-  return { app, auth, sentOtps, json, requestOtp, signIn, client };
+  return { app, auth, storage: storage as MemoryStorage, sentOtps, json, requestOtp, signIn, client };
 }
 
 /** `name=value` pairs from a response's Set-Cookie headers, ready for a `cookie` request header. */
