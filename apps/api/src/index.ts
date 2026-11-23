@@ -3,6 +3,8 @@ import { parseFeatureFlagsJson } from '@split-pay/shared';
 import { createApp } from './app';
 import { createAuth, devOtpSender } from './auth';
 import { createDb } from './db/client';
+import { startPushJob } from './push/dispatch';
+import { expoPushSender, logPushSender } from './push/sender';
 import { frankfurterRateSource } from './rates/source';
 import { startRateJob } from './rates/sync';
 
@@ -26,6 +28,15 @@ const flags = parseFeatureFlagsJson(process.env.FEATURE_FLAGS);
 const app = createApp({ auth, db, flags });
 // Daily ECB rates (ADR-0014); FRANKFURTER_URL points at a self-hosted instance if set.
 startRateJob({ db, source: frankfurterRateSource({ baseUrl: process.env.FRANKFURTER_URL || undefined }) });
+// Push notifications (#24): PUSH_SENDER=expo sends through the Expo push service
+// (EXPO_ACCESS_TOKEN only if enhanced push security is on); anything else logs them.
+startPushJob({
+  db,
+  sender:
+    process.env.PUSH_SENDER === 'expo'
+      ? expoPushSender({ accessToken: process.env.EXPO_ACCESS_TOKEN || undefined })
+      : logPushSender,
+});
 
 serve({ fetch: app.fetch, port }, (info) => {
   console.log(`API listening on http://localhost:${info.port}`);

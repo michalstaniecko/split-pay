@@ -14,8 +14,9 @@ const otpTypes: readonly OtpType[] = ['sign-in', 'email-verification', 'forget-p
  * named "Usunięty użytkownik" in `locale` — entries reference member ids, so
  * expenses and balances are untouched. Anyone can rename or claim it later.
  *
- * Future personal data (payout details, push tokens, avatars in storage) must
- * be removed here too, or reference `user` with `onDelete: 'cascade'`.
+ * Payout details, push tokens, notification settings and queued pushes go
+ * with the `user` row (`onDelete: 'cascade'`). Future personal data (avatars
+ * in storage) must be removed here too, or cascade the same way.
  */
 export async function deleteAccount(db: Db, account: { id: string; email: string }, locale: string) {
   const name = deletedUserName(locale);

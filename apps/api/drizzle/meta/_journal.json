@@ -50,6 +50,13 @@
       "when": 1795475979369,
       "tag": "0006_ecb_rates",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1795476814567,
+      "tag": "0007_push",
+      "breakpoints": true
     }
   ]
 }

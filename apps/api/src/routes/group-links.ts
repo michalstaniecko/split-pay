@@ -6,6 +6,7 @@ import { Hono, type MiddlewareHandler } from 'hono';
 import type { Db } from '../db/client';
 import { groupLinks, members } from '../db/schema';
 import type { AuthEnv } from '../middleware/require-user';
+import { notifyClaim } from '../push/enqueue';
 import { claimMember, findMyMember, newLinkToken, resolveLinkToken } from './claims';
 import { ownerDisplayName } from './groups';
 
@@ -121,7 +122,10 @@ export const linksRoutes = ({ db, requireUser }: { db: Db; requireUser: Middlewa
       const user = c.get('user');
       const groupId = link.group.id;
       const result = await claimMember(db, { groupId, memberId, user }, ownerDisplayName(user));
-      if (result.status === 'claimed') return c.json({ groupId, memberId: result.memberId }, 201);
+      if (result.status === 'claimed') {
+        await notifyClaim(db, { groupId, memberId: result.memberId, userId: user.id, claimerName: ownerDisplayName(user) });
+        return c.json({ groupId, memberId: result.memberId }, 201);
+      }
       if (result.status === 'already_mine') return c.json({ groupId, memberId: result.memberId }, 200);
       if (result.status === 'not_found') return c.json({ error: 'not_found' as const }, 404);
       return c.json({ error: result.status }, 409);

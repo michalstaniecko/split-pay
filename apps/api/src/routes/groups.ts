@@ -11,6 +11,7 @@ import { balancesRoutes, groupSettingsRoutes } from './balances';
 import { entriesRoutes, latestEntries } from './entries';
 import { claimLinkRoutes, claimRoutes } from './claims';
 import { groupLinkRoutes } from './group-links';
+import { groupPushRoutes } from './notifications';
 import { memberPayoutDetailsRoutes } from './payout-details';
 import { statsRoutes } from './stats';
 
@@ -91,6 +92,8 @@ export const groupsRoutes = ({ db, requireUser }: { db: Db; requireUser: Middlew
       /** A member's payout details ("Oddaj" sheet): `routes/payout-details.ts`. */
       .route('/:groupId/members/:memberId/payout-details', memberPayoutDetailsRoutes({ db }))
       .route('/:groupId/stats', statsRoutes({ db }))
+      /** Per-group notifications switch and "Przypomnij" nudges: `routes/notifications.ts`. */
+      .route('/:groupId', groupPushRoutes({ db }))
       /**
        * Creates a group with the caller as owner and first member, in one
        * transaction. Idempotent on the client-generated id: repeating the same

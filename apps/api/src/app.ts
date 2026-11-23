@@ -8,6 +8,7 @@ import { type AuthEnv, createRequireUser } from './middleware/require-user';
 import { deleteAccount } from './routes/account';
 import { linksRoutes } from './routes/group-links';
 import { groupsRoutes } from './routes/groups';
+import { myNotificationSettingsRoutes, myPushTokenRoutes } from './routes/notifications';
 import { myPayoutDetailsRoutes } from './routes/payout-details';
 import { quickBillsRoutes } from './routes/quick-bills';
 import { ratesRoutes } from './routes/rates';
@@ -47,6 +48,9 @@ export const createApp = ({ auth, db, flags = defaultFeatureFlags }: AppDeps) =>
       })
       /** My payout details (Profile). */
       .route('/me/payout-details', myPayoutDetailsRoutes({ db, requireUser }))
+      /** Push notifications (#24): this device's token and the global switch. */
+      .route('/me/push-tokens', myPushTokenRoutes({ db, requireUser }))
+      .route('/me/notifications', myNotificationSettingsRoutes({ db, requireUser }))
       .route('/groups', groupsRoutes({ db, requireUser }))
       /** Quick bill: group + members without an account + its expense in one step. */
       .route('/quick-bills', quickBillsRoutes({ db, requireUser }))
