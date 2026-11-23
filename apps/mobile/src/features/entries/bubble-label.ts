@@ -4,28 +4,69 @@ import type { EntryItem } from './conversation';
 import { incomeBubbleLabel } from './income-bubble-label';
 import { spokenEntryAmount } from './spoken-amount';
 
+/** "Kasia, Ania i Bartek" / "Kasia, Ania and Bartek". */
+function nameList(names: readonly string[]): string {
+  if (names.length <= 1) return names[0] ?? '';
+  const rest = names.slice(0, -1).join(', ');
+  const last = names[names.length - 1]!;
+  return t`${rest} i ${last}`;
+}
+
 /**
- * The screen-reader label of any bubble — one sentence for the whole bubble,
- * in the active UI language (#36 pattern, as `incomeBubbleLabel`): "Wydatek
- * 20,00 euro, czyli około 86,43 złotego polskiego: Kolacja. Zapłacił(a):
- * Kasia. 11 lipca 2026. Twój udział 28,81 złotego polskiego."
- * A foreign-currency entry reads the original amount, then the base amount.
+ * The screen-reader label of a bubble naming its payers (income: recipients),
+ * one sentence read as one element (the bubble label pattern of #36):
+ * "Kasia, Ania i Bartek zapłacili 90,00 zł za Pizza, 10 lipca 2026. Twój
+ * udział 30,00 zł." Amounts and the date come formatted (`useFormatters`);
+ * `myShare` is `null` when I have no share. Uses the active Lingui locale.
+ */
+export function payersBubbleLabel(input: {
+  kind: 'expense' | 'income';
+  /** Largest amount first. */
+  payerNames: readonly string[];
+  title: string;
+  amount: string;
+  date: string;
+  myShare: string | null;
+}): string {
+  const names = nameList(input.payerNames);
+  const count = input.payerNames.length;
+  const { amount, title, date } = input;
+  const sentence =
+    input.kind === 'expense'
+      ? t`${names} ${plural(count, { one: 'zapłacił(a)', few: 'zapłacili', many: 'zapłacili', other: 'zapłacili' })} ${amount} za ${title}, ${date}.`
+      : t`${names} ${plural(count, { one: 'otrzymał(a)', few: 'otrzymali', many: 'otrzymali', other: 'otrzymali' })} ${amount} za ${title}, ${date}.`;
+  if (input.myShare === null) return sentence;
+  const share = input.myShare;
+  return `${sentence} ${t`Twój udział ${share}.`}`;
+}
+
+/**
+ * The screen-reader label of any bubble, one sentence for the whole bubble in
+ * the active UI language (#36 pattern): incomes via `incomeBubbleLabel`,
+ * several payers via `payersBubbleLabel`, otherwise "Wydatek 20,00 euro,
+ * czyli około 86,43 złotego polskiego: Kolacja. Zapłacił(a): Kasia.
+ * 11 lipca 2026. Twój udział 28,81 złotego polskiego."
+ * Amounts spell the currency out; a foreign-currency entry reads the
+ * original amount, then the base amount (#14).
  */
 export function entryBubbleLabel(item: EntryItem, context: { baseCurrency: CurrencyCode; locale: string }): string {
-  const { entry, payerName, otherPayers, myShare, baseAmount } = item;
+  const { entry, payerName, payerNames, otherPayers, myShare, baseAmount } = item;
   if (entry.kind === 'income') return incomeBubbleLabel({ entry, payerName, otherPayers, myShare, baseAmount }, context);
 
   const amount = spokenEntryAmount(entry, baseAmount, context);
   const date = formatDate(entry.date, context.locale);
   if (entry.kind === 'settlement') return t`Spłata ${amount}. Od: ${payerName}. ${date}.`;
 
+  const spokenShare =
+    myShare === null || myShare === 0
+      ? null
+      : formatAmount(myShare, context.baseCurrency, context.locale, { currencyDisplay: 'name' });
+  if (otherPayers > 0) {
+    return payersBubbleLabel({ kind: 'expense', payerNames, title: entry.title, amount, date, myShare: spokenShare });
+  }
   const title = entry.title;
-  const payers =
-    otherPayers > 0
-      ? t`${payerName} i ${plural(otherPayers, { one: '# inna osoba', few: '# inne osoby', many: '# innych osób', other: '# innej osoby' })}`
-      : payerName;
-  const sentence = t`Wydatek ${amount}: ${title}. Zapłacił(a): ${payers}. ${date}.`;
-  if (myShare === null || myShare === 0) return sentence;
-  const share = formatAmount(myShare, context.baseCurrency, context.locale, { currencyDisplay: 'name' });
+  const sentence = t`Wydatek ${amount}: ${title}. Zapłacił(a): ${payerName}. ${date}.`;
+  if (spokenShare === null) return sentence;
+  const share = spokenShare;
   return `${sentence} ${t`Twój udział ${share}.`}`;
 }

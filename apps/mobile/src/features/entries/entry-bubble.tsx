@@ -58,9 +58,15 @@ export function EntryBubble({
           highlighted && styles.highlighted,
           pressed && styles.pressed,
         ]}>
-        <Text style={[styles.author, mine && styles.mineMuted]} numberOfLines={1}>
-          {author}
-        </Text>
+        <View style={styles.authorRow}>
+          {/* Avatar of the largest payer (initial until user avatars exist). */}
+          <View style={[styles.avatar, mine && styles.avatarMine]}>
+            <Text style={[styles.avatarText, mine && styles.avatarTextMine]}>{payerName.trim().charAt(0).toUpperCase()}</Text>
+          </View>
+          <Text style={[styles.author, mine && styles.mineMuted]} numberOfLines={1}>
+            {author}
+          </Text>
+        </View>
         {income ? <Text style={styles.incomeLabel}>{t`↓ Wpływ`}</Text> : null}
         <View style={styles.main}>
           <Text style={styles.icon}>{icon}</Text>
@@ -135,7 +141,32 @@ const styles = StyleSheet.create((theme) => ({
   pressed: {
     opacity: 0.7,
   },
+  authorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.space(1.5),
+  },
+  avatar: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.border,
+  },
+  avatarMine: {
+    backgroundColor: theme.colors.onPrimary,
+  },
+  avatarTextMine: {
+    color: theme.colors.primary,
+  },
+  avatarText: {
+    fontSize: 11,
+    fontWeight: theme.font.weightBold,
+    color: theme.colors.text,
+  },
   author: {
+    flexShrink: 1,
     fontSize: theme.font.sizeSm,
     fontWeight: theme.font.weightBold,
     color: theme.colors.textMuted,

@@ -1,7 +1,7 @@
 import type { Entry } from '@split-pay/shared';
 import { describe, expect, it } from 'vitest';
 import { activateLocale } from '../../i18n/i18n';
-import { entryBubbleLabel } from './bubble-label';
+import { entryBubbleLabel, payersBubbleLabel } from './bubble-label';
 import type { EntryItem } from './conversation';
 
 const id = (n: number) => `00000000-0000-4000-8000-${n.toString().padStart(12, '0')}`;
@@ -33,7 +33,9 @@ const bubble = (overrides: Partial<EntryItem> = {}): EntryItem => ({
   key: dinner.id,
   entry: dinner,
   side: 'start',
+  payerId: id(3),
   payerName: 'Kasia',
+  payerNames: ['Kasia'],
   otherPayers: 0,
   myShare: 2_881,
   baseAmount: 8_643,
@@ -58,13 +60,17 @@ describe('entryBubbleLabel', () => {
     );
   });
 
-  it('reads a base-currency expense without a converted amount, counting the other payers', () => {
+  it('reads a base-currency expense without a converted amount', () => {
     const pln = { ...dinner, amount: 4_550, currency: 'PLN', rateToBase: '1' };
-    expect(label('en', bubble({ entry: pln, baseAmount: null, otherPayers: 2, myShare: null }))).toBe(
-      'Expense 45.50 Polish zlotys: Kolacja. Paid by Kasia and 2 other people. July 11, 2026.',
+    expect(label('en', bubble({ entry: pln, baseAmount: null, myShare: null }))).toBe(
+      'Expense 45.50 Polish zlotys: Kolacja. Paid by Kasia. July 11, 2026.',
     );
-    expect(label('pl', bubble({ entry: pln, baseAmount: null, otherPayers: 2, myShare: null }))).toContain(
-      'Zapłacił(a): Kasia i 2 inne osoby.',
+  });
+
+  it('names every payer of a foreign-currency expense paid by several people', () => {
+    const several = bubble({ payerNames: ['Kasia', 'Ania', 'Bartek'], otherPayers: 2, myShare: null });
+    expect(label('pl', several)).toBe(
+      'Kasia, Ania i Bartek zapłacili 20,00 euro, czyli około 86,43 złotego polskiego za Kolacja, 11 lipca 2026.',
     );
   });
 
@@ -73,6 +79,48 @@ describe('entryBubbleLabel', () => {
     const refund: Entry = { ...fields, kind: 'income', amount: 10_000, title: 'Zwrot', recipients: payers };
     expect(label('pl', bubble({ entry: refund, baseAmount: 43_215, myShare: null }))).toBe(
       'Wpływ 100,00 euro, czyli około 432,15 złotego polskiego: Zwrot. Otrzymał(a): Kasia. 11 lipca 2026.',
+    );
+  });
+});
+
+const pizza = { kind: 'expense', title: 'Pizza', amount: '90,00 zł', date: '10 lipca 2026' } as const;
+
+describe('payersBubbleLabel', () => {
+  it('names every payer in Polish, with the amount, title, date and my share', () => {
+    activateLocale('pl');
+    expect(payersBubbleLabel({ ...pizza, payerNames: ['Kasia', 'Ania', 'Bartek'], myShare: '30,00 zł' })).toBe(
+      'Kasia, Ania i Bartek zapłacili 90,00 zł za Pizza, 10 lipca 2026. Twój udział 30,00 zł.',
+    );
+    expect(payersBubbleLabel({ ...pizza, payerNames: ['Kasia', 'Ania'], myShare: null })).toBe(
+      'Kasia i Ania zapłacili 90,00 zł za Pizza, 10 lipca 2026.',
+    );
+    expect(payersBubbleLabel({ ...pizza, payerNames: ['Kasia', 'Ania', 'Bartek', 'Ola', 'Tomek'], myShare: null })).toBe(
+      'Kasia, Ania, Bartek, Ola i Tomek zapłacili 90,00 zł za Pizza, 10 lipca 2026.',
+    );
+  });
+
+  it('reads an income as received', () => {
+    activateLocale('pl');
+    expect(
+      payersBubbleLabel({ ...pizza, kind: 'income', title: 'Kaucja', payerNames: ['Kasia', 'Ania'], myShare: '-45,00 zł' }),
+    ).toBe('Kasia i Ania otrzymali 90,00 zł za Kaucja, 10 lipca 2026. Twój udział -45,00 zł.');
+  });
+
+  it('names every payer in English', () => {
+    activateLocale('en');
+    const en = { ...pizza, amount: 'PLN 90.00', date: 'July 10, 2026' };
+    expect(payersBubbleLabel({ ...en, payerNames: ['Kasia', 'Ania', 'Bartek'], myShare: 'PLN 30.00' })).toBe(
+      'Kasia, Ania and Bartek paid PLN 90.00 for Pizza, July 10, 2026. Your share PLN 30.00.',
+    );
+    expect(payersBubbleLabel({ ...en, kind: 'income', payerNames: ['Kasia', 'Ania'], myShare: null })).toBe(
+      'Kasia and Ania received PLN 90.00 for Pizza, July 10, 2026.',
+    );
+  });
+
+  it('a single payer is named alone', () => {
+    activateLocale('en');
+    expect(payersBubbleLabel({ ...pizza, amount: 'PLN 90.00', date: 'July 10, 2026', payerNames: ['Kasia'], myShare: null })).toBe(
+      'Kasia paid PLN 90.00 for Pizza, July 10, 2026.',
     );
   });
 });

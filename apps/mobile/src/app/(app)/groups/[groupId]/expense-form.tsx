@@ -1,4 +1,3 @@
-import { plural } from '@lingui/core/macro';
 import { useLingui } from '@lingui/react/macro';
 import { Category, LocalDate, minorUnitDigits } from '@split-pay/shared';
 import { useQuery } from '@tanstack/react-query';
@@ -9,7 +8,7 @@ import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollVie
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { Button } from '@/components/button';
 import { GroupNotFound } from '@/components/group-not-found';
-import { cleanAmountInput } from '@/features/entries/amount-input';
+import { cleanAmountInput, parseAmountInput } from '@/features/entries/amount-input';
 import { composerStore } from '@/features/entries/composer-store';
 import { myMemberId } from '@/features/entries/conversation';
 import { CATEGORY_ICONS, useCreateEntry } from '@/features/entries/entries-query';
@@ -28,6 +27,7 @@ import {
   withSuggestedRate,
   withTitle,
 } from '@/features/entries/expense-draft';
+import { PayersField, SplitField } from '@/features/entries/split-fields';
 import { useEntryLabels } from '@/features/entries/use-entry-labels';
 import { type GroupDetail, groupQuery } from '@/features/groups/groups-query';
 import { ratesQuery } from '@/features/rates/rates-query';
@@ -39,10 +39,10 @@ import { closeSheet } from '@/lib/close-sheet';
  * The full expense form ("+" in the composer), prefilled from the composer's
  * draft. Saving creates the expense and clears the composer; dismissing
  * leaves the composer's values where they were.
- * This slice: expense or income (#13; the payer chips pick the recipient),
- * payer, date, category, currency with the frozen rate (#14, prefilled with
- * the ECB rate for the date, editable); equal split among those present on
- * the date. Later: split modes (#12),
+ * Expense or income (#13; the payers field picks the recipients), payer(s),
+ * date, category, split modes with a live preview of every member's share
+ * (#12), currency with the frozen rate (#14, prefilled with the ECB rate for
+ * the date, editable). Later:
  * receipt (#26), and editing with `?entryId=` (#11).
  */
 export default function ExpenseFormSheet() {
@@ -94,7 +94,7 @@ function ExpenseFormView({ group }: { group: GroupDetail }) {
     setErrors((current) => current.filter((f) => !fields.includes(f)));
   };
 
-  const participantCount = form.participantIds.length > 0 ? form.participantIds.length : group.members.length;
+  const amount = parseAmountInput(form.amount, digits);
   const income = form.kind === 'income';
   const kinds: { kind: ExpenseFormKind; label: string }[] = [
     { kind: 'expense', label: t`Wydatek` },
@@ -121,6 +121,9 @@ function ExpenseFormView({ group }: { group: GroupDetail }) {
     payer: income ? t`Wybierz, kto otrzymał pieniądze.` : t`Wybierz, kto zapłacił.`,
     date: t`Podaj datę w formacie RRRR-MM-DD.`,
     rate: t`Podaj kurs większy od zera, np. 4,3215.`,
+    // The split and payer sections show what doesn't add up themselves.
+    payerAmounts: '',
+    split: '',
   };
   const rateSource = !foreign
     ? null
@@ -132,7 +135,7 @@ function ExpenseFormView({ group }: { group: GroupDetail }) {
           : t`Kurs EBC z ${format.date(rates.data.table.ratesDate)}.`
         : t`Brak kursu EBC dla tej daty — wpisz go ręcznie.`;
   const errorFor = (field: ExpenseFormField) =>
-    errors.includes(field) ? <Text style={styles.error}>{fieldError[field]}</Text> : null;
+    errors.includes(field) && fieldError[field] !== '' ? <Text style={styles.error}>{fieldError[field]}</Text> : null;
 
   return (
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -239,29 +242,28 @@ function ExpenseFormView({ group }: { group: GroupDetail }) {
           </View>
         </View>
 
-        <View style={styles.field}>
-          <Text style={styles.label}>{income ? t`Otrzymał(a)` : t`Zapłacił(a)`}</Text>
-          <View style={styles.chips} accessibilityRole="radiogroup">
-            {group.members.map((member) => (
-              <Pressable
-                key={member.id}
-                accessibilityRole="radio"
-                accessibilityState={{ checked: form.payerMemberId === member.id }}
-                onPress={() => update({ ...form, payerMemberId: member.id }, ['payer'])}
-                style={[styles.chip, form.payerMemberId === member.id && styles.chipSelected]}>
-                <Text style={styles.chipLabel}>{member.id === me ? t`Ty` : member.displayName}</Text>
-              </Pressable>
-            ))}
-          </View>
-          {errorFor('payer')}
-        </View>
+        <PayersField
+          members={group.members}
+          myMemberId={me}
+          payerMemberId={form.payerMemberId}
+          payers={form.payers}
+          amountText={form.amount}
+          amount={amount}
+          digits={digits}
+          currency={form.currency}
+          showErrors={errors.includes('payerAmounts')}
+          onChangePayer={(payerMemberId) => update({ ...form, payerMemberId }, ['payer'])}
+          onChangePayers={(payers) => update({ ...form, payers }, ['payer', 'payerAmounts'])}
+          income={income}
+        />
+        {errorFor('payer')}
 
         <View style={styles.field}>
           {/* TODO: native date picker; a typed ISO date works on every platform for now (as in the group form). */}
           <Text style={styles.label}>{t`Data`}</Text>
           <TextInput
             value={form.date}
-            onChangeText={(date) => update(withDate(form, date, group.members), ['date'])}
+            onChangeText={(date) => update(withDate(form, date, group.members), ['date', 'split'])}
             placeholder={t`RRRR-MM-DD`}
             accessibilityLabel={t`Data`}
             placeholderTextColor={theme.colors.textMuted}
@@ -272,12 +274,18 @@ function ExpenseFormView({ group }: { group: GroupDetail }) {
           {errorFor('date')}
         </View>
 
-        <View style={styles.field}>
-          <Text style={styles.label}>{t`Podział`}</Text>
-          <Text style={styles.value}>
-            {t`Po równo między obecnych tego dnia: ${plural(participantCount, { one: '# osoba', few: '# osoby', many: '# osób', other: '# osoby' })}`}
-          </Text>
-        </View>
+        <SplitField
+          members={group.members}
+          myMemberId={me}
+          split={form.split}
+          participantIds={form.participantIds}
+          amount={amount}
+          digits={digits}
+          currency={form.currency}
+          showErrors={errors.includes('split')}
+          onChange={(split) => update({ ...form, split }, ['split'])}
+          onChangeParticipants={(participantIds) => update({ ...form, participantIds }, ['split'])}
+        />
 
         {createEntry.isError ? (
           <Text style={styles.error}>
