@@ -13,7 +13,11 @@
     "test": "turbo run test",
     "mobile": "pnpm --filter @split-pay/mobile start",
     "i18n:extract": "pnpm --filter @split-pay/mobile i18n:extract",
-    "api": "pnpm --filter @split-pay/api dev"
+    "api": "pnpm --filter @split-pay/api dev",
+    "db:up": "docker compose up -d --wait postgres",
+    "db:down": "docker compose down",
+    "db:generate": "pnpm --filter @split-pay/api db:generate",
+    "db:migrate": "pnpm --filter @split-pay/api db:migrate"
   },
   "devDependencies": {
     "turbo": "^2.11.13",
