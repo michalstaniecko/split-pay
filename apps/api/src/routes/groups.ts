@@ -7,12 +7,13 @@ import type { SessionUser } from '../auth';
 import type { Db } from '../db/client';
 import { groups, members } from '../db/schema';
 import type { AuthEnv } from '../middleware/require-user';
+import { entriesRoutes, latestEntries } from './entries';
 
 type GroupRow = typeof groups.$inferSelect;
 type MemberRow = typeof members.$inferSelect;
 
 /** A group as the API returns it: the shared `Group` fields + owner and inbox ordering. */
-const toGroupDto = (g: GroupRow) => ({
+export const toGroupDto = (g: GroupRow) => ({
   id: g.id,
   name: g.name,
   emoji: g.emoji,
@@ -66,8 +67,14 @@ export const groupsRoutes = ({ db, requireUser }: { db: Db; requireUser: Middlew
           .from(groups)
           .innerJoin(members, and(eq(members.groupId, groups.id), eq(members.userId, c.get('user').id)))
           .orderBy(desc(groups.lastActivityAt), desc(groups.createdAt), asc(groups.id));
-        return c.json(rows.map((r) => toGroupDto(r.group)));
+        const previews = await latestEntries(
+          db,
+          rows.map((r) => r.group.id),
+        );
+        // `lastEntry`: the most recently added entry, previewed in the inbox row.
+        return c.json(rows.map((r) => ({ ...toGroupDto(r.group), lastEntry: previews.get(r.group.id) ?? null })));
       })
+      .route('/:groupId/entries', entriesRoutes({ db }))
       /**
        * Creates a group with the caller as owner and first member, in one
        * transaction. Idempotent on the client-generated id: repeating the same

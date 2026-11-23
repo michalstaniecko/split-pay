@@ -5,6 +5,7 @@ import type { Auth } from './auth';
 import type { Db } from './db/client';
 import { type AuthEnv, createRequireUser } from './middleware/require-user';
 import { groupsRoutes } from './routes/groups';
+import { quickBillsRoutes } from './routes/quick-bills';
 
 export interface AppDeps {
   auth: Auth;
@@ -35,6 +36,7 @@ export const createApp = ({ auth, db, flags = defaultFeatureFlags }: AppDeps) =>
         return c.json({ id: user.id, email: user.email, name: user.name });
       })
       .route('/groups', groupsRoutes({ db, requireUser }))
+      .route('/quick-bills', quickBillsRoutes({ db, requireUser }))
   );
 };
 
