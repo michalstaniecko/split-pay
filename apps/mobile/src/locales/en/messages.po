@@ -7,19 +7,68 @@ msgstr ""
 "X-Generator: @lingui/cli\n"
 "Language: en\n"
 
+#. placeholder {0}: member.displayName
+#: src/app/(app)/groups/[groupId]/info.tsx
+msgid "{0} (założyciel)"
+msgstr "{0} (owner)"
+
+#. placeholder {0}: group.data.name
+#: src/app/(app)/groups/[groupId]/index.tsx
+msgid "{0}, informacje o grupie"
+msgstr "{0}, group info"
+
+#: src/app/(app)/groups/[groupId]/info.tsx
+msgid "{count, plural, one {# osoba} few {# osoby} many {# osób} other {# osoby}}"
+msgstr "{count, plural, one {# person} other {# people}}"
+
 #: src/app/(auth)/sign-in.tsx
 msgid "Adres e-mail"
 msgstr "Email address"
 
-#: src/app/(tabs)/_layout.tsx
-#: src/app/(tabs)/activity.tsx
+#: src/app/(app)/_layout.tsx
+#: src/app/(app)/activity.tsx
+#: src/components/inbox-header-buttons.tsx
 msgid "Aktywność"
 msgstr "Activity"
 
-#: src/app/(tabs)/_layout.tsx
-#: src/app/(tabs)/index.tsx
-msgid "Grupy"
-msgstr "Groups"
+#: src/app/(app)/new-group.tsx
+#: src/app/(app)/new.tsx
+msgid "Anuluj"
+msgstr "Cancel"
+
+#: src/app/(app)/groups/[groupId]/index.tsx
+#: src/app/(app)/index.tsx
+msgid "Brak wpisów"
+msgstr "No entries"
+
+#: src/app/(app)/groups/[groupId]/info.tsx
+msgid "Członkowie"
+msgstr "Members"
+
+#: src/app/(app)/new-group.tsx
+msgid "Daty pozwalają dzielić koszty według obecności."
+msgstr "Dates let you split costs by attendance."
+
+#: src/app/(app)/new-group.tsx
+msgid "Do"
+msgstr "To"
+
+#: src/app/(app)/new-group.tsx
+msgid "Emoji"
+msgstr "Emoji"
+
+#: src/app/(app)/groups/[groupId]/info.tsx
+msgid "Historia zmian"
+msgstr "Change history"
+
+#: src/app/(app)/_layout.tsx
+#: src/app/(app)/groups/[groupId]/index.tsx
+msgid "Informacje o grupie"
+msgstr "Group info"
+
+#: src/app/(app)/new.tsx
+msgid "Jeden wydatek z kilkoma osobami"
+msgstr "One expense shared with a few people"
 
 #: src/components/language-picker.tsx
 msgid "Język"
@@ -33,6 +82,34 @@ msgstr "System language"
 msgid "Kod jednorazowy"
 msgstr "One-time code"
 
+#: src/app/(app)/new-group.tsx
+msgid "Kolor"
+msgstr "Colour"
+
+#: src/app/(app)/groups/[groupId]/info.tsx
+msgid "Link grupy"
+msgstr "Group link"
+
+#: src/app/(app)/new-group.tsx
+msgid "Nazwa"
+msgstr "Name"
+
+#: src/app/(app)/index.tsx
+msgid "Nie masz jeszcze grup"
+msgstr "You have no groups yet"
+
+#: src/app/(app)/new-group.tsx
+msgid "Nie udało się utworzyć grupy. Spróbuj ponownie."
+msgstr "Could not create the group. Try again."
+
+#: src/app/(app)/index.tsx
+msgid "Nie udało się wczytać grup."
+msgstr "Could not load groups."
+
+#: src/components/group-not-found.tsx
+msgid "Nie udało się wczytać grupy."
+msgstr "Could not load the group."
+
 #: src/app/(auth)/sign-in.tsx
 msgid "Nie udało się wysłać kodu. Spróbuj ponownie."
 msgstr "Couldn't send the code. Please try again."
@@ -41,24 +118,123 @@ msgstr "Couldn't send the code. Please try again."
 msgid "Nieprawidłowy lub wygasły kod."
 msgstr "Invalid or expired code."
 
+#: src/app/(app)/_layout.tsx
+#: src/app/(app)/new.tsx
+msgid "Nowa grupa"
+msgstr "New group"
+
+#: src/app/(app)/_layout.tsx
+#: src/app/(app)/index.tsx
+msgid "Nowy"
+msgstr "New"
+
+#: src/app/(app)/new-group.tsx
+msgid "np. Mazury 2026"
+msgstr "e.g. Lake trip 2026"
+
+#: src/app/(app)/new-group.tsx
+msgid "Od"
+msgstr "From"
+
+#: src/app/(app)/groups/[groupId]/info.tsx
+msgid "Opuść, archiwizuj lub usuń grupę"
+msgstr "Leave, archive or delete the group"
+
+#: src/app/(app)/new-group.tsx
+msgid "Podaj datę końca (RRRR-MM-DD), nie wcześniejszą niż początek."
+msgstr "Enter an end date (YYYY-MM-DD) no earlier than the start."
+
+#: src/app/(app)/new-group.tsx
+msgid "Podaj datę początku w formacie RRRR-MM-DD."
+msgstr "Enter a start date as YYYY-MM-DD."
+
+#: src/app/(app)/new-group.tsx
+msgid "Podaj nazwę grupy."
+msgstr "Enter a group name."
+
 #: src/app/(auth)/sign-in.tsx
 msgid "Podaj poprawny adres e-mail."
 msgstr "Enter a valid email address."
 
-#: src/app/(tabs)/index.tsx
-msgid "Podział {amount} na {count, plural, one {# osobę} few {# osoby} many {# osób} other {# osoby}}"
-msgstr "{amount} split between {count, plural, one {# person} other {# people}}"
-
-#: src/app/(tabs)/_layout.tsx
-#: src/app/(tabs)/profile.tsx
+#: src/app/(app)/_layout.tsx
+#: src/app/(app)/profile.tsx
+#: src/components/inbox-header-buttons.tsx
 msgid "Profil"
 msgstr "Profile"
+
+#: src/app/(app)/new-group.tsx
+msgid "RRRR-MM-DD"
+msgstr "YYYY-MM-DD"
+
+#: src/app/(app)/index.tsx
+#: src/components/group-not-found.tsx
+msgid "Spróbuj ponownie"
+msgstr "Try again"
+
+#: src/app/(app)/groups/[groupId]/info.tsx
+msgid "Statystyki"
+msgstr "Stats"
+
+#: src/app/(app)/_layout.tsx
+#: src/app/(app)/new.tsx
+#: src/app/(app)/quick-bill.tsx
+msgid "Szybki rachunek"
+msgstr "Quick bill"
+
+#: src/components/group-not-found.tsx
+msgid "Ta grupa nie istnieje albo nie masz do niej dostępu."
+msgstr "This group does not exist or you do not have access to it."
+
+#: src/app/(app)/groups/[groupId]/info.tsx
+msgid "Ustawienia"
+msgstr "Settings"
+
+#: src/app/(app)/new-group.tsx
+msgid "Utwórz grupę"
+msgstr "Create group"
+
+#: src/app/(app)/index.tsx
+msgid "Utwórz grupę dla wyjazdu, mieszkania albo jednego rachunku."
+msgstr "Create a group for a trip, a flat or a single bill."
+
+#: src/app/(app)/new-group.tsx
+msgid "Waluta bazowa"
+msgstr "Base currency"
+
+#: src/app/(app)/groups/[groupId]/info.tsx
+#: src/app/(app)/quick-bill.tsx
+msgid "Wkrótce"
+msgstr "Coming soon"
 
 #: src/app/(auth)/sign-in.tsx
 msgid "Wpisz kod wysłany na {email}."
 msgstr "Enter the code sent to {email}."
 
-#: src/app/(tabs)/profile.tsx
+#: src/app/(app)/new-group.tsx
+msgid "Wybierz emoji."
+msgstr "Choose an emoji."
+
+#: src/app/(app)/new-group.tsx
+msgid "Wybierz kolor."
+msgstr "Choose a colour."
+
+#: src/app/(app)/new-group.tsx
+msgid "Wybierz walutę."
+msgstr "Choose a currency."
+
+#: src/app/(app)/groups/[groupId]/index.tsx
+msgid "Wydatki dodane w tej grupie pojawią się tutaj."
+msgstr "Expenses added to this group will show up here."
+
+#: src/app/(app)/new-group.tsx
+msgid "Wyjazd z datami"
+msgstr "Trip with dates"
+
+#: src/app/(app)/new.tsx
+msgid "Wyjazd, mieszkanie albo inne wspólne wydatki"
+msgstr "A trip, a flat or other shared expenses"
+
+#: src/app/(app)/profile.tsx
 msgid "Wyloguj się"
 msgstr "Sign out"
 
@@ -74,7 +250,7 @@ msgstr "Send code"
 msgid "Wyślij kod ponownie"
 msgstr "Resend code"
 
-#: src/app/(tabs)/profile.tsx
+#: src/app/(app)/profile.tsx
 msgid "Zalogowano jako"
 msgstr "Signed in as"
 
@@ -85,6 +261,10 @@ msgstr "Sign in"
 #: src/app/(auth)/sign-in.tsx
 msgid "Zaloguj się"
 msgstr "Sign in"
+
+#: src/app/(app)/quick-bill.tsx
+msgid "Zamknij"
+msgstr "Close"
 
 #: src/app/(auth)/sign-in.tsx
 msgid "Zmień adres e-mail"
