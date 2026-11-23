@@ -2,8 +2,6 @@ import { randomUUID } from 'node:crypto';
 import { parseResponse } from 'hono/client';
 import { describe, expect, it } from 'vitest';
 import { createTestApp } from '../test/app';
-import { testDb } from '../test/db';
-import { members } from './db/schema';
 
 const newGroup = () => ({
   id: randomUUID(),
@@ -71,7 +69,8 @@ describe('member attendance', () => {
   it("any member edits anyone's attendance, including members with an account (ADR-0008)", async () => {
     const { ania, group, attendance, detail } = await setup();
     const bartek = await signIn('bartek@example.com');
-    await testDb.db.insert(members).values({ id: randomUUID(), groupId: group.id, userId: bartek.userId, displayName: 'Bartek' });
+    const { token } = await parseResponse(client(ania).groups[':groupId'].link.$get({ param: { groupId: group.id } }));
+    await parseResponse(client(bartek).links[':token'].join.$post({ param: { token } }));
     const aniaMemberId = group.ownerMemberId;
 
     const res = await attendance(bartek).$put({

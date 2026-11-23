@@ -2,3 +2,4 @@
 // add new table modules here as `export * from './<area>'`.
 export * from './auth-schema';
 export * from './groups';
+export * from './group-links';

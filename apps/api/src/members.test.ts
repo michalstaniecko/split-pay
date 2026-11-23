@@ -2,8 +2,6 @@ import { randomUUID } from 'node:crypto';
 import { parseResponse } from 'hono/client';
 import { describe, expect, it } from 'vitest';
 import { createTestApp } from '../test/app';
-import { testDb } from '../test/db';
-import { members } from './db/schema';
 
 const newGroup = () => ({
   id: randomUUID(),
@@ -28,14 +26,11 @@ describe('members', () => {
     return { ania, group, api, detail };
   }
 
-  /**
-   * Makes a user a member of the group. Joining via the group link is a later
-   * slice, so the test seeds the row directly.
-   */
-  async function addAccountMember(groupId: string, userId: string, displayName: string) {
-    const id = randomUUID();
-    await testDb.db.insert(members).values({ id, groupId, userId, displayName });
-    return id;
+  /** `member` shares the group link and `joiner` joins as a new person; returns the new member's id. */
+  async function join(groupId: string, member: { cookie: string }, joiner: { cookie: string }) {
+    const { token } = await parseResponse(client(member).groups[':groupId'].link.$get({ param: { groupId } }));
+    const joined = await parseResponse(client(joiner).links[':token'].join.$post({ param: { token } }));
+    return joined.memberId;
   }
 
   it('adds a member without an account', async () => {
@@ -98,7 +93,7 @@ describe('members', () => {
   it('any member renames a member without an account', async () => {
     const { ania, group, api, detail } = await setup();
     const bartek = await signIn('bartek@example.com');
-    await addAccountMember(group.id, bartek.userId, 'Bartek');
+    await join(group.id, ania, bartek);
     const id = randomUUID();
     await api(ania).$post({ param: { groupId: group.id }, json: { id, displayName: 'Tomek' } });
 
@@ -114,7 +109,7 @@ describe('members', () => {
   it("members with an account can't be renamed by others, only by themselves", async () => {
     const { ania, group, api, detail } = await setup();
     const bartek = await signIn('bartek@example.com');
-    const bartekMemberId = await addAccountMember(group.id, bartek.userId, 'Bartek');
+    const bartekMemberId = await join(group.id, ania, bartek);
 
     const byOther = await api(ania)[':memberId'].$patch({
       param: { groupId: group.id, memberId: bartekMemberId },
