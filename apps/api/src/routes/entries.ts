@@ -202,7 +202,8 @@ export const entriesRoutes = ({ db }: { db: Db }) =>
      * Edits an entry (any member, ADR-0008): the body is the whole entry as
      * entered plus the version it was based on. 200 the new version; 409
      * `version_conflict` with the current entry when that version is stale or
-     * the entry is deleted; 400 invalid (also: archived group, another id); 404.
+     * the entry is deleted; 400 invalid (another id); 404. An archived group
+     * answers 409 `archived` (`rejectWritesToArchived`).
      */
     .put('/:entryId', zValidator('json', EntryUpdate), async (c) => {
       const userId = c.get('user').id;
@@ -221,7 +222,8 @@ export const entriesRoutes = ({ db }: { db: Db }) =>
     /**
      * Soft-deletes an entry (`deletedAt`), based on `?baseVersion=`. 200 the
      * deleted entry (also when it already was deleted — idempotent); 409
-     * `version_conflict` with the current entry; 400 archived group; 404.
+     * `version_conflict` with the current entry; 409 `archived` in an archived
+     * group (`rejectWritesToArchived`); 404.
      */
     .delete('/:entryId', zValidator('query', EntryVersionCheck), async (c) => {
       const group = await findMyGroup(db, c.req.param('groupId'), c.get('user').id);

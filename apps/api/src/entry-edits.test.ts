@@ -186,12 +186,18 @@ describe('editing and deleting entries', () => {
     expect(await res.json()).toEqual({ error: 'version_conflict', entry: deleted });
   });
 
-  it('an archived group is read-only', async () => {
-    const { group, created, edit, remove } = await setup();
+  it('an archived group is read-only (409 archived, #25)', async () => {
+    const { group, created, edit, remove, restore } = await setup();
     await testDb.db.update(groups).set({ archivedAt: new Date() }).where(eq(groups.id, group.id));
 
-    expect((await edit({ ...toNewEntry(created), title: 'Kolacja' } as NewEntry, 1)).status).toBe(400);
-    expect((await remove(1)).status).toBe(400);
+    for (const res of [
+      await edit({ ...toNewEntry(created), title: 'Kolacja' } as NewEntry, 1),
+      await remove(1),
+      await restore(1),
+    ]) {
+      expect(res.status).toBe(409);
+      expect(await res.json()).toEqual({ error: 'archived' });
+    }
   });
 
   it('is scoped to members of the group: 404 otherwise', async () => {
