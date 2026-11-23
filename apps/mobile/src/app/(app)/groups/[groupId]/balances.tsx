@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
+import { Button } from '@/components/button';
 import { GroupNotFound } from '@/components/group-not-found';
 import { type BalanceRow, drawerRows, type TransferRow } from '@/features/balances/balances';
 import { balancesQuery, type GroupBalances } from '@/features/balances/balances-query';
@@ -15,7 +16,8 @@ import { authClient } from '@/lib/auth-client';
  * Balance drawer (sheet from the balance banner): every member's balance and
  * who should pay whom — simplified or pairwise per the group's setting
  * (toggled in Group info → settings). "Oddaj" on my own transfer opens the
- * settle sheet with the recipient's payout details.
+ * settle sheet with the recipient's payout details and the suggested amount;
+ * "Inna spłata" at the bottom opens it with from / to / amount pickers.
  */
 export default function BalancesSheet() {
   const { theme } = useUnistyles();
@@ -71,6 +73,14 @@ function Drawer({ group, balances }: { group: GroupDetail; balances: GroupBalanc
             />
           ))}
         </View>
+      )}
+      {/* TODO(#24): "Przypomnij" (nudge) on `toMe` transfers comes with push notifications. */}
+      {archived ? null : (
+        <Button
+          variant="secondary"
+          label={t`Inna spłata`}
+          onPress={() => router.push({ pathname: '/groups/[groupId]/settle', params: { groupId: group.id } })}
+        />
       )}
     </ScrollView>
   );

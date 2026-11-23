@@ -263,6 +263,7 @@ describe('classifySendError', () => {
       error: 'invalid_entry',
     });
     expect(classifySendError(http(409, { error: 'conflict' }))).toEqual({ type: 'failed', error: 'conflict' });
+    expect(classifySendError(http(409, { error: 'archived' }))).toEqual({ type: 'failed', error: 'archived' });
     expect(classifySendError(http(404, { error: 'not_found' }))).toEqual({ type: 'failed', error: 'not_found' });
     expect(classifySendError(http(403, 'nope'))).toEqual({ type: 'failed', error: 'http_403' });
   });

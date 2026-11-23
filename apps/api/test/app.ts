@@ -14,7 +14,7 @@ export interface SentOtp {
  * The real app wired to the test database. OTP codes are captured in `sentOtps`
  * instead of being logged.
  */
-export function createTestApp(options: { flags?: FeatureFlags } = {}) {
+export function createTestApp(options: { flags?: FeatureFlags; webUrl?: string } = {}) {
   const sentOtps: SentOtp[] = [];
   const otpSender: OtpSender = {
     async send(message) {
