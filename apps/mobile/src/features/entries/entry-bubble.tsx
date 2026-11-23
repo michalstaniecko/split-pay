@@ -1,16 +1,20 @@
 import { useLingui } from '@lingui/react/macro';
 import { Pressable, Text, View } from 'react-native';
 import { StyleSheet } from 'react-native-unistyles';
+import { useLocale } from '@/i18n/locale-provider';
 import { useFormatters } from '@/i18n/use-formatters';
 import type { DayItem, EntryItem } from './conversation';
 import { CATEGORY_ICONS } from './entries-query';
+import { incomeBubbleLabel } from './income-bubble-label';
 
 /**
  * One entry in the Conversation, from its payer: end edge when it's mine,
  * start edge otherwise (`alignSelf` follows the layout direction, so RTL
  * mirrors it). Read as one element by screen readers.
- * Later slices add: "edytowano" (#11), income styling (#13), the base amount
- * of a foreign currency (#14), the receipt thumbnail (#26).
+ * An income (#13) is from its largest recipient, labelled "↓ Wpływ" in the
+ * positive colour on a surface background (on either edge).
+ * Later slices add: "edytowano" (#11), the base amount of a foreign currency
+ * (#14), the receipt thumbnail (#26).
  */
 export function EntryBubble({
   item,
@@ -25,48 +29,59 @@ export function EntryBubble({
 }) {
   const { t } = useLingui();
   const format = useFormatters();
+  const { locale } = useLocale();
   const { entry, side, payerName, otherPayers, myShare } = item;
-  const mine = side === 'end';
+  const income = entry.kind === 'income';
+  // Income bubbles keep the surface background so the positive colour reads on both edges.
+  const mine = side === 'end' && !income;
   const title = entry.kind === 'settlement' ? t`Spłata` : entry.title;
   const icon = entry.kind === 'settlement' ? '💸' : CATEGORY_ICONS[entry.category];
   const author = otherPayers > 0 ? t`${payerName} + ${otherPayers}` : payerName;
   const amount = format.amount(entry.amount, entry.currency);
-  const share = myShare !== null && myShare !== 0 ? t`twój udział ${format.amount(myShare, baseCurrency)}` : null;
+  // An income share is money that belongs to me — shown without the minus.
+  const shareAmount = myShare !== null && income ? Math.abs(myShare) : myShare;
+  const share = shareAmount !== null && shareAmount !== 0 ? t`twój udział ${format.amount(shareAmount, baseCurrency)}` : null;
+  const label =
+    entry.kind === 'income'
+      ? incomeBubbleLabel({ entry, payerName, otherPayers, myShare }, { baseCurrency, locale })
+      : [author, title, amount, share].filter(Boolean).join(', ');
 
   return (
-    <View style={[styles.row, mine ? styles.rowEnd : styles.rowStart]}>
+    <View style={[styles.row, side === 'end' ? styles.rowEnd : styles.rowStart]}>
       <Pressable
         accessible
         accessibilityRole="button"
-        accessibilityLabel={[author, title, amount, share].filter(Boolean).join(', ')}
+        accessibilityLabel={label}
         onPress={onPress}
         style={({ pressed }) => [
           styles.bubble,
           mine ? styles.mine : styles.theirs,
+          income && styles.income,
           highlighted && styles.highlighted,
           pressed && styles.pressed,
         ]}>
         <Text style={[styles.author, mine && styles.mineMuted]} numberOfLines={1}>
           {author}
         </Text>
+        {income ? <Text style={styles.incomeLabel}>{t`↓ Wpływ`}</Text> : null}
         <View style={styles.main}>
           <Text style={styles.icon}>{icon}</Text>
           <Text style={[styles.title, mine && styles.mineText]} numberOfLines={2}>
             {title}
           </Text>
         </View>
-        <Text style={[styles.amount, mine && styles.mineText]}>{amount}</Text>
+        <Text style={[styles.amount, mine && styles.mineText, income && styles.incomeAmount]}>{amount}</Text>
         {share ? <Text style={[styles.share, mine && styles.mineMuted]}>{share}</Text> : null}
       </Pressable>
     </View>
   );
 }
 
-/** Sticky day separator with the group's total for the day. */
+/** Sticky day separator with the group's total for the day (negative when incomes outweigh expenses). */
 export function DaySeparator({ item, baseCurrency }: { item: DayItem; baseCurrency: string }) {
   const format = useFormatters();
   const label = format.date(item.date);
-  const total = item.total > 0 ? format.amount(item.total, baseCurrency) : null;
+  const total = item.total !== 0 ? format.amount(item.total, baseCurrency) : null;
   return (
     <View style={styles.dayRow} accessibilityRole="header">
       <View style={styles.dayPill}>
@@ -103,6 +118,17 @@ const styles = StyleSheet.create((theme) => ({
   },
   mine: {
     backgroundColor: theme.colors.primary,
+  },
+  income: {
+    borderColor: theme.colors.positive,
+  },
+  incomeLabel: {
+    fontSize: theme.font.sizeSm,
+    fontWeight: theme.font.weightBold,
+    color: theme.colors.positive,
+  },
+  incomeAmount: {
+    color: theme.colors.positive,
   },
   highlighted: {
     borderColor: theme.colors.accent,

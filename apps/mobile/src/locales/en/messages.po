@@ -36,6 +36,15 @@ msgstr "{name}, here is your link to the “{groupName}” group in split-pay: {
 msgid "{payerName} + {otherPayers}"
 msgstr "{payerName} + {otherPayers}"
 
+#: src/features/entries/income-bubble-label.ts
+msgid "{payerName} i {otherPayers, plural, one {# inna osoba} few {# inne osoby} many {# innych osób} other {# innej osoby}}"
+msgstr "{payerName} and {otherPayers, plural, one {# other person} other {# other people}}"
+
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+#: src/features/entries/entry-bubble.tsx
+msgid "↓ Wpływ"
+msgstr "↓ Income"
+
 #: src/app/(app)/groups/[groupId]/info.tsx
 msgid "+ Dodaj osobę bez konta"
 msgstr "+ Add a person without an account"
@@ -251,6 +260,10 @@ msgid "Nie udało się cofnąć przejęcia."
 msgstr "Couldn't undo the claim."
 
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Nie udało się dodać wpływu. Spróbuj ponownie."
+msgstr "Couldn't add the income. Try again."
+
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
 #: src/features/entries/composer.tsx
 msgid "Nie udało się dodać wydatku. Spróbuj ponownie."
 msgstr "Couldn't add the expense. Try again."
@@ -333,6 +346,10 @@ msgstr "New group"
 msgid "Nowy"
 msgstr "New"
 
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Nowy wpływ"
+msgstr "New income"
+
 #: src/app/(app)/_layout.tsx
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
 msgid "Nowy wydatek"
@@ -362,6 +379,10 @@ msgstr "Leave, archive or delete the group"
 #: src/app/(app)/_layout.tsx
 msgid "Osoba"
 msgstr "Person"
+
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Otrzymał(a)"
+msgstr "Received by"
 
 #: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
 msgid "Otrzymali"
@@ -430,6 +451,10 @@ msgstr "Profile"
 #: src/app/(app)/g/[token].tsx
 msgid "Przejmij profil osoby bez konta razem z historią wydatków."
 msgstr "Claim the profile of a member without an account, with their expense history."
+
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Rodzaj wpisu"
+msgstr "Entry type"
 
 #: src/features/entries/use-entry-labels.ts
 msgid "Rozrywka"
@@ -512,10 +537,14 @@ msgstr "Transport"
 msgid "Tryb jasny/ciemny"
 msgstr "Light/dark mode"
 
-#. placeholder {0}: format.amount(myShare, baseCurrency)
+#. placeholder {0}: format.amount(shareAmount, baseCurrency)
 #: src/features/entries/entry-bubble.tsx
 msgid "twój udział {0}"
 msgstr "your share {0}"
+
+#: src/features/entries/income-bubble-label.ts
+msgid "Twój udział {share}."
+msgstr "Your share {share}."
 
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
 #: src/app/(app)/groups/[groupId]/info.tsx
@@ -594,6 +623,10 @@ msgstr "Enter the code sent to {email}."
 msgid "Wpisz kwotę i tytuł poniżej, żeby dodać pierwszy wydatek."
 msgstr "Type an amount and a title below to add the first expense."
 
+#: src/features/entries/income-bubble-label.ts
+msgid "Wpływ {amount}: {title}. Otrzymał(a): {recipients}. {date}."
+msgstr "Income {amount}: {title}. Received by {recipients}. {date}."
+
 #: src/app/(app)/g/[token].tsx
 msgid "Wróć"
 msgstr "Back"
@@ -615,8 +648,16 @@ msgid "Wybierz walutę."
 msgstr "Choose a currency."
 
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Wybierz, kto otrzymał pieniądze."
+msgstr "Choose who received the money."
+
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
 msgid "Wybierz, kto zapłacił."
 msgstr "Choose who paid."
+
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+msgid "Wydatek"
+msgstr "Expense"
 
 #: src/app/(app)/new-group.tsx
 msgid "Wyjazd z datami"

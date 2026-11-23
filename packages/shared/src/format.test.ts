@@ -33,6 +33,13 @@ describe('formatAmount', () => {
   });
 });
 
+describe('formatAmount for screen readers', () => {
+  it('spells out the currency name', () => {
+    expect(plain(formatAmount(4550, 'PLN', 'pl', { currencyDisplay: 'name' }))).toBe('45,50 złotego polskiego');
+    expect(plain(formatAmount(120_000, 'EUR', 'en', { currencyDisplay: 'name' }))).toBe('1,200.00 euros');
+  });
+});
+
 describe('formatDate', () => {
   it('formats a calendar date in Polish and English', () => {
     expect(formatDate('2026-11-23', 'pl')).toBe('23 listopada 2026');

@@ -122,6 +122,35 @@ describe('conversationItems', () => {
     });
   });
 
+  describe('incomes', () => {
+    // Kasia and Bartek got the 600 deposit back; it belongs to all three.
+    const { payers: _payers, ...fields } = expense('2026-07-11', '2026-07-11T21:00:00.000Z', [], 600) as Extract<
+      Entry,
+      { kind: 'expense' }
+    >;
+    const refund: Entry = {
+      ...fields,
+      kind: 'income',
+      title: 'Zwrot kaucji',
+      recipients: [
+        { memberId: BARTEK, amount: 200 },
+        { memberId: KASIA, amount: 400 },
+      ],
+    };
+
+    it('are bubbles from their largest recipient, on the end edge when I am among the recipients', () => {
+      const asBartek = conversationItems([refund], { members, myMemberId: BARTEK, baseCurrency: 'PLN' });
+      expect(asBartek.items[1]).toMatchObject({ type: 'entry', side: 'end', payerName: 'Kasia', otherPayers: 1 });
+      const asAnia = conversationItems([refund], { members, myMemberId: ANIA, baseCurrency: 'PLN' });
+      expect(asAnia.items[1]).toMatchObject({ side: 'start', myShare: -200 });
+    });
+
+    it("reduce the day separator's total", () => {
+      const { items } = conversationItems([aniaEarly, bartekLate, refund], { members, myMemberId: ANIA, baseCurrency: 'PLN' });
+      expect(items[0]).toMatchObject({ type: 'day', date: '2026-07-11', total: 1800 - 600 });
+    });
+  });
+
   it('is empty without entries', () => {
     expect(conversationItems([], { members, myMemberId: ANIA, baseCurrency: 'PLN' })).toEqual({
       items: [],

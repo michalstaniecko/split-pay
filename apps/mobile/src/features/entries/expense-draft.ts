@@ -85,6 +85,23 @@ export interface ExpenseForm {
   participantIds: string[];
   /** The last valid date `participantIds` were resolved for (`date` may be half-typed). */
   participantsDate: LocalDate;
+  /**
+   * Expense (default) or income (#13): for an income `payerMemberId` is the
+   * recipient — the person chips read "Otrzymał(a)" instead of "Zapłacił(a)".
+   */
+  kind?: ExpenseFormKind;
+}
+
+/** What the full form saves; settlements have their own sheet. */
+export type ExpenseFormKind = 'expense' | 'income';
+
+/** A new income, as the full form sends it. */
+export type NewIncome = Extract<NewEntry, { kind: 'income' }>;
+
+/** The same entry as an income: payers become recipients, everything else stays (a reversed expense). */
+export function asIncome(expense: NewExpense): NewIncome {
+  const { kind: _kind, payers, ...fields } = expense;
+  return { kind: 'income', ...fields, recipients: payers };
 }
 
 export type ExpenseFormField = 'amount' | 'title' | 'payer' | 'date';
@@ -134,9 +151,12 @@ export function withTitle(form: ExpenseForm, title: string): ExpenseForm {
   return { ...form, title, category: form.categoryChosen ? form.category : suggestCategory(title) };
 }
 
-export type ParsedExpenseForm = { ok: true; value: NewExpense } | { ok: false; errors: ExpenseFormField[] };
+export type ParsedExpenseForm = { ok: true; value: NewExpense | NewIncome } | { ok: false; errors: ExpenseFormField[] };
 
-/** Validates the form and builds the equal-split expense among the form's participants. */
+/**
+ * Validates the form and builds the equal-split expense among the form's
+ * participants — or income, with the payer as its recipient.
+ */
 export function parseExpenseForm(
   form: ExpenseForm,
   context: { id: string; group: ExpenseGroup; members: readonly Member[] },
@@ -150,7 +170,7 @@ export function parseExpenseForm(
   if (!LocalDate.safeParse(date).success) errors.add('date');
   if (errors.size > 0 || amount === null) return { ok: false, errors: FIELDS.filter((f) => errors.has(f)) };
 
-  const value = equalExpenseDefaults({
+  const expense = equalExpenseDefaults({
     id: context.id,
     title: form.title,
     amount,
@@ -162,12 +182,13 @@ export function parseExpenseForm(
   });
   // Nobody present that day: everyone takes part, as in `equalExpenseDefaults`.
   const memberIds = form.participantIds.length > 0 ? form.participantIds : context.members.map((m) => m.id);
-  value.split = { mode: 'equal', memberIds: [...memberIds] };
+  expense.split = { mode: 'equal', memberIds: [...memberIds] };
+  const value = form.kind === 'income' ? asIncome(expense) : expense;
   // Same schema as the API; catches limits like the title length.
   const checked = NewEntry.safeParse(value);
   if (!checked.success) {
     const invalid = new Set(checked.error.issues.map((i) => i.path[0]));
-    return { ok: false, errors: FIELDS.filter((f) => invalid.has(f === 'payer' ? 'payers' : f)) };
+    return { ok: false, errors: FIELDS.filter((f) => invalid.has(f === 'payer' ? (value.kind === 'income' ? 'recipients' : 'payers') : f)) };
   }
   return { ok: true, value };
 }

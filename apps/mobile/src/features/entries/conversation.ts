@@ -16,7 +16,10 @@ export function myMemberId(members: readonly Pick<Member, 'id' | 'userId'>[], us
   return members.find((m) => m.userId === userId)?.id ?? null;
 }
 
-/** Sticky day separator. `total`: the group's spending that day in the base currency. */
+/**
+ * Sticky day separator. `total`: the group's net spending that day in the
+ * base currency — expenses minus incomes (`dailyTotals`), so it can be negative.
+ */
 export interface DayItem {
   type: 'day';
   key: string;
