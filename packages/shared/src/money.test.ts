@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { allocate, minorUnitDigits, splitEvenly } from './money';
+import { allocate, convert, convertAllocations, minorUnitDigits, splitEvenly } from './money';
 
 const sum = (xs: { amount: number }[]) => xs.reduce((a, x) => a + x.amount, 0);
 
@@ -55,6 +55,7 @@ describe('allocate', () => {
 
   it('odrzuca niepoprawne dane', () => {
     expect(() => allocate(1.5, [{ memberId: 'a', weight: 1 }])).toThrow();
+    expect(() => allocate(100, [{ memberId: 'a', weight: 0.5 }])).toThrow();
     expect(() => allocate(100, [])).toThrow();
     expect(() => allocate(100, [{ memberId: 'a', weight: 0 }])).toThrow();
     expect(() =>
@@ -71,5 +72,31 @@ describe('minorUnitDigits', () => {
     expect(minorUnitDigits('PLN')).toBe(2);
     expect(minorUnitDigits('JPY')).toBe(0);
     expect(minorUnitDigits('KWD')).toBe(3);
+  });
+});
+
+describe('convert', () => {
+  it('przelicza EUR → PLN z zaokrągleniem połówek od zera', () => {
+    expect(convert(1000, '4.2715', 'EUR', 'PLN')).toBe(4272); // 42,715 → 42,72
+    expect(convert(-1000, '4.2715', 'EUR', 'PLN')).toBe(-4272);
+    expect(convert(1001, '4.2715', 'EUR', 'PLN')).toBe(4276); // 42,757…
+  });
+
+  it('uwzględnia różną liczbę miejsc po przecinku', () => {
+    expect(convert(1000, '0.026', 'JPY', 'PLN')).toBe(2600); // 1000 ¥ → 26,00 zł
+    expect(convert(10_000, '38.5', 'PLN', 'JPY')).toBe(3850); // 100 zł → 3850 ¥
+  });
+
+  it('ta sama waluta wymaga kursu 1', () => {
+    expect(convert(123, '1', 'PLN', 'PLN')).toBe(123);
+    expect(() => convert(123, '4.2', 'PLN', 'PLN')).toThrow();
+  });
+});
+
+describe('convertAllocations', () => {
+  it('suma po przeliczeniu równa się przeliczonej sumie', () => {
+    const parts = splitEvenly(1000, ['a', 'b', 'c']); // 3,34 + 3,33 + 3,33 EUR
+    const converted = convertAllocations(parts, '4.2715', 'EUR', 'PLN');
+    expect(converted.reduce((a, x) => a + x.amount, 0)).toBe(convert(1000, '4.2715', 'EUR', 'PLN'));
   });
 });

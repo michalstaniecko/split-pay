@@ -51,6 +51,10 @@ Link wskazujący konkretnego członka bez konta do przejęcia.
 
 ## Pieniądze
 
+**Wpis** (`Entry`):
+Wspólna nazwa wydatku, wpływu i spłaty, czyli wszystkiego, co zmienia salda w grupie.
+_Avoid_: Transakcja, operacja, rekord
+
 **Wydatek** (`Expense`):
 Zapłata dokonana przez jednego lub kilku płatników, dzielona na udziały członków.
 _Avoid_: Rachunek, transakcja, koszt
@@ -70,6 +74,10 @@ _Avoid_: Kupujący, payer-user
 **Udział** (`share`):
 Część wydatku lub wpływu przypadająca na danego członka.
 _Avoid_: Split, część, porcja
+
+**Tryb podziału** (`Split`):
+Sposób, w jaki kwota wpisu jest dzielona na udziały: po równo, dokładnymi kwotami, według wag albo „wspólne + osobiste”.
+_Avoid_: Typ podziału, metoda
 
 **Pozycja osobista**:
 Część wydatku przypisana w całości jednemu członkowi, wyłączona z podziału wspólnego.
