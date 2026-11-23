@@ -1,5 +1,6 @@
 import {
   type CurrencyCode,
+  type Settlement,
   type LocalDate,
   type Member,
   type MinorAmount,
@@ -79,4 +80,23 @@ export function parseSettleForm(
   });
   if (!parsed.success || parsed.data.kind !== 'settlement') return { ok: false, errors: [...FIELDS] };
   return { ok: true, value: parsed.data };
+}
+
+/** The settle sheet opened by "Edytuj" on a settlement (#10×#11): its people and amount. */
+export function settleFormFromEntry(entry: Settlement, separator: string): SettleForm {
+  return settleForm({ from: entry.from, to: entry.to, amount: entry.amount, currency: entry.currency, separator });
+}
+
+/**
+ * The edited settlement from the sheet — validated like a new one; keeps the
+ * entry's id, date, currency and rate (sent with the version it was based on).
+ */
+export function editedSettlement(
+  entry: Settlement,
+  form: SettleForm,
+  members: readonly Pick<Member, 'id'>[],
+): ParsedSettleForm {
+  const parsed = parseSettleForm(form, { id: entry.id, date: entry.date, currency: entry.currency, members });
+  if (!parsed.ok) return parsed;
+  return { ok: true, value: { ...parsed.value, rateToBase: entry.rateToBase } };
 }

@@ -24,7 +24,13 @@ import { entriesQuery, useDeleteEntry, useRestoreEntry } from '@/features/entrie
 import { EntryActionsMenu } from '@/features/entries/entry-actions-menu';
 import { DaySeparator, EntryBubble } from '@/features/entries/entry-bubble';
 import { useEntryConflicts } from '@/features/entries/entry-conflicts';
-import { amountForClipboard, type EntryAction, entryActions, versionConflictEntry } from '@/features/entries/entry-edit';
+import {
+  amountForClipboard,
+  type EntryAction,
+  editScreen,
+  entryActions,
+  versionConflictEntry,
+} from '@/features/entries/entry-edit';
 import { UndoSnackbar } from '@/features/entries/undo-snackbar';
 import { type GroupDetail, groupQuery } from '@/features/groups/groups-query';
 import { SettlementSystemMessage } from '@/features/settlements/settlement-system-message';
@@ -40,7 +46,7 @@ const HIGHLIGHT_MS = 2000;
  * payers by entry date, sticky day separators with the daily total, the
  * composer at the bottom, the balance banner on top. The header (emoji +
  * name) and `⋯` open Group info.
- * Long-press on a bubble: Edytuj, Usuń (with a "Cofnij" snackbar), Historia,
+ * Long-press on a bubble or a settlement: Edytuj, Usuń (with a "Cofnij" snackbar), Historia,
  * Kopiuj kwotę (#11).
  */
 export default function ConversationScreen() {
@@ -191,6 +197,11 @@ function Conversation({
                 myMemberId={me}
                 highlighted={item.entry.id === highlightId}
                 onPress={() => openEntry(item.entry.id)}
+                onLongPress={() => actions.openMenu(item.entry)}
+                actions={entryActions(item.entry, group)}
+                onAction={(action) => actions.run(item.entry, action)}
+                conflict={conflicts.has(item.entry.id)}
+                onConflictPress={() => openConflict(item.entry.id)}
               />
             ) : (
               <EntryBubble
@@ -214,8 +225,9 @@ function Conversation({
 }
 
 /**
- * The bubbles' long-press menu and what its actions do: "Edytuj" opens the
- * full form for the entry, "Usuń" soft-deletes it and offers "Cofnij" in a
+ * The long-press menu of bubbles and settlement messages and what its actions
+ * do: "Edytuj" opens the full form for the entry (the settle sheet for a
+ * settlement), "Usuń" soft-deletes it and offers "Cofnij" in a
  * snackbar, "Kopiuj kwotę" copies the bare amount. `elements` (menu +
  * snackbar) go below the list. "Historia" opens the entry detail until the
  * change history exists (TODO(#20)). In an archived group only Historia and
@@ -233,7 +245,7 @@ function useEntryActionHandler(group: GroupDetail) {
   const run = (entry: Entry, action: EntryAction) => {
     switch (action) {
       case 'edit':
-        router.push({ pathname: '/groups/[groupId]/expense-form', params: { groupId: group.id, entryId: entry.id } });
+        router.push({ pathname: editScreen(entry), params: { groupId: group.id, entryId: entry.id } });
         return;
       case 'delete':
         setUndo(null);
