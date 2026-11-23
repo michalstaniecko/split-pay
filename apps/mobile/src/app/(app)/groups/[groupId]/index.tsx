@@ -26,6 +26,7 @@ import { useEntryConflicts } from '@/features/entries/entry-conflicts';
 import { amountForClipboard, type EntryAction, entryActions, versionConflictEntry } from '@/features/entries/entry-edit';
 import { UndoSnackbar } from '@/features/entries/undo-snackbar';
 import { type GroupDetail, groupQuery } from '@/features/groups/groups-query';
+import { SettlementSystemMessage } from '@/features/settlements/settlement-system-message';
 import { useLocale } from '@/i18n/locale-provider';
 import { authClient } from '@/lib/auth-client';
 import { useRefreshOnFocus } from '@/lib/use-refresh-on-focus';
@@ -161,7 +162,7 @@ function Conversation({
           ref={listRef}
           data={items}
           keyExtractor={(item) => item.key}
-          getItemType={(item) => item.type}
+          getItemType={(item) => (item.type === 'entry' && item.entry.kind === 'settlement' ? 'settlement' : item.type)}
           stickyHeaderIndices={stickyHeaderIndices}
           extraData={[highlightId, conflicts]}
           // Opens at the newest entry; keeps following new ones while the user is near the bottom.
@@ -175,6 +176,15 @@ function Conversation({
               <DaySeparator item={item} baseCurrency={group.baseCurrency} />
             ) : item.type === 'claim' ? (
               <ClaimMessage groupId={group.id} claim={item.claim} />
+            ) : item.entry.kind === 'settlement' ? (
+              // Settlements are system messages, not bubbles (ADR-0017).
+              <SettlementSystemMessage
+                entry={item.entry}
+                members={group.members}
+                myMemberId={me}
+                highlighted={item.entry.id === highlightId}
+                onPress={() => openEntry(item.entry.id)}
+              />
             ) : (
               <EntryBubble
                 item={item}
