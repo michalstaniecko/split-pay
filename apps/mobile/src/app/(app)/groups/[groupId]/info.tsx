@@ -7,6 +7,7 @@ import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-nati
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { GroupAvatar } from '@/components/group-avatar';
 import { GroupNotFound } from '@/components/group-not-found';
+import { PersonalClaimLinkButton } from '@/features/claims/personal-claim-link-button';
 import { GroupLinkSection } from '@/features/group-link/group-link-section';
 import { AttendanceGridView } from '@/features/groups/attendance-grid-view';
 import { type GroupDetail, groupQuery } from '@/features/groups/groups-query';
@@ -54,7 +55,10 @@ function GroupInfo({ group }: { group: GroupDetail }) {
         title={t`Członkowie`}
         subtitle={t`${plural(count, { one: '# osoba', few: '# osoby', many: '# osób', other: '# osoby' })}`}>
         {rows.map((row) => (
-          <MemberItem key={row.id} row={row} onPress={() => openMemberSheet(row.id)} />
+          <View key={row.id} style={styles.memberLine}>
+            <MemberItem row={row} onPress={() => openMemberSheet(row.id)} />
+            {row.withoutAccount ? <PersonalClaimLinkButton groupId={group.id} groupName={group.name} member={row} /> : null}
+          </View>
         ))}
         <Pressable
           accessibilityRole="button"
@@ -170,7 +174,13 @@ const styles = StyleSheet.create((theme) => ({
     fontWeight: theme.font.weightBold,
     color: theme.colors.text,
   },
+  memberLine: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.space(2),
+  },
   memberRow: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: theme.space(2),

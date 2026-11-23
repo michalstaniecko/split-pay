@@ -12,6 +12,10 @@ msgstr ""
 msgid "{0}, informacje o grupie"
 msgstr "{0}, group info"
 
+#: src/features/claims/claim-messages.tsx
+msgid "{claimerName} przejął profil {memberName}"
+msgstr "{claimerName} claimed the {memberName} profile"
+
 #: src/app/(app)/groups/[groupId]/info.tsx
 msgid "{count, plural, one {# osoba} few {# osoby} many {# osób} other {# osoby}}"
 msgstr "{count, plural, one {# person} other {# people}}"
@@ -19,6 +23,14 @@ msgstr "{count, plural, one {# person} other {# people}}"
 #: src/app/(app)/g/[token].tsx
 msgid "{memberCount, plural, one {# osoba w grupie} few {# osoby w grupie} many {# osób w grupie} other {# osoby w grupie}}"
 msgstr "{memberCount, plural, one {# person in the group} other {# people in the group}}"
+
+#: src/features/claims/claim-messages.tsx
+msgid "{memberName} znowu będzie osobą bez konta."
+msgstr "{memberName} will be a member without an account again."
+
+#: src/features/claims/personal-claim-link-button.tsx
+msgid "{name}, to Twój link do grupy „{groupName}” w split-pay: {url}"
+msgstr "{name}, here is your link to the “{groupName}” group in split-pay: {url}"
 
 #: src/features/entries/bubble-label.ts
 msgid "{names} {count, plural, one {otrzymał(a)} few {otrzymali} many {otrzymali} other {otrzymali}} {amount} za {title}, {date}."
@@ -59,6 +71,7 @@ msgstr "Alcohol"
 #: src/app/(app)/new-group.tsx
 #: src/app/(app)/new.tsx
 #: src/app/(app)/quick-bill.tsx
+#: src/features/claims/claim-messages.tsx
 #: src/features/group-link/group-link-section.tsx
 #: src/features/groups/attendance-grid-view.tsx
 msgid "Anuluj"
@@ -76,6 +89,10 @@ msgstr "No entries"
 #: src/features/theme/theme-picker.tsx
 msgid "Ciemny"
 msgstr "Dark"
+
+#: src/features/claims/claim-messages.tsx
+msgid "Cofnij przejęcie"
+msgstr "Undo claim"
 
 #: src/app/(app)/groups/[groupId]/info.tsx
 msgid "Członkowie"
@@ -173,6 +190,14 @@ msgstr "One person paid"
 msgid "Jedzenie"
 msgstr "Food"
 
+#: src/app/(app)/g/[token].tsx
+msgid "Jestem {personalName}"
+msgstr "I am {personalName}"
+
+#: src/app/(app)/g/[token].tsx
+msgid "Jesteś jednym z nich?"
+msgstr "Are you one of them?"
+
 #: src/components/language-picker.tsx
 msgid "Język"
 msgstr "Language"
@@ -249,6 +274,10 @@ msgstr "Name"
 msgid "Nie masz jeszcze grup"
 msgstr "You have no groups yet"
 
+#: src/features/claims/claim-messages.tsx
+msgid "Nie udało się cofnąć przejęcia."
+msgstr "Couldn't undo the claim."
+
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
 #: src/features/entries/composer.tsx
 msgid "Nie udało się dodać wydatku. Spróbuj ponownie."
@@ -262,6 +291,10 @@ msgstr "Couldn't join. Please try again."
 msgid "Nie udało się otworzyć linku grupy."
 msgstr "Couldn't open the group link."
 
+#: src/app/(app)/g/[token].tsx
+msgid "Nie udało się przejąć profilu. Spróbuj ponownie."
+msgstr "Couldn't claim the profile. Try again."
+
 #: src/features/group-link/group-link-section.tsx
 msgid "Nie udało się unieważnić linku."
 msgstr "Couldn't revoke the link."
@@ -269,6 +302,10 @@ msgstr "Couldn't revoke the link."
 #: src/app/(app)/new-group.tsx
 msgid "Nie udało się utworzyć grupy. Spróbuj ponownie."
 msgstr "Could not create the group. Try again."
+
+#: src/features/claims/personal-claim-link-button.tsx
+msgid "Nie udało się utworzyć linku."
+msgstr "Couldn't create the link."
 
 #: src/app/(app)/quick-bill.tsx
 msgid "Nie udało się utworzyć rachunku. Spróbuj ponownie."
@@ -424,6 +461,10 @@ msgstr "Personal items ({0}) exceed the expense amount ({1})."
 msgid "Profil"
 msgstr "Profile"
 
+#: src/app/(app)/g/[token].tsx
+msgid "Przejmij profil osoby bez konta razem z historią wydatków."
+msgstr "Claim the profile of a member without an account, with their expense history."
+
 #: src/features/entries/split-fields.tsx
 msgid "Resztę dzielą po równo"
 msgstr "The rest is split equally between"
@@ -488,6 +529,18 @@ msgstr "This person is no longer in the group."
 #: src/app/(app)/g/[token].tsx
 msgid "Ten link grupy jest nieważny. Poproś kogoś z grupy o nowy."
 msgstr "This group link is no longer valid. Ask someone in the group for a new one."
+
+#: src/app/(app)/g/[token].tsx
+msgid "Ten link jest dla osoby „{personalName}”. Przejmij ten profil razem z historią wydatków."
+msgstr "This link is for “{personalName}”. Claim this profile with its expense history."
+
+#: src/app/(app)/g/[token].tsx
+msgid "Ten profil ma już konto. Poproś kogoś z grupy o link grupy."
+msgstr "This profile already has an account. Ask someone in the group for the group link."
+
+#: src/app/(app)/g/[token].tsx
+msgid "Ten profil został już przejęty."
+msgstr "This profile has already been claimed."
 
 #: src/features/entries/use-entry-labels.ts
 msgid "Transport"
@@ -647,6 +700,10 @@ msgstr "We'll email you a one-time code. No passwords."
 msgid "Wyślij"
 msgstr "Send"
 
+#: src/features/claims/personal-claim-link-button.tsx
+msgid "Wyślij {name} osobisty link"
+msgstr "Send {name} a personal link"
+
 #: src/app/(auth)/sign-in.tsx
 msgid "Wyślij kod"
 msgstr "Send code"
@@ -654,6 +711,10 @@ msgstr "Send code"
 #: src/app/(auth)/sign-in.tsx
 msgid "Wyślij kod ponownie"
 msgstr "Resend code"
+
+#: src/features/claims/personal-claim-link-button.tsx
+msgid "Wyślij link"
+msgstr "Send link"
 
 #: src/app/(app)/quick-bill.tsx
 msgid "Z kim"
