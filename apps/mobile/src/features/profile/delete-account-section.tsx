@@ -40,12 +40,12 @@ export function DeleteAccountSection() {
     {
       value: 'keepName',
       label: t`Usuń konto`,
-      description: t`W grupach zostaniesz osobą bez konta pod swoją ostatnią nazwą, więc znajomi nadal będą wiedzieć, kto to.`,
+      description: t`W grupach zostanie po Tobie członek bez konta pod Twoją ostatnią nazwą, więc znajomi nadal będą wiedzieć, kto to.`,
     },
     {
       value: 'removeName',
       label: t`Usuń konto i moją nazwę z grup`,
-      description: t`W grupach zostaniesz osobą bez konta, a wszyscy zobaczą zamiast nazwy „Usunięty użytkownik”.`,
+      description: t`W grupach zostanie po Tobie członek bez konta, a wszyscy zobaczą zamiast nazwy „Usunięty użytkownik”.`,
     },
   ];
   const selected = options.find((o) => o.value === choice) ?? options[0]!;
@@ -54,8 +54,8 @@ export function DeleteAccountSection() {
     Alert.alert(
       t`Usunąć konto?`,
       choice === 'keepName'
-        ? t`Twój e-mail, sposoby logowania, zdjęcie profilowe i dane do przelewu zostaną usunięte. W grupach zostaniesz osobą bez konta pod obecną nazwą, a wydatki i salda się nie zmienią. Tego nie można cofnąć.`
-        : t`Twój e-mail, sposoby logowania, zdjęcie profilowe i dane do przelewu zostaną usunięte. W grupach zostaniesz osobą bez konta „Usunięty użytkownik”, a wydatki i salda się nie zmienią. Tego nie można cofnąć.`,
+        ? t`Twój e-mail, sposoby logowania, zdjęcie profilowe i dane do przelewu zostaną usunięte. W grupach zostanie po Tobie członek bez konta pod obecną nazwą, a wydatki i salda się nie zmienią. Tego nie można cofnąć.`
+        : t`Twój e-mail, sposoby logowania, zdjęcie profilowe i dane do przelewu zostaną usunięte. W grupach zostanie po Tobie członek bez konta „Usunięty użytkownik”, a wydatki i salda się nie zmienią. Tego nie można cofnąć.`,
       [
         { text: t`Anuluj`, style: 'cancel' },
         { text: selected.label, style: 'destructive', onPress: () => deleteAccount.mutate(choice === 'removeName') },

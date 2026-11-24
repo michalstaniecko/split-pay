@@ -1485,12 +1485,12 @@ msgid "Tryb jasny/ciemny"
 msgstr "Tryb jasny/ciemny"
 
 #: src/features/profile/delete-account-section.tsx
-msgid "Twój e-mail, sposoby logowania, zdjęcie profilowe i dane do przelewu zostaną usunięte. W grupach zostaniesz osobą bez konta „Usunięty użytkownik”, a wydatki i salda się nie zmienią. Tego nie można cofnąć."
-msgstr "Twój e-mail, sposoby logowania, zdjęcie profilowe i dane do przelewu zostaną usunięte. W grupach zostaniesz osobą bez konta „Usunięty użytkownik”, a wydatki i salda się nie zmienią. Tego nie można cofnąć."
+msgid "Twój e-mail, sposoby logowania, zdjęcie profilowe i dane do przelewu zostaną usunięte. W grupach zostanie po Tobie członek bez konta „Usunięty użytkownik”, a wydatki i salda się nie zmienią. Tego nie można cofnąć."
+msgstr "Twój e-mail, sposoby logowania, zdjęcie profilowe i dane do przelewu zostaną usunięte. W grupach zostanie po Tobie członek bez konta „Usunięty użytkownik”, a wydatki i salda się nie zmienią. Tego nie można cofnąć."
 
 #: src/features/profile/delete-account-section.tsx
-msgid "Twój e-mail, sposoby logowania, zdjęcie profilowe i dane do przelewu zostaną usunięte. W grupach zostaniesz osobą bez konta pod obecną nazwą, a wydatki i salda się nie zmienią. Tego nie można cofnąć."
-msgstr "Twój e-mail, sposoby logowania, zdjęcie profilowe i dane do przelewu zostaną usunięte. W grupach zostaniesz osobą bez konta pod obecną nazwą, a wydatki i salda się nie zmienią. Tego nie można cofnąć."
+msgid "Twój e-mail, sposoby logowania, zdjęcie profilowe i dane do przelewu zostaną usunięte. W grupach zostanie po Tobie członek bez konta pod obecną nazwą, a wydatki i salda się nie zmienią. Tego nie można cofnąć."
+msgstr "Twój e-mail, sposoby logowania, zdjęcie profilowe i dane do przelewu zostaną usunięte. W grupach zostanie po Tobie członek bez konta pod obecną nazwą, a wydatki i salda się nie zmienią. Tego nie można cofnąć."
 
 #. placeholder {0}: format.amount(shareAmount, baseCurrency)
 #: src/features/entries/entry-bubble.tsx
@@ -1659,12 +1659,12 @@ msgid "Utworzono grupę {group}"
 msgstr "Utworzono grupę {group}"
 
 #: src/features/profile/delete-account-section.tsx
-msgid "W grupach zostaniesz osobą bez konta pod swoją ostatnią nazwą, więc znajomi nadal będą wiedzieć, kto to."
-msgstr "W grupach zostaniesz osobą bez konta pod swoją ostatnią nazwą, więc znajomi nadal będą wiedzieć, kto to."
+msgid "W grupach zostanie po Tobie członek bez konta pod Twoją ostatnią nazwą, więc znajomi nadal będą wiedzieć, kto to."
+msgstr "W grupach zostanie po Tobie członek bez konta pod Twoją ostatnią nazwą, więc znajomi nadal będą wiedzieć, kto to."
 
 #: src/features/profile/delete-account-section.tsx
-msgid "W grupach zostaniesz osobą bez konta, a wszyscy zobaczą zamiast nazwy „Usunięty użytkownik”."
-msgstr "W grupach zostaniesz osobą bez konta, a wszyscy zobaczą zamiast nazwy „Usunięty użytkownik”."
+msgid "W grupach zostanie po Tobie członek bez konta, a wszyscy zobaczą zamiast nazwy „Usunięty użytkownik”."
+msgstr "W grupach zostanie po Tobie członek bez konta, a wszyscy zobaczą zamiast nazwy „Usunięty użytkownik”."
 
 #: src/features/entries/entry-detail-body.tsx
 msgid "W walucie bazowej"

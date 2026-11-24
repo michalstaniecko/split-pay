@@ -1485,11 +1485,11 @@ msgid "Tryb jasny/ciemny"
 msgstr "Light/dark mode"
 
 #: src/features/profile/delete-account-section.tsx
-msgid "Twój e-mail, sposoby logowania, zdjęcie profilowe i dane do przelewu zostaną usunięte. W grupach zostaniesz osobą bez konta „Usunięty użytkownik”, a wydatki i salda się nie zmienią. Tego nie można cofnąć."
+msgid "Twój e-mail, sposoby logowania, zdjęcie profilowe i dane do przelewu zostaną usunięte. W grupach zostanie po Tobie członek bez konta „Usunięty użytkownik”, a wydatki i salda się nie zmienią. Tego nie można cofnąć."
 msgstr "Your email, sign-in methods, profile photo and payout details will be deleted. In your groups you will become a member without an account called “Deleted user”; expenses and balances stay the same. This can't be undone."
 
 #: src/features/profile/delete-account-section.tsx
-msgid "Twój e-mail, sposoby logowania, zdjęcie profilowe i dane do przelewu zostaną usunięte. W grupach zostaniesz osobą bez konta pod obecną nazwą, a wydatki i salda się nie zmienią. Tego nie można cofnąć."
+msgid "Twój e-mail, sposoby logowania, zdjęcie profilowe i dane do przelewu zostaną usunięte. W grupach zostanie po Tobie członek bez konta pod obecną nazwą, a wydatki i salda się nie zmienią. Tego nie można cofnąć."
 msgstr "Your email, sign-in methods, profile photo and payout details will be deleted. In your groups you will stay as a member without an account under your current name; expenses and balances stay the same. This can't be undone."
 
 #. placeholder {0}: format.amount(shareAmount, baseCurrency)
@@ -1659,11 +1659,11 @@ msgid "Utworzono grupę {group}"
 msgstr "Created the group {group}"
 
 #: src/features/profile/delete-account-section.tsx
-msgid "W grupach zostaniesz osobą bez konta pod swoją ostatnią nazwą, więc znajomi nadal będą wiedzieć, kto to."
+msgid "W grupach zostanie po Tobie członek bez konta pod Twoją ostatnią nazwą, więc znajomi nadal będą wiedzieć, kto to."
 msgstr "In your groups you will stay as a member without an account under your last name, so your friends still know who it is."
 
 #: src/features/profile/delete-account-section.tsx
-msgid "W grupach zostaniesz osobą bez konta, a wszyscy zobaczą zamiast nazwy „Usunięty użytkownik”."
+msgid "W grupach zostanie po Tobie członek bez konta, a wszyscy zobaczą zamiast nazwy „Usunięty użytkownik”."
 msgstr "In your groups you will stay as a member without an account, and everyone will see “Deleted user” instead of your name."
 
 #: src/features/entries/entry-detail-body.tsx
