@@ -5,7 +5,7 @@ import { StyleSheet } from 'react-native-unistyles';
 import { Button } from '@/components/button';
 import { sourceRepositoryUrl } from '@/features/profile/about-section';
 import { SponsorLink } from './sponsor-link';
-import { downloadAppUrl } from './web-view';
+import { downloadAppUrl, openInAppUrl } from './web-view';
 
 /** Store listings, inlined at build time; unset until the app is published. */
 const storeLinks = {
@@ -34,7 +34,7 @@ export function WebFooter({ token }: { token?: string }) {
           <Button
             variant="secondary"
             label={t`Otwórz w aplikacji`}
-            onPress={() => void openURL(`splitpay://g/${encodeURIComponent(token)}`)}
+            onPress={() => void openURL(openInAppUrl(token))}
           />
         ) : null}
       </View>
