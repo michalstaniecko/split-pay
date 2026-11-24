@@ -1,8 +1,9 @@
 import { z } from 'zod';
 
 /**
- * Name a member gets when its user deletes their account (ADR-0010), per UI
- * language. It is an ordinary display name afterwards: anyone may rename it.
+ * What a viewer sees for a member whose user deleted their account and chose
+ * to remove their name too (ADR-0019). The name is stored as a marker
+ * (`displayName: null`), so each viewer reads it in their own language.
  */
 export const DELETED_USER_NAMES = {
   pl: 'Usunięty użytkownik',
@@ -11,11 +12,20 @@ export const DELETED_USER_NAMES = {
 
 /** The deleted user name in `locale` (language code), English when unsupported. */
 export function deletedUserName(locale: string): string {
-  return locale in DELETED_USER_NAMES
-    ? DELETED_USER_NAMES[locale as keyof typeof DELETED_USER_NAMES]
+  const language = locale.split('-')[0] ?? locale;
+  return language in DELETED_USER_NAMES
+    ? DELETED_USER_NAMES[language as keyof typeof DELETED_USER_NAMES]
     : DELETED_USER_NAMES.en;
 }
 
-/** Account deletion request: the UI language of the deleting user names the leftover members. */
-export const AccountDeletion = z.object({ locale: z.string().min(1).max(35) });
+/** A member's name as `locale` shows it: the removed-name marker reads "Deleted user". */
+export function memberName(member: { displayName: string | null }, locale: string): string {
+  return member.displayName ?? deletedUserName(locale);
+}
+
+/**
+ * Account deletion request (ADR-0019). By default the user's members keep
+ * their last name; `removeName` clears it too (stored as a marker).
+ */
+export const AccountDeletion = z.object({ removeName: z.boolean().default(false) });
 export type AccountDeletion = z.infer<typeof AccountDeletion>;

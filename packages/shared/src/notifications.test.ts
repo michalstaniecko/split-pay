@@ -203,6 +203,12 @@ describe('pushMessageBody', () => {
     expect(pushMessageBody(claim, 'en')).toBe('Kasia claimed the Tomek profile');
   });
 
+  it('names an author whose name was removed (empty) "Deleted user" in the recipient’s language (ADR-0019)', () => {
+    const msg = { ...base, actorName: '', kind: 'entryCreated' as const, entryKind: 'expense' as const, count: 2 };
+    expect(pushMessageBody(msg, 'pl')).toBe('Usunięty użytkownik: dodano 2 wydatki');
+    expect(pushMessageBody(msg, 'en')).toBe('Deleted user added 2 expenses');
+  });
+
   it('falls back to English for other languages', () => {
     expect(pushMessageBody({ ...base, kind: 'entryCreated', entryKind: 'expense', count: 2 }, 'de')).toBe(
       'Kasia added 2 expenses',
