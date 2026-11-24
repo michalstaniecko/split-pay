@@ -79,7 +79,6 @@ describe('group lifecycle: archive, leave, delete', () => {
         g.members[':memberId'].attendance.$put({ param: { groupId, memberId: tomekId }, json: { attendance: null } }),
       );
       await rejected(g.settings.$patch({ param: { groupId }, json: { simplifyDebts: false } }));
-      await rejected(g.link.revoke.$post({ param: { groupId } }));
       // Any route a later slice adds under the group is covered too (e.g. entry edits).
       await rejected(app.request(`/groups/${groupId}/entries/${randomUUID()}`, { method: 'DELETE', headers: { cookie: ania.cookie } }));
 
@@ -100,6 +99,22 @@ describe('group lifecycle: archive, leave, delete', () => {
       const claim = await client(kasia).links[':token'].claim.$post({ param: { token }, json: { memberId: tomekId } });
       expect(claim.status).toBe(409);
       expect(await claim.json()).toEqual({ error: 'archived' });
+    });
+
+    it('a member can still revoke the group link of an archived group (security action)', async () => {
+      const { groupId, token, bartek } = await setup();
+      const g = client(bartek).groups[':groupId'];
+      await parseResponse(g.archive.$put({ param: { groupId } }));
+
+      const revoked = await g.link.revoke.$post({ param: { groupId } });
+      expect(revoked.status).toBe(200);
+      const { token: fresh } = await revoked.json();
+      expect(fresh).not.toBe(token);
+      expect(await parseResponse(g.link.$get({ param: { groupId } }))).toEqual({ token: fresh });
+      const kasia = await signIn('kasia@example.com');
+      expect((await client(kasia).links[':token'].$get({ param: { token } })).status).toBe(404);
+      // Still archived: the new link doesn't let anyone in either.
+      expect((await client(kasia).links[':token'].join.$post({ param: { token: fresh } })).status).toBe(409);
     });
 
     it('a member can still mute or unmute an archived group (personal setting)', async () => {
