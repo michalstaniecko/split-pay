@@ -39,10 +39,10 @@ function GroupInfo({ group }: { group: GroupDetail }) {
   const { t } = useLingui();
   const format = useFormatters();
   const { data: session } = authClient.useSession();
-  const archived = group.archivedAt !== null;
+  // False only in an archived group: read-only and closed to joining, so no
+  // links, and no adding or renaming members either.
   const shareLinks = canShareLinks(group);
-  // Archived group: read-only, so no adding or renaming members.
-  const rows = memberRows(group, session?.user.id).map((row) => (archived ? { ...row, canRename: false } : row));
+  const rows = memberRows(group, session?.user.id).map((row) => (shareLinks ? row : { ...row, canRename: false }));
   const openMemberSheet = (memberId?: string) =>
     router.push({
       pathname: '/groups/[groupId]/member',
@@ -74,14 +74,14 @@ function GroupInfo({ group }: { group: GroupDetail }) {
           </View>
         ))}
         {owner ? <Text style={styles.muted}>{t`Grupę założono: ${owner}`}</Text> : null}
-        {archived ? null : (
+        {shareLinks ? (
           <Pressable
             accessibilityRole="button"
             onPress={() => openMemberSheet()}
             style={({ pressed }) => [styles.addRow, pressed && styles.pressed]}>
             <Text style={styles.addLabel}>{t`+ Dodaj osobę bez konta`}</Text>
           </Pressable>
-        )}
+        ) : null}
         <AttendanceGridView group={group} />
       </Section>
       {shareLinks ? (
