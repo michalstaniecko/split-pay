@@ -12,6 +12,7 @@ msgid "„{title}”"
 msgstr "„{title}”"
 
 #. placeholder {0}: row.name
+#: src/features/balances/balance-label.ts
 #: src/features/balances/balances-view.tsx
 msgid "{0} (Ty)"
 msgstr "{0} (Ty)"
@@ -79,15 +80,15 @@ msgstr "{name} (Ty)"
 msgid "{name}, to Twój link do grupy „{groupName}” w split-pay: {url}"
 msgstr "{name}, to Twój link do grupy „{groupName}” w split-pay: {url}"
 
-#: src/features/balances/balances-view.tsx
+#: src/features/balances/balance-label.ts
 msgid "{name}: do oddania {amount}"
 msgstr "{name}: do oddania {amount}"
 
-#: src/features/balances/balances-view.tsx
+#: src/features/balances/balance-label.ts
 msgid "{name}: należy się {amount}"
 msgstr "{name}: należy się {amount}"
 
-#: src/features/balances/balances-view.tsx
+#: src/features/balances/balance-label.ts
 msgid "{name}: rozliczono"
 msgstr "{name}: rozliczono"
 
@@ -311,6 +312,7 @@ msgid "Do"
 msgstr "Do"
 
 #: src/features/balances/balance-banner.tsx
+#: src/features/balances/balance-label.ts
 msgid "Do oddania: {amount}"
 msgstr "Do oddania: {amount}"
 
@@ -719,6 +721,7 @@ msgid "Najpierw rozwiąż konflikt tego wpisu (czerwony „!”)."
 msgstr "Najpierw rozwiąż konflikt tego wpisu (czerwony „!”)."
 
 #: src/features/balances/balance-banner.tsx
+#: src/features/balances/balance-label.ts
 msgid "Należy ci się {amount}"
 msgstr "Należy ci się {amount}"
 
@@ -1738,6 +1741,7 @@ msgid "Wszystkie wpisy i salda znikną dla wszystkich członków. Tego nie da si
 msgstr "Wszystkie wpisy i salda znikną dla wszystkich członków. Tego nie da się cofnąć."
 
 #: src/features/balances/balance-banner.tsx
+#: src/features/balances/balance-label.ts
 msgid "Wszystko rozliczone"
 msgstr "Wszystko rozliczone"
 
