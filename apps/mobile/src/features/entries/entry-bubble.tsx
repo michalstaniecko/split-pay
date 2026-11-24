@@ -6,7 +6,7 @@ import { useLocale } from '@/i18n/locale-provider';
 import { MemberAvatar, photoCacheKey } from '@/features/photos/member-avatar';
 import { useFormatters } from '@/i18n/use-formatters';
 import { entryBubbleLabel } from './bubble-label';
-import type { DayItem, EntryItem } from './conversation';
+import { type DayItem, type EntryItem, separatorTotal } from './conversation';
 import { CATEGORY_ICONS } from './entries-query';
 import { useEntryActionLabels } from './entry-actions-menu';
 import type { EntryAction } from './entry-edit';
@@ -153,11 +153,12 @@ export function EntryBubble({
   );
 }
 
-/** Sticky day separator with the group's total for the day (negative when incomes outweigh expenses). */
+/** Sticky day separator with the group's net total for the day, hidden when not positive. */
 export function DaySeparator({ item, baseCurrency }: { item: DayItem; baseCurrency: string }) {
   const format = useFormatters();
   const label = format.date(item.date);
-  const total = item.total !== 0 ? format.amount(item.total, baseCurrency) : null;
+  const net = separatorTotal(item);
+  const total = net === null ? null : format.amount(net, baseCurrency);
   return (
     <View style={styles.dayRow} accessibilityRole="header">
       <View style={styles.dayPill}>
