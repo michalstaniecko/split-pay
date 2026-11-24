@@ -11,6 +11,8 @@ import { inboxSections } from '@/features/groups/group-lifecycle';
 import { useGroupUnread } from '@/features/groups/group-unread-store';
 import { type GroupListItem, groupsQuery } from '@/features/groups/groups-query';
 import { OfflineBanner } from '@/features/offline/offline-banner';
+import { InboxSearchField } from '@/features/search/inbox-search-field';
+import { InboxSearchResults } from '@/features/search/inbox-search-results';
 import { useFormatters } from '@/i18n/use-formatters';
 import { useRefreshOnFocus } from '@/lib/use-refresh-on-focus';
 
@@ -21,13 +23,17 @@ export default function InboxScreen() {
   const insets = useSafeAreaInsets();
   const groups = useQuery(groupsQuery());
   useRefreshOnFocus(groups.refetch);
+  const [query, setQuery] = useState('');
 
   const openNew = () => router.push('/new');
 
   return (
     <View style={styles.container}>
       <OfflineBanner />
-      {groups.isPending ? (
+      <InboxSearchField value={query} onChange={setQuery} />
+      {query.trim() !== '' ? (
+        <InboxSearchResults query={query} />
+      ) : groups.isPending ? (
         <ActivityIndicator style={styles.center} color={theme.colors.primary} />
       ) : groups.isError ? (
         <View style={styles.center}>

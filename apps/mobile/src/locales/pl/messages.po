@@ -225,6 +225,10 @@ msgstr "Brak wpisów"
 msgid "Brak wydatków — statystyki pojawią się po dodaniu pierwszego."
 msgstr "Brak wydatków — statystyki pojawią się po dodaniu pierwszego."
 
+#: src/features/search/inbox-search-results.tsx
+msgid "Brak wyników"
+msgstr "Brak wyników"
+
 #: src/app/(app)/admin.tsx
 msgid "Brak zablokowanych kont."
 msgstr "Brak zablokowanych kont."
@@ -447,6 +451,10 @@ msgstr "Grupa zniknie z Twojej listy. Twoje wpisy zostaną w grupie."
 #: src/app/(app)/groups/[groupId]/unsent-entry.tsx
 msgid "Grupa została zarchiwizowana — nie można już w niej nic zmieniać."
 msgstr "Grupa została zarchiwizowana — nie można już w niej nic zmieniać."
+
+#: src/features/search/inbox-search-results.tsx
+msgid "Grupy"
+msgstr "Grupy"
 
 #: src/features/entries/entry-actions-menu.tsx
 msgid "Historia"
@@ -870,6 +878,10 @@ msgstr "Nie udało się wysłać zdjęcia. Spróbuj ponownie."
 #: src/app/(app)/report-photo.tsx
 msgid "Nie udało się wysłać zgłoszenia. Spróbuj ponownie."
 msgstr "Nie udało się wysłać zgłoszenia. Spróbuj ponownie."
+
+#: src/features/search/inbox-search-results.tsx
+msgid "Nie udało się wyszukać."
+msgstr "Nie udało się wyszukać."
 
 #: src/features/groups/attendance-grid-view.tsx
 msgid "Nie udało się zapisać obecności. Spróbuj ponownie."
@@ -1353,6 +1365,10 @@ msgstr "Systemowy"
 msgid "Szczegóły (opcjonalnie)"
 msgstr "Szczegóły (opcjonalnie)"
 
+#: src/features/search/inbox-search-field.tsx
+msgid "Szukaj grup i wydatków"
+msgstr "Szukaj grup i wydatków"
+
 #: src/app/(app)/_layout.tsx
 #: src/app/(app)/new.tsx
 #: src/app/(app)/quick-bill.tsx
@@ -1671,6 +1687,10 @@ msgstr "Wpis o tym identyfikatorze już istnieje w innej grupie."
 msgid "Wpisujesz za nią wydatki. Później może przejąć swój profil."
 msgstr "Wpisujesz za nią wydatki. Później może przejąć swój profil."
 
+#: src/features/search/inbox-search-results.tsx
+msgid "Wpisy"
+msgstr "Wpisy"
+
 #: src/features/entries/split-fields.tsx
 msgid "Wpisz co najmniej jedną pozycję osobistą."
 msgstr "Wpisz co najmniej jedną pozycję osobistą."
@@ -1762,6 +1782,10 @@ msgstr "Wybierz, kto zapłacił."
 #: src/app/(app)/groups/[groupId]/entry-conflict.tsx
 msgid "Wybierz, która wersja zostaje."
 msgstr "Wybierz, która wersja zostaje."
+
+#: src/features/search/inbox-search-field.tsx
+msgid "Wyczyść wyszukiwanie"
+msgstr "Wyczyść wyszukiwanie"
 
 #: src/features/history/describe-change.ts
 msgid "wydatek"
