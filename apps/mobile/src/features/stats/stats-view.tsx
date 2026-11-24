@@ -6,7 +6,7 @@ import { StyleSheet } from 'react-native-unistyles';
 import { CATEGORY_ICONS } from '@/features/entries/entries-query';
 import { useEntryLabels } from '@/features/entries/use-entry-labels';
 import { useFormatters } from '@/i18n/use-formatters';
-import { categoryBars, type StatsCell, statsTable } from './stats-table';
+import { categoryBars, type StatsCell, type StatsColumn, statsTable } from './stats-table';
 
 /**
  * The Stats screen's content: the days × people table (scrolls sideways on a
@@ -36,12 +36,14 @@ export function StatsView({
   );
 }
 
+const columnKey = (c: StatsColumn) => (c.kind === 'member' ? c.memberId : 'former');
+
 function DaysTable({ stats, members }: { stats: GroupStats; members: readonly { id: string; displayName: string }[] }) {
   const { t } = useLingui();
   const format = useFormatters();
   const table = statsTable(stats, members);
   const amount = (minor: number) => format.amount(minor, stats.baseCurrency);
-  const names = table.columns.map((c) => c.name ?? t`Byli członkowie`);
+  const names = table.columns.map((c) => (c.kind === 'member' ? c.name : t`Byli członkowie`));
 
   const row = (key: string, label: string, total: number, cells: StatsCell[], bold = false) => (
     <View key={key} style={[styles.row, bold && styles.totalsRow]}>
@@ -51,7 +53,7 @@ function DaysTable({ stats, members }: { stats: GroupStats; members: readonly { 
       </View>
       {cells.map((cell, i) => (
         <View
-          key={table.columns[i]!.memberId ?? 'former'}
+          key={columnKey(table.columns[i]!)}
           style={styles.cell}
           accessible
           accessibilityLabel={t`${names[i]!}, ${label}: zapłacone ${amount(cell.paid)}, zużyte ${amount(cell.consumed)}`}>
@@ -68,7 +70,7 @@ function DaysTable({ stats, members }: { stats: GroupStats; members: readonly { 
         <View style={[styles.row, styles.headerRow]} accessibilityRole="header">
           <Text style={[styles.dateCell, styles.headerText]}>{t`Dzień`}</Text>
           {names.map((name, i) => (
-            <View key={table.columns[i]!.memberId ?? 'former'} style={styles.cell}>
+            <View key={columnKey(table.columns[i]!)} style={styles.cell}>
               <Text style={styles.headerText} numberOfLines={2}>
                 {name}
               </Text>

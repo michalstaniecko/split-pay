@@ -1,17 +1,17 @@
-import type { Entry } from '@split-pay/shared';
+import type { CurrencyCode, Entry, Id, LocalDate, MinorAmount } from '@split-pay/shared';
 import { and, asc, desc, isNotNull, isNull } from 'drizzle-orm';
 import type { LocalDb } from '../offline/local-db';
 import { type CachedGroup, localEntries, localGroups } from '../offline/local-schema';
 
 /** An entry whose title matched; opening it scrolls its group's Conversation to the bubble. */
 export interface EntrySearchHit {
-  entryId: string;
-  groupId: string;
+  entryId: Id;
+  groupId: Id;
   title: string;
   kind: Entry['kind'];
-  amount: number;
-  currency: string;
-  date: string;
+  amount: MinorAmount;
+  currency: CurrencyCode;
+  date: LocalDate;
   /** The group it belongs to, for the result row. */
   group: Pick<CachedGroup, 'name' | 'emoji' | 'color'>;
 }

@@ -46,10 +46,10 @@ describe('statsTable', () => {
 
   it('has a column per member in Group info order, then one for members who left', () => {
     expect(statsTable(stats, members).columns).toEqual([
-      { memberId: TOMEK, name: 'Tomek' },
-      { memberId: ANIA, name: 'Ania' },
-      { memberId: BARTEK, name: 'Bartek' },
-      { memberId: null, name: null },
+      { kind: 'member', memberId: TOMEK, name: 'Tomek' },
+      { kind: 'member', memberId: ANIA, name: 'Ania' },
+      { kind: 'member', memberId: BARTEK, name: 'Bartek' },
+      { kind: 'former' },
     ]);
   });
 
@@ -77,8 +77,8 @@ describe('statsTable', () => {
       [{ id: ANIA, displayName: 'Ania' }],
     );
     expect(table.columns).toEqual([
-      { memberId: ANIA, name: 'Ania' },
-      { memberId: null, name: null },
+      { kind: 'member', memberId: ANIA, name: 'Ania' },
+      { kind: 'former' },
     ]);
     expect(table.rows[0]!.cells).toEqual([
       { paid: 0, consumed: 0 },
@@ -89,7 +89,7 @@ describe('statsTable', () => {
 
   it('has no former-members column when nobody left', () => {
     const table = statsTable(stats, [...members, { id: GONE, displayName: 'Ola' }]);
-    expect(table.columns.map((c) => c.name)).toEqual(['Tomek', 'Ania', 'Bartek', 'Ola']);
+    expect(table.columns.map((c) => (c.kind === 'member' ? c.name : 'former'))).toEqual(['Tomek', 'Ania', 'Bartek', 'Ola']);
   });
 
   it('fills every day × member cell, zero where the member had nothing that day', () => {

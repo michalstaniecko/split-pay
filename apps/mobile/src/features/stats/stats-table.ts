@@ -1,11 +1,10 @@
 import type { CategoryStats, GroupStats, LocalDate } from '@split-pay/shared';
 
 /**
- * A member's column, or (`memberId` and `name` both `null`) the single
- * "Byli członkowie" column summing everyone who appears in the stats but is no
- * longer a member.
+ * A member's column, or the single "Byli członkowie" column (`former`)
+ * summing everyone who appears in the stats but is no longer a member.
  */
-export type StatsColumn = { memberId: string; name: string } | { memberId: null; name: null };
+export type StatsColumn = { kind: 'member'; memberId: string; name: string } | { kind: 'former' };
 
 export interface StatsCell {
   paid: number;
@@ -30,9 +29,9 @@ export function statsTable(
   stats: GroupStats,
   members: readonly { id: string; displayName: string }[],
 ): StatsTable {
-  const columns: StatsColumn[] = members.map((m) => ({ memberId: m.id, name: m.displayName }));
+  const columns: StatsColumn[] = members.map((m) => ({ kind: 'member', memberId: m.id, name: m.displayName }));
   const current = new Set(members.map((m) => m.id));
-  if (stats.members.some((m) => !current.has(m.memberId))) columns.push({ memberId: null, name: null });
+  if (stats.members.some((m) => !current.has(m.memberId))) columns.push({ kind: 'former' });
   const cells = (xs: GroupStats['members']) => {
     const byColumn = new Map<string | null, StatsCell>();
     for (const x of xs) {
@@ -40,7 +39,7 @@ export function statsTable(
       const cell = byColumn.get(key) ?? { ...ZERO };
       byColumn.set(key, { paid: cell.paid + x.paid, consumed: cell.consumed + x.consumed });
     }
-    return columns.map((c): StatsCell => byColumn.get(c.memberId) ?? { ...ZERO });
+    return columns.map((c): StatsCell => byColumn.get(c.kind === 'member' ? c.memberId : null) ?? { ...ZERO });
   };
   return {
     columns,
