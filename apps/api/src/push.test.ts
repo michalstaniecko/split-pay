@@ -241,7 +241,7 @@ describe('push notifications', () => {
     await dispatchPushes(testDb.db, sender, { now: new Date() });
     expect(visible(sent).map((m) => [m.to, m.body])).toEqual(
       expect.arrayContaining([
-        ['ExponentPushToken[bartek]', 'tomasz przejął profil Tomek'],
+        ['ExponentPushToken[bartek]', 'Przejęcie profilu Tomek: tomasz'],
         ['ExponentPushToken[kasia]', 'tomasz claimed the Tomek profile'],
       ]),
     );

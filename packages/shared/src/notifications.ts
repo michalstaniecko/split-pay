@@ -186,9 +186,9 @@ export function pushMessageBody(summary: PushSummary, locale: string): string {
       if (polish) return money ? `${s.actorName} przypomina o zwrocie ${money}` : `${s.actorName} przypomina o rozliczeniu`;
       return money ? `${s.actorName} reminds you to pay back ${money}` : `${s.actorName} reminds you to settle up`;
     case 'claim':
-      if (s.memberName === null) return polish ? `${s.actorName} przejął profil` : `${s.actorName} claimed a profile`;
+      if (s.memberName === null) return polish ? `Przejęcie profilu: ${s.actorName}` : `${s.actorName} claimed a profile`;
       return polish
-        ? `${s.actorName} przejął profil ${s.memberName}`
+        ? `Przejęcie profilu ${s.memberName}: ${s.actorName}`
         : `${s.actorName} claimed the ${s.memberName} profile`;
   }
   const entryKind = s.entryKind ?? 'expense';

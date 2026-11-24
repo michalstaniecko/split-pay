@@ -24,8 +24,8 @@ export async function findMyMember(db: Db, groupId: string, userId: string) {
 }
 
 /**
- * A claim as the API returns it — the system message "<claimerName> przejął
- * profil <memberName>". A `null` name was removed (ADR-0019): "Deleted user".
+ * A claim as the API returns it — the system message "Przejęcie profilu <memberName>: <claimerName>".
+ * A `null` name was removed (ADR-0019): "Deleted user".
  */
 const toClaimDto = (c: ClaimRow, memberName: string | null) => ({
   id: c.id,

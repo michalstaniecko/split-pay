@@ -199,7 +199,8 @@ describe('pushMessageBody', () => {
     expect(plain(pushMessageBody(nudge, 'pl'))).toBe('Kasia przypomina o zwrocie 45,50 zł');
     expect(plain(pushMessageBody(nudge, 'en'))).toBe('Kasia reminds you to pay back PLN 45.50');
     const claim = { ...base, kind: 'claim' as const, entryKind: null, entryTitle: null, memberName: 'Tomek', count: 1 };
-    expect(pushMessageBody(claim, 'pl')).toBe('Kasia przejął profil Tomek');
+    expect(pushMessageBody(claim, 'pl')).toBe('Przejęcie profilu Tomek: Kasia');
+    expect(pushMessageBody({ ...claim, memberName: null }, 'pl')).toBe('Przejęcie profilu: Kasia');
     expect(pushMessageBody(claim, 'en')).toBe('Kasia claimed the Tomek profile');
   });
 

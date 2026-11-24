@@ -21,7 +21,7 @@ export const claims = pgTable(
     /** The claiming user; `null` once their account is deleted. */
     userId: uuid().references(() => user.id, { onDelete: 'set null' }),
     /**
-     * The claimer's name at claim time ("Tomek przejął profil …"); `null` once
+     * The claimer's name at claim time ("Przejęcie profilu …: Tomek"); `null` once
      * removed with their account (ADR-0019), shown as "Deleted user".
      */
     claimerName: text(),

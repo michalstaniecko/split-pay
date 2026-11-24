@@ -90,7 +90,7 @@ export async function enqueueNotification(db: Db, input: NotifyInput): Promise<v
   if (rows.length > 0) await db.insert(pushQueue).values(rows);
 }
 
-/** "<claimer> przejął profil <member>" for the other members of the group. */
+/** "Przejęcie profilu <member>: <claimer>" for the other members of the group. */
 export async function notifyClaim(
   db: Db,
   { groupId, memberId, userId, claimerName }: { groupId: Id; memberId: Id; userId: Id; claimerName: string },
