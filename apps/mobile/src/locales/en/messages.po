@@ -12,6 +12,7 @@ msgid "„{title}”"
 msgstr "“{title}”"
 
 #. placeholder {0}: row.name
+#: src/features/balances/balance-label.ts
 #: src/features/balances/balances-view.tsx
 msgid "{0} (Ty)"
 msgstr "{0} (you)"
@@ -74,17 +75,17 @@ msgstr "{name} (you)"
 msgid "{name}, to Twój link do grupy „{groupName}” w split-pay: {url}"
 msgstr "{name}, here is your link to the “{groupName}” group in split-pay: {url}"
 
-#: src/features/balances/balances-view.tsx
-msgid "{name}: należy się {amount}"
+#: src/features/balances/balance-label.ts
+msgid "{name}: do oddania {amount}"
+msgstr "{name}: owes {amount}"
+
+#: src/features/balances/balance-label.ts
+msgid "{name}: do odebrania {amount}"
 msgstr "{name}: is owed {amount}"
 
-#: src/features/balances/balances-view.tsx
-msgid "{name}: rozliczony"
+#: src/features/balances/balance-label.ts
+msgid "{name}: rozliczono"
 msgstr "{name}: settled up"
-
-#: src/features/balances/balances-view.tsx
-msgid "{name}: winien {amount}"
-msgstr "{name}: owes {amount}"
 
 #: src/features/entries/bubble-label.ts
 msgid "{names} {count, plural, one {otrzymał(a)} few {otrzymali} many {otrzymali} other {otrzymali}} {amount} za {title}, {date}."
@@ -308,6 +309,10 @@ msgstr "Days × people and categories"
 #: src/features/entries/entry-detail-body.tsx
 msgid "Do"
 msgstr "To"
+
+#: src/features/balances/balance-label.ts
+msgid "Do oddania: {amount}"
+msgstr "You owe {amount}"
 
 #: src/features/photos/photo-messages.ts
 msgid "Do tego wpisu wysłano już {perEntry} zdjęć — to limit."
@@ -706,6 +711,10 @@ msgstr "Resolve this entry's conflict first (red “!”)."
 
 #: src/features/balances/balance-banner.tsx
 msgid "Należy ci się {amount}"
+msgstr "You are owed {amount}"
+
+#: src/features/balances/balance-label.ts
+msgid "Należy ci się: {amount}"
 msgstr "You are owed {amount}"
 
 #: src/app/(app)/admin.tsx
@@ -1706,6 +1715,7 @@ msgid "Wszystkie wpisy i salda znikną dla wszystkich członków. Tego nie da si
 msgstr "All entries and balances will be gone for every member. This can't be undone."
 
 #: src/features/balances/balance-banner.tsx
+#: src/features/balances/balance-label.ts
 msgid "Wszystko rozliczone"
 msgstr "All settled up"
 
