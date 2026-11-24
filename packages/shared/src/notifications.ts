@@ -142,8 +142,8 @@ export interface PushSummary {
   entryKind: Entry['kind'] | null;
   /** Pushes in the burst. */
   count: number;
-  /** The author's member name in the group; empty = the name was removed (ADR-0019). */
-  actorName: string;
+  /** The author's member name in the group; `null` = the name was removed (ADR-0019). */
+  actorName: string | null;
   /** Title of the (newest) entry; `null` for settlements. */
   entryTitle: string | null;
   /** Settlement amount or the nudged debt, in minor units of `currency`. */
@@ -178,7 +178,7 @@ function plPlural(count: number, forms: PluralForms): string {
  * claim, which matches the claim system message.
  */
 export function pushMessageBody(summary: PushSummary, locale: string): string {
-  const s = { ...summary, actorName: summary.actorName || deletedUserName(locale) };
+  const s = { ...summary, actorName: summary.actorName ?? deletedUserName(locale) };
   const polish = locale.split('-')[0] === 'pl';
   const money = s.amount !== null && s.currency ? formatAmount(s.amount, s.currency, polish ? 'pl' : 'en') : null;
   switch (s.kind) {

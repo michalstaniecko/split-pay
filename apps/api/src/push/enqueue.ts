@@ -10,8 +10,8 @@ export interface NotifyInput {
   groupId: Id;
   actorUserId: Id;
   event: NotificationEvent;
-  /** The author's name; defaults to their member's name in the group. */
-  actorName?: string;
+  /** The author's name; defaults to their member's name in the group (`null` = removed, ADR-0019). */
+  actorName?: string | null;
   /** Debt amount for a nudge (minor units of `currency`). */
   amount?: number;
   currency?: string;
@@ -70,8 +70,10 @@ export async function enqueueNotification(db: Db, input: NotifyInput): Promise<v
 
   const { event } = input;
   const actorName =
-    // Empty = no name (removed, ADR-0019): the push reads "Deleted user" in the recipient's language.
-    input.actorName ?? groupMembers.find((m) => m.userId === input.actorUserId)?.displayName ?? '';
+    // `null` = no name (removed, ADR-0019): the push reads "Deleted user" in the recipient's language.
+    input.actorName !== undefined
+      ? input.actorName
+      : (groupMembers.find((m) => m.userId === input.actorUserId)?.displayName ?? null);
   const details: Omit<QueueInsert, 'id' | 'recipientUserId' | 'kind'> = {
     groupId: input.groupId,
     actorUserId: input.actorUserId,

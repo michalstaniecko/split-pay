@@ -2,8 +2,10 @@ import { randomUUID } from 'node:crypto';
 import type { NewEntry } from '@split-pay/shared';
 import { parseResponse } from 'hono/client';
 import { describe, expect, it } from 'vitest';
+import { eq } from 'drizzle-orm';
 import { createTestApp } from '../test/app';
 import { testDb } from '../test/db';
+import { members } from './db/schema';
 import { dispatchPushes } from './push/dispatch';
 import type { PushMessage, PushSender, PushTicket } from './push/sender';
 
@@ -212,6 +214,21 @@ describe('push notifications', () => {
       ['ExponentPushToken[ania]', 'bartek: spłata dla Ciebie · 30,00 zł'],
     ]);
     expect(silent(sent).map((m) => m.data)).toEqual([{ type: 'sync', groupId }]);
+  });
+
+  it('an author whose member name was removed reads "Deleted user" in each recipient’s language (ADR-0019)', async () => {
+    const { ania, aniaId, bartekId, kasiaId, expense, add } = await setup();
+    await testDb.db.update(members).set({ displayName: null }).where(eq(members.id, aniaId));
+    await add(ania, expense(aniaId, [aniaId, bartekId, kasiaId]));
+
+    const { sent, sender } = fakeSender();
+    await dispatchPushes(testDb.db, sender, { now: later() });
+    expect(visible(sent).map((m) => [m.to, m.body])).toEqual(
+      expect.arrayContaining([
+        ['ExponentPushToken[bartek]', 'Usunięty użytkownik: dodano wydatek „Pizza”'],
+        ['ExponentPushToken[kasia]', 'Deleted user added the expense “Pizza”'],
+      ]),
+    );
   });
 
   it('a claim notifies the other members with an account', async () => {
