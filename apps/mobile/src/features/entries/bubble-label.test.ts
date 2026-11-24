@@ -123,24 +123,24 @@ describe('payersBubbleLabel', () => {
     activateLocale('en');
     const en = { ...pizza, amount: 'PLN 90.00', date: 'July 10, 2026' };
     expect(payersBubbleLabel({ ...en, payerNames: ['Kasia', 'Ania', 'Bartek'], myShare: 'PLN 30.00' })).toBe(
-      'Kasia, Ania and Bartek paid PLN 90.00 for Pizza, July 10, 2026. Your share PLN 30.00.',
+      'Expense PLN 90.00: Pizza. Paid by Kasia, Ania and Bartek. July 10, 2026. Your share PLN 30.00.',
     );
     expect(payersBubbleLabel({ ...en, kind: 'income', payerNames: ['Kasia', 'Ania'], myShare: null })).toBe(
       'Kasia and Ania received PLN 90.00 for Pizza, July 10, 2026.',
     );
   });
 
-  it('in English, one payer and several payers read alike ("paid")', () => {
+  it('in English, one payer and several payers read alike ("Paid by")', () => {
     activateLocale('en');
     const en = { ...pizza, amount: 'PLN 90.00', date: 'July 10, 2026', myShare: null };
-    expect(payersBubbleLabel({ ...en, payerNames: ['Kasia'] })).toBe('Kasia paid PLN 90.00 for Pizza, July 10, 2026.');
-    expect(payersBubbleLabel({ ...en, payerNames: ['Kasia', 'Ania'] })).toBe('Kasia and Ania paid PLN 90.00 for Pizza, July 10, 2026.');
+    expect(payersBubbleLabel({ ...en, payerNames: ['Kasia'] })).toBe('Expense PLN 90.00: Pizza. Paid by Kasia. July 10, 2026.');
+    expect(payersBubbleLabel({ ...en, payerNames: ['Kasia', 'Ania'] })).toBe('Expense PLN 90.00: Pizza. Paid by Kasia and Ania. July 10, 2026.');
   });
 
   it('a single payer is named alone', () => {
     activateLocale('en');
     expect(payersBubbleLabel({ ...pizza, amount: 'PLN 90.00', date: 'July 10, 2026', payerNames: ['Kasia'], myShare: null })).toBe(
-      'Kasia paid PLN 90.00 for Pizza, July 10, 2026.',
+      'Expense PLN 90.00: Pizza. Paid by Kasia. July 10, 2026.',
     );
   });
 });

@@ -68,10 +68,6 @@ msgstr "{label}, razem {0}"
 msgid "{memberCount, plural, one {# osoba w grupie} few {# osoby w grupie} many {# osób w grupie} other {# osoby w grupie}}"
 msgstr "{memberCount, plural, one {# osoba w grupie} few {# osoby w grupie} many {# osób w grupie} other {# osoby w grupie}}"
 
-#: src/features/claims/claim-messages.tsx
-msgid "{memberName} znowu będzie osobą bez konta."
-msgstr "{memberName} znowu będzie osobą bez konta."
-
 #: src/app/(app)/groups/[groupId]/settle.tsx
 msgid "{name} (Ty)"
 msgstr "{name} (Ty)"
@@ -167,11 +163,6 @@ msgstr "Anuluj"
 msgid "Archiwizuj grupę"
 msgstr "Archiwizuj grupę"
 
-#. placeholder {0}: account?.email ?? '—'
-#: src/app/(app)/admin.tsx
-msgid "Autor zdjęcia: {0}"
-msgstr "Autor zdjęcia: {0}"
-
 #: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
 #: src/app/(app)/groups/[groupId]/settle.tsx
@@ -229,10 +220,6 @@ msgstr "Brak zablokowanych kont."
 #: src/app/(app)/groups/[groupId]/history.tsx
 msgid "Brak zmian."
 msgstr "Brak zmian."
-
-#: src/features/stats/stats-view.tsx
-msgid "Byli członkowie"
-msgstr "Byli członkowie"
 
 #: src/features/history/describe-change.ts
 msgid "cały wyjazd"
@@ -454,6 +441,10 @@ msgstr "Grupa zniknie z Twojej listy. Twoje wpisy zostaną w grupie."
 msgid "Grupa została zarchiwizowana — nie można już w niej nic zmieniać."
 msgstr "Grupa została zarchiwizowana — nie można już w niej nic zmieniać."
 
+#: src/app/(app)/groups/[groupId]/info.tsx
+msgid "Grupę założono: {owner}"
+msgstr "Grupę założono: {owner}"
+
 #: src/features/search/inbox-search-results.tsx
 msgid "Grupy"
 msgstr "Grupy"
@@ -651,12 +642,12 @@ msgstr "Kto otrzymuje: {value}"
 
 #: src/features/entries/entry-detail-body.tsx
 #: src/features/entries/split-fields.tsx
-msgid "Kto płaci"
-msgstr "Kto płaci"
+msgid "Kto zapłacił"
+msgstr "Kto zapłacił"
 
 #: src/features/history/describe-change.ts
-msgid "Kto płaci: {value}"
-msgstr "Kto płaci: {value}"
+msgid "Kto zapłacił: {value}"
+msgstr "Kto zapłacił: {value}"
 
 #: src/features/entries/entry-detail-body.tsx
 msgid "Kurs"
@@ -1060,6 +1051,7 @@ msgstr "Otwiera pasek dni"
 msgid "Otwiera zdjęcie na pełnym ekranie"
 msgstr "Otwiera zdjęcie na pełnym ekranie"
 
+#: src/features/web-view/claim-banner.tsx
 #: src/features/web-view/web-footer.tsx
 msgid "Otwórz w aplikacji"
 msgstr "Otwórz w aplikacji"
@@ -1174,6 +1166,10 @@ msgstr "Powiadomienia z tej grupy"
 #: src/app/(app)/report-photo.tsx
 msgid "Powód zgłoszenia"
 msgstr "Powód zgłoszenia"
+
+#: src/features/stats/stats-view.tsx
+msgid "Poza grupą"
+msgstr "Poza grupą"
 
 #: src/features/moderation/reportable-member-avatar.tsx
 msgid "Pozwala zgłosić zdjęcie"
@@ -1419,10 +1415,6 @@ msgid "Ten link jest dla osoby „{personalName}”. Przejmij ten profil razem z
 msgstr "Ten link jest dla osoby „{personalName}”. Przejmij ten profil razem z historią wydatków."
 
 #: src/app/g/[token]/index.tsx
-msgid "Ten profil ma już konto. Poproś kogoś z grupy o link grupy."
-msgstr "Ten profil ma już konto. Poproś kogoś z grupy o link grupy."
-
-#: src/app/g/[token]/index.tsx
 msgid "Ten profil został już przejęty."
 msgstr "Ten profil został już przejęty."
 
@@ -1485,8 +1477,8 @@ msgid "Tryb jasny/ciemny"
 msgstr "Tryb jasny/ciemny"
 
 #: src/features/profile/delete-account-section.tsx
-msgid "Twój e-mail, sposoby logowania, zdjęcie profilowe i dane do przelewu zostaną usunięte. W grupach zostanie po Tobie członek bez konta „Usunięty użytkownik”, a wydatki i salda się nie zmienią. Tego nie można cofnąć."
-msgstr "Twój e-mail, sposoby logowania, zdjęcie profilowe i dane do przelewu zostaną usunięte. W grupach zostanie po Tobie członek bez konta „Usunięty użytkownik”, a wydatki i salda się nie zmienią. Tego nie można cofnąć."
+msgid "Twój e-mail, sposoby logowania, zdjęcie profilowe i dane do przelewu zostaną usunięte. W grupach zostanie po Tobie członek bez konta „Usunięte konto”, a wydatki i salda się nie zmienią. Tego nie można cofnąć."
+msgstr "Twój e-mail, sposoby logowania, zdjęcie profilowe i dane do przelewu zostaną usunięte. W grupach zostanie po Tobie członek bez konta „Usunięte konto”, a wydatki i salda się nie zmienią. Tego nie można cofnąć."
 
 #: src/features/profile/delete-account-section.tsx
 msgid "Twój e-mail, sposoby logowania, zdjęcie profilowe i dane do przelewu zostaną usunięte. W grupach zostanie po Tobie członek bez konta pod obecną nazwą, a wydatki i salda się nie zmienią. Tego nie można cofnąć."
@@ -1659,12 +1651,12 @@ msgid "Utworzono grupę {group}"
 msgstr "Utworzono grupę {group}"
 
 #: src/features/profile/delete-account-section.tsx
-msgid "W grupach zostanie po Tobie członek bez konta pod Twoją ostatnią nazwą, więc znajomi nadal będą wiedzieć, kto to."
-msgstr "W grupach zostanie po Tobie członek bez konta pod Twoją ostatnią nazwą, więc znajomi nadal będą wiedzieć, kto to."
+msgid "W grupach zostanie po Tobie członek bez konta pod obecną nazwą, więc znajomi nadal będą wiedzieć, kto to."
+msgstr "W grupach zostanie po Tobie członek bez konta pod obecną nazwą, więc znajomi nadal będą wiedzieć, kto to."
 
 #: src/features/profile/delete-account-section.tsx
-msgid "W grupach zostanie po Tobie członek bez konta, a wszyscy zobaczą zamiast nazwy „Usunięty użytkownik”."
-msgstr "W grupach zostanie po Tobie członek bez konta, a wszyscy zobaczą zamiast nazwy „Usunięty użytkownik”."
+msgid "W grupach zostanie po Tobie członek bez konta, a wszyscy zobaczą zamiast nazwy „Usunięte konto”."
+msgstr "W grupach zostanie po Tobie członek bez konta, a wszyscy zobaczą zamiast nazwy „Usunięte konto”."
 
 #: src/features/entries/entry-detail-body.tsx
 msgid "W walucie bazowej"
@@ -1814,8 +1806,8 @@ msgid "Wybierz, kto otrzymuje pieniądze."
 msgstr "Wybierz, kto otrzymuje pieniądze."
 
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
-msgid "Wybierz, kto płaci."
-msgstr "Wybierz, kto płaci."
+msgid "Wybierz, kto zapłacił."
+msgstr "Wybierz, kto zapłacił."
 
 #: src/app/(app)/groups/[groupId]/entry-conflict.tsx
 msgid "Wybierz, która wersja zostaje."
@@ -1960,10 +1952,6 @@ msgstr "Zaloguj"
 msgid "Zaloguj się"
 msgstr "Zaloguj się"
 
-#: src/app/(app)/groups/[groupId]/info.tsx
-msgid "założyciel"
-msgstr "założyciel"
-
 #: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
 #: src/app/(app)/groups/[groupId]/entry-conflict.tsx
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
@@ -2023,6 +2011,11 @@ msgstr "Zaznacz co najmniej jeden dzień: {0}"
 #: src/features/photos/photo-messages.ts
 msgid "Zdjęcia są teraz niedostępne. Spróbuj później."
 msgstr "Zdjęcia są teraz niedostępne. Spróbuj później."
+
+#. placeholder {0}: account?.email ?? '—'
+#: src/app/(app)/admin.tsx
+msgid "Zdjęcie dodano: {0}"
+msgstr "Zdjęcie dodano: {0}"
 
 #: src/features/photos/photo-messages.ts
 msgid "Zdjęcie jest za duże (maks. {megabytes} MB)."
@@ -2116,6 +2109,10 @@ msgstr "Zmieniono ustawienia grupy"
 #: src/features/history/describe-change.ts
 msgid "Zmieniono zdjęcie paragonu"
 msgstr "Zmieniono zdjęcie paragonu"
+
+#: src/features/claims/claim-messages.tsx
+msgid "Znowu członek bez konta: {memberName}"
+msgstr "Znowu członek bez konta: {memberName}"
 
 #: src/features/photos/avatar-section.tsx
 msgid "Zrób zdjęcie"

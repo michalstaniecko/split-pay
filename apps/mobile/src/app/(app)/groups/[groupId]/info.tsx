@@ -8,6 +8,7 @@ import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { GroupAvatar } from '@/components/group-avatar';
 import { GroupNotFound } from '@/components/group-not-found';
 import { PersonalClaimLinkButton } from '@/features/claims/personal-claim-link-button';
+import { canShareLinks } from '@/features/group-link/group-link';
 import { GroupLinkSection } from '@/features/group-link/group-link-section';
 import { AttendanceGridView } from '@/features/groups/attendance-grid-view';
 import { GroupLifecycleSection } from '@/features/groups/group-lifecycle-section';
@@ -21,7 +22,7 @@ import { useFormatters } from '@/i18n/use-formatters';
 import { authClient } from '@/lib/auth-client';
 
 /**
- * Group info (GLOSSARY): members, group link, Stats, change history,
+ * Group info (GLOSSARY): members, group link (not when archived), Stats, change history,
  * settings, then leave / archive / delete at the bottom.
  */
 export default function GroupInfoScreen() {
@@ -38,8 +39,8 @@ function GroupInfo({ group }: { group: GroupDetail }) {
   const { t } = useLingui();
   const format = useFormatters();
   const { data: session } = authClient.useSession();
-  const archived = group.archivedAt !== null;
-  // Archived group: read-only, so no adding or renaming members.
+  // An archived group is read-only and closed to joining: no links, no adding or renaming members.
+  const archived = !canShareLinks(group);
   const rows = memberRows(group, session?.user.id).map((row) => (archived ? { ...row, canRename: false } : row));
   const openMemberSheet = (memberId?: string) =>
     router.push({
@@ -50,6 +51,8 @@ function GroupInfo({ group }: { group: GroupDetail }) {
   const dates = group.startDate && group.endDate ? `${format.date(group.startDate)} – ${format.date(group.endDate)}` : null;
   const soon = t`Wkrótce`;
   const avatars = useQuery(groupAvatarsQuery(group.id)).data;
+  // Gender-neutral: the owner's name follows a colon, never "założyciel".
+  const owner = rows.find((row) => row.isOwner)?.displayName;
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -66,22 +69,25 @@ function GroupInfo({ group }: { group: GroupDetail }) {
           <View key={row.id} style={styles.memberLine}>
             <ReportableMemberAvatar groupId={group.id} member={row} url={avatars?.get(row.id)} size={32} />
             <MemberItem row={row} onPress={() => openMemberSheet(row.id)} />
-            {row.withoutAccount ? <PersonalClaimLinkButton groupId={group.id} groupName={group.name} member={row} /> : null}
+            {!archived && row.withoutAccount ? <PersonalClaimLinkButton groupId={group.id} groupName={group.name} member={row} /> : null}
           </View>
         ))}
-        {archived ? null : (
+        {owner ? <Text style={styles.muted}>{t`Grupę założono: ${owner}`}</Text> : null}
+        {!archived ? (
           <Pressable
             accessibilityRole="button"
             onPress={() => openMemberSheet()}
             style={({ pressed }) => [styles.addRow, pressed && styles.pressed]}>
             <Text style={styles.addLabel}>{t`+ Dodaj osobę bez konta`}</Text>
           </Pressable>
-        )}
+        ) : null}
         <AttendanceGridView group={group} />
       </Section>
-      <Section title={t`Link grupy`}>
-        <GroupLinkSection groupId={group.id} groupName={group.name} />
-      </Section>
+      {!archived ? (
+        <Section title={t`Link grupy`}>
+          <GroupLinkSection groupId={group.id} groupName={group.name} />
+        </Section>
+      ) : null}
       <Pressable
         accessibilityRole="button"
         accessibilityHint={t`Dni × osoby i kategorie`}
@@ -101,12 +107,11 @@ function GroupInfo({ group }: { group: GroupDetail }) {
   );
 }
 
-/** A member: name, badges (owner, me, without account); tappable when I may rename them. */
+/** A member: name, badges (me, without account); tappable when I may rename them. */
 function MemberItem({ row, onPress }: { row: MemberRow; onPress: () => void }) {
   const { t } = useLingui();
   const badges = [
     row.isMe ? t`Ty` : null,
-    row.isOwner ? t`założyciel` : null,
     row.withoutAccount ? t`bez konta` : null,
   ].filter((badge): badge is string => badge !== null);
   const content = (

@@ -5,7 +5,7 @@ export type Named<M extends { displayName: string | null }> = Omit<M, 'displayNa
 
 /**
  * The group with every member named for the viewer (ADR-0019): a removed name
- * (`null` marker) reads "Usunięty użytkownik" / "Deleted user" in `locale`.
+ * (`null` marker) reads "Usunięte konto" / "Deleted user" in `locale`.
  */
 export function nameMembers<G extends { members: readonly M[] }, M extends { displayName: string | null }>(
   group: G,

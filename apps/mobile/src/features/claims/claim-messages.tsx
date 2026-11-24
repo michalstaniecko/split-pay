@@ -42,7 +42,7 @@ export function ClaimMessage({
       onError: () => Alert.alert(t`Nie udało się cofnąć przejęcia.`),
     });
   const confirmUndo = () =>
-    Alert.alert(undoLabel, t`${memberName} znowu będzie osobą bez konta.`, [
+    Alert.alert(undoLabel, t`Znowu członek bez konta: ${memberName}`, [
       { text: t`Anuluj`, style: 'cancel' },
       { text: undoLabel, style: 'destructive', onPress: runUndo },
     ]);

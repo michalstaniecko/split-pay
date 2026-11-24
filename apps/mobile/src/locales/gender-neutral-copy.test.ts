@@ -17,6 +17,7 @@ const MASCULINE_BY_DEFAULT = [
   word('winien'),
   word('rozliczony'),
   word('rozliczeni'),
+  // Except the questions in NEUTRAL_ZAPLACIL below.
   word('zapłacił'),
   word('otrzymał'),
   word('dodał'),
@@ -31,6 +32,25 @@ const MASCULINE_BY_DEFAULT = [
   word('otrzymujący'),
   word('zgłaszający'),
   word('zablokowany'),
+  // "Usunięty użytkownik" / "Byli członkowie": say "Usunięte konto", and
+  // "Osoby, które opuściły grupę" in lists or "Poza grupą" in the stats
+  // column. Lowercase "usunięty" describes an entry ("wpis"), not a person.
+  /(?<!\p{L})Usunięty(?!\p{L})/u,
+  word('byli'),
+];
+
+// "Kto zapłacił" is fine: "kto" asks about anyone, not about a man. Only these
+// exact messages are allowed; any other "zapłacił" still fails.
+const NEUTRAL_ZAPLACIL = new Set(['Kto zapłacił', 'Kto zapłacił: {value}', 'Wybierz, kto zapłacił.']);
+const isAllowed = (message: string, pattern: RegExp) =>
+  pattern.source === word('zapłacił').source && NEUTRAL_ZAPLACIL.has(message);
+const offending = (candidates: readonly string[], pattern: RegExp) =>
+  candidates.filter((m) => pattern.test(m) && !isAllowed(m, pattern));
+
+// Superseded copy that isn't gendered but must not come back.
+const RETIRED = [
+  // Expense forms ask "Kto zapłacił" (the expense already happened).
+  /(?<!\p{L})kto płaci(?!\p{L})/iu,
 ];
 
 describe('Polish catalog', () => {
@@ -40,6 +60,23 @@ describe('Polish catalog', () => {
 
   it.each(MASCULINE_BY_DEFAULT.map((pattern) => [String(pattern), pattern] as const))(
     'has no masculine-by-default form %s',
+    (_, pattern) => {
+      expect(offending(messages, pattern)).toEqual([]);
+    },
+  );
+
+  it('allows "kto zapłacił" only in the listed questions', () => {
+    const pattern = word('zapłacił');
+    expect(
+      offending(
+        [...NEUTRAL_ZAPLACIL, '{name} zapłacił', 'Ten, kto zapłacił, jest winien mniej'],
+        pattern,
+      ),
+    ).toEqual(['{name} zapłacił', 'Ten, kto zapłacił, jest winien mniej']);
+  });
+
+  it.each(RETIRED.map((pattern) => [String(pattern), pattern] as const))(
+    'has no retired copy %s',
     (_, pattern) => {
       expect(messages.filter((m) => pattern.test(m))).toEqual([]);
     },

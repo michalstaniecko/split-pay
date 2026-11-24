@@ -240,8 +240,34 @@ describe('claiming a member without an account', () => {
       expect(await parseResponse(link(tomasz).$get({ param: { token: personalToken } }))).toMatchObject({
         isMember: true,
         claimable: [],
-        claimFor: tomek.id,
       });
+    });
+
+    it('once its member is claimed, only lets others join as a new person', async () => {
+      const { groupId, tomek, personalToken, addMember, detail } = await personal();
+      const zosia = await addMember('Zosia');
+      const tomasz = await signIn('tomasz@example.com');
+      await parseResponse(link(tomasz).claim.$post({ param: { token: personalToken }, json: { memberId: tomek.id } }));
+
+      const bartek = await signIn('bartek@example.com');
+      expect(await parseResponse(link(bartek).$get({ param: { token: personalToken } }))).toMatchObject({
+        isMember: false,
+        claimable: [],
+        claimFor: null,
+      });
+
+      const other = await link(bartek).claim.$post({ param: { token: personalToken }, json: { memberId: zosia.id } });
+      expect(other.status).toBe(404);
+      const same = await link(bartek).claim.$post({ param: { token: personalToken }, json: { memberId: tomek.id } });
+      expect(same.status).toBe(409);
+      expect(await same.json()).toEqual({ error: 'already_claimed' });
+      const members = (await detail()).members;
+      expect(members.find((m) => m.id === zosia.id)?.userId).toBeNull();
+      expect(members.find((m) => m.id === tomek.id)?.userId).toBe(tomasz.userId);
+
+      const joined = await link(bartek).join.$post({ param: { token: personalToken } });
+      expect(joined.status).toBe(201);
+      expect(await joined.json()).toMatchObject({ groupId });
     });
 
     it("can't be used to claim another member", async () => {

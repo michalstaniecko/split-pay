@@ -206,7 +206,7 @@ describe('pushMessageBody', () => {
 
   it('names an author whose name was removed (null) "Deleted user" in the recipient’s language (ADR-0019)', () => {
     const msg = { ...base, actorName: null, kind: 'entryCreated' as const, entryKind: 'expense' as const, count: 2 };
-    expect(pushMessageBody(msg, 'pl')).toBe('Usunięty użytkownik: dodano 2 wydatki');
+    expect(pushMessageBody(msg, 'pl')).toBe('Usunięte konto: dodano 2 wydatki');
     expect(pushMessageBody(msg, 'en')).toBe('Deleted user added 2 expenses');
   });
 

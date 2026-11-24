@@ -16,6 +16,14 @@ export function groupLinkUrl(token: string, webBaseUrl: string | undefined): str
 }
 
 /**
+ * Whether Group info offers sharing the group link (and its QR code) and
+ * personal claim links. Not in an archived group: nobody can join it (409).
+ */
+export function canShareLinks(group: { archivedAt: string | null }): boolean {
+  return group.archivedAt === null;
+}
+
+/**
  * The token of an incoming group link (`splitpay://g/<token>`,
  * `https://…/g/<token>` or the bare path `/g/<token>`); `undefined` for other links.
  */

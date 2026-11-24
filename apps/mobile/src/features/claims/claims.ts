@@ -29,16 +29,14 @@ export interface ClaimableMember {
 /**
  * What the join screen offers for a link (GET /links/:token):
  * - `group` — a group link: join as a new person, or "Jesteś na tej liście?" → claim one of `claimable`;
- * - `personal` — a personal claim link: claim `member` directly;
- * - `personal-taken` — a personal claim link whose member already has an account.
+ * - `personal` — a personal claim link: claim `member` directly.
+ *
+ * A personal claim link whose member already has an account acts as a group
+ * link (the API then answers `claimFor: null`; this also covers a stale preview).
  */
-export type JoinChoices =
-  | { kind: 'group'; claimable: ClaimableMember[] }
-  | { kind: 'personal'; member: ClaimableMember }
-  | { kind: 'personal-taken' };
+export type JoinChoices = { kind: 'group'; claimable: ClaimableMember[] } | { kind: 'personal'; member: ClaimableMember };
 
 export function joinChoices(preview: { claimFor: string | null; claimable: ClaimableMember[] }): JoinChoices {
-  if (preview.claimFor === null) return { kind: 'group', claimable: preview.claimable };
   const member = preview.claimable.find((m) => m.id === preview.claimFor);
-  return member ? { kind: 'personal', member } : { kind: 'personal-taken' };
+  return member ? { kind: 'personal', member } : { kind: 'group', claimable: preview.claimable };
 }
