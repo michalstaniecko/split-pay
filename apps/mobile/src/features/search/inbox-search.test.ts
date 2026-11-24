@@ -55,7 +55,7 @@ const entry = (groupId: string, title: string, overrides: Partial<Entry> = {}): 
 
 /** Caches these groups (as `GET /groups` listed them) and their entries (as delta sync pulled them). */
 async function cache(db: LocalDb, groups: [CachedGroup, Entry[]][]): Promise<void> {
-  await saveGroupList(db, groups.map(([g]) => ({ ...g, lastEntry: null })));
+  await saveGroupList(db, groups.map(([g]) => ({ ...g, lastEntry: null, lastEntryByOthersAt: null })));
   for (const [g, entries] of groups) {
     await applyGroupDelta(db, { group: { ...g, members: [] }, entries, cursor: null });
   }
@@ -65,8 +65,8 @@ describe('inbox search', () => {
   it('matches group names, ignoring case', async () => {
     const db = await nodeLocalDb();
     await saveGroupList(db, [
-      { ...group(G1, 'Mazury 2026'), lastEntry: null },
-      { ...group(G2, 'Mieszkanie'), lastEntry: null },
+      { ...group(G1, 'Mazury 2026'), lastEntry: null, lastEntryByOthersAt: null },
+      { ...group(G2, 'Mieszkanie'), lastEntry: null, lastEntryByOthersAt: null },
     ]);
 
     const results = await searchInbox(db, 'mazu');
@@ -117,7 +117,7 @@ describe('inbox search', () => {
       [group(G2, 'Pizzeria Kraków'), [entry(G2, 'Pizza')]],
     ]);
 
-    await saveGroupList(db, [{ ...group(G1, 'Pizzeria Mazury'), lastEntry: null }]);
+    await saveGroupList(db, [{ ...group(G1, 'Pizzeria Mazury'), lastEntry: null, lastEntryByOthersAt: null }]);
     const results = await searchInbox(db, 'pizz');
 
     expect(results.groups.map((g) => g.id)).toEqual([G1]);
