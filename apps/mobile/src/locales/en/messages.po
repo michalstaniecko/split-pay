@@ -1613,6 +1613,7 @@ msgid "W walucie bazowej"
 msgstr "In the base currency"
 
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
+#: src/app/(app)/quick-bill.tsx
 msgid "Waluta"
 msgstr "Currency"
 

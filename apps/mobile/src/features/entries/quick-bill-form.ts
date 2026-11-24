@@ -1,5 +1,6 @@
 import { type CurrencyCode, type LocalDate, minorUnitDigits, NewQuickBill } from '@split-pay/shared';
-import { parseAmountInput } from './amount-input';
+import { BASE_CURRENCIES } from '../groups/new-group-form';
+import { cleanAmountInput, parseAmountInput } from './amount-input';
 
 /** The "Szybki rachunek" sheet: amount, title and "Z kim" chips. */
 export interface QuickBillDraft {
@@ -25,6 +26,23 @@ export function addPerson(draft: QuickBillDraft, id: string): QuickBillDraft {
 
 export function removePerson(draft: QuickBillDraft, id: string): QuickBillDraft {
   return { ...draft, people: draft.people.filter((p) => p.id !== id) };
+}
+
+/** Used when the device region's currency is unknown or not offered. */
+export const FALLBACK_QUICK_BILL_CURRENCY: CurrencyCode = 'PLN';
+
+/**
+ * The quick bill's default currency: the device region's currency
+ * (`expo-localization` → `getLocales()[0].currencyCode`) when it is one of the
+ * base currencies offered, otherwise PLN. No per-user default currency.
+ */
+export function defaultQuickBillCurrency(regionCurrency: string | null | undefined): CurrencyCode {
+  return BASE_CURRENCIES.find((c) => c === regionCurrency) ?? FALLBACK_QUICK_BILL_CURRENCY;
+}
+
+/** Changing the currency trims the typed amount to its minor digits. */
+export function withQuickBillCurrency(draft: QuickBillDraft, currency: CurrencyCode): QuickBillDraft {
+  return { ...draft, amount: cleanAmountInput(draft.amount, minorUnitDigits(currency)) };
 }
 
 export type ParsedQuickBill = { ok: true; value: NewQuickBill } | { ok: false; errors: QuickBillField[] };
