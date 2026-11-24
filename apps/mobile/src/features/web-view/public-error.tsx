@@ -22,7 +22,7 @@ export function PublicError({ error, onRetry }: { error: unknown; onRetry: () =>
           {invalid ? t`Ten link grupy jest już nieważny` : t`Nie udało się wczytać grupy.`}
         </Text>
         {invalid ? (
-          <Text style={styles.text}>{t`Ktoś z grupy wygenerował nowy link. Poproś go o aktualny.`}</Text>
+          <Text style={styles.text}>{t`Grupa ma już nowy link. Poproś kogoś z grupy o aktualny.`}</Text>
         ) : (
           <Button variant="secondary" label={t`Spróbuj ponownie`} onPress={onRetry} />
         )}

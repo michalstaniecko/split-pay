@@ -53,7 +53,7 @@ function EntryDetail({ token, data, entry }: { token: string; data: PublicGroup;
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <EntryDetailBody entry={entry} baseCurrency={data.group.baseCurrency} memberName={(id) => name(id) ?? '?'} />
-      <Text style={styles.meta}>{t`Dodał(a) ${addedBy}, ${format.dateTime(entry.createdAt)}`}</Text>
+      <Text style={styles.meta}>{t`Dodano: ${addedBy}, ${format.dateTime(entry.createdAt)}`}</Text>
       {isEdited(entry) ? <Text style={styles.meta}>{t`edytowano ${format.dateTime(entry.updatedAt)}`}</Text> : null}
       <Button variant="secondary" label={t`Zamknij`} onPress={() => closePublicPage(token)} />
     </ScrollView>

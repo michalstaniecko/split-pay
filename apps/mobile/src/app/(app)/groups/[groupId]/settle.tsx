@@ -203,7 +203,7 @@ function SettleSheetForm({
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView style={styles.container} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <Text style={styles.title}>{editing ? t`Edytuj spłatę` : suggested ? t`Oddaj ${recipient}` : t`Inna spłata`}</Text>
+        <Text style={styles.title}>{editing ? t`Edytuj spłatę` : suggested ? t`Spłata dla: ${recipient}` : t`Inna spłata`}</Text>
 
         {suggested ? null : (
           <>
@@ -232,7 +232,7 @@ function SettleSheetForm({
         {form.to !== '' ? <PayoutDetailsBox groupId={group.id} memberId={form.to} /> : null}
 
         {deletedMeanwhile ? (
-          <Text style={styles.error}>{t`Ktoś usunął ten wpis w międzyczasie. Twoje zmiany nie zostały zapisane.`}</Text>
+          <Text style={styles.error}>{t`Ten wpis został w międzyczasie usunięty. Twoje zmiany nie zostały zapisane.`}</Text>
         ) : saving.error instanceof OutboxBlockedError ? (
           <Text style={styles.error}>{t`Najpierw rozwiąż konflikt tego wpisu (czerwony „!”).`}</Text>
         ) : saving.error instanceof LockedOfflineError ? (
