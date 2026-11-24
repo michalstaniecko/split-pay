@@ -1,8 +1,11 @@
+import { fileURLToPath } from 'node:url';
 import { serve } from '@hono/node-server';
 import { parseFeatureFlagsJson } from '@split-pay/shared';
 import { createApp } from './app';
 import { createAuth, devOtpSender } from './auth';
 import { createDb } from './db/client';
+import { migrateDatabase } from './db/migrate';
+import { startSentry } from './error-reporting';
 import { parseAdminEmails } from './middleware/require-admin';
 import { startPushJob } from './push/dispatch';
 import { expoPushSender, logPushSender } from './push/sender';
@@ -17,8 +20,19 @@ const requireEnv = (name: string): string => {
   return value;
 };
 
+// Error reporting (#64): Sentry only when SENTRY_DSN is set; SENTRY_ENVIRONMENT=staging|production.
+const errorReporter = startSentry(process.env);
+
 const port = Number(process.env.PORT ?? 3000);
-const { db } = createDb(requireEnv('DATABASE_URL'));
+const { db, pool } = createDb(requireEnv('DATABASE_URL'));
+// Pending migrations before anything touches the database. `drizzle/` sits next to `src/`
+// in the repo and next to `dist/` in the image. A failed migration stops the start.
+try {
+  await migrateDatabase(pool, fileURLToPath(new URL('../drizzle', import.meta.url)));
+} catch (error) {
+  console.error('[db] migration failed, not starting', error);
+  process.exit(1);
+}
 const auth = createAuth({
   db,
   // TODO(#32): SMTP sender once a provider is chosen; until then codes go to the log.
@@ -35,7 +49,15 @@ if (!storage) console.warn('[photos] S3_* not set: receipt photos and avatars ar
 // like everyone; no admin accounts or credentials. Unset = nobody can open the admin panel.
 const adminEmails = parseAdminEmails(process.env.ADMIN_EMAILS);
 // WEB_URL: origin of the web app (e.g. https://app.example.com), used by link previews (/og/:token).
-const app = createApp({ auth, db, adminEmails, flags, webUrl: process.env.WEB_URL || undefined, ...(storage ? { storage } : {}) });
+const app = createApp({
+  auth,
+  db,
+  adminEmails,
+  flags,
+  webUrl: process.env.WEB_URL || undefined,
+  errorReporter,
+  ...(storage ? { storage } : {}),
+});
 // Daily ECB rates (ADR-0014); FRANKFURTER_URL points at a self-hosted instance if set.
 startRateJob({ db, source: frankfurterRateSource({ baseUrl: process.env.FRANKFURTER_URL || undefined }) });
 // Push notifications (#24): PUSH_SENDER=expo sends through the Expo push service
