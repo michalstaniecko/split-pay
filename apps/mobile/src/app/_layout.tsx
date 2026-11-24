@@ -1,6 +1,8 @@
-import { QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { SplashScreen, Stack } from 'expo-router';
 import { useEffect } from 'react';
+import { sessionArea } from '@/features/moderation/moderation';
+import { meQuery } from '@/features/profile/me-query';
 import { LocaleProvider } from '@/i18n/locale-provider';
 import { authClient } from '@/lib/auth-client';
 import { queryClient } from '@/lib/query-client';
@@ -18,24 +20,36 @@ export default function RootLayout() {
 }
 
 /**
- * Signed-in users see the app, everyone else the sign-in flow. Signing in or
- * out flips the guards; Expo Router then swaps the stacks (no manual redirect).
+ * Signed-in users see the app, everyone else the sign-in flow. A blocked
+ * account (#48) sees only "Konto zablokowane" — no inbox, no group links.
+ * Signing in or out, or the API reporting the block, flips the guards; Expo
+ * Router then swaps the stacks (no manual redirect).
  */
 function RootNavigator() {
   const { data: session, isPending } = authClient.useSession();
-  // The splash screen covers the moment before the stored session is read.
-  useEffect(() => {
-    if (!isPending) SplashScreen.hide();
-  }, [isPending]);
-
   const signedIn = !!session;
+  const me = useQuery({ ...meQuery(), enabled: signedIn });
+  // The splash screen covers reading the stored session and, when online,
+  // the API's answer whether the account is blocked.
+  const checkingBlock = signedIn && me.isPending && me.fetchStatus === 'fetching';
+  useEffect(() => {
+    if (!isPending && !checkingBlock) SplashScreen.hide();
+  }, [isPending, checkingBlock]);
+
+  const area = sessionArea(signedIn, me.data);
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Protected guard={signedIn}>
+      <Stack.Protected guard={area === 'app'}>
         <Stack.Screen name="(app)" />
       </Stack.Protected>
-      <Stack.Protected guard={!signedIn}>
+      <Stack.Protected guard={area === 'auth'}>
         <Stack.Screen name="(auth)" />
+      </Stack.Protected>
+      <Stack.Protected guard={area === 'blocked'}>
+        <Stack.Screen name="blocked" />
+      </Stack.Protected>
+      <Stack.Protected guard={area !== 'blocked'}>
+        <Stack.Screen name="g" />
       </Stack.Protected>
     </Stack>
   );

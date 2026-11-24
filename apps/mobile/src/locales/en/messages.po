@@ -616,6 +616,10 @@ msgstr "Conflicting change: {title}. Show details"
 msgid "konto zablokowane"
 msgstr "blocked"
 
+#: src/app/blocked.tsx
+msgid "Konto zablokowane"
+msgstr "Account blocked"
+
 #: src/app/(app)/groups/[groupId]/settle.tsx
 msgid "Kopiuj"
 msgstr "Copy"
@@ -1443,9 +1447,9 @@ msgstr "This is me"
 msgid "To ja… (wybierz siebie)"
 msgstr "This is me… (pick yourself)"
 
-#: src/app/(auth)/sign-in.tsx
-msgid "To konto zostało zablokowane przez administratora."
-msgstr "This account has been blocked by an administrator."
+#: src/app/blocked.tsx
+msgid "To konto zostało zablokowane za naruszenie zasad. Nie masz już dostępu do grup, ale możesz usunąć konto."
+msgstr "This account has been blocked for breaking the rules. You no longer have access to your groups, but you can delete your account."
 
 #: src/features/profile/payout-details-section.tsx
 msgid "To nie wygląda na numer konta."
@@ -1862,6 +1866,7 @@ msgid "Wyłączono upraszczanie długów"
 msgstr "Debt simplification turned off"
 
 #: src/app/(app)/profile.tsx
+#: src/app/blocked.tsx
 msgid "Wyloguj się"
 msgstr "Sign out"
 
