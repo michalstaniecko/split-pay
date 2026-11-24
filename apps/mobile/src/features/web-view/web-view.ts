@@ -49,6 +49,18 @@ export function effectiveMe(input: {
 }
 
 /**
+ * The member the personal claim link banner names ("To Twój profil — przejmij
+ * go w aplikacji"): the member the link is for, while they are still in the
+ * group without an account. `null` = no banner (group link, or already claimed).
+ */
+export function claimBannerMember<M extends { id: string; hasAccount: boolean }>(input: {
+  claimFor: string | null;
+  members: readonly M[];
+}): M | null {
+  return input.members.find((m) => m.id === input.claimFor && !m.hasAccount) ?? null;
+}
+
+/**
  * Where "download the app" leads: the store of the visitor's phone, else
  * (desktop, or a store listing not configured yet) the fallback page.
  */
