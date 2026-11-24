@@ -12,7 +12,7 @@ Not every participant will install the app — hence **members without an accoun
 ## Product character
 
 - A public product in the App Store and Google Play, but the MVP is designed for "friends" scale — no building scalability up front.
-- From the start we meet store and EU law requirements: privacy policy, terms of service (DSA — reporting procedure), in-app account deletion, content reporting.
+- From the start we meet store and EU law requirements: privacy policy, terms of service (DSA — reporting procedure), in-app account deletion, content reporting. The privacy policy lists our processors, including Cloudflare (US; DPA, Data Privacy Framework, EU-jurisdiction buckets).
 - Free, no ads. Support via GitHub Sponsors — link **only on the web and in the README**, not in the mobile app (review rejection risk, [ADR-0011](./adr/0011-github-sponsors-outside-the-app.md)). In the app, an "About" section without a clickable payment link. AdMob possibly in the future, behind a feature flag.
 - A simple feature flags mechanism in the code from the start, so paid features/ads can be added without a rebuild.
 
@@ -121,8 +121,9 @@ A fixed, translated list with icons (food, transport, accommodation, alcohol, fu
 ## Photos
 
 - Only: a **receipt photo** on an expense and a user **avatar**. A group has an emoji + color instead of a cover. No trip gallery.
-- Storage: **Hetzner Object Storage** (S3-compatible), private bucket ([ADR-0006](./adr/0006-private-photos-on-hetzner-object-storage.md)).
-- Upload directly from the phone via a presigned URL; the API only issues the URLs.
+- Storage: **Cloudflare R2** (S3-compatible, `eu` jurisdiction), private bucket, behind a provider-neutral object-storage port so the provider can be swapped by configuration ([ADR-0006](./adr/0006-private-photos-on-hetzner-object-storage.md), [ADR-0018](./adr/0018-object-storage-on-cloudflare-r2-behind-s3-port.md)).
+- The database stores object keys, never URLs; the app only ever sees presigned URLs from the API.
+- Upload directly from the phone via a presigned **PUT** URL (signed content type); the API only issues the URLs and checks the object's size and type before attaching it.
 - On the phone: downscaling (e.g. 1600 px), compression, EXIF stripping (including GPS).
 - Access only for group members via short-lived signed URLs. Logged-out web visitors do not see photos.
 - Limits: file size, number of photos per expense, daily limit per account. MVP values (`PHOTO_LIMITS` in `@split-pay/shared`): 3 MB per photo, 5 receipt uploads per entry (retakes count; an entry shows one receipt), 50 uploads per account in 24 hours. Receipts are downscaled to 1600 px, avatars to 512 px.
@@ -214,7 +215,7 @@ Expo Router, chat-style layout — no bottom tabs, no group tabs ([ADR-0017](./a
 
 ## Technical architecture
 
-([ADR-0001](./adr/0001-typescript-across-the-stack.md), [ADR-0012](./adr/0012-self-hosting-on-coolify.md), [ADR-0013](./adr/0013-hono-rest-instead-of-trpc.md))
+([ADR-0001](./adr/0001-typescript-across-the-stack.md), [ADR-0012](./adr/0012-self-hosting-on-coolify.md), [ADR-0013](./adr/0013-hono-rest-instead-of-trpc.md), [ADR-0018](./adr/0018-object-storage-on-cloudflare-r2-behind-s3-port.md))
 
 | Area | Choice |
 | --- | --- |
@@ -228,7 +229,7 @@ Expo Router, chat-style layout — no bottom tabs, no group tabs ([ADR-0017](./a
 | OTP emails | transactional SMTP with a free plan (Resend / Brevo / SES) |
 | App data | TanStack Query + expo-sqlite/Drizzle (cache + outbox) |
 | Styling | Unistyles 3 |
-| File storage | Hetzner Object Storage |
+| File storage | Cloudflare R2 (S3-compatible, EU jurisdiction); MinIO locally |
 | Push | Expo Push |
 | Errors | Sentry (free plan), no personal data |
 | Analytics | none in the MVP |
@@ -236,8 +237,9 @@ Expo Router, chat-style layout — no bottom tabs, no group tabs ([ADR-0017](./a
 ### Infrastructure
 
 - Hetzner VPS (basic, e.g. CX22) with Coolify, EU location.
-- Staging and production as separate apps in Coolify; **a shared PostgreSQL instance, separate databases**; separate buckets.
-- Database backup at least daily to Object Storage in a **different Hetzner location** than the VPS; restore tested.
+- Staging and production as separate apps in Coolify; **a shared PostgreSQL instance, separate databases**.
+- Cloudflare R2 set up at the start of the MVP: separate private buckets for staging and production (`eu` jurisdiction), a backup bucket, and API tokens scoped per bucket. The free tier is shared by the whole account.
+- Database backup at least daily to the R2 backup bucket (a **different provider** than the VPS); restore tested.
 - Coolify builds the API image from the Dockerfile: `main` → staging, tag → production. If the VPS runs out of RAM — build the image in GitHub Actions and push to GHCR.
 
 ### Repository and CI/CD
