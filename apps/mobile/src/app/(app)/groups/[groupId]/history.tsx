@@ -4,7 +4,7 @@ import { Stack, useLocalSearchParams } from 'expo-router';
 import { ActivityIndicator, FlatList, Text, View } from 'react-native';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { GroupNotFound } from '@/components/group-not-found';
-import { groupQuery } from '@/features/groups/groups-query';
+import { useGroup } from '@/features/groups/groups-query';
 import { ChangeRow } from '@/features/history/change-row';
 import { historyQuery } from '@/features/history/history-query';
 import { useRefreshOnFocus } from '@/lib/use-refresh-on-focus';
@@ -18,7 +18,7 @@ export default function HistoryScreen() {
   const { t } = useLingui();
   const { theme } = useUnistyles();
   const { groupId, entryId } = useLocalSearchParams<{ groupId: string; entryId?: string }>();
-  const group = useQuery(groupQuery(groupId));
+  const group = useGroup(groupId);
   const history = useQuery(historyQuery(groupId, entryId));
   useRefreshOnFocus(history.refetch);
   const title = entryId ? t`Historia wpisu` : t`Historia zmian`;

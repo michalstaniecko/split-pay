@@ -1,5 +1,6 @@
 import { useLingui } from '@lingui/react/macro';
 import type { Member, SplitMode } from '@split-pay/shared';
+import type { Named } from '@/features/groups/member-name';
 import { Pressable, Text, TextInput, View } from 'react-native';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { useFormatters } from '@/i18n/use-formatters';
@@ -71,7 +72,7 @@ export function PayersField({
   onChangePayers,
   income = false,
 }: {
-  members: readonly Member[];
+  members: readonly Named<Member>[];
   myMemberId: string | null;
   payerMemberId: string;
   payers: PayersForm;
@@ -87,7 +88,7 @@ export function PayersField({
 }) {
   const { t } = useLingui();
   const problemMessage = useProblemMessage(currency);
-  const name = (m: Member) => (m.id === myMemberId ? t`Ty` : m.displayName);
+  const name = (m: Named<Member>) => (m.id === myMemberId ? t`Ty` : m.displayName);
   const result = buildPayers(payerMemberId, payers, { amount, digits });
   const message = payers.multiple && !result.ok ? problemMessage(result.problem) : null;
 
@@ -160,7 +161,7 @@ export function SplitField({
   onChange,
   onChangeParticipants,
 }: {
-  members: readonly Member[];
+  members: readonly Named<Member>[];
   myMemberId: string | null;
   split: SplitForm;
   /** Equal split / common part participants (the form's `participantIds`, empty = everyone). */
@@ -176,7 +177,7 @@ export function SplitField({
   const labels = useEntryLabels();
   const format = useFormatters();
   const problemMessage = useProblemMessage(currency);
-  const name = (m: Member) => (m.id === myMemberId ? t`Ty` : m.displayName);
+  const name = (m: Named<Member>) => (m.id === myMemberId ? t`Ty` : m.displayName);
   const result = buildSplit(split, { amount, digits, members, participantIds });
   const message = result.ok ? null : problemMessage(result.problem);
   const participants = effectiveParticipants(participantIds, members);

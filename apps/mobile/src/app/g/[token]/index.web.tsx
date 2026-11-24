@@ -16,7 +16,7 @@ import {
   type PublicGroup,
   publicBalancesQuery,
   publicEntriesQuery,
-  publicGroupQuery,
+  usePublicGroup,
 } from '@/features/web-view/public-view-query';
 import { useThisIsMe } from '@/features/web-view/this-is-me';
 import { WebFooter } from '@/features/web-view/web-footer';
@@ -31,7 +31,7 @@ import { WebFooter } from '@/features/web-view/web-footer';
 export default function PublicConversationScreen() {
   const { theme } = useUnistyles();
   const { token } = useLocalSearchParams<{ token: string }>();
-  const group = useQuery(publicGroupQuery(token));
+  const group = usePublicGroup(token);
 
   if (group.isPending) return <ActivityIndicator style={styles.center} color={theme.colors.primary} />;
   if (group.isError) return <PublicError error={group.error} onRetry={() => void group.refetch()} />;

@@ -4,13 +4,13 @@ import { ActivityIndicator, ScrollView } from 'react-native';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { StatsView } from '@/features/stats/stats-view';
 import { PublicError } from '@/features/web-view/public-error';
-import { publicGroupQuery, publicStatsQuery } from '@/features/web-view/public-view-query';
+import { usePublicGroup, publicStatsQuery } from '@/features/web-view/public-view-query';
 
 /** Stats of the view-only web: the same table and categories as Group info → Stats in the app. */
 export default function PublicStatsScreen() {
   const { theme } = useUnistyles();
   const { token } = useLocalSearchParams<{ token: string }>();
-  const group = useQuery(publicGroupQuery(token));
+  const group = usePublicGroup(token);
   const stats = useQuery(publicStatsQuery(token));
 
   if (group.isError || stats.isError) {

@@ -84,7 +84,7 @@ const byConversationOrder = (a: Message<unknown>, b: Message<unknown>) =>
 export function conversationItems<C extends ClaimLike = ClaimLike>(
   entries: readonly Entry[],
   context: {
-    members: readonly Pick<Member, 'id' | 'displayName'>[];
+    members: readonly { id: string; displayName: string }[];
     myMemberId: string | null;
     baseCurrency: CurrencyCode;
     claims?: readonly C[];

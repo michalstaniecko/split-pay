@@ -37,7 +37,7 @@ const directionOrder = { fromMe: 0, toMe: 1, others: 2 } as const;
  */
 export function drawerRows(
   data: { balances: readonly Allocation[]; transfers: readonly Transfer[] },
-  members: readonly Pick<Member, 'id' | 'displayName'>[],
+  members: readonly { id: string; displayName: string }[],
   myMemberId: string | null,
 ): { balances: BalanceRow[]; transfers: TransferRow[] } {
   const name = (memberId: string) => members.find((m) => m.id === memberId)?.displayName ?? '?';

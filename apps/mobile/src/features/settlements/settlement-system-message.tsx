@@ -31,7 +31,7 @@ export function SettlementSystemMessage({
   failed = false,
 }: {
   entry: Settlement;
-  members: readonly Pick<Member, 'id' | 'displayName'>[];
+  members: readonly { id: string; displayName: string }[];
   myMemberId: string | null;
   highlighted: boolean;
   onPress: () => void;

@@ -8,7 +8,7 @@ import {
   type PublicBalances,
   type PublicGroup,
   publicBalancesQuery,
-  publicGroupQuery,
+  usePublicGroup,
 } from '@/features/web-view/public-view-query';
 import { useThisIsMe } from '@/features/web-view/this-is-me';
 
@@ -19,7 +19,7 @@ import { useThisIsMe } from '@/features/web-view/this-is-me';
 export default function PublicBalancesScreen() {
   const { theme } = useUnistyles();
   const { token } = useLocalSearchParams<{ token: string }>();
-  const group = useQuery(publicGroupQuery(token));
+  const group = usePublicGroup(token);
   const balances = useQuery(publicBalancesQuery(token));
 
   if (group.isError) return <PublicError error={group.error} onRetry={() => void group.refetch()} />;

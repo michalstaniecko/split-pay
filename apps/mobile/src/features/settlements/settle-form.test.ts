@@ -69,6 +69,7 @@ describe('editing a settlement', () => {
     groupId: id(100),
     version: 1,
     createdBy: ANIA,
+    createdByMember: null,
     createdAt: '2026-07-12T10:00:00.000Z',
     updatedAt: '2026-07-12T10:00:00.000Z',
     deletedAt: null,

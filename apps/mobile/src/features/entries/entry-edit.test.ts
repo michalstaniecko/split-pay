@@ -40,6 +40,7 @@ const pizza: Expense = {
   groupId: GROUP,
   version: 2,
   createdBy: id(200),
+  createdByMember: null,
   createdAt: '2026-07-11T18:00:00.000Z',
   updatedAt: '2026-07-11T19:00:00.000Z',
   deletedAt: null,

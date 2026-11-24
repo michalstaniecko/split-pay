@@ -9,7 +9,7 @@ import type { TransferRow } from '@/features/balances/balances';
 import { balancesQuery, type GroupBalances } from '@/features/balances/balances-query';
 import { BalancesView } from '@/features/balances/balances-view';
 import { myMemberId } from '@/features/entries/conversation';
-import { type GroupDetail, groupQuery } from '@/features/groups/groups-query';
+import { type GroupDetail, useGroup } from '@/features/groups/groups-query';
 import { NudgeButton } from '@/features/notifications/nudge-button';
 import { authClient } from '@/lib/auth-client';
 
@@ -24,7 +24,7 @@ import { authClient } from '@/lib/auth-client';
 export default function BalancesSheet() {
   const { theme } = useUnistyles();
   const { groupId } = useLocalSearchParams<{ groupId: string }>();
-  const group = useQuery(groupQuery(groupId));
+  const group = useGroup(groupId);
   const balances = useQuery(balancesQuery(groupId));
 
   if (group.isError) return <GroupNotFound error={group.error} onRetry={() => void group.refetch()} />;

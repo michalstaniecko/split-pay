@@ -6,7 +6,7 @@ import { settlementMessage } from './settlement-message';
 const id = (n: number) => `00000000-0000-4000-8000-${n.toString().padStart(12, '0')}`;
 const ANIA = id(1);
 const BARTEK = id(2);
-const member = (memberId: string, displayName: string): Member => ({
+const member = (memberId: string, displayName: string): Member & { displayName: string } => ({
   id: memberId,
   groupId: id(100),
   displayName,
@@ -21,6 +21,7 @@ const settlement: Settlement = {
   groupId: id(100),
   version: 1,
   createdBy: id(200),
+  createdByMember: null,
   createdAt: '2026-07-12T10:00:00.000Z',
   updatedAt: '2026-07-12T10:00:00.000Z',
   deletedAt: null,

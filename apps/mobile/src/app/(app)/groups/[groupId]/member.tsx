@@ -8,7 +8,7 @@ import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { Button } from '@/components/button';
 import { GroupNotFound } from '@/components/group-not-found';
 import { parseMemberName } from '@/features/groups/member-form';
-import { type GroupDetail, groupQuery, useAddMember, useRenameMember } from '@/features/groups/groups-query';
+import { type GroupDetailData, groupQuery, useAddMember, useRenameMember } from '@/features/groups/groups-query';
 import { closeSheet } from '@/lib/close-sheet';
 
 /**
@@ -25,12 +25,13 @@ export default function MemberSheet() {
   return <MemberForm key={memberId ?? 'new'} group={group.data} memberId={memberId} />;
 }
 
-function MemberForm({ group, memberId }: { group: GroupDetail; memberId: string | undefined }) {
+function MemberForm({ group, memberId }: { group: GroupDetailData; memberId: string | undefined }) {
   const { t } = useLingui();
   const { theme } = useUnistyles();
   const existing = memberId ? group.members.find((m) => m.id === memberId) : undefined;
   // One id per form: a retry after a lost response cannot add the member twice.
   const [id] = useState(() => randomUUID());
+  // A removed name (ADR-0019) starts empty: renaming replaces the marker with a name.
   const [name, setName] = useState(existing?.displayName ?? '');
   const [invalid, setInvalid] = useState(false);
   const addMember = useAddMember(group.id);

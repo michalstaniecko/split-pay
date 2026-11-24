@@ -8,7 +8,7 @@ import { formatAmount, formatDate, type Member, type Settlement } from '@split-p
  */
 export function settlementMessage(
   entry: Pick<Settlement, 'from' | 'to' | 'amount' | 'currency' | 'date'>,
-  context: { members: readonly Pick<Member, 'id' | 'displayName'>[]; myMemberId: string | null; locale: string },
+  context: { members: readonly { id: string; displayName: string }[]; myMemberId: string | null; locale: string },
 ): { text: string; label: string } {
   const name = (memberId: string) =>
     memberId === context.myMemberId ? t`Ty` : (context.members.find((m) => m.id === memberId)?.displayName ?? '?');

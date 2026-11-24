@@ -490,6 +490,10 @@ msgstr "Other"
 msgid "Inny powód"
 msgstr "Something else"
 
+#: src/features/profile/delete-account-section.tsx
+msgid "Jak usunąć konto"
+msgstr "How to delete the account"
+
 #: src/features/theme/theme-picker.tsx
 msgid "Jasny"
 msgstr "Light"
@@ -1447,8 +1451,12 @@ msgid "Tryb jasny/ciemny"
 msgstr "Light/dark mode"
 
 #: src/features/profile/delete-account-section.tsx
-msgid "Twój e-mail i dane konta zostaną usunięte. W grupach zostaniesz osobą bez konta „Usunięty użytkownik”, a wydatki i salda się nie zmienią. Tego nie można cofnąć."
-msgstr "Your email and account data will be deleted. In your groups you will become a member without an account called “Deleted user”; expenses and balances stay the same. This can't be undone."
+msgid "Twój e-mail, sposoby logowania, zdjęcie profilowe i dane do przelewu zostaną usunięte. W grupach zostaniesz osobą bez konta „Usunięty użytkownik”, a wydatki i salda się nie zmienią. Tego nie można cofnąć."
+msgstr "Your email, sign-in methods, profile photo and payout details will be deleted. In your groups you will become a member without an account called “Deleted user”; expenses and balances stay the same. This can't be undone."
+
+#: src/features/profile/delete-account-section.tsx
+msgid "Twój e-mail, sposoby logowania, zdjęcie profilowe i dane do przelewu zostaną usunięte. W grupach zostaniesz osobą bez konta pod obecną nazwą, a wydatki i salda się nie zmienią. Tego nie można cofnąć."
+msgstr "Your email, sign-in methods, profile photo and payout details will be deleted. In your groups you will stay as a member without an account under your current name; expenses and balances stay the same. This can't be undone."
 
 #. placeholder {0}: format.amount(shareAmount, baseCurrency)
 #: src/features/entries/entry-bubble.tsx
@@ -1545,6 +1553,10 @@ msgstr "Delete group permanently"
 msgid "Usuń konto"
 msgstr "Delete account"
 
+#: src/features/profile/delete-account-section.tsx
+msgid "Usuń konto i moją nazwę z grup"
+msgstr "Delete account and my name from groups"
+
 #: src/features/groups/group-lifecycle-section.tsx
 msgid "Usuń na zawsze"
 msgstr "Delete permanently"
@@ -1570,6 +1582,10 @@ msgstr "Delete account?"
 #: src/app/(app)/admin.tsx
 msgid "Usunąć zdjęcie?"
 msgstr "Remove the photo?"
+
+#: src/features/profile/delete-account-section.tsx
+msgid "Usunięcie konta usuwa Twój e-mail, sposoby logowania, zdjęcie profilowe i dane do przelewu. Wydatki i salda w grupach się nie zmienią."
+msgstr "Deleting your account removes your email, sign-in methods, profile photo and payout details. Expenses and balances in your groups stay the same."
 
 #: src/app/(app)/groups/[groupId]/entry-conflict.tsx
 msgid "Usunięcie wpisu"
@@ -1607,6 +1623,14 @@ msgstr "Create a group for a trip, a flat or a single bill."
 #: src/features/history/describe-change.ts
 msgid "Utworzono grupę {group}"
 msgstr "Created the group {group}"
+
+#: src/features/profile/delete-account-section.tsx
+msgid "W grupach zostaniesz osobą bez konta pod swoją ostatnią nazwą, więc znajomi nadal będą wiedzieć, kto to."
+msgstr "In your groups you will stay as a member without an account under your last name, so your friends still know who it is."
+
+#: src/features/profile/delete-account-section.tsx
+msgid "W grupach zostaniesz osobą bez konta, a każdy zobaczy zamiast nazwy „Usunięty użytkownik”."
+msgstr "In your groups you will stay as a member without an account, and everyone will see “Deleted user” instead of your name."
 
 #: src/features/entries/entry-detail-body.tsx
 msgid "W walucie bazowej"
