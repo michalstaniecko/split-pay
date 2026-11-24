@@ -196,14 +196,15 @@ describe('content reporting, admin panel, account blocking (#27)', () => {
     const block = (admin: Session, userId: string) =>
       client(admin).admin.users[':userId'].block.$post({ param: { userId }, json: { reason: 'repeated nudity' } });
 
-    it('a blocked account is rejected by the API, can no longer sign in, and can be unblocked', async () => {
+    it('a blocked account is rejected by the API and can be unblocked', async () => {
       const { ania, admin } = await setup();
       expect((await block(admin, ania.userId)).status).toBe(200);
 
       // Existing sessions stop working...
       expect((await client(ania).groups.$get()).status).toBe(401);
-      // ...and signing in again is refused.
-      await expect(signIn('ania@example.com')).rejects.toThrow(/403/);
+      // ...and a new sign-in reaches only account deletion (#48).
+      const blockedSession = await signIn('ania@example.com');
+      expect((await client(blockedSession).groups.$get()).status).toBe(403);
 
       const { blocked } = await parseResponse(client(admin).admin.users.blocked.$get());
       expect(blocked).toEqual([
