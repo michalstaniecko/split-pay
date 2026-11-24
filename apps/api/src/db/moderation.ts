@@ -29,8 +29,9 @@ export const photoReports = pgTable(
 );
 
 /**
- * Blocked accounts (#27): no sign-in (`auth.ts` refuses new sessions), and
- * blocking deletes their sessions. Removing the row unblocks.
+ * Blocked accounts (#27): blocking deletes their sessions; a new sign-in
+ * reaches only account deletion (#48, `requireUser` and `auth.ts`). Removing
+ * the row unblocks; deleting the account removes it too.
  */
 export const accountBlocks = pgTable('account_blocks', {
   userId: uuid()

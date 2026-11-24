@@ -1,11 +1,28 @@
+import { DetailedError } from 'hono/client';
 import { describe, expect, it } from 'vitest';
-import { isAccountBlockedError, reportablePhoto } from './moderation';
+import { isAccountBlockedResponse, reportablePhoto, sessionArea } from './moderation';
 
-describe('isAccountBlockedError', () => {
-  it('recognises the sign-in refusal for a blocked account', () => {
-    expect(isAccountBlockedError({ status: 403, code: 'ACCOUNT_BLOCKED' })).toBe(true);
-    expect(isAccountBlockedError({ status: 400, code: 'INVALID_OTP' })).toBe(false);
-    expect(isAccountBlockedError(null)).toBe(false);
+describe('sessionArea', () => {
+  it('signed out → sign-in; a blocked session → only "Konto zablokowane"; otherwise the app', () => {
+    expect(sessionArea(false, undefined)).toBe('auth');
+    expect(sessionArea(true, { blocked: true })).toBe('blocked');
+    expect(sessionArea(true, { blocked: false })).toBe('app');
+  });
+
+  it('shows the app while the API has not answered yet (offline: the cache stays usable)', () => {
+    expect(sessionArea(true, undefined)).toBe('app');
+  });
+});
+
+describe('isAccountBlockedResponse', () => {
+  const failed = (statusCode: number, data: unknown) =>
+    new DetailedError(`${statusCode}`, { statusCode, detail: { data, statusText: '' } });
+
+  it('recognises the API refusing a blocked session', () => {
+    expect(isAccountBlockedResponse(failed(403, { error: 'account_blocked' }))).toBe(true);
+    expect(isAccountBlockedResponse(failed(403, { error: 'forbidden' }))).toBe(false);
+    expect(isAccountBlockedResponse(failed(401, { error: 'unauthorized' }))).toBe(false);
+    expect(isAccountBlockedResponse(new Error('network'))).toBe(false);
   });
 });
 
