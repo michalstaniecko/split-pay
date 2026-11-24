@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { deletedUserName } from './account';
 import { formatAmount } from './format';
 import { type Entry, Id, type Member, referencedMemberIds } from './model';
 
@@ -141,7 +142,7 @@ export interface PushSummary {
   entryKind: Entry['kind'] | null;
   /** Pushes in the burst. */
   count: number;
-  /** The author's member name in the group. */
+  /** The author's member name in the group; empty = the name was removed (ADR-0019). */
   actorName: string;
   /** Title of the (newest) entry; `null` for settlements. */
   entryTitle: string | null;
@@ -176,7 +177,8 @@ function plPlural(count: number, forms: PluralForms): string {
  * Polish avoids gendered verbs ("Kasia: dodano 3 wydatki") except for the
  * claim, which matches the claim system message.
  */
-export function pushMessageBody(s: PushSummary, locale: string): string {
+export function pushMessageBody(summary: PushSummary, locale: string): string {
+  const s = { ...summary, actorName: summary.actorName || deletedUserName(locale) };
   const polish = locale.split('-')[0] === 'pl';
   const money = s.amount !== null && s.currency ? formatAmount(s.amount, s.currency, polish ? 'pl' : 'en') : null;
   switch (s.kind) {

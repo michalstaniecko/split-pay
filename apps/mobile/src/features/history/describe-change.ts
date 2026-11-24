@@ -8,6 +8,7 @@ import {
   formatAmount,
   formatDate,
   type MemberAmount,
+  memberName,
   resolveSplit,
   type SplitMode,
 } from '@split-pay/shared';
@@ -65,16 +66,17 @@ export function describeChange(change: Change, context: ChangeDescriptionContext
       return { title: t`Zmieniono ${what}`, details: entryEditDetails(change.before, change.after, context) };
     }
     case 'member.add': {
-      const name = change.after.displayName;
+      const name = memberName(change.after, context.locale);
       return only(t`Dodano osobę bez konta: ${name}`);
     }
     case 'member.join': {
-      const name = change.after.displayName;
+      const name = memberName(change.after, context.locale);
       return only(t`Dołączenie do grupy: ${name}`);
     }
     case 'member.rename': {
-      const before = change.before.displayName;
-      const after = change.after.displayName;
+      // A removed name (ADR-0019) reads "Deleted user" in the viewer's language.
+      const before = memberName(change.before, context.locale);
+      const after = memberName(change.after, context.locale);
       return only(t`Zmieniono imię: ${before} → ${after}`);
     }
     case 'member.attendance': {

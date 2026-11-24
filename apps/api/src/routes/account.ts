@@ -1,4 +1,4 @@
-import { deletedUserName } from '@split-pay/shared';
+import type { AccountDeletion } from '@split-pay/shared';
 import { and, eq, inArray, sql } from 'drizzle-orm';
 import type { OtpType } from '../auth';
 import type { Db } from '../db/client';
@@ -9,42 +9,46 @@ import { avatarPhotosOf, deletePhotos } from './photos';
 const otpTypes: readonly OtpType[] = ['sign-in', 'email-verification', 'forget-password', 'change-email'];
 
 /**
- * Deletes a user's account (ADR-0010). Personal data goes: the `user` row
- * (email, name, avatar) and with it sessions and sign-in accounts (FK
- * cascade), pending one-time codes, the claimer name on claims they made, their
- * member names in the change history.
+ * Deletes a user's account (ADR-0010, ADR-0019). Personal data goes: the
+ * `user` row (email, name, avatar) and with it sessions and sign-in accounts
+ * (FK cascade), and pending one-time codes.
  * In every group their member stays, as an ordinary member without an account
- * named "Usunięty użytkownik" in `locale` — entries reference member ids, so
- * expenses and balances are untouched. Anyone can rename or claim it later.
+ * — entries reference member ids (and `createdByMember` for "added by"), so
+ * expenses, balances and authorship are untouched. Anyone can rename or claim
+ * it later. By default it keeps its last name. With `removeName` the name is
+ * cleared everywhere it is stored — the members, the claimer name on claims
+ * they made, their member names in the change history — leaving the marker
+ * `null`, which every viewer shows as "Deleted user" in their own language.
  *
  * Payout details, push tokens, notification settings and queued pushes go
- * with the `user` row (`onDelete: 'cascade'`). Avatars are deleted from the
- * bucket (#26); receipt photos the user took stay with the group's entries.
- * Future personal data must be removed here too, or cascade the same way.
+ * with the `user` row (`onDelete: 'cascade'`). Avatars are always deleted
+ * from the bucket (#26); receipt photos the user took stay with the group's
+ * entries. Future personal data must be removed here too, or cascade the same way.
  */
 export async function deleteAccount(
   db: Db,
   account: { id: string; email: string },
-  locale: string,
+  { removeName }: AccountDeletion,
   storage?: ObjectStorage,
 ) {
-  const name = deletedUserName(locale);
   const avatars = await avatarPhotosOf(db, account.id);
   await db.transaction(async (tx) => {
-    // Names their members had (added, joined, renamed) in the change history.
-    const named = (column: typeof changes.before | typeof changes.after) =>
-      sql`case when ${column} is null then null else jsonb_build_object('displayName', ${name}::text) end`;
+    const myMembers = tx.select({ id: members.id }).from(members).where(eq(members.userId, account.id));
+    if (removeName) {
+      // Names their members had (added, joined, renamed) in the change history.
+      const named = (column: typeof changes.before | typeof changes.after) =>
+        sql`case when ${column} is null then null else jsonb_build_object('displayName', null) end`;
+      await tx
+        .update(changes)
+        .set({ before: named(changes.before), after: named(changes.after) })
+        .where(and(inArray(changes.kind, ['member.add', 'member.join', 'member.rename']), inArray(changes.targetId, myMembers)));
+      await tx.update(claims).set({ claimerName: null }).where(eq(claims.userId, account.id));
+    }
     await tx
-      .update(changes)
-      .set({ before: named(changes.before), after: named(changes.after) })
-      .where(
-        and(
-          inArray(changes.kind, ['member.add', 'member.join', 'member.rename']),
-          inArray(changes.targetId, tx.select({ id: members.id }).from(members).where(eq(members.userId, account.id))),
-        ),
-      );
-    await tx.update(members).set({ userId: null, displayName: name }).where(eq(members.userId, account.id));
-    await tx.update(claims).set({ userId: null, claimerName: name }).where(eq(claims.userId, account.id));
+      .update(members)
+      .set(removeName ? { userId: null, displayName: null } : { userId: null })
+      .where(eq(members.userId, account.id));
+    await tx.update(claims).set({ userId: null }).where(eq(claims.userId, account.id));
     await tx.delete(verification).where(
       inArray(
         verification.identifier,

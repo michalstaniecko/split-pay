@@ -1,7 +1,9 @@
 import { useLingui } from '@lingui/react/macro';
+import { memberName as nameOf } from '@split-pay/shared';
 import { router } from 'expo-router';
 import { Alert, Pressable, Text } from 'react-native';
 import { StyleSheet } from 'react-native-unistyles';
+import { useLocale } from '@/i18n/locale-provider';
 import { authClient } from '@/lib/auth-client';
 import { canUndoClaim } from './claims';
 import { type Claim, useUndoClaim } from './claims-query';
@@ -24,7 +26,10 @@ export function ClaimMessage({
   const undo = useUndoClaim(group.id);
   const undoable = canUndoClaim(group);
   const { data: session } = authClient.useSession();
-  const { claimerName, memberName } = claim;
+  const { locale } = useLocale();
+  // Names removed on account deletion (ADR-0019) read "Deleted user" in my language.
+  const claimerName = nameOf({ displayName: claim.claimerName }, locale);
+  const memberName = nameOf({ displayName: claim.memberName }, locale);
   const text = t`Przejęcie profilu ${memberName}: ${claimerName}`;
   const undoLabel = t`Cofnij przejęcie`;
 

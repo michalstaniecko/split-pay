@@ -36,7 +36,7 @@ import {
 } from '@/features/entries/expense-draft';
 import { PayersField, SplitField } from '@/features/entries/split-fields';
 import { useEntryLabels } from '@/features/entries/use-entry-labels';
-import { type GroupDetail, groupQuery } from '@/features/groups/groups-query';
+import { type GroupDetail, useGroup } from '@/features/groups/groups-query';
 import { ratesQuery } from '@/features/rates/rates-query';
 import { LockedOfflineError, OutboxBlockedError } from '@/features/offline/offline-changes';
 import { pendingReceipt } from '@/features/photos/pending-receipt';
@@ -71,7 +71,7 @@ export default function ExpenseFormSheet() {
   const { t } = useLingui();
   const { theme } = useUnistyles();
   const { groupId, entryId } = useLocalSearchParams<{ groupId: string; entryId?: string }>();
-  const group = useQuery(groupQuery(groupId));
+  const group = useGroup(groupId);
   const entries = useQuery({ ...entriesQuery(groupId), enabled: entryId !== undefined });
   if (group.isPending || (entryId !== undefined && entries.isPending)) {
     return <ActivityIndicator style={styles.loading} color={theme.colors.primary} />;

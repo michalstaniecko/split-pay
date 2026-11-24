@@ -27,6 +27,7 @@ describe('entryFromEdit', () => {
       groupId: current.groupId,
       version: 4,
       createdBy: current.createdBy,
+      createdByMember: current.createdByMember,
       createdAt: '2026-07-10T10:00:00.000Z',
       updatedAt: now,
       deletedAt: null,

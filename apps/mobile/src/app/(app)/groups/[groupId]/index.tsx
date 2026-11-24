@@ -35,7 +35,7 @@ import {
 } from '@/features/entries/entry-edit';
 import { UndoSnackbar } from '@/features/entries/undo-snackbar';
 import { useMarkGroupSeen } from '@/features/groups/group-unread-store';
-import { type GroupDetail, groupQuery } from '@/features/groups/groups-query';
+import { type GroupDetail, useGroup } from '@/features/groups/groups-query';
 import { groupAvatarsQuery, receiptsQuery } from '@/features/photos/photos-query';
 import { useFocusedEntry } from '@/features/notifications/use-focused-entry';
 import { OfflineBanner } from '@/features/offline/offline-banner';
@@ -63,7 +63,7 @@ export default function ConversationScreen() {
   const { theme } = useUnistyles();
   // `entryId`: opened from a notification — scroll to that bubble and highlight it.
   const { groupId, entryId } = useLocalSearchParams<{ groupId: string; entryId?: string }>();
-  const group = useQuery(groupQuery(groupId));
+  const group = useGroup(groupId);
   const entries = useQuery(entriesQuery(groupId));
   const claims = useQuery(claimsQuery(groupId));
   useRefreshOnFocus(group.refetch);

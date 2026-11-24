@@ -6,7 +6,7 @@ const id = (n: number) => `00000000-0000-4000-8000-${n.toString().padStart(12, '
 const ANIA = id(1);
 const BARTEK = id(2);
 const TOMEK = id(3);
-const member = (memberId: string, displayName: string, userId: string | null = null): Member => ({
+const member = (memberId: string, displayName: string, userId: string | null = null): Member & { displayName: string } => ({
   id: memberId,
   groupId: id(100),
   displayName,

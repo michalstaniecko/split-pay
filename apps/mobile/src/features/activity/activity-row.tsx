@@ -1,5 +1,5 @@
 import { useLingui } from '@lingui/react/macro';
-import type { ActivityItem } from '@split-pay/shared';
+import { type ActivityItem, type ActivityPage, memberName as nameOf } from '@split-pay/shared';
 import { router } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
 import { StyleSheet } from 'react-native-unistyles';
@@ -15,13 +15,17 @@ import { activityTarget } from './activity';
  * history's wording, #20), who and when. Tapping opens the group's
  * Conversation, scrolled to the entry's bubble when there is one.
  */
-export function ActivityRow({ item, memberNames }: { item: ActivityItem; memberNames: Record<string, string> }) {
+export function ActivityRow({ item, memberNames }: { item: ActivityItem; memberNames: ActivityPage['memberNames'] }) {
   const { t } = useLingui();
   const { locale } = useLocale();
   const format = useFormatters();
   const labels = useEntryLabels();
 
-  const memberName = (memberId: string) => memberNames[memberId] ?? t`nieznana osoba`;
+  // Unknown id → "nieznana osoba"; a removed name (null, ADR-0019) → "Deleted user".
+  const memberName = (memberId: string) => {
+    const name = memberNames[memberId];
+    return name === undefined ? t`nieznana osoba` : nameOf({ displayName: name }, locale);
+  };
   const { title } = describeChange(item, {
     locale,
     memberName,

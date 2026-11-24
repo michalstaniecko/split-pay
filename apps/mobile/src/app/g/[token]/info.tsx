@@ -1,12 +1,11 @@
 import { plural } from '@lingui/core/macro';
 import { useLingui } from '@lingui/react/macro';
-import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { GroupAvatar } from '@/components/group-avatar';
 import { PublicError } from '@/features/web-view/public-error';
-import { type PublicGroup, publicGroupQuery } from '@/features/web-view/public-view-query';
+import { type PublicGroup, usePublicGroup } from '@/features/web-view/public-view-query';
 import { SponsorLink } from '@/features/web-view/sponsor-link';
 import { useThisIsMe } from '@/features/web-view/this-is-me';
 import { useFormatters } from '@/i18n/use-formatters';
@@ -18,7 +17,7 @@ import { useFormatters } from '@/i18n/use-formatters';
 export default function PublicGroupInfoScreen() {
   const { theme } = useUnistyles();
   const { token } = useLocalSearchParams<{ token: string }>();
-  const group = useQuery(publicGroupQuery(token));
+  const group = usePublicGroup(token);
 
   if (group.isPending) return <ActivityIndicator style={styles.loading} color={theme.colors.primary} />;
   if (group.isError) return <PublicError error={group.error} onRetry={() => void group.refetch()} />;

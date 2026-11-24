@@ -1,5 +1,6 @@
 import { plural } from '@lingui/core/macro';
 import { useLingui } from '@lingui/react/macro';
+import { memberName } from '@split-pay/shared';
 import { useQuery } from '@tanstack/react-query';
 import { Redirect, router, Stack, useLocalSearchParams } from 'expo-router';
 import { DetailedError } from 'hono/client';
@@ -12,6 +13,7 @@ import { type ClaimableMember, joinChoices } from '@/features/claims/claims';
 import { useClaimMember } from '@/features/claims/claims-query';
 import { pendingJoin } from '@/features/group-link/group-link';
 import { linkPreviewQuery, useJoinGroup } from '@/features/group-link/group-link-query';
+import { useLocale } from '@/i18n/locale-provider';
 import { authClient } from '@/lib/auth-client';
 
 const openConversation = (groupId: string) => router.replace({ pathname: '/groups/[groupId]', params: { groupId } });
@@ -48,6 +50,7 @@ function JoinScreen() {
   const { t } = useLingui();
   const { theme } = useUnistyles();
   const { token } = useLocalSearchParams<{ token: string }>();
+  const { locale } = useLocale();
   const preview = useQuery(linkPreviewQuery(token));
   const join = useJoinGroup(token);
   const claim = useClaimMember(token);
@@ -90,7 +93,9 @@ function JoinScreen() {
   }
 
   const { group, memberCount } = preview.data;
-  const choices = joinChoices(preview.data);
+  // A member whose name was removed (ADR-0019) is offered as "Deleted user".
+  const claimable = preview.data.claimable.map((m) => ({ ...m, displayName: memberName(m, locale) }));
+  const choices = joinChoices({ ...preview.data, claimable });
   const busy = join.isPending || claim.isPending;
   const personalName = choices.kind === 'personal' ? choices.member.displayName : '';
   const onJoin = () => join.mutate(undefined, { onSuccess: ({ groupId }) => openConversation(groupId) });

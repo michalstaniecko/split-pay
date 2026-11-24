@@ -15,6 +15,7 @@ const pizza: Expense = {
   groupId: id(100),
   version: 1,
   createdBy: id(200),
+  createdByMember: null,
   createdAt: '2026-07-11T10:00:00.000Z',
   updatedAt: '2026-07-11T10:00:00.000Z',
   deletedAt: null,
@@ -103,6 +104,14 @@ describe('describeChange', () => {
     });
     expect(describe_('en', { kind: 'entry.edit', targetId: pizza.id, before: pizza, after }).details[0]).toBe(
       'Title: “Pizza” → “Pizza i napoje”',
+    );
+  });
+
+  it('names a removed name (marker) "Deleted user" in the viewer’s language (ADR-0019)', () => {
+    const renamed = { kind: 'member.rename', targetId: BARTEK, before: { displayName: null }, after: { displayName: 'Bartek' } };
+    expect(describe_('pl', renamed).title).toBe('Zmieniono imię: Usunięty użytkownik → Bartek');
+    expect(describe_('en', { kind: 'member.join', targetId: BARTEK, before: null, after: { displayName: null } }).title).toBe(
+      'Joined the group: Deleted user',
     );
   });
 

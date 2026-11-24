@@ -20,8 +20,11 @@ export const claims = pgTable(
       .references(() => members.id, { onDelete: 'cascade' }),
     /** The claiming user; `null` once their account is deleted. */
     userId: uuid().references(() => user.id, { onDelete: 'set null' }),
-    /** The claimer's name at claim time ("Tomek przejął profil …"). */
-    claimerName: text().notNull(),
+    /**
+     * The claimer's name at claim time ("Tomek przejął profil …"); `null` once
+     * removed with their account (ADR-0019), shown as "Deleted user".
+     */
+    claimerName: text(),
     claimedAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
     undoneAt: timestamp({ withTimezone: true }),
     /** The member who undid the claim (no FK: it may be the claimed member itself). */

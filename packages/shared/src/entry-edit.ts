@@ -41,6 +41,7 @@ export function entryFromEdit(current: Entry, input: NewEntry, now: string): z.Z
     groupId: current.groupId,
     version: current.version + 1,
     createdBy: current.createdBy,
+    createdByMember: current.createdByMember,
     createdAt: current.createdAt,
     updatedAt: now,
     deletedAt: current.deletedAt,
@@ -49,7 +50,16 @@ export function entryFromEdit(current: Entry, input: NewEntry, now: string): z.Z
 
 /** The entered fields of an entry (what an edit sends): `Entry` minus the server-owned fields. */
 export function toNewEntry(entry: Entry): NewEntry {
-  const { groupId: _g, version: _v, createdBy: _c, createdAt: _ca, updatedAt: _u, deletedAt: _d, ...rest } = entry;
+  const {
+    groupId: _g,
+    version: _v,
+    createdBy: _c,
+    createdByMember: _cm,
+    createdAt: _ca,
+    updatedAt: _u,
+    deletedAt: _d,
+    ...rest
+  } = entry;
   return rest;
 }
 

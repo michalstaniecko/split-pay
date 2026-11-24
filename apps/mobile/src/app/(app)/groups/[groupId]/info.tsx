@@ -12,7 +12,7 @@ import { GroupLinkSection } from '@/features/group-link/group-link-section';
 import { AttendanceGridView } from '@/features/groups/attendance-grid-view';
 import { GroupLifecycleSection } from '@/features/groups/group-lifecycle-section';
 import { GroupSettingsSection } from '@/features/groups/group-settings-section';
-import { type GroupDetail, groupQuery } from '@/features/groups/groups-query';
+import { type GroupDetail, useGroup } from '@/features/groups/groups-query';
 import { type MemberRow, memberRows } from '@/features/groups/member-form';
 import { HistorySection } from '@/features/history/history-section';
 import { ReportableMemberAvatar } from '@/features/moderation/reportable-member-avatar';
@@ -27,7 +27,7 @@ import { authClient } from '@/lib/auth-client';
 export default function GroupInfoScreen() {
   const { theme } = useUnistyles();
   const { groupId } = useLocalSearchParams<{ groupId: string }>();
-  const group = useQuery(groupQuery(groupId));
+  const group = useGroup(groupId);
 
   if (group.isPending) return <ActivityIndicator style={styles.loading} color={theme.colors.primary} />;
   if (group.isError) return <GroupNotFound error={group.error} onRetry={() => void group.refetch()} />;

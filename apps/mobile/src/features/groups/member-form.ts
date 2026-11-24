@@ -1,4 +1,5 @@
 import { canRenameMember, type Member, MemberRename } from '@split-pay/shared';
+import type { Named } from './member-name';
 
 export type ParsedMemberName = { ok: true; displayName: string } | { ok: false };
 
@@ -25,7 +26,7 @@ export interface MemberRow {
  * are renamable).
  */
 export function memberRows(
-  group: { ownerMemberId: string; members: readonly Member[] },
+  group: { ownerMemberId: string; members: readonly Named<Member>[] },
   myUserId: string | undefined,
 ): MemberRow[] {
   return group.members.map((member) => ({

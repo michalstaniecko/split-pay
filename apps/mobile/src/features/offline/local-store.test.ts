@@ -51,6 +51,7 @@ const entry = (groupId: string, overrides: Partial<Entry> = {}): Entry => {
     groupId,
     version: 1,
     createdBy: USER,
+    createdByMember: null,
     createdAt: `2026-07-02T10:00:${String(n % 60).padStart(2, '0')}.000Z`,
     updatedAt: `2026-07-02T10:00:${String(n % 60).padStart(2, '0')}.000Z`,
     deletedAt: null,

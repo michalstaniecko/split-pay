@@ -25,14 +25,13 @@ const toPublicMember = (m: MemberRow) => ({
 
 /**
  * An entry as the public view shows it: the author's user id is replaced by
- * `HIDDEN_USER_ID` and named by member instead (`addedBy`), and there is no
- * receipt photo (logged-out visitors see no photos, SPEC "Photos").
+ * `HIDDEN_USER_ID` ("added by" is `createdByMember`), and there is no receipt
+ * photo (logged-out visitors see no photos, SPEC "Photos").
  */
-function toPublicEntry(entry: Entry, memberByUser: ReadonlyMap<string, string>) {
-  const addedBy = memberByUser.get(entry.createdBy) ?? null;
+function toPublicEntry(entry: Entry) {
   return entry.kind === 'settlement'
-    ? { ...entry, createdBy: HIDDEN_USER_ID, addedBy }
-    : { ...entry, createdBy: HIDDEN_USER_ID, receiptPhotoId: null, addedBy };
+    ? { ...entry, createdBy: HIDDEN_USER_ID }
+    : { ...entry, createdBy: HIDDEN_USER_ID, receiptPhotoId: null };
 }
 
 /**
@@ -83,16 +82,12 @@ export const publicViewRoutes = ({ db }: { db: Db }) => {
       .get('/:token/entries', async (c) => {
         const link = await groupOf(c.req.param('token'));
         if (!link) return c.json(notFound, 404);
-        const [rows, entries] = await Promise.all([membersOf(db, link.group.id), liveEntries(db, link.group.id)]);
-        const memberByUser = new Map(rows.flatMap((m) => (m.userId ? [[m.userId, m.id] as const] : [])));
+        const entries = await liveEntries(db, link.group.id);
         entries.sort(
           (a, b) =>
             a.date.localeCompare(b.date) || a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id),
         );
-        return c.json(
-          entries.map((e) => toPublicEntry(e, memberByUser)),
-          200,
-        );
+        return c.json(entries.map(toPublicEntry), 200);
       })
       /** Balances and suggested transfers (balance banner and drawer). */
       .get('/:token/balances', async (c) => {

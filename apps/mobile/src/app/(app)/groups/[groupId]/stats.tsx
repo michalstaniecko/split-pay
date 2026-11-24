@@ -3,7 +3,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { ActivityIndicator, ScrollView } from 'react-native';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { GroupNotFound } from '@/components/group-not-found';
-import { groupQuery } from '@/features/groups/groups-query';
+import { useGroup } from '@/features/groups/groups-query';
 import { statsQuery } from '@/features/stats/stats-query';
 import { StatsView } from '@/features/stats/stats-view';
 import { useRefreshOnFocus } from '@/lib/use-refresh-on-focus';
@@ -12,7 +12,7 @@ import { useRefreshOnFocus } from '@/lib/use-refresh-on-focus';
 export default function StatsScreen() {
   const { theme } = useUnistyles();
   const { groupId } = useLocalSearchParams<{ groupId: string }>();
-  const group = useQuery(groupQuery(groupId));
+  const group = useGroup(groupId);
   const stats = useQuery(statsQuery(groupId));
   useRefreshOnFocus(stats.refetch);
 

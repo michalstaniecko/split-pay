@@ -9,7 +9,7 @@ const BARTEK = id(2);
 const KASIA = id(3);
 const ANIA_USER = id(200);
 
-const member = (memberId: string, displayName: string, userId: string | null = null): Member => ({
+const member = (memberId: string, displayName: string, userId: string | null = null): Member & { displayName: string } => ({
   id: memberId,
   groupId: GROUP,
   displayName,
@@ -25,6 +25,7 @@ const expense = (date: string, createdAt: string, payers: { memberId: string; am
   groupId: GROUP,
   version: 1,
   createdBy: ANIA_USER,
+  createdByMember: null,
   createdAt,
   updatedAt: createdAt,
   deletedAt: null,

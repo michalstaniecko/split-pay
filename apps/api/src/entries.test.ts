@@ -51,7 +51,7 @@ describe('entries', () => {
   }
 
   it('creates an equal-split expense as version 1 by the caller', async () => {
-    const { ania, group, expense, create, list } = await setup();
+    const { ania, group, me, expense, create, list } = await setup();
     const input = expense();
 
     const res = await create(input);
@@ -62,6 +62,7 @@ describe('entries', () => {
       groupId: group.id,
       version: 1,
       createdBy: ania.userId,
+      createdByMember: me,
       createdAt: expect.any(String),
       updatedAt: created.createdAt,
       deletedAt: null,
