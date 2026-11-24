@@ -49,7 +49,7 @@ describe('reportServerErrors', () => {
   });
 
   it('reports an unhandled error with the route pattern and user id, and answers 500', async () => {
-    const res = await appWith({ capture }).request('/links/secret-token');
+    const res = await appWith({ capture, captureJob: vi.fn() }).request('/links/secret-token');
 
     expect(res.status).toBe(500);
     expect(capture).toHaveBeenCalledOnce();
@@ -57,14 +57,14 @@ describe('reportServerErrors', () => {
   });
 
   it('reports a 5xx HTTPException and keeps its response', async () => {
-    const res = await appWith({ capture }).request('/unavailable');
+    const res = await appWith({ capture, captureJob: vi.fn() }).request('/unavailable');
 
     expect(res.status).toBe(503);
     expect(capture).toHaveBeenCalledOnce();
   });
 
   it('does not report client errors', async () => {
-    const res = await appWith({ capture }).request('/not-found');
+    const res = await appWith({ capture, captureJob: vi.fn() }).request('/not-found');
 
     expect(res.status).toBe(404);
     expect(capture).not.toHaveBeenCalled();
@@ -116,5 +116,27 @@ describe('startSentry', () => {
     for (const secret of ['ania@example.com', 'secret-token', '123456', 'secret-bearer', 'secret-cookie', '203.0.113.7']) {
       expect(envelope).not.toContain(secret);
     }
+  });
+
+  it('sends a failed background job run tagged with the job, scrubbed', async () => {
+    const sent: string[] = [];
+    const reporter = startSentry(
+      { SENTRY_DSN: 'https://key@o1.ingest.sentry.io/1', SENTRY_ENVIRONMENT: 'test' },
+      {
+        transport: (options) =>
+          Sentry.createTransport(options, async (request) => {
+            sent.push(typeof request.body === 'string' ? request.body : new TextDecoder().decode(request.body));
+            return { statusCode: 200 };
+          }),
+      },
+    );
+
+    reporter!.captureJob(new Error('push to ania@example.com failed'), 'push');
+    await Sentry.flush(2000);
+
+    const envelope = sent.join('\n');
+    expect(envelope).toContain('push to [email] failed');
+    expect(envelope).toContain('"job":"push"');
+    expect(envelope).not.toContain('ania@example.com');
   });
 });

@@ -13,6 +13,8 @@ export interface ErrorContext {
 /** Sends server errors somewhere (Sentry). */
 export interface ErrorReporter {
   capture(error: unknown, context: ErrorContext): void;
+  /** A failed run of a background job (`rates`, `push`, `photo-retention`). */
+  captureJob(error: unknown, job: string): void;
 }
 
 /**
@@ -67,6 +69,12 @@ export function startSentry(
       Sentry.withScope((scope) => {
         scope.setTags({ method, route });
         if (userId) scope.setUser({ id: userId });
+        Sentry.captureException(error);
+      });
+    },
+    captureJob(error, job) {
+      Sentry.withScope((scope) => {
+        scope.setTag('job', job);
         Sentry.captureException(error);
       });
     },

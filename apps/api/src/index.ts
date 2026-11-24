@@ -59,7 +59,13 @@ const app = createApp({
   ...(storage ? { storage } : {}),
 });
 // Daily ECB rates (ADR-0014); FRANKFURTER_URL points at a self-hosted instance if set.
-startRateJob({ db, source: frankfurterRateSource({ baseUrl: process.env.FRANKFURTER_URL || undefined }) });
+// Failed runs of background jobs go to Sentry too (tagged `job`), not only to the log.
+const reportJob = (job: string) => (error: unknown) => errorReporter?.captureJob(error, job);
+startRateJob({
+  db,
+  source: frankfurterRateSource({ baseUrl: process.env.FRANKFURTER_URL || undefined }),
+  onError: reportJob('rates'),
+});
 // Push notifications (#24): PUSH_SENDER=expo sends through the Expo push service
 // (EXPO_ACCESS_TOKEN only if enhanced push security is on); anything else logs them.
 startPushJob({
@@ -68,10 +74,11 @@ startPushJob({
     process.env.PUSH_SENDER === 'expo'
       ? expoPushSender({ accessToken: process.env.EXPO_ACCESS_TOKEN || undefined })
       : logPushSender,
+  onError: reportJob('push'),
 });
 
 // Daily: receipts of groups archived over a year ago, orphans, abandoned uploads.
-if (storage) startPhotoRetentionJob({ db, storage });
+if (storage) startPhotoRetentionJob({ db, storage, onError: reportJob('photo-retention') });
 
 serve({ fetch: app.fetch, port }, (info) => {
   console.log(`API listening on http://localhost:${info.port}`);
