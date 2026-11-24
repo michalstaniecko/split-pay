@@ -39,7 +39,17 @@ const dirtyEvent = () => ({
       {
         type: 'Error',
         value: 'No member for ola@example.org',
-        stacktrace: { frames: [{ filename: 'app.ts', lineno: 1, vars: { email: 'ola@example.org' } }] },
+        stacktrace: {
+          frames: [
+            {
+              filename: 'app.ts',
+              lineno: 1,
+              vars: { email: 'ola@example.org' },
+              context_line: "throw new Error('no ola@example.org');",
+              pre_context: ['// ola@example.org'],
+            },
+          ],
+        },
       },
     ],
   },
@@ -119,7 +129,11 @@ describe('scrubErrorReport', () => {
     expect(scrubbed.exception?.values?.[0]).toEqual({
       type: 'Error',
       value: 'No member for [email]',
-      stacktrace: { frames: [{ filename: 'app.ts', lineno: 1 }] },
+      stacktrace: {
+        frames: [
+          { filename: 'app.ts', lineno: 1, context_line: "throw new Error('no [email]');", pre_context: ['// [email]'] },
+        ],
+      },
     });
     expect(scrubbed.message).toBe('Sign-in failed for [email]');
     expect(scrubbed.logentry).toEqual({ message: 'Sign-in failed for %s', params: ['[email]'] });

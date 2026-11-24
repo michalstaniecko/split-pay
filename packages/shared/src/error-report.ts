@@ -5,7 +5,8 @@
  * contexts go through allowlists: a field the scrubber does not know is dropped
  * rather than sent. `extra` is dropped entirely.
  *
- * Kept: error types and messages, stack frames (without local variables), the
+ * Kept: error types and messages, stack frames (without local variables; source
+ * lines scrubbed), the
  * request method, URLs without query strings and link tokens, harmless headers,
  * breadcrumb outlines (category, method, status, URLs), device/OS/app/runtime
  * contexts without the device name, and the user id. Every kept string has
@@ -23,12 +24,18 @@ export interface ErrorReport {
     method?: string;
     url?: string;
     headers?: Record<string, string>;
-    [key: string]: unknown;
   };
   exception?: {
     values?: Array<{
       value?: string;
-      stacktrace?: { frames?: Array<{ vars?: Record<string, unknown> }> };
+      stacktrace?: {
+        frames?: Array<{
+          vars?: Record<string, unknown>;
+          context_line?: string;
+          pre_context?: string[];
+          post_context?: string[];
+        }>;
+      };
     }>;
   };
   breadcrumbs?: Array<{
@@ -114,6 +121,18 @@ function scrubBreadcrumb(crumb: NonNullable<ErrorReport['breadcrumbs']>[number])
   });
 }
 
+type Frame = NonNullable<NonNullable<NonNullable<ErrorReport['exception']>['values']>[number]['stacktrace']>['frames'];
+
+/** A stack frame without local variables; source lines around it have emails replaced. */
+function scrubFrame<F extends NonNullable<Frame>[number]>({ vars: _vars, ...frame }: F): F {
+  return defined<F>({
+    ...(frame as Partial<F>),
+    context_line: frame.context_line === undefined ? undefined : scrubText(frame.context_line),
+    pre_context: frame.pre_context?.map(scrubText),
+    post_context: frame.post_context?.map(scrubText),
+  } as { [K in keyof F]?: F[K] | undefined });
+}
+
 function scrubContexts(contexts: NonNullable<ErrorReport['contexts']>): ErrorReport['contexts'] {
   const kept: NonNullable<ErrorReport['contexts']> = {};
   for (const [name, context] of Object.entries(contexts)) {
@@ -150,7 +169,7 @@ export function scrubErrorReport<T extends ErrorReport>(event: T): T {
               stacktrace: value.stacktrace
                 ? {
                     ...value.stacktrace,
-                    frames: value.stacktrace.frames?.map(({ vars: _vars, ...frame }) => frame),
+                    frames: value.stacktrace.frames?.map(scrubFrame),
                   }
                 : undefined,
             }),
