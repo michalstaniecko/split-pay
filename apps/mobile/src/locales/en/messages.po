@@ -1419,10 +1419,6 @@ msgid "Ten link jest dla osoby „{personalName}”. Przejmij ten profil razem z
 msgstr "This link is for “{personalName}”. Claim this profile with its expense history."
 
 #: src/app/g/[token]/index.tsx
-msgid "Ten profil ma już konto. Poproś kogoś z grupy o link grupy."
-msgstr "This profile already has an account. Ask someone in the group for the group link."
-
-#: src/app/g/[token]/index.tsx
 msgid "Ten profil został już przejęty."
 msgstr "This profile has already been claimed."
 

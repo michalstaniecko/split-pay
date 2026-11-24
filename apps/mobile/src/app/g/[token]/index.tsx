@@ -133,11 +133,6 @@ function JoinScreen() {
             onPress={() => onClaim(choices.member.id)}
           />
         </View>
-      ) : choices.kind === 'personal-taken' ? (
-        <View style={styles.actions}>
-          <Text style={styles.text}>{t`Ten profil ma już konto. Poproś kogoś z grupy o link grupy.`}</Text>
-          <Button variant="secondary" label={t`Wróć`} onPress={() => router.replace('/')} />
-        </View>
       ) : (
         <View style={styles.actions}>
           <Button label={t`Dołącz jako nowa osoba`} loading={join.isPending} disabled={busy} onPress={onJoin} />
