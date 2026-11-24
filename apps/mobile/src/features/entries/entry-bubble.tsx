@@ -154,16 +154,39 @@ export function EntryBubble({
 }
 
 /** Sticky day separator with the group's net total for the day, hidden when not positive. */
-export function DaySeparator({ item, baseCurrency }: { item: DayItem; baseCurrency: string }) {
+export function DaySeparator({
+  item,
+  baseCurrency,
+  onPress,
+}: {
+  item: DayItem;
+  baseCurrency: string;
+  /** Opens the day strip (#38); without it the separator is not pressable. */
+  onPress?: () => void;
+}) {
+  const { t } = useLingui();
   const format = useFormatters();
   const label = format.date(item.date);
   const net = separatorTotal(item);
   const total = net === null ? null : format.amount(net, baseCurrency);
+  const text = total ? `${label} · ${total}` : label;
   return (
     <View style={styles.dayRow} accessibilityRole="header">
-      <View style={styles.dayPill}>
-        <Text style={styles.dayText}>{total ? `${label} · ${total}` : label}</Text>
-      </View>
+      {onPress ? (
+        <Pressable
+          onPress={onPress}
+          accessibilityRole="button"
+          accessibilityLabel={text}
+          accessibilityHint={t`Otwiera pasek dni`}
+          hitSlop={8}
+          style={({ pressed }) => [styles.dayPill, pressed && styles.pressed]}>
+          <Text style={styles.dayText}>{text}</Text>
+        </Pressable>
+      ) : (
+        <View style={styles.dayPill}>
+          <Text style={styles.dayText}>{text}</Text>
+        </View>
+      )}
     </View>
   );
 }

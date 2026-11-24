@@ -54,6 +54,10 @@ msgstr "{count, plural, one {# osoba} few {# osoby} many {# osób} other {# osob
 msgid "{from} → {to}: {amount}"
 msgstr "{from} → {to}: {amount}"
 
+#: src/features/entries/day-strip-modal.tsx
+msgid "{label}, brak wpisów"
+msgstr "{label}, brak wpisów"
+
 #. placeholder {0}: amount(total)
 #: src/features/stats/stats-view.tsx
 msgid "{label}, razem {0}"
@@ -1037,6 +1041,10 @@ msgstr "Otwarte zgłoszenia"
 msgid "Otwiera historię wpisu"
 msgstr "Otwiera historię wpisu"
 
+#: src/features/entries/entry-bubble.tsx
+msgid "Otwiera pasek dni"
+msgstr "Otwiera pasek dni"
+
 #: src/features/photos/receipt-photo.tsx
 msgid "Otwiera zdjęcie na pełnym ekranie"
 msgstr "Otwiera zdjęcie na pełnym ekranie"
@@ -1781,6 +1789,10 @@ msgstr "Wybierz, kto płaci."
 msgid "Wybierz, która wersja zostaje."
 msgstr "Wybierz, która wersja zostaje."
 
+#: src/features/entries/day-strip-modal.tsx
+msgid "Wybór dnia"
+msgstr "Wybór dnia"
+
 #: src/features/search/inbox-search-field.tsx
 msgid "Wyczyść wyszukiwanie"
 msgstr "Wyczyść wyszukiwanie"
@@ -1928,6 +1940,7 @@ msgstr "założyciel"
 #: src/app/(app)/groups/[groupId]/unsent-entry.tsx
 #: src/app/(app)/report-photo.tsx
 #: src/app/g/[token]/entries/[entryId].tsx
+#: src/features/entries/day-strip-modal.tsx
 #: src/features/entries/entry-actions-menu.tsx
 msgid "Zamknij"
 msgstr "Zamknij"

@@ -1,13 +1,16 @@
 import { useLingui } from '@lingui/react/macro';
-import { FlashList } from '@shopify/flash-list';
+import { FlashList, type FlashListRef } from '@shopify/flash-list';
 import { useQuery } from '@tanstack/react-query';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
-import { useMemo } from 'react';
+import type { LocalDate } from '@split-pay/shared';
+import { useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { GroupAvatar } from '@/components/group-avatar';
 import { BalanceBannerView } from '@/features/balances/balance-banner';
-import { conversationItems } from '@/features/entries/conversation';
+import { type ConversationItem, conversationItems } from '@/features/entries/conversation';
+import { dayStripDays } from '@/features/entries/day-strip';
+import { DayStrip } from '@/features/entries/day-strip-modal';
 import { DaySeparator, EntryBubble } from '@/features/entries/entry-bubble';
 import { SettlementSystemMessage } from '@/features/settlements/settlement-system-message';
 import { ClaimBanner } from '@/features/web-view/claim-banner';
@@ -124,6 +127,11 @@ function EntryList({
     () => conversationItems(entries, { members: data.members, myMemberId: me, baseCurrency }),
     [entries, data.members, me, baseCurrency],
   );
+  // Day strip (#38), as in the app: a separator opens it, picking a day jumps to it.
+  const listRef = useRef<FlashListRef<ConversationItem>>(null);
+  const [stripDay, setStripDay] = useState<LocalDate | null>(null);
+  const { startDate, endDate } = data.group;
+  const stripDays = useMemo(() => dayStripDays(items, { startDate, endDate }), [items, startDate, endDate]);
 
   const openEntry = (entryId: string) =>
     router.push({ pathname: '/g/[token]/entries/[entryId]', params: { token, entryId } });
@@ -137,36 +145,45 @@ function EntryList({
   }
 
   return (
-    <FlashList
-      data={items}
-      keyExtractor={(item) => item.key}
-      getItemType={(item) => item.type}
-      stickyHeaderIndices={stickyHeaderIndices}
-      maintainVisibleContentPosition={{ startRenderingFromBottom: true }}
-      initialScrollIndex={items.length - 1}
-      contentContainerStyle={styles.list}
-      renderItem={({ item }) =>
-        item.type === 'day' ? (
-          <DaySeparator item={item} baseCurrency={baseCurrency} />
-        ) : item.type !== 'entry' ? null : item.entry.kind === 'settlement' ? (
-          // Settlements are system messages, not bubbles (ADR-0017).
-          <SettlementSystemMessage
-            entry={item.entry}
-            members={data.members}
-            myMemberId={me}
-            highlighted={false}
-            onPress={() => openEntry(item.entry.id)}
-          />
-        ) : (
-          <EntryBubble
-            item={item}
-            baseCurrency={baseCurrency}
-            highlighted={false}
-            onPress={() => openEntry(item.entry.id)}
-          />
-        )
-      }
-    />
+    <>
+      <FlashList
+        ref={listRef}
+        data={items}
+        keyExtractor={(item) => item.key}
+        getItemType={(item) => item.type}
+        stickyHeaderIndices={stickyHeaderIndices}
+        maintainVisibleContentPosition={{ startRenderingFromBottom: true }}
+        initialScrollIndex={items.length - 1}
+        contentContainerStyle={styles.list}
+        renderItem={({ item }) =>
+          item.type === 'day' ? (
+            <DaySeparator item={item} baseCurrency={baseCurrency} onPress={() => setStripDay(item.date)} />
+          ) : item.type !== 'entry' ? null : item.entry.kind === 'settlement' ? (
+            // Settlements are system messages, not bubbles (ADR-0017).
+            <SettlementSystemMessage
+              entry={item.entry}
+              members={data.members}
+              myMemberId={me}
+              highlighted={false}
+              onPress={() => openEntry(item.entry.id)}
+            />
+          ) : (
+            <EntryBubble
+              item={item}
+              baseCurrency={baseCurrency}
+              highlighted={false}
+              onPress={() => openEntry(item.entry.id)}
+            />
+          )
+        }
+      />
+      <DayStrip
+        days={stripDays}
+        current={stripDay}
+        onPick={(index) => void listRef.current?.scrollToIndex({ index, animated: true, viewPosition: 0 })}
+        onClose={() => setStripDay(null)}
+      />
+    </>
   );
 }
 
