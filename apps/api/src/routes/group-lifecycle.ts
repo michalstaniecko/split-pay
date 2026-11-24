@@ -17,7 +17,8 @@ export const archivedResponse = { error: 'archived' as const };
  * An archived group is fully read-only (SPEC "Data model"): every write under
  * `/groups/:groupId/…` answers 409 `{ error: 'archived' }`, whatever route a
  * slice adds. Only the lifecycle itself stays open: unarchive, leave and
- * permanent deletion. Reads pass. Non-members fall through to the route, which
+ * permanent deletion — plus the caller's personal per-group notifications
+ * switch, which isn't group data (muting an archived group is fine). Reads pass. Non-members fall through to the route, which
  * answers 404 as usual (existence doesn't leak).
  */
 export const rejectWritesToArchived = ({ db }: { db: Db }) =>
@@ -27,7 +28,8 @@ export const rejectWritesToArchived = ({ db }: { db: Db }) =>
     const rest = c.req.path.slice(c.req.path.indexOf(`/${groupId}`) + 1 + (groupId?.length ?? 0));
     const lifecycle =
       rest === '/archive' || rest === '/leave' || ((rest === '' || rest === '/') && c.req.method === 'DELETE');
-    if (lifecycle) return next();
+    const personal = rest === '/notifications';
+    if (lifecycle || personal) return next();
     const group = await findMyGroup(db, groupId, c.get('user').id);
     if (group?.archivedAt) return c.json(archivedResponse, 409);
     return next();

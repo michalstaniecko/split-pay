@@ -80,7 +80,7 @@ export const groupsRoutes = ({
   return (
     new Hono<AuthEnv>()
       .use(requireUser)
-      /** Archived groups are read-only: every write below answers 409 (`routes/group-lifecycle.ts`). */
+      /** Archived groups are read-only: every write below answers 409, bar the lifecycle and personal settings (`routes/group-lifecycle.ts`). */
       .use('/:groupId/*', rejectWritesToArchived({ db }))
       /** Archive / unarchive, leave, permanent deletion: `routes/group-lifecycle.ts`. */
       .route('/:groupId', groupLifecycleRoutes({ db }))
