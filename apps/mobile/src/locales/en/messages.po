@@ -132,6 +132,10 @@ msgstr "📷 Take a new one"
 msgid "📷 Zrób zdjęcie"
 msgstr "📷 Take a photo"
 
+#: src/app/(app)/report-photo.tsx
+msgid "Administrator sprawdzi to zdjęcie i w razie potrzeby je usunie."
+msgstr "An administrator will review this photo and remove it if needed."
+
 #: src/app/(auth)/sign-in.tsx
 msgid "Adres e-mail"
 msgstr "Email address"
@@ -149,16 +153,19 @@ msgstr "Activity, new changes"
 msgid "Alkohol"
 msgstr "Alcohol"
 
+#: src/app/(app)/admin.tsx
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
 #: src/app/(app)/groups/[groupId]/member.tsx
 #: src/app/(app)/new-group.tsx
 #: src/app/(app)/new.tsx
 #: src/app/(app)/quick-bill.tsx
+#: src/app/(app)/report-photo.tsx
 #: src/features/claims/claim-messages.tsx
 #: src/features/group-link/group-link-section.tsx
 #: src/features/groups/attendance-grid-view.tsx
 #: src/features/groups/group-lifecycle-section.tsx
 #: src/features/history/change-row.tsx
+#: src/features/moderation/reportable-member-avatar.tsx
 #: src/features/profile/delete-account-section.tsx
 msgid "Anuluj"
 msgstr "Cancel"
@@ -166,6 +173,11 @@ msgstr "Cancel"
 #: src/features/groups/group-lifecycle-section.tsx
 msgid "Archiwizuj grupę"
 msgstr "Archive group"
+
+#. placeholder {0}: account?.email ?? '—'
+#: src/app/(app)/admin.tsx
+msgid "Autor zdjęcia: {0}"
+msgstr "Uploaded by: {0}"
 
 #: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
@@ -200,6 +212,10 @@ msgstr "No access to the camera. Pick a photo from your library."
 msgid "Brak kursu EBC dla tej daty — wpisz go ręcznie."
 msgstr "No ECB rate for this date — enter it manually."
 
+#: src/app/(app)/admin.tsx
+msgid "Brak otwartych zgłoszeń."
+msgstr "No open reports."
+
 #: src/app/(app)/groups/[groupId]/index.tsx
 #: src/app/(app)/index.tsx
 #: src/app/g/[token]/index.web.tsx
@@ -209,6 +225,10 @@ msgstr "No entries"
 #: src/features/stats/stats-view.tsx
 msgid "Brak wydatków — statystyki pojawią się po dodaniu pierwszego."
 msgstr "No expenses yet — stats appear once the first one is added."
+
+#: src/app/(app)/admin.tsx
+msgid "Brak zablokowanych kont."
+msgstr "No blocked accounts."
 
 #: src/app/(app)/groups/[groupId]/history.tsx
 msgid "Brak zmian."
@@ -359,6 +379,10 @@ msgstr "Join as a new person"
 msgid "Dołączenie do grupy: {name}"
 msgstr "Joined the group: {name}"
 
+#: src/app/(app)/report-photo.tsx
+msgid "Dziękujemy za zgłoszenie"
+msgstr "Thanks for your report"
+
 #: src/features/stats/stats-view.tsx
 msgid "Dzień"
 msgstr "Day"
@@ -468,6 +492,11 @@ msgstr "Other settlement"
 #: src/features/entries/use-entry-labels.ts
 msgid "Inne"
 msgstr "Other"
+
+#: src/app/(app)/admin.tsx
+#: src/app/(app)/report-photo.tsx
+msgid "Inny powód"
+msgstr "Something else"
 
 #: src/features/theme/theme-picker.tsx
 msgid "Jasny"
@@ -672,6 +701,11 @@ msgstr "Link not valid"
 msgid "Motyw"
 msgstr "Theme"
 
+#: src/app/(app)/admin.tsx
+#: src/app/(app)/report-photo.tsx
+msgid "Nagość lub treści seksualne"
+msgstr "Nudity or sexual content"
+
 #: src/features/groups/group-settings-section.tsx
 msgid "Najmniej przelewów przy rozliczeniu. Wyłączone: każdy oddaje temu, kto za niego zapłacił."
 msgstr "Fewest transfers when settling up. Off: everyone pays back whoever paid for them."
@@ -686,9 +720,19 @@ msgstr "Resolve this entry's conflict first (red “!”)."
 msgid "Należy ci się {amount}"
 msgstr "You are owed {amount}"
 
+#: src/app/(app)/admin.tsx
+#: src/app/(app)/report-photo.tsx
+msgid "Narusza czyjąś prywatność"
+msgstr "Violates someone's privacy"
+
 #: src/app/(app)/new-group.tsx
 msgid "Nazwa"
 msgstr "Name"
+
+#: src/app/(app)/admin.tsx
+#: src/app/(app)/report-photo.tsx
+msgid "Nękanie lub mowa nienawiści"
+msgstr "Harassment or hate speech"
 
 #: src/app/(app)/activity.tsx
 msgid "Nic się jeszcze nie wydarzyło w Twoich grupach."
@@ -809,6 +853,10 @@ msgstr "Couldn't load the history."
 msgid "Nie udało się wczytać linku grupy."
 msgstr "Couldn't load the group link."
 
+#: src/app/(app)/admin.tsx
+msgid "Nie udało się wczytać panelu administratora."
+msgstr "Couldn't load the admin panel."
+
 #: src/app/(app)/groups/[groupId]/index.tsx
 msgid "Nie udało się wczytać wpisów."
 msgstr "Couldn't load the entries."
@@ -825,6 +873,10 @@ msgstr "Couldn't send the code. Please try again."
 #: src/features/photos/photo-messages.ts
 msgid "Nie udało się wysłać zdjęcia. Spróbuj ponownie."
 msgstr "Couldn't upload the photo. Try again."
+
+#: src/app/(app)/report-photo.tsx
+msgid "Nie udało się wysłać zgłoszenia. Spróbuj ponownie."
+msgstr "Couldn't send the report. Try again."
 
 #: src/features/groups/attendance-grid-view.tsx
 msgid "Nie udało się zapisać obecności. Spróbuj ponownie."
@@ -933,6 +985,10 @@ msgstr "From"
 msgid "Od: {value}"
 msgstr "From: {value}"
 
+#: src/app/(app)/admin.tsx
+msgid "Odblokuj"
+msgstr "Unblock"
+
 #: src/app/(app)/_layout.tsx
 #: src/app/(app)/groups/[groupId]/balances.tsx
 msgid "Oddaj"
@@ -946,6 +1002,10 @@ msgstr "Pay back {amount} – {0}"
 #: src/app/(app)/groups/[groupId]/settle.tsx
 msgid "Oddaj {recipient}"
 msgstr "Pay back {recipient}"
+
+#: src/app/(app)/admin.tsx
+msgid "Odrzuć zgłoszenie"
+msgstr "Dismiss report"
 
 #: src/app/(app)/groups/[groupId]/unsent-entry.tsx
 msgid "Odrzuć zmianę"
@@ -986,6 +1046,10 @@ msgstr "Received by"
 msgid "Otrzymujący: {value}"
 msgstr "Received by: {value}"
 
+#: src/app/(app)/admin.tsx
+msgid "Otwarte zgłoszenia"
+msgstr "Open reports"
+
 #: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
 msgid "Otwiera historię wpisu"
 msgstr "Opens the entry's history"
@@ -1001,6 +1065,11 @@ msgstr "Open in the app"
 #: src/features/entries/use-entry-labels.ts
 msgid "Paliwo"
 msgstr "Fuel"
+
+#: src/app/(app)/_layout.tsx
+#: src/app/(app)/profile.tsx
+msgid "Panel administratora"
+msgstr "Admin panel"
 
 #: src/features/photos/receipt-field.tsx
 #: src/features/photos/receipt-photo.tsx
@@ -1087,6 +1156,10 @@ msgstr "Show the whole history"
 msgid "Pokazuje salda i kto komu ile oddaje"
 msgstr "Shows balances and who pays whom how much"
 
+#: src/app/(app)/admin.tsx
+msgid "Potwierdź"
+msgstr "Confirm"
+
 #: src/features/notifications/notification-switches.tsx
 msgid "Powiadomienia"
 msgstr "Notifications"
@@ -1098,6 +1171,14 @@ msgstr "Push notifications"
 #: src/features/notifications/notification-switches.tsx
 msgid "Powiadomienia z tej grupy"
 msgstr "Notifications from this group"
+
+#: src/app/(app)/report-photo.tsx
+msgid "Powód zgłoszenia"
+msgstr "Reason for the report"
+
+#: src/features/moderation/reportable-member-avatar.tsx
+msgid "Pozwala zgłosić zdjęcie"
+msgstr "Lets you report the photo"
 
 #: src/features/entries/split-fields.tsx
 msgid "Pozycje osobiste"
@@ -1122,6 +1203,11 @@ msgstr "Claimed the {name} profile"
 #: src/app/g/[token]/index.tsx
 msgid "Przejmij profil osoby bez konta razem z historią wydatków."
 msgstr "Claim the profile of a member without an account, with their expense history."
+
+#: src/app/(app)/admin.tsx
+#: src/app/(app)/report-photo.tsx
+msgid "Przemoc lub drastyczne treści"
+msgstr "Violence or graphic content"
 
 #: src/features/notifications/nudge-button.tsx
 msgid "przypomniano dziś"
@@ -1204,6 +1290,11 @@ msgstr "Copied"
 msgid "Skopiowano kwotę"
 msgstr "Amount copied"
 
+#: src/app/(app)/admin.tsx
+#: src/app/(app)/report-photo.tsx
+msgid "Spam"
+msgstr "Spam"
+
 #: src/features/history/describe-change.ts
 msgid "spłata"
 msgstr "settlement"
@@ -1240,6 +1331,7 @@ msgid "split-pay, wersja {version}"
 msgstr "split-pay, version {version}"
 
 #: src/app/(app)/activity.tsx
+#: src/app/(app)/admin.tsx
 #: src/app/(app)/groups/[groupId]/index.tsx
 #: src/app/(app)/groups/[groupId]/settle.tsx
 #: src/app/(app)/groups/[groupId]/unsent-entry.tsx
@@ -1266,6 +1358,10 @@ msgstr "Stats"
 #: src/features/theme/theme-picker.tsx
 msgid "Systemowy"
 msgstr "System"
+
+#: src/app/(app)/report-photo.tsx
+msgid "Szczegóły (opcjonalnie)"
+msgstr "Details (optional)"
 
 #: src/app/(app)/_layout.tsx
 #: src/app/(app)/new.tsx
@@ -1333,6 +1429,10 @@ msgstr "This is me"
 msgid "To ja… (wybierz siebie)"
 msgstr "This is me… (pick yourself)"
 
+#: src/app/(auth)/sign-in.tsx
+msgid "To konto zostało zablokowane przez administratora."
+msgstr "This account has been blocked by an administrator."
+
 #: src/features/profile/payout-details-section.tsx
 msgid "To nie wygląda na numer konta."
 msgstr "That doesn't look like a bank account number."
@@ -1353,6 +1453,11 @@ msgstr "you"
 #: src/features/entries/use-entry-labels.ts
 msgid "Transport"
 msgstr "Transport"
+
+#: src/app/(app)/admin.tsx
+#: src/app/(app)/report-photo.tsx
+msgid "Treści nielegalne"
+msgstr "Illegal content"
 
 #: src/features/theme/theme-picker.tsx
 msgid "Tryb jasny/ciemny"
@@ -1468,6 +1573,7 @@ msgstr "Delete permanently"
 msgid "Usuń wpis"
 msgstr "Remove the entry"
 
+#: src/app/(app)/admin.tsx
 #: src/features/photos/avatar-section.tsx
 #: src/features/photos/receipt-field.tsx
 msgid "Usuń zdjęcie"
@@ -1480,6 +1586,10 @@ msgstr "Delete “{name}” permanently?"
 #: src/features/profile/delete-account-section.tsx
 msgid "Usunąć konto?"
 msgstr "Delete account?"
+
+#: src/app/(app)/admin.tsx
+msgid "Usunąć zdjęcie?"
+msgstr "Remove the photo?"
 
 #: src/app/(app)/groups/[groupId]/entry-conflict.tsx
 msgid "Usunięcie wpisu"
@@ -1725,6 +1835,10 @@ msgstr "Resend code"
 msgid "Wyślij link"
 msgstr "Send link"
 
+#: src/app/(app)/report-photo.tsx
+msgid "Wyślij zgłoszenie"
+msgstr "Send report"
+
 #: src/features/photos/receipt-field.tsx
 msgid "Z galerii"
 msgstr "From library"
@@ -1741,6 +1855,23 @@ msgstr "What for?"
 #: src/app/(app)/quick-bill.tsx
 msgid "Za co? np. Pizza u Kasi"
 msgstr "What for? e.g. Pizza at Kasia's"
+
+#. placeholder {0}: account.email
+#: src/app/(app)/admin.tsx
+msgid "Zablokować konto {0}?"
+msgstr "Block the account {0}?"
+
+#: src/app/(app)/admin.tsx
+msgid "Zablokowane konta"
+msgstr "Blocked accounts"
+
+#: src/app/(app)/admin.tsx
+msgid "zablokowany"
+msgstr "blocked"
+
+#: src/app/(app)/admin.tsx
+msgid "Zablokuj konto"
+msgstr "Block account"
 
 #: src/app/(app)/groups/[groupId]/entry-conflict.tsx
 msgid "Zachowaj ich wersję"
@@ -1781,6 +1912,7 @@ msgstr "owner"
 #: src/app/(app)/groups/[groupId]/receipt.tsx
 #: src/app/(app)/groups/[groupId]/settle.tsx
 #: src/app/(app)/groups/[groupId]/unsent-entry.tsx
+#: src/app/(app)/report-photo.tsx
 #: src/app/g/[token]/entries/[entryId].tsx
 #: src/features/entries/entry-actions-menu.tsx
 msgid "Zamknij"
@@ -1846,6 +1978,7 @@ msgstr "Photos are unavailable right now. Try again later."
 msgid "Zdjęcie jest za duże (maks. {megabytes} MB)."
 msgstr "The photo is too large (max {megabytes} MB)."
 
+#: src/app/(app)/admin.tsx
 #: src/app/(app)/groups/[groupId]/receipt.tsx
 #: src/features/entries/composer.tsx
 #: src/features/photos/receipt-field.tsx
@@ -1853,9 +1986,40 @@ msgstr "The photo is too large (max {megabytes} MB)."
 msgid "Zdjęcie paragonu"
 msgstr "Receipt photo"
 
+#: src/app/(app)/admin.tsx
+msgid "Zdjęcie profilowe"
+msgstr "Profile photo"
+
+#. placeholder {0}: member.displayName
+#: src/features/moderation/reportable-member-avatar.tsx
+msgid "Zdjęcie profilowe: {0}"
+msgstr "Profile photo: {0}"
+
+#: src/app/(app)/admin.tsx
+msgid "Zdjęcie zostało już usunięte."
+msgstr "The photo has already been removed."
+
 #: src/features/entries/entry-bubble.tsx
 msgid "ze zdjęciem paragonu"
 msgstr "with a receipt photo"
+
+#. placeholder {0}: report.reporter?.email ?? '—'
+#: src/app/(app)/admin.tsx
+msgid "Zgłaszający: {0}"
+msgstr "Reported by: {0}"
+
+#: src/app/(app)/groups/[groupId]/receipt.tsx
+msgid "Zgłoś"
+msgstr "Report"
+
+#: src/app/(app)/_layout.tsx
+#: src/app/(app)/report-photo.tsx
+msgid "Zgłoś zdjęcie"
+msgstr "Report photo"
+
+#: src/features/moderation/reportable-member-avatar.tsx
+msgid "Zgłoś zdjęcie profilowe"
+msgstr "Report profile photo"
 
 #: src/app/(app)/groups/[groupId]/info.tsx
 msgid "Zmień"

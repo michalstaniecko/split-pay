@@ -121,6 +121,18 @@ export default function AppLayout() {
         options={{ presentation: 'fullScreenModal', headerShown: false, animation: 'fade' }}
       />
       <Stack.Screen name="groups/[groupId]/history" options={{ title: t`Historia zmian` }} />
+      {/* Content reporting + admin panel (#27). */}
+      <Stack.Screen
+        name="report-photo"
+        options={{
+          title: t`Zgłoś zdjęcie`,
+          presentation: 'formSheet',
+          sheetAllowedDetents: [0.75, 1],
+          sheetGrabberVisible: true,
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen name="admin" options={{ title: t`Panel administratora` }} />
       <Stack.Screen
         name="groups/[groupId]/member"
         options={{

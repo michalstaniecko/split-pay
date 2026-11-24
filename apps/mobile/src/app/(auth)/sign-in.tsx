@@ -4,6 +4,7 @@ import { KeyboardAvoidingView, Platform, Text, TextInput, View } from 'react-nat
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { Button } from '@/components/button';
 import { cleanOtp, isOtpComplete, OTP_LENGTH, parseEmail } from '@/features/auth/sign-in-input';
+import { isAccountBlockedError } from '@/features/moderation/moderation';
 import { authClient } from '@/lib/auth-client';
 
 type Step = { name: 'email' } | { name: 'code'; email: string };
@@ -49,7 +50,13 @@ export default function SignInScreen() {
     setError(null);
     const { error: signInError } = await authClient.signIn.emailOtp({ email, otp: code });
     setBusy(false);
-    if (signInError) setError(t`Nieprawidłowy lub wygasły kod.`);
+    if (signInError) {
+      setError(
+        isAccountBlockedError(signInError)
+          ? t`To konto zostało zablokowane przez administratora.`
+          : t`Nieprawidłowy lub wygasły kod.`,
+      );
+    }
   };
 
   const codeSentHint = (email: string) => t`Wpisz kod wysłany na ${email}.`;

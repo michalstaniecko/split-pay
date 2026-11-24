@@ -4,9 +4,11 @@ import { Hono } from 'hono';
 import { logger } from 'hono/logger';
 import type { Auth } from './auth';
 import type { Db } from './db/client';
+import { createRequireAdmin, isAdminEmail } from './middleware/require-admin';
 import { type AuthEnv, createRequireUser } from './middleware/require-user';
 import { deleteAccount } from './routes/account';
 import { activityRoutes } from './routes/activity';
+import { adminRoutes, reportRoutes } from './routes/moderation';
 import { linksRoutes } from './routes/group-links';
 import { groupsRoutes } from './routes/groups';
 import { myNotificationSettingsRoutes, myPushTokenRoutes } from './routes/notifications';
@@ -21,6 +23,8 @@ import type { ObjectStorage } from './storage/object-storage';
 export interface AppDeps {
   auth: Auth;
   db: Db;
+  /** Admin emails (`ADMIN_EMAILS`, lowercase): app-wide moderators (#27); none when omitted. */
+  adminEmails?: readonly string[];
   /** Feature flags served to the apps; defaults (all off) when omitted. */
   flags?: FeatureFlags;
   /** Photo bucket (ADR-0006); photo routes answer 503 when omitted. */
@@ -35,8 +39,9 @@ export interface AppDeps {
  * Keep routes chained in one expression (or `.route()` chained sub-apps) —
  * the typed client (`hc`) infers its types from this chain.
  */
-export const createApp = ({ auth, db, flags = defaultFeatureFlags, storage, webUrl }: AppDeps) => {
+export const createApp = ({ auth, db, adminEmails = [], flags = defaultFeatureFlags, storage, webUrl }: AppDeps) => {
   const requireUser = createRequireUser(auth);
+  const requireAdmin = createRequireAdmin(adminEmails);
 
   return (
     new Hono<AuthEnv>()
@@ -48,7 +53,7 @@ export const createApp = ({ auth, db, flags = defaultFeatureFlags, storage, webU
       /** The signed-in user. */
       .get('/me', requireUser, (c) => {
         const user = c.get('user');
-        return c.json({ id: user.id, email: user.email, name: user.name });
+        return c.json({ id: user.id, email: user.email, name: user.name, isAdmin: isAdminEmail(adminEmails, user.email) });
       })
       /** Account deletion (ADR-0010): personal data goes, the user's members stay without an account. */
       .delete('/me', requireUser, zValidator('json', AccountDeletion), async (c) => {
@@ -72,6 +77,9 @@ export const createApp = ({ auth, db, flags = defaultFeatureFlags, storage, webU
       /** The view-only web for a group link (no session) and its link previews. */
       .route('/public/links', publicViewRoutes({ db }))
       .route('/og', openGraphRoutes({ db, webUrl }))
+      /** Content reporting and the admin panel (#27). */
+      .route('/reports', reportRoutes({ db, requireUser }))
+      .route('/admin', adminRoutes({ db, requireUser, requireAdmin, storage }))
       /** ECB exchange rates for a date (ADR-0014). */
       .route('/rates', ratesRoutes({ db, requireUser }))
   );
