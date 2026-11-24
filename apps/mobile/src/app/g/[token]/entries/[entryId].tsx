@@ -1,13 +1,11 @@
 import { useLingui } from '@lingui/react/macro';
-import { convert, isEdited, resolveSplit } from '@split-pay/shared';
+import { isEdited } from '@split-pay/shared';
 import { useQuery } from '@tanstack/react-query';
 import { useLocalSearchParams } from 'expo-router';
-import type { ReactNode } from 'react';
 import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { Button } from '@/components/button';
-import { CATEGORY_ICONS } from '@/features/entries/entries-query';
-import { useEntryLabels } from '@/features/entries/use-entry-labels';
+import { EntryDetailBody } from '@/features/entries/entry-detail-body';
 import { closePublicPage } from '@/features/web-view/navigation';
 import { PublicError } from '@/features/web-view/public-error';
 import {
@@ -16,8 +14,6 @@ import {
   publicEntriesQuery,
   publicGroupQuery,
 } from '@/features/web-view/public-view-query';
-import { formatRate } from '@/features/rates/rate-format';
-import { useLocale } from '@/i18n/locale-provider';
 import { useFormatters } from '@/i18n/use-formatters';
 
 /**
@@ -50,87 +46,17 @@ export default function PublicEntryDetailScreen() {
 
 function EntryDetail({ token, data, entry }: { token: string; data: PublicGroup; entry: PublicEntry }) {
   const { t } = useLingui();
-  const labels = useEntryLabels();
   const format = useFormatters();
   const name = (memberId: string | null) => data.members.find((m) => m.id === memberId)?.displayName;
   const addedBy = name(entry.addedBy) ?? t`nieznana osoba`;
-  const amount = (minor: number) => format.amount(minor, entry.currency);
-  const currencyRows = <CurrencyRows entry={entry} baseCurrency={data.group.baseCurrency} />;
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {entry.kind === 'settlement' ? (
-        <>
-          <Text style={styles.heading}>💸 {t`Spłata`}</Text>
-          <Row label={t`Kwota`}>{amount(entry.amount)}</Row>
-          {currencyRows}
-          <Row label={t`Data`}>{format.date(entry.date)}</Row>
-          <Row label={t`Od`}>{name(entry.from) ?? '?'}</Row>
-          <Row label={t`Do`}>{name(entry.to) ?? '?'}</Row>
-        </>
-      ) : (
-        <>
-          <Text style={styles.heading}>
-            {CATEGORY_ICONS[entry.category]} {entry.title}
-          </Text>
-          <Text style={styles.amount}>{amount(entry.amount)}</Text>
-          {currencyRows}
-          <Row label={t`Kategoria`}>{labels.category[entry.category]}</Row>
-          <Row label={t`Data`}>{format.date(entry.date)}</Row>
-          <Section title={entry.kind === 'expense' ? t`Zapłacili` : t`Otrzymali`}>
-            {(entry.kind === 'expense' ? entry.payers : entry.recipients).map((h) => (
-              <Row key={h.memberId} label={name(h.memberId) ?? '?'}>
-                {amount(h.amount)}
-              </Row>
-            ))}
-          </Section>
-          <Section title={t`Udziały · ${labels.splitMode[entry.split.mode]}`}>
-            {resolveSplit(entry.split, entry.amount).map((share) => (
-              <Row key={share.memberId} label={name(share.memberId) ?? '?'}>
-                {amount(share.amount)}
-              </Row>
-            ))}
-          </Section>
-        </>
-      )}
+      <EntryDetailBody entry={entry} baseCurrency={data.group.baseCurrency} memberName={(id) => name(id) ?? '?'} />
       <Text style={styles.meta}>{t`Dodał(a) ${addedBy}, ${format.dateTime(entry.createdAt)}`}</Text>
       {isEdited(entry) ? <Text style={styles.meta}>{t`edytowano ${format.dateTime(entry.updatedAt)}`}</Text> : null}
       <Button variant="secondary" label={t`Zamknij`} onPress={() => closePublicPage(token)} />
     </ScrollView>
-  );
-}
-
-/** A foreign-currency entry: the amount in the base currency and the frozen rate ("1 EUR = 4,3215 PLN"). */
-function CurrencyRows({ entry, baseCurrency }: { entry: PublicEntry; baseCurrency: string }) {
-  const { t } = useLingui();
-  const format = useFormatters();
-  const { locale } = useLocale();
-  if (entry.currency === baseCurrency) return null;
-  const base = convert(entry.amount, entry.rateToBase, entry.currency, baseCurrency);
-  const rate = `1 ${entry.currency} = ${formatRate(entry.rateToBase, locale)} ${baseCurrency}`;
-  return (
-    <>
-      <Row label={t`W walucie bazowej`}>≈ {format.amount(base, baseCurrency)}</Row>
-      <Row label={t`Kurs`}>{rate}</Row>
-    </>
-  );
-}
-
-function Section({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <View style={styles.section}>
-      <Text style={styles.sectionTitle}>{title}</Text>
-      {children}
-    </View>
-  );
-}
-
-function Row({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <View style={styles.row} accessible>
-      <Text style={styles.label}>{label}</Text>
-      <Text style={styles.value}>{children}</Text>
-    </View>
   );
 }
 
@@ -148,35 +74,6 @@ const styles = StyleSheet.create((theme) => ({
     paddingTop: theme.space(6),
     paddingBottom: theme.space(10),
     backgroundColor: theme.colors.background,
-  },
-  heading: {
-    fontSize: theme.font.sizeLg,
-    fontWeight: theme.font.weightBold,
-    color: theme.colors.text,
-  },
-  amount: {
-    fontSize: theme.font.sizeXl,
-    fontWeight: theme.font.weightBold,
-    color: theme.colors.text,
-  },
-  section: {
-    gap: theme.space(2),
-    paddingTop: theme.space(2),
-  },
-  sectionTitle: {
-    fontSize: theme.font.sizeSm,
-    fontWeight: theme.font.weightBold,
-    color: theme.colors.textMuted,
-  },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: theme.space(3),
-  },
-  label: {
-    flexShrink: 1,
-    fontSize: theme.font.sizeMd,
-    color: theme.colors.textMuted,
   },
   value: {
     fontSize: theme.font.sizeMd,

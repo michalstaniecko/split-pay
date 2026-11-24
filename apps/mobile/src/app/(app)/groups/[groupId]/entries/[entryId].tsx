@@ -1,20 +1,17 @@
 import { useLingui } from '@lingui/react/macro';
-import { convert, type Entry, isEdited, resolveSplit } from '@split-pay/shared';
+import { type Entry, isEdited } from '@split-pay/shared';
 import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
-import type { ReactNode } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { Button } from '@/components/button';
 import { GroupNotFound } from '@/components/group-not-found';
-import { CATEGORY_ICONS, entriesQuery } from '@/features/entries/entries-query';
+import { entriesQuery } from '@/features/entries/entries-query';
+import { EntryDetailBody } from '@/features/entries/entry-detail-body';
 import { editScreen, lockedOffline } from '@/features/entries/entry-edit';
-import { useEntryLabels } from '@/features/entries/use-entry-labels';
 import { type GroupDetail, groupQuery } from '@/features/groups/groups-query';
 import { useIsOnline } from '@/features/offline/use-offline-sync';
 import { ReceiptPhoto } from '@/features/photos/receipt-photo';
-import { formatRate } from '@/features/rates/rate-format';
-import { useLocale } from '@/i18n/locale-provider';
 import { useFormatters } from '@/i18n/use-formatters';
 import { authClient } from '@/lib/auth-client';
 import { closeSheet } from '@/lib/close-sheet';
@@ -52,12 +49,9 @@ export default function EntryDetailSheet() {
 
 function EntryDetail({ group, entry }: { group: GroupDetail; entry: Entry }) {
   const { t } = useLingui();
-  const labels = useEntryLabels();
   const format = useFormatters();
   const name = (memberId: string) => group.members.find((m) => m.id === memberId)?.displayName ?? '?';
   const addedBy = group.members.find((m) => m.userId === entry.createdBy)?.displayName ?? t`nieznana osoba`;
-  const amount = (minor: number) => format.amount(minor, entry.currency);
-  const currencyRows = <CurrencyRows entry={entry} baseCurrency={group.baseCurrency} />;
   const online = useIsOnline();
   const userId = authClient.useSession().data?.user.id;
   // Offline, only entries I added can be edited (ADR-0005).
@@ -65,41 +59,16 @@ function EntryDetail({ group, entry }: { group: GroupDetail; entry: Entry }) {
 
   return (
     <ScrollView contentContainerStyle={styles.content}>
-      {entry.kind === 'settlement' ? (
-        <>
-          <Text style={styles.heading}>💸 {t`Spłata`}</Text>
-          <Row label={t`Kwota`}>{amount(entry.amount)}</Row>
-          {currencyRows}
-          <Row label={t`Data`}>{format.date(entry.date)}</Row>
-          <Row label={t`Od`}>{name(entry.from)}</Row>
-          <Row label={t`Do`}>{name(entry.to)}</Row>
-        </>
-      ) : (
-        <>
-          <Text style={styles.heading}>
-            {CATEGORY_ICONS[entry.category]} {entry.title}
-          </Text>
-          <Text style={styles.amount}>{amount(entry.amount)}</Text>
-          {currencyRows}
-          <Row label={t`Kategoria`}>{labels.category[entry.category]}</Row>
-          <Row label={t`Data`}>{format.date(entry.date)}</Row>
-          <Section title={entry.kind === 'expense' ? t`Zapłacili` : t`Otrzymali`}>
-            {(entry.kind === 'expense' ? entry.payers : entry.recipients).map((h) => (
-              <Row key={h.memberId} label={name(h.memberId)}>
-                {amount(h.amount)}
-              </Row>
-            ))}
-          </Section>
-          <Section title={t`Udziały · ${labels.splitMode[entry.split.mode]}`}>
-            {resolveSplit(entry.split, entry.amount).map((share) => (
-              <Row key={share.memberId} label={name(share.memberId)}>
-                {amount(share.amount)}
-              </Row>
-            ))}
-          </Section>
-          {entry.receiptPhotoId !== null ? <ReceiptPhoto groupId={group.id} entryId={entry.id} /> : null}
-        </>
-      )}
+      <EntryDetailBody
+        entry={entry}
+        baseCurrency={group.baseCurrency}
+        memberName={name}
+        receiptPhoto={
+          entry.kind !== 'settlement' && entry.receiptPhotoId !== null ? (
+            <ReceiptPhoto groupId={group.id} entryId={entry.id} />
+          ) : null
+        }
+      />
       <Text style={styles.meta}>{t`Dodał(a) ${addedBy}, ${format.dateTime(entry.createdAt)}`}</Text>
       {isEdited(entry) ? (
         <Pressable
@@ -126,40 +95,6 @@ function EntryDetail({ group, entry }: { group: GroupDetail; entry: Entry }) {
   );
 }
 
-/** A foreign-currency entry: the amount in the base currency and the frozen rate ("1 EUR = 4,3215 PLN"). */
-function CurrencyRows({ entry, baseCurrency }: { entry: Entry; baseCurrency: string }) {
-  const { t } = useLingui();
-  const format = useFormatters();
-  const { locale } = useLocale();
-  if (entry.currency === baseCurrency) return null;
-  const base = convert(entry.amount, entry.rateToBase, entry.currency, baseCurrency);
-  const rate = `1 ${entry.currency} = ${formatRate(entry.rateToBase, locale)} ${baseCurrency}`;
-  return (
-    <>
-      <Row label={t`W walucie bazowej`}>≈ {format.amount(base, baseCurrency)}</Row>
-      <Row label={t`Kurs`}>{rate}</Row>
-    </>
-  );
-}
-
-function Section({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <View style={styles.section}>
-      <Text style={styles.sectionTitle}>{title}</Text>
-      {children}
-    </View>
-  );
-}
-
-function Row({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <View style={styles.row} accessible>
-      <Text style={styles.label}>{label}</Text>
-      <Text style={styles.value}>{children}</Text>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create((theme) => ({
   loading: {
     padding: theme.space(6),
@@ -170,35 +105,6 @@ const styles = StyleSheet.create((theme) => ({
     paddingTop: theme.space(6),
     paddingBottom: theme.space(10),
     backgroundColor: theme.colors.background,
-  },
-  heading: {
-    fontSize: theme.font.sizeLg,
-    fontWeight: theme.font.weightBold,
-    color: theme.colors.text,
-  },
-  amount: {
-    fontSize: theme.font.sizeXl,
-    fontWeight: theme.font.weightBold,
-    color: theme.colors.text,
-  },
-  section: {
-    gap: theme.space(2),
-    paddingTop: theme.space(2),
-  },
-  sectionTitle: {
-    fontSize: theme.font.sizeSm,
-    fontWeight: theme.font.weightBold,
-    color: theme.colors.textMuted,
-  },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: theme.space(3),
-  },
-  label: {
-    flexShrink: 1,
-    fontSize: theme.font.sizeMd,
-    color: theme.colors.textMuted,
   },
   value: {
     fontSize: theme.font.sizeMd,

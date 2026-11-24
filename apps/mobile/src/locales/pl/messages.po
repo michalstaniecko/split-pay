@@ -12,8 +12,7 @@ msgid "„{title}”"
 msgstr "„{title}”"
 
 #. placeholder {0}: row.name
-#: src/app/(app)/groups/[groupId]/balances.tsx
-#: src/app/g/[token]/balances.tsx
+#: src/features/balances/balances-view.tsx
 msgid "{0} (Ty)"
 msgstr "{0} (Ty)"
 
@@ -50,8 +49,7 @@ msgstr "{claimerName} przejął profil {memberName}"
 msgid "{count, plural, one {# osoba} few {# osoby} many {# osób} other {# osoby}}"
 msgstr "{count, plural, one {# osoba} few {# osoby} many {# osób} other {# osoby}}"
 
-#: src/app/(app)/groups/[groupId]/balances.tsx
-#: src/app/g/[token]/balances.tsx
+#: src/features/balances/balances-view.tsx
 msgid "{from} → {to}: {amount}"
 msgstr "{from} → {to}: {amount}"
 
@@ -76,18 +74,15 @@ msgstr "{name} (Ty)"
 msgid "{name}, to Twój link do grupy „{groupName}” w split-pay: {url}"
 msgstr "{name}, to Twój link do grupy „{groupName}” w split-pay: {url}"
 
-#: src/app/(app)/groups/[groupId]/balances.tsx
-#: src/app/g/[token]/balances.tsx
+#: src/features/balances/balances-view.tsx
 msgid "{name}: należy się {amount}"
 msgstr "{name}: należy się {amount}"
 
-#: src/app/(app)/groups/[groupId]/balances.tsx
-#: src/app/g/[token]/balances.tsx
+#: src/features/balances/balances-view.tsx
 msgid "{name}: rozliczony"
 msgstr "{name}: rozliczony"
 
-#: src/app/(app)/groups/[groupId]/balances.tsx
-#: src/app/g/[token]/balances.tsx
+#: src/features/balances/balances-view.tsx
 msgid "{name}: winien {amount}"
 msgstr "{name}: winien {amount}"
 
@@ -190,8 +185,7 @@ msgstr "Bez internetu możesz edytować tylko wpisy dodane przez siebie."
 msgid "bez konta"
 msgstr "bez konta"
 
-#: src/app/(app)/groups/[groupId]/balances.tsx
-#: src/app/g/[token]/balances.tsx
+#: src/features/balances/balances-view.tsx
 msgid "Bez upraszczania długów"
 msgstr "Bez upraszczania długów"
 
@@ -288,9 +282,8 @@ msgstr "Członkowie"
 msgid "Dane do spłaty"
 msgstr "Dane do spłaty"
 
-#: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
-#: src/app/g/[token]/entries/[entryId].tsx
+#: src/features/entries/entry-detail-body.tsx
 msgid "Data"
 msgstr "Data"
 
@@ -311,9 +304,8 @@ msgstr "Dni × osoby"
 msgid "Dni × osoby i kategorie"
 msgstr "Dni × osoby i kategorie"
 
-#: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
 #: src/app/(app)/new-group.tsx
-#: src/app/g/[token]/entries/[entryId].tsx
+#: src/features/entries/entry-detail-body.tsx
 msgid "Do"
 msgstr "Do"
 
@@ -542,9 +534,8 @@ msgstr "Język"
 msgid "Język systemu"
 msgstr "Język systemu"
 
-#: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
-#: src/app/g/[token]/entries/[entryId].tsx
+#: src/features/entries/entry-detail-body.tsx
 msgid "Kategoria"
 msgstr "Kategoria"
 
@@ -622,8 +613,7 @@ msgstr "Kopiuj kwotę"
 msgid "Kopiuj: {label}"
 msgstr "Kopiuj: {label}"
 
-#: src/app/(app)/groups/[groupId]/balances.tsx
-#: src/app/g/[token]/balances.tsx
+#: src/features/balances/balances-view.tsx
 msgid "Kto komu oddaje"
 msgstr "Kto komu oddaje"
 
@@ -644,8 +634,7 @@ msgstr "Ktoś z grupy wygenerował nowy link. Poproś go o aktualny."
 msgid "Ktoś zmienił ten wpis w międzyczasie"
 msgstr "Ktoś zmienił ten wpis w międzyczasie"
 
-#: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
-#: src/app/g/[token]/entries/[entryId].tsx
+#: src/features/entries/entry-detail-body.tsx
 msgid "Kurs"
 msgstr "Kurs"
 
@@ -664,12 +653,11 @@ msgstr "Kurs: {value}"
 msgid "Kurs: 1 {0} = ? {1}"
 msgstr "Kurs: 1 {0} = ? {1}"
 
-#: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
 #: src/app/(app)/groups/[groupId]/settle.tsx
 #: src/app/(app)/quick-bill.tsx
-#: src/app/g/[token]/entries/[entryId].tsx
 #: src/features/entries/composer.tsx
+#: src/features/entries/entry-detail-body.tsx
 msgid "Kwota"
 msgstr "Kwota"
 
@@ -975,9 +963,8 @@ msgstr "O aplikacji"
 msgid "Obecność"
 msgstr "Obecność"
 
-#: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
 #: src/app/(app)/new-group.tsx
-#: src/app/g/[token]/entries/[entryId].tsx
+#: src/features/entries/entry-detail-body.tsx
 msgid "Od"
 msgstr "Od"
 
@@ -990,12 +977,12 @@ msgid "Odblokuj"
 msgstr "Odblokuj"
 
 #: src/app/(app)/_layout.tsx
-#: src/app/(app)/groups/[groupId]/balances.tsx
+#: src/features/balances/balances-view.tsx
 msgid "Oddaj"
 msgstr "Oddaj"
 
 #. placeholder {0}: transfer.toName
-#: src/app/(app)/groups/[groupId]/balances.tsx
+#: src/features/balances/balances-view.tsx
 msgid "Oddaj {amount} – {0}"
 msgstr "Oddaj {amount} – {0}"
 
@@ -1036,8 +1023,7 @@ msgstr "Osoba"
 msgid "Otrzymał(a)"
 msgstr "Otrzymał(a)"
 
-#: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
-#: src/app/g/[token]/entries/[entryId].tsx
+#: src/features/entries/entry-detail-body.tsx
 #: src/features/entries/split-fields.tsx
 msgid "Otrzymali"
 msgstr "Otrzymali"
@@ -1264,9 +1250,8 @@ msgid "RRRR-MM-DD"
 msgstr "RRRR-MM-DD"
 
 #: src/app/(app)/_layout.tsx
-#: src/app/(app)/groups/[groupId]/balances.tsx
 #: src/app/g/[token]/_layout.tsx
-#: src/app/g/[token]/balances.tsx
+#: src/features/balances/balances-view.tsx
 msgid "Salda"
 msgstr "Salda"
 
@@ -1299,13 +1284,12 @@ msgstr "Spam"
 msgid "spłata"
 msgstr "spłata"
 
-#: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
 #: src/app/(app)/groups/[groupId]/entry-conflict.tsx
 #: src/app/(app)/groups/[groupId]/index.tsx
 #: src/app/(app)/groups/[groupId]/unsent-entry.tsx
 #: src/app/(app)/index.tsx
-#: src/app/g/[token]/entries/[entryId].tsx
 #: src/features/entries/entry-bubble.tsx
+#: src/features/entries/entry-detail-body.tsx
 #: src/features/settlements/settlement-system-message.tsx
 msgid "Spłata"
 msgstr "Spłata"
@@ -1445,8 +1429,7 @@ msgstr "To nie wygląda na numer telefonu."
 msgid "To podgląd tylko do odczytu. Dodawaj wydatki w aplikacji."
 msgstr "To podgląd tylko do odczytu. Dodawaj wydatki w aplikacji."
 
-#: src/app/(app)/groups/[groupId]/balances.tsx
-#: src/app/g/[token]/balances.tsx
+#: src/features/balances/balances-view.tsx
 msgid "Tobie"
 msgstr "Tobie"
 
@@ -1485,11 +1468,10 @@ msgstr "Twoja wersja"
 msgid "Twoje zmiany nie zostały zapisane."
 msgstr "Twoje zmiany nie zostały zapisane."
 
-#: src/app/(app)/groups/[groupId]/balances.tsx
 #: src/app/(app)/groups/[groupId]/info.tsx
-#: src/app/g/[token]/balances.tsx
 #: src/app/g/[token]/info.tsx
 #: src/features/activity/activity-row.tsx
+#: src/features/balances/balances-view.tsx
 #: src/features/entries/split-fields.tsx
 #: src/features/settlements/settlement-message.ts
 msgid "Ty"
@@ -1522,8 +1504,7 @@ msgid "Udziały"
 msgstr "Udziały"
 
 #. placeholder {0}: labels.splitMode[entry.split.mode]
-#: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
-#: src/app/g/[token]/entries/[entryId].tsx
+#: src/features/entries/entry-detail-body.tsx
 msgid "Udziały · {0}"
 msgstr "Udziały · {0}"
 
@@ -1539,8 +1520,7 @@ msgstr "Unieważnij link"
 msgid "Upraszczaj długi"
 msgstr "Upraszczaj długi"
 
-#: src/app/(app)/groups/[groupId]/balances.tsx
-#: src/app/g/[token]/balances.tsx
+#: src/features/balances/balances-view.tsx
 msgid "Uproszczone długi"
 msgstr "Uproszczone długi"
 
@@ -1628,8 +1608,7 @@ msgstr "Utwórz grupę dla wyjazdu, mieszkania albo jednego rachunku."
 msgid "Utworzono grupę {group}"
 msgstr "Utworzono grupę {group}"
 
-#: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
-#: src/app/g/[token]/entries/[entryId].tsx
+#: src/features/entries/entry-detail-body.tsx
 msgid "W walucie bazowej"
 msgstr "W walucie bazowej"
 
@@ -1718,8 +1697,7 @@ msgstr "Wróć"
 msgid "Wspólne + osobiste"
 msgstr "Wspólne + osobiste"
 
-#: src/app/(app)/groups/[groupId]/balances.tsx
-#: src/app/g/[token]/balances.tsx
+#: src/features/balances/balances-view.tsx
 msgid "Wszyscy są rozliczeni."
 msgstr "Wszyscy są rozliczeni."
 
@@ -1951,8 +1929,7 @@ msgstr "Zapisz spłatę"
 msgid "Zapłacił(a)"
 msgstr "Zapłacił(a)"
 
-#: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
-#: src/app/g/[token]/entries/[entryId].tsx
+#: src/features/entries/entry-detail-body.tsx
 #: src/features/entries/split-fields.tsx
 msgid "Zapłacili"
 msgstr "Zapłacili"
