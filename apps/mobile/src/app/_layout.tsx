@@ -1,6 +1,7 @@
 import { QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { SplashScreen, Stack } from 'expo-router';
 import { useEffect } from 'react';
+import { useLastKnownBlocked } from '@/features/moderation/blocked-status-store';
 import { sessionArea } from '@/features/moderation/moderation';
 import { meQuery } from '@/features/profile/me-query';
 import { LocaleProvider } from '@/i18n/locale-provider';
@@ -36,7 +37,10 @@ function RootNavigator() {
     if (!isPending && !checkingBlock) SplashScreen.hide();
   }, [isPending, checkingBlock]);
 
-  const area = sessionArea(signedIn, me.data);
+  // Offline or on an error, the status this device last saw keeps a blocked
+  // user out of the inbox (the offline cache would otherwise show it).
+  const lastKnownBlocked = useLastKnownBlocked({ pending: isPending, userId: session?.user.id }, me.data);
+  const area = sessionArea(signedIn, me.data, lastKnownBlocked);
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Protected guard={area === 'app'}>

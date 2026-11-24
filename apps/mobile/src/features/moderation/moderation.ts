@@ -5,12 +5,53 @@ export type SessionArea = 'auth' | 'app' | 'blocked';
 
 /**
  * A blocked account (#27) can sign in, but only to delete itself (#48,
- * ADR-0019). The API says so in `GET /me`; until it answers (or offline) the
- * app shows as usual — the API rejects everything else from a blocked session anyway.
+ * ADR-0019). The API says so in `GET /me`; until it answers (offline, error)
+ * the last status this device saw decides, so a blocked user never reaches
+ * the inbox from the offline cache.
  */
-export function sessionArea(signedIn: boolean, me: { blocked: boolean } | undefined): SessionArea {
+export function sessionArea(
+  signedIn: boolean,
+  me: { blocked: boolean } | undefined,
+  lastKnownBlocked: boolean,
+): SessionArea {
   if (!signedIn) return 'auth';
-  return me?.blocked ? 'blocked' : 'app';
+  const blocked = me ? me.blocked : lastKnownBlocked;
+  return blocked ? 'blocked' : 'app';
+}
+
+interface KeyValueStorage {
+  getItem(key: string): string | null;
+  setItem(key: string, value: string): void;
+}
+
+const BLOCKED_KEY = 'account.blocked-user';
+
+/**
+ * The last known blocked status, stored on the device: the id of the blocked
+ * account signed in here, if any. Set and cleared from `GET /me`'s answer,
+ * cleared on sign-out.
+ */
+export function createBlockedStatusStore(storage: KeyValueStorage) {
+  const listeners = new Set<() => void>();
+  let blockedUserId = storage.getItem(BLOCKED_KEY) || null;
+  const set = (next: string | null) => {
+    if (next === blockedUserId) return;
+    blockedUserId = next;
+    storage.setItem(BLOCKED_KEY, next ?? '');
+    for (const listener of listeners) listener();
+  };
+  return {
+    isBlocked: (userId: string | undefined) => userId !== undefined && userId === blockedUserId,
+    remember(userId: string, blocked: boolean) {
+      if (blocked) set(userId);
+      else if (blockedUserId === userId) set(null);
+    },
+    forget: () => set(null),
+    subscribe(listener: () => void): () => void {
+      listeners.add(listener);
+      return () => void listeners.delete(listener);
+    },
+  };
 }
 
 /** The API refused a request because the account is blocked (403 `account_blocked`). */
