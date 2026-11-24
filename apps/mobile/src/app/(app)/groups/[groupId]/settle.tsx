@@ -30,6 +30,7 @@ import {
   settleForm,
   settleFormFromEntry,
 } from '@/features/settlements/settle-form';
+import { decimalSeparator } from '@/i18n/locale';
 import { useLocale } from '@/i18n/locale-provider';
 import { LockedOfflineError, OutboxBlockedError } from '@/features/offline/offline-changes';
 import { authClient } from '@/lib/auth-client';
@@ -38,9 +39,6 @@ import { closeSheet } from '@/lib/close-sheet';
 /** How long "Skopiowano" replaces a copy button's label. */
 const COPIED_MS = 2000;
 
-/** The locale's decimal separator, for prefilling the amount field. */
-const decimalSeparator = (locale: string) =>
-  new Intl.NumberFormat(locale).formatToParts(1.5).find((part) => part.type === 'decimal')?.value ?? '.';
 
 /**
  * The settle sheet. "Oddaj" on my transfer in the balance drawer opens it with
