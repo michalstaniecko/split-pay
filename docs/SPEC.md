@@ -94,7 +94,7 @@ A fixed, translated list with icons (food, transport, accommodation, alcohol, fu
 
 - A **days × people** table: how much each person spent (paid) and consumed (sum of shares) on each day.
 - Breakdown by category. Incomes reduce their category's total; a category totalling 0 is hidden.
-- Members who left the group are shown together in a "Byli członkowie" ("Former members") column.
+- Members who left the group are shown together in a "Poza grupą" ("Former members") column.
 - Stats refresh when the screen is opened again (no realtime in the MVP).
 
 ## Members without an account, invitations, sharing
@@ -121,13 +121,13 @@ A fixed, translated list with icons (food, transport, accommodation, alcohol, fu
 ## Photos
 
 - Only: a **receipt photo** on an expense and a user **avatar**. A group has an emoji + color instead of a cover. No trip gallery.
-- Storage: **Cloudflare R2** (S3-compatible, `eu` jurisdiction), private bucket, behind a provider-neutral object-storage port so the provider can be swapped by configuration ([ADR-0006](./adr/0006-private-photos-on-hetzner-object-storage.md), [ADR-0018](./adr/0018-object-storage-on-cloudflare-r2-behind-s3-port.md)).
+- Storage: **Cloudflare R2** (S3-compatible, `eu` jurisdiction), private bucket, behind a provider-neutral object-storage port so the provider can be swapped by configuration ([ADR-0006](./adr/0006-private-photos-on-hetzner-object-storage.md), [ADR-0020](./adr/0020-object-storage-on-cloudflare-r2-behind-s3-port.md)).
 - The database stores object keys, never URLs; the app only ever sees presigned URLs from the API.
 - Upload directly from the phone via a presigned **PUT** URL (signed content type); the API only issues the URLs and checks the object's size and type before attaching it.
 - On the phone: downscaling (e.g. 1600 px), compression, EXIF stripping (including GPS).
 - Access only for group members via short-lived signed URLs. Logged-out web visitors do not see photos.
 - Limits: file size, number of photos per expense, daily limit per account. MVP values (`PHOTO_LIMITS` in `@split-pay/shared`): 3 MB per photo, 5 receipt uploads per entry (retakes count; an entry shows one receipt), 50 uploads per account in 24 hours. Receipts are downscaled to 1600 px, avatars to 512 px.
-- A "Report" button on a photo, an admin panel for reviewing reports, account blocking. Moderation decisions send no notifications to the reporter or the blocked user. A blocked user can still sign in, but sees only a "Konto zablokowane" screen whose single action is account deletion ([ADR-0019](./adr/0019-account-deletion-keeps-name-by-default.md)).
+- A "Report" button on a photo, an admin panel for reviewing reports, account blocking. Moderation decisions send no notifications to the reporter or the blocked user. A blocked user can still sign in, but sees only a "Konto zablokowane" screen whose only actions are signing out and account deletion ([ADR-0019](./adr/0019-account-deletion-keeps-name-by-default.md)).
 - Retention: receipt photos deleted one year (365 days) after the group is archived, by a daily job; it also removes photos of deleted groups and uploads never attached to an entry or set as avatar within a day. Avatars are deleted with the account.
 - CSAM scanning: **none in the MVP**; apply for Microsoft PhotoDNA at the public store launch.
 
@@ -138,7 +138,7 @@ A fixed, translated list with icons (food, transport, accommodation, alcohol, fu
 - Only the owner can permanently delete a group. Ownership follows the owner's member (claiming it makes you the owner). If the owner member has no account — the owner deleted their account or left — every member may delete the group.
 - **Account deletion** (Apple requirement, GDPR) offers two choices ([ADR-0010](./adr/0010-account-deletion-turns-into-member-without-account.md), [ADR-0019](./adr/0019-account-deletion-keeps-name-by-default.md)):
   - **"Usuń konto"** (default): email, sign-in methods, avatar and payout details are removed; in every group the user becomes an ordinary member without an account with their **last name**.
-  - **"Usuń konto i moją nazwę z grup"**: the same, and the name is cleared. A cleared name is stored as a marker, not text, and each viewer sees "Usunięty użytkownik" / "Deleted user" in their own language.
+  - **"Usuń konto i moją nazwę z grup"**: the same, and the name is cleared. A cleared name is stored as a marker, not text, and each viewer sees "Usunięte konto" / "Deleted user" in their own language.
   - Either way, other people's expenses and balances remain, any member can rename the member, and it can be claimed again. No masked names (e.g. "T…ek").
 
 ## Offline
@@ -215,7 +215,7 @@ Expo Router, chat-style layout — no bottom tabs, no group tabs ([ADR-0017](./a
 
 ## Technical architecture
 
-([ADR-0001](./adr/0001-typescript-across-the-stack.md), [ADR-0012](./adr/0012-self-hosting-on-coolify.md), [ADR-0013](./adr/0013-hono-rest-instead-of-trpc.md), [ADR-0018](./adr/0018-object-storage-on-cloudflare-r2-behind-s3-port.md))
+([ADR-0001](./adr/0001-typescript-across-the-stack.md), [ADR-0012](./adr/0012-self-hosting-on-coolify.md), [ADR-0013](./adr/0013-hono-rest-instead-of-trpc.md), [ADR-0020](./adr/0020-object-storage-on-cloudflare-r2-behind-s3-port.md))
 
 | Area | Choice |
 | --- | --- |

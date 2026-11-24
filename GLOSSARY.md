@@ -30,13 +30,21 @@ _Avoid_: Participant, user (in a group context)
 A member who has no account or has not yet claimed their profile; others enter their expenses.
 _Avoid_: Ghost, guest, placeholder, virtual person
 
-**Owner** (PL: Założyciel):
+**Owner** (PL: phrased as „Grupę założono: {name}”):
 The member who created the group; the only one who can permanently delete it. Ownership belongs to the member, not the user: claiming the owner's member makes you the owner. If the owner's member has no account, every member may delete the group.
 _Avoid_: Admin, founder
 
-**Deleted user** (PL: Usunięty użytkownik):
+**Deleted user** (PL: Usunięte konto):
 The name shown, in the viewer's own language, for a member whose user deleted their account and chose to remove their name too. Stored as a marker, not text. By default a deleted account keeps its member's last name instead.
 _Avoid_: Anonymous, unknown person (that is only a fallback for missing "added by" data)
+
+**Former member** (PL: Osoby, które opuściły grupę):
+A member who left the group. Their entries and balance stay in the group.
+_Avoid_: Ex-member, removed member
+
+**Blocked user** (PL: Konto zablokowane):
+A user an admin has cut off from all groups for breaking the rules. They can still sign in, but can only sign out or delete their account.
+_Avoid_: Banned user, suspended account
 
 **Claim** (PL: Przejęcie):
 Linking a member without account to a user, transferring their whole history in the group to that user.
