@@ -41,19 +41,21 @@ function RootNavigator() {
   // user out of the inbox (the offline cache would otherwise show it).
   const lastKnownBlocked = useLastKnownBlocked({ pending: isPending, userId: session?.user.id }, me.data);
   const area = sessionArea(signedIn, me.data, lastKnownBlocked);
+  // Where a guarded route sends the user instead (e.g. the app's start URL "/" while signed out).
+  const home = area === 'auth' ? '/sign-in' : area === 'blocked' ? '/blocked' : '/';
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Protected guard={area === 'app'}>
+      <Stack.Protected guard={area === 'app'} redirectTo={home}>
         <Stack.Screen name="(app)" />
       </Stack.Protected>
-      <Stack.Protected guard={area === 'auth'}>
+      <Stack.Protected guard={area === 'auth'} redirectTo={home}>
         <Stack.Screen name="(auth)" />
       </Stack.Protected>
-      <Stack.Protected guard={area === 'blocked'}>
+      <Stack.Protected guard={area === 'blocked'} redirectTo={home}>
         <Stack.Screen name="blocked" />
       </Stack.Protected>
-      <Stack.Protected guard={area !== 'blocked'}>
-        <Stack.Screen name="g" />
+      <Stack.Protected guard={area !== 'blocked'} redirectTo={home}>
+        <Stack.Screen name="g/[token]" />
       </Stack.Protected>
     </Stack>
   );
