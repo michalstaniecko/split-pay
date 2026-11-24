@@ -1,6 +1,6 @@
 import { useLingui } from '@lingui/react/macro';
 import { FlashList, type FlashListRef } from '@shopify/flash-list';
-import type { Entry } from '@split-pay/shared';
+import type { Entry, LocalDate } from '@split-pay/shared';
 import { useQuery } from '@tanstack/react-query';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
@@ -20,6 +20,8 @@ import {
   myMemberId as findMyMemberId,
   newestAddedEntry,
 } from '@/features/entries/conversation';
+import { dayStripDays } from '@/features/entries/day-strip';
+import { DayStrip } from '@/features/entries/day-strip-modal';
 import { entriesQuery, useDeleteEntry, useRestoreEntry } from '@/features/entries/entries-query';
 import { EntryActionsMenu } from '@/features/entries/entry-actions-menu';
 import { DaySeparator, EntryBubble } from '@/features/entries/entry-bubble';
@@ -172,6 +174,13 @@ function Conversation({
   const newHighlightId = useNewEntryHighlight(items, listRef);
   const focusedId = useFocusedEntry(items, listRef, focusEntryId);
   const highlightId = focusedId ?? newHighlightId;
+  // Day strip (#38): opened from a sticky day separator, jumps to a day's separator by index.
+  const [stripDay, setStripDay] = useState<LocalDate | null>(null);
+  const stripDays = useMemo(
+    () => dayStripDays(items, { startDate: group.startDate, endDate: group.endDate }),
+    [items, group.startDate, group.endDate],
+  );
+  const jumpToDay = (index: number) => void listRef.current?.scrollToIndex({ index, animated: true, viewPosition: 0 });
 
   const actions = useEntryActionHandler(group);
   const conflicts = useEntryConflicts(group.id);
@@ -210,7 +219,7 @@ function Conversation({
           contentContainerStyle={styles.list}
           renderItem={({ item }) =>
             item.type === 'day' ? (
-              <DaySeparator item={item} baseCurrency={group.baseCurrency} />
+              <DaySeparator item={item} baseCurrency={group.baseCurrency} onPress={() => setStripDay(item.date)} />
             ) : item.type === 'claim' ? (
               <ClaimMessage group={group} claim={item.claim} />
             ) : item.entry.kind === 'settlement' ? (
@@ -253,6 +262,7 @@ function Conversation({
           }
         />
       )}
+      <DayStrip days={stripDays} current={stripDay} onPick={jumpToDay} onClose={() => setStripDay(null)} />
       {actions.elements}
     </View>
   );
