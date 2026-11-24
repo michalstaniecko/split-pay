@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { claimBannerMember, createThisIsMeStore, downloadAppUrl, effectiveMe } from './web-view';
+import { claimBanner, createThisIsMeStore, downloadAppUrl, effectiveMe, openInAppUrl } from './web-view';
 
 const GROUP = '7f1c2a4e-0000-4000-8000-000000000001';
 const ANIA = '7f1c2a4e-0000-4000-8000-0000000000a1';
@@ -87,21 +87,33 @@ describe('downloadAppUrl', () => {
   });
 });
 
-describe('claimBannerMember (personal claim link banner)', () => {
+describe('openInAppUrl', () => {
+  it('opens the link in the app through its deep link, landing on the same token', () => {
+    expect(openInAppUrl('abc123')).toBe('splitpay://g/abc123');
+    expect(openInAppUrl('a/b c')).toBe('splitpay://g/a%2Fb%20c');
+  });
+});
+
+describe('claimBanner (personal claim link banner)', () => {
   const ania = { id: ANIA, displayName: 'Ania', hasAccount: true };
   const tomek = { id: TOMEK, displayName: 'Tomek', hasAccount: false };
   const members = [ania, tomek];
+  const token = 'claim-token-tomek';
 
-  it('is the member a personal claim link is for', () => {
-    expect(claimBannerMember({ claimFor: TOMEK, members })).toEqual(tomek);
+  it('names the member a personal claim link is for', () => {
+    expect(claimBanner({ token, claimFor: TOMEK, members })?.member).toEqual(tomek);
   });
 
-  it('is nobody for a group link', () => {
-    expect(claimBannerMember({ claimFor: null, members })).toBeNull();
+  it('offers "open in the app" with the same personal claim link', () => {
+    expect(claimBanner({ token, claimFor: TOMEK, members })?.openInAppUrl).toBe('splitpay://g/claim-token-tomek');
   });
 
-  it('is nobody once the member is claimed or gone', () => {
-    expect(claimBannerMember({ claimFor: ANIA, members })).toBeNull();
-    expect(claimBannerMember({ claimFor: 'gone', members })).toBeNull();
+  it('is not shown for a group link', () => {
+    expect(claimBanner({ token, claimFor: null, members })).toBeNull();
+  });
+
+  it('is not shown (nor "open in the app") once the member is claimed or gone', () => {
+    expect(claimBanner({ token, claimFor: ANIA, members })).toBeNull();
+    expect(claimBanner({ token, claimFor: 'gone', members })).toBeNull();
   });
 });

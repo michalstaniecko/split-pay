@@ -3,6 +3,8 @@
  * choice kept in browser storage and the "download the app" link.
  */
 
+import { groupLinkUrl } from '../group-link/group-link';
+
 interface KeyValueStorage {
   getItem(key: string): string | null;
   setItem(key: string, value: string): void;
@@ -49,15 +51,28 @@ export function effectiveMe(input: {
 }
 
 /**
- * The member the personal claim link banner names ("To Twój profil — przejmij
- * go w aplikacji"): the member the link is for, while they are still in the
- * group without an account. `null` = no banner (group link, or already claimed).
+ * "Open in the app" for a link (group link or personal claim link): the app's
+ * deep link to the same token, so the app lands on its join screen — for a
+ * personal claim link, straight on claiming that member. A web URL of the same
+ * page would only reload it, so this always uses the app's scheme.
  */
-export function claimBannerMember<M extends { id: string; hasAccount: boolean }>(input: {
+export function openInAppUrl(token: string): string {
+  return groupLinkUrl(token, undefined);
+}
+
+/**
+ * The personal claim link banner ("To Twój profil — przejmij go w aplikacji"):
+ * the member the link is for, while they are still in the group without an
+ * account, and "open in the app" for the same link. `null` = no banner (group
+ * link, or already claimed).
+ */
+export function claimBanner<M extends { id: string; hasAccount: boolean }>(input: {
+  token: string;
   claimFor: string | null;
   members: readonly M[];
-}): M | null {
-  return input.members.find((m) => m.id === input.claimFor && !m.hasAccount) ?? null;
+}): { member: M; openInAppUrl: string } | null {
+  const member = input.members.find((m) => m.id === input.claimFor && !m.hasAccount);
+  return member ? { member, openInAppUrl: openInAppUrl(input.token) } : null;
 }
 
 /**
