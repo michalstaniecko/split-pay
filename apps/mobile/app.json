@@ -8,9 +8,18 @@
     "scheme": "splitpay",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/expo.icon",
+      "infoPlist": {
+        "CFBundleAllowMixedLocalizations": true
+      },
+      "bundleIdentifier": "com.website.ihumbak.splitpay"
+    },
+    "locales": {
+      "pl": "./app-locales/pl.json",
+      "en": "./app-locales/en.json"
     },
     "android": {
+      "package": "com.website.ihumbak.splitpay",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -33,7 +42,29 @@
           "imageWidth": 76
         }
       ],
-      "react-native-edge-to-edge"
+      "react-native-edge-to-edge",
+      "expo-localization",
+      "expo-sqlite",
+      [
+        "expo-secure-store",
+        {
+          "faceIDPermission": false
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "enableBackgroundRemoteNotifications": true
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "split-pay uses the camera to photograph receipts and your profile picture.",
+          "photosPermission": "split-pay lets you pick a receipt photo or a profile picture from your library.",
+          "microphonePermission": false
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

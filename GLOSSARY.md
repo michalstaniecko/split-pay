@@ -30,16 +30,28 @@ _Avoid_: Participant, user (in a group context)
 A member who has no account or has not yet claimed their profile; others enter their expenses.
 _Avoid_: Ghost, guest, placeholder, virtual person
 
-**Owner** (PL: Założyciel):
-The member who created the group; the only one who can permanently delete it.
+**Owner** (PL: phrased as „Grupę założono: {name}”):
+The member who created the group; the only one who can permanently delete it. Ownership belongs to the member, not the user: claiming the owner's member makes you the owner. If the owner's member has no account, every member may delete the group.
 _Avoid_: Admin, founder
+
+**Deleted user** (PL: Usunięte konto):
+The name shown, in the viewer's own language, for a member whose user deleted their account and chose to remove their name too. Stored as a marker, not text. By default a deleted account keeps its member's last name instead.
+_Avoid_: Anonymous, unknown person (that is only a fallback for missing "added by" data)
+
+**Former member** (PL: Osoby, które opuściły grupę):
+A member who left the group. Their entries and balance stay in the group.
+_Avoid_: Ex-member, removed member
+
+**Blocked user** (PL: Konto zablokowane):
+A user an admin has cut off from all groups for breaking the rules. They can still sign in, but can only sign out or delete their account.
+_Avoid_: Banned user, suspended account
 
 **Claim** (PL: Przejęcie):
 Linking a member without account to a user, transferring their whole history in the group to that user.
 _Avoid_: Merge, link-up
 
 **Attendance** (PL: Obecność):
-The range of trip days on which a member is present; it determines the default split participants.
+One or more ranges of trip days on which a member is present (a member can leave and come back); it determines the default split participants. No attendance means present for the whole trip.
 _Avoid_: Availability, stay
 
 **Conversation** (PL: Rozmowa):
@@ -55,7 +67,7 @@ A secret, revocable link that leads to joining the group (in the app) or preview
 _Avoid_: Email invitation, group code
 
 **Personal claim link** (PL: Osobisty link przejęcia):
-A link pointing to a specific member without account to be claimed.
+A link pointing to a specific member without account to be claimed. Without the app it opens the same web view as the group link, with that member highlighted.
 
 ## Money
 
@@ -68,11 +80,11 @@ A payment made by one or more payers, split into members' shares.
 _Avoid_: Bill, transaction, cost
 
 **Income** (PL: Wpływ):
-Money received by a member that belongs to several members (e.g. a deposit refund); the reverse of an expense.
+Money received by a member that belongs to several members (e.g. a deposit refund); the reverse of an expense. The members who received the money are its recipients.
 _Avoid_: Negative expense, refund (as a type)
 
 **Settlement** (PL: Spłata):
-A transfer of money from one member to another to even out balances.
+A transfer of money from one member to another to even out balances. It may be in a foreign currency, with a frozen rate like any other entry.
 _Avoid_: Payment, transfer (as a type)
 
 **Payer** (PL: Płatnik):

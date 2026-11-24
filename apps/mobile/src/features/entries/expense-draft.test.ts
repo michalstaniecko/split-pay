@@ -1,0 +1,379 @@
+import type { Member } from '@split-pay/shared';
+import { describe, expect, it } from 'vitest';
+import {
+  canSendComposer,
+  composerExpense,
+  entryCurrencies,
+  expenseFormFromComposer,
+  formBaseAmount,
+  parseExpenseForm,
+  todayLocalDate,
+  withCurrency,
+  withRate,
+  withSuggestedRate,
+  withDate,
+  withTitle,
+} from './expense-draft';
+import { initialPayersForm, initialSplitForm } from './split-form';
+
+const id = (n: number) => `00000000-0000-4000-8000-${n.toString().padStart(12, '0')}`;
+const GROUP = id(100);
+const ANIA = id(1);
+const BARTEK = id(2);
+const TOMEK = id(4);
+const ENTRY = id(500);
+const member = (memberId: string, displayName: string, attendance: Member['attendance'] = null): Member => ({
+  id: memberId,
+  groupId: GROUP,
+  displayName,
+  userId: null,
+  attendance,
+});
+// Tomek arrives on the 12th.
+const members = [member(ANIA, 'Ania'), member(BARTEK, 'Bartek'), member(TOMEK, 'Tomek', [{ from: '2026-07-12', to: '2026-07-14' }])];
+const trip = { id: GROUP, baseCurrency: 'PLN', startDate: '2026-07-10', endDate: '2026-07-14' };
+
+describe('todayLocalDate', () => {
+  it("is the device's local calendar date", () => {
+    expect(todayLocalDate(new Date(2026, 10, 3, 23, 59))).toBe('2026-11-03');
+    expect(todayLocalDate(new Date(2026, 0, 1, 0, 1))).toBe('2026-01-01');
+  });
+});
+
+describe('canSendComposer', () => {
+  it('needs an amount > 0 and a non-empty title', () => {
+    expect(canSendComposer({ amount: '12,5', title: 'Pizza' }, 2)).toBe(true);
+    expect(canSendComposer({ amount: '0', title: 'Pizza' }, 2)).toBe(false);
+    expect(canSendComposer({ amount: '', title: 'Pizza' }, 2)).toBe(false);
+    expect(canSendComposer({ amount: '12', title: '  ' }, 2)).toBe(false);
+  });
+});
+
+describe('composerExpense', () => {
+  it('is paid by me, on the default date, split equally among those present, category from the title', () => {
+    const expense = composerExpense({
+      draft: { amount: '120,00', title: 'Pizza' },
+      id: ENTRY,
+      group: trip,
+      members,
+      myMemberId: ANIA,
+      today: '2026-07-11',
+    });
+    expect(expense).toMatchObject({
+      kind: 'expense',
+      id: ENTRY,
+      date: '2026-07-11',
+      title: 'Pizza',
+      amount: 12_000,
+      currency: 'PLN',
+      category: 'food',
+      payers: [{ memberId: ANIA, amount: 12_000 }],
+      split: { mode: 'equal', memberIds: [ANIA, BARTEK] },
+    });
+  });
+
+  it('after the trip uses its last day, which also decides who is present', () => {
+    const expense = composerExpense({
+      draft: { amount: '30', title: 'Taxi' },
+      id: ENTRY,
+      group: trip,
+      members,
+      myMemberId: ANIA,
+      today: '2026-11-23',
+    });
+    expect(expense).toMatchObject({ date: '2026-07-14', split: { memberIds: [ANIA, BARTEK, TOMEK] } });
+  });
+
+  it('is null when the draft cannot be sent or I am not a member', () => {
+    const input = { id: ENTRY, group: trip, members, today: '2026-07-11' };
+    expect(composerExpense({ ...input, draft: { amount: '', title: 'x' }, myMemberId: ANIA })).toBeNull();
+    expect(composerExpense({ ...input, draft: { amount: '5', title: 'x' }, myMemberId: null })).toBeNull();
+  });
+});
+
+describe('expense form', () => {
+  const form = expenseFormFromComposer({
+    draft: { amount: '45,5', title: 'Paliwo' },
+    group: trip,
+    members,
+    myMemberId: ANIA,
+    today: '2026-07-11',
+  });
+
+  it('is prefilled from the composer with me as payer, the default date, those present and the suggested category', () => {
+    expect(form).toEqual({
+      amount: '45,5',
+      title: 'Paliwo',
+      payerMemberId: ANIA,
+      date: '2026-07-11',
+      category: 'fuel',
+      categoryChosen: false,
+      currency: 'PLN',
+      rate: '1',
+      rateEdited: false,
+      participantIds: [ANIA, BARTEK],
+      participantsDate: '2026-07-11',
+      split: initialSplitForm,
+      payers: initialPayersForm,
+    });
+  });
+
+  it('participants follow attendance when the date changes', () => {
+    const next = withDate(form, '2026-07-13', members);
+    expect(next).toMatchObject({ date: '2026-07-13', participantIds: [ANIA, BARTEK, TOMEK], participantsDate: '2026-07-13' });
+    expect(withDate(next, '2026-07-10', members).participantIds).toEqual([ANIA, BARTEK]);
+  });
+
+  it('keeps hand-picked participants when the date changes', () => {
+    const picked = { ...form, participantIds: [BARTEK] };
+    expect(withDate(picked, '2026-07-13', members).participantIds).toEqual([BARTEK]);
+  });
+
+  it('keeps participants while the date is being typed', () => {
+    const typing = withDate(form, '2026-07-1', members);
+    expect(typing).toMatchObject({ date: '2026-07-1', participantIds: [ANIA, BARTEK], participantsDate: '2026-07-11' });
+    expect(withDate(typing, '2026-07-13', members).participantIds).toEqual([ANIA, BARTEK, TOMEK]);
+  });
+
+  it('keeps suggesting the category from the title until the user picks one', () => {
+    expect(withTitle(form, 'Pizza').category).toBe('food');
+    expect(withTitle({ ...form, category: 'other', categoryChosen: true }, 'Pizza').category).toBe('other');
+  });
+
+  it('builds an equal-split expense; the date decides who is present', () => {
+    const parsed = parseExpenseForm(
+      { ...withDate(form, '2026-07-13', members), payerMemberId: BARTEK },
+      { id: ENTRY, group: trip, members },
+    );
+    expect(parsed).toEqual({
+      ok: true,
+      value: expect.objectContaining({
+        amount: 4550,
+        category: 'fuel',
+        date: '2026-07-13',
+        payers: [{ memberId: BARTEK, amount: 4550 }],
+        split: { mode: 'equal', memberIds: [ANIA, BARTEK, TOMEK] },
+      }),
+    });
+  });
+
+  it('splits among the chosen participants, everyone when nobody is present that day', () => {
+    const context = { id: ENTRY, group: trip, members };
+    const picked = parseExpenseForm({ ...form, participantIds: [BARTEK, TOMEK] }, context);
+    expect(picked.ok && picked.value.split).toEqual({ mode: 'equal', memberIds: [BARTEK, TOMEK] });
+    const nobody = parseExpenseForm({ ...form, participantIds: [] }, context);
+    expect(nobody.ok && nobody.value.split).toEqual({ mode: 'equal', memberIds: [ANIA, BARTEK, TOMEK] });
+  });
+
+  it('lists invalid fields in form order', () => {
+    const parsed = parseExpenseForm(
+      { ...form, amount: '0', title: ' ', date: '2026-13-40', payerMemberId: '' },
+      { id: ENTRY, group: trip, members },
+    );
+    expect(parsed).toEqual({ ok: false, errors: ['amount', 'title', 'payer', 'date'] });
+  });
+
+  it('builds the split mode and multiple payers the form describes', () => {
+    const parsed = parseExpenseForm(
+      {
+        ...form,
+        split: { ...form.split, mode: 'shares', weights: { [ANIA]: '2', [TOMEK]: '1' } },
+        payers: { multiple: true, amounts: { [ANIA]: '40', [BARTEK]: '5,5' } },
+      },
+      { id: ENTRY, group: trip, members },
+    );
+    expect(parsed).toMatchObject({
+      ok: true,
+      value: {
+        payers: [
+          { memberId: ANIA, amount: 4000 },
+          { memberId: BARTEK, amount: 550 },
+        ],
+        split: {
+          mode: 'shares',
+          weights: [
+            { memberId: ANIA, weight: 2 },
+            { memberId: TOMEK, weight: 1 },
+          ],
+        },
+      },
+    });
+  });
+
+  it('blocks saving when split or payer amounts do not add up', () => {
+    const parsed = parseExpenseForm(
+      {
+        ...form,
+        split: { ...form.split, mode: 'exact', exact: { [ANIA]: '40' } },
+        payers: { multiple: true, amounts: { [ANIA]: '40' } },
+      },
+      { id: ENTRY, group: trip, members },
+    );
+    expect(parsed).toEqual({ ok: false, errors: ['payerAmounts', 'split'] });
+  });
+});
+
+describe('expense form in a foreign currency', () => {
+  const form = expenseFormFromComposer({
+    draft: { amount: '20,505', title: 'Kolacja' },
+    group: trip,
+    members,
+    myMemberId: ANIA,
+    today: '2026-07-11',
+  });
+  const eur = withCurrency(form, 'EUR', 'PLN');
+
+  it('picking a currency clears the rate until the ECB rate arrives; the base currency has rate 1', () => {
+    expect(eur).toMatchObject({ currency: 'EUR', rate: '', rateEdited: false });
+    expect(withCurrency(withRate(eur, '4,5'), 'PLN', 'PLN')).toMatchObject({ currency: 'PLN', rate: '1', rateEdited: false });
+  });
+
+  it("trims the amount to the new currency's minor digits", () => {
+    expect(withCurrency({ ...form, amount: '1200,50' }, 'JPY', 'PLN').amount).toBe('1200');
+  });
+
+  it('prefills the suggested rate until the user edits it', () => {
+    expect(withSuggestedRate(eur, '4.3157').rate).toBe('4.3157');
+    expect(withSuggestedRate(withRate(eur, '4,30'), '4.3157').rate).toBe('4,30');
+  });
+
+  it('shows the amount in the base currency at the typed rate', () => {
+    expect(formBaseAmount({ ...withRate(eur, '4,3157'), amount: '20' }, 'PLN')).toBe(8_631);
+    expect(formBaseAmount({ ...eur, amount: '20' }, 'PLN')).toBeNull();
+    expect(formBaseAmount(form, 'PLN')).toBeNull();
+  });
+
+  it('builds the expense in the entry currency with the frozen rate as a decimal string', () => {
+    const parsed = parseExpenseForm({ ...withRate(eur, '4,3157'), amount: '20,50' }, { id: ENTRY, group: trip, members });
+    expect(parsed).toEqual({
+      ok: true,
+      value: expect.objectContaining({
+        amount: 2050,
+        currency: 'EUR',
+        rateToBase: '4.3157',
+        payers: [{ memberId: ANIA, amount: 2050 }],
+      }),
+    });
+  });
+
+  it("reads several payers' amounts in the entry currency's minor units", () => {
+    const yen = { ...withRate(withCurrency(form, 'JPY', 'PLN'), '0,0262862'), amount: '3000' };
+    const parsed = parseExpenseForm(
+      { ...yen, payers: { multiple: true, amounts: { [ANIA]: '1000', [BARTEK]: '2000' } } },
+      { id: ENTRY, group: trip, members },
+    );
+    expect(parsed).toEqual({
+      ok: true,
+      value: expect.objectContaining({
+        amount: 3000,
+        currency: 'JPY',
+        rateToBase: '0.0262862',
+        payers: [
+          { memberId: ANIA, amount: 1000 },
+          { memberId: BARTEK, amount: 2000 },
+        ],
+      }),
+    });
+  });
+
+  it('rejects a missing or invalid rate', () => {
+    const context = { id: ENTRY, group: trip, members };
+    expect(parseExpenseForm({ ...eur, amount: '20' }, context)).toEqual({ ok: false, errors: ['rate'] });
+    expect(parseExpenseForm({ ...withRate(eur, '0'), amount: '20' }, context)).toEqual({ ok: false, errors: ['rate'] });
+    expect(parseExpenseForm({ ...withRate(eur, '4.3.1'), amount: '20' }, context)).toEqual({ ok: false, errors: ['rate'] });
+  });
+});
+
+describe('entryCurrencies', () => {
+  it('offers the base currency first, then the others once', () => {
+    const list = entryCurrencies('PLN');
+    expect(list[0]).toBe('PLN');
+    expect(list).toContain('EUR');
+    expect(new Set(list).size).toBe(list.length);
+    expect(entryCurrencies('MXN')[0]).toBe('MXN');
+  });
+});
+
+describe('income in the expense form', () => {
+  const form = expenseFormFromComposer({
+    draft: { amount: '400', title: 'Zwrot kaucji' },
+    group: trip,
+    members,
+    myMemberId: ANIA,
+    today: '2026-07-14',
+  });
+
+  it('builds an equal-split income received by the chosen recipient', () => {
+    const parsed = parseExpenseForm(
+      { ...form, kind: 'income', payerMemberId: BARTEK, category: 'accommodation', categoryChosen: true },
+      { id: ENTRY, group: trip, members },
+    );
+    expect(parsed).toEqual({
+      ok: true,
+      value: {
+        kind: 'income',
+        id: ENTRY,
+        date: '2026-07-14',
+        title: 'Zwrot kaucji',
+        amount: 40_000,
+        currency: 'PLN',
+        rateToBase: '1',
+        category: 'accommodation',
+        receiptPhotoId: null,
+        recipients: [{ memberId: BARTEK, amount: 40_000 }],
+        split: { mode: 'equal', memberIds: [ANIA, BARTEK, TOMEK] },
+      },
+    });
+  });
+
+  it('switching back to an expense builds an expense again', () => {
+    const parsed = parseExpenseForm({ ...form, kind: 'expense' }, { id: ENTRY, group: trip, members });
+    expect(parsed).toEqual({
+      ok: true,
+      value: expect.objectContaining({ kind: 'expense', payers: [{ memberId: ANIA, amount: 40_000 }] }),
+    });
+  });
+
+  it('builds an income with several recipients and a split mode (#12)', () => {
+    const parsed = parseExpenseForm(
+      {
+        ...form,
+        kind: 'income',
+        split: { ...form.split, mode: 'exact', exact: { [ANIA]: '300', [TOMEK]: '100' } },
+        payers: { multiple: true, amounts: { [ANIA]: '250', [BARTEK]: '150' } },
+      },
+      { id: ENTRY, group: trip, members },
+    );
+    expect(parsed).toMatchObject({
+      ok: true,
+      value: {
+        kind: 'income',
+        recipients: [
+          { memberId: ANIA, amount: 25_000 },
+          { memberId: BARTEK, amount: 15_000 },
+        ],
+        split: {
+          mode: 'exact',
+          amounts: [
+            { memberId: ANIA, amount: 30_000 },
+            { memberId: TOMEK, amount: 10_000 },
+          ],
+        },
+      },
+    });
+    expect(parsed.ok && 'payers' in parsed.value).toBe(false);
+  });
+
+  it('reports recipient amounts that do not add up on the payer amounts field', () => {
+    const parsed = parseExpenseForm(
+      { ...form, kind: 'income', payers: { multiple: true, amounts: { [ANIA]: '100' } } },
+      { id: ENTRY, group: trip, members },
+    );
+    expect(parsed).toEqual({ ok: false, errors: ['payerAmounts'] });
+  });
+
+  it('reports a missing recipient on the payer field', () => {
+    const parsed = parseExpenseForm({ ...form, kind: 'income', payerMemberId: '' }, { id: ENTRY, group: trip, members });
+    expect(parsed).toEqual({ ok: false, errors: ['payer'] });
+  });
+});

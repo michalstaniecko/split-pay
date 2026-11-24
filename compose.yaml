@@ -1,0 +1,52 @@
+# Local development services. Start with `pnpm db:up`.
+# A fixed project name keeps one Postgres (and one volume) across worktrees.
+name: split-pay
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: splitpay
+      POSTGRES_PASSWORD: splitpay
+      POSTGRES_DB: splitpay
+    ports: ['5432:5432']
+    volumes:
+      # PG18 image: mount at /var/lib/postgresql, not /var/lib/postgresql/data.
+      - pgdata:/var/lib/postgresql
+      # Creates the test database on the first start of an empty volume.
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U splitpay']
+      interval: 2s
+      retries: 20
+
+  # S3-compatible photo bucket for development (ADR-0006). MinIO's images are
+  # no longer published on Docker Hub; RustFS speaks the same API.
+  s3:
+    image: rustfs/rustfs:latest
+    environment:
+      RUSTFS_ACCESS_KEY: splitpay
+      RUSTFS_SECRET_KEY: splitpay-secret
+    ports: ['9000:9000']
+    volumes:
+      - s3data:/data
+
+  # Creates the private bucket once the store is up (idempotent).
+  s3-bucket:
+    image: amazon/aws-cli:latest
+    depends_on: [s3]
+    environment:
+      AWS_ACCESS_KEY_ID: splitpay
+      AWS_SECRET_ACCESS_KEY: splitpay-secret
+      AWS_DEFAULT_REGION: us-east-1
+    entrypoint: ['/bin/sh', '-c']
+    command:
+      - >-
+        for i in 1 2 3 4 5 6 7 8 9 10; do
+        aws --endpoint-url http://s3:9000 s3api head-bucket --bucket splitpay-photos 2>/dev/null && exit 0;
+        aws --endpoint-url http://s3:9000 s3api create-bucket --bucket splitpay-photos && exit 0;
+        sleep 2; done; exit 1
+
+volumes:
+  pgdata:
+  s3data:

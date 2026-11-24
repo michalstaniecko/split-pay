@@ -40,7 +40,7 @@ function assertSum(allocations: Allocation[], amount: number): Allocation[] {
 
 /** Whether a member is present on a given day (attendance `null` = whole trip). */
 export function isPresentOn(member: Member, date: LocalDate): boolean {
-  return member.attendance === null || (member.attendance.from <= date && date <= member.attendance.to);
+  return member.attendance === null || member.attendance.some((r) => r.from <= date && date <= r.to);
 }
 
 /** Default split participants: members present on the entry's date. */

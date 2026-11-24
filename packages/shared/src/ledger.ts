@@ -57,6 +57,34 @@ export function computeBalances(entries: readonly Entry[], baseCurrency: Currenc
   return balances;
 }
 
+/**
+ * A member's share of an entry in the base currency ("twój udział" on a
+ * bubble): 0 when they are not in the split and for settlements, negative for
+ * an income (money that belongs to them).
+ */
+export function memberShare(entry: Entry, memberId: string, baseCurrency: CurrencyCode): number {
+  return entryEffect(entry, baseCurrency).consumed.find((c) => c.memberId === memberId)?.amount ?? 0;
+}
+
+/**
+ * The group's net spending per day in the base currency (the Conversation's
+ * day separators): that day's expenses minus its incomes — the sum of every
+ * member's `consumed` in `dailyStats`, so an income (deposit refund) reduces
+ * the day's total and a day with only an income has a negative total.
+ * Settlements are not spending and are skipped, as are deleted entries. Days
+ * without expenses or incomes are absent.
+ */
+export function dailyTotals(entries: readonly Entry[], baseCurrency: CurrencyCode): Map<LocalDate, number> {
+  const totals = new Map<LocalDate, number>();
+  for (const entry of entries.filter(isActive)) {
+    if (entry.kind === 'settlement') continue;
+    // Converted as a total, then split — so the sum of shares is the converted amount (ADR-0016).
+    const amount = entryEffect(entry, baseCurrency).consumed.reduce((acc, c) => acc + c.amount, 0);
+    totals.set(entry.date, (totals.get(entry.date) ?? 0) + amount);
+  }
+  return totals;
+}
+
 export interface MemberDayStats {
   /** How much the member paid out that day (expenses minus income received). */
   paid: number;

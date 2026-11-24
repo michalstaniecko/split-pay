@@ -7,6 +7,7 @@ export const ANIA = uuid(1);
 export const BARTEK = uuid(2);
 export const KASIA = uuid(3);
 export const TOMEK = uuid(4);
+export const ZOSIA = uuid(5);
 export const GROUP = uuid(100);
 export const USER = uuid(200);
 
@@ -34,7 +35,12 @@ export const members: Member[] = [
   member(ANIA, 'Ania'),
   member(BARTEK, 'Bartek'),
   member(KASIA, 'Kasia'),
-  member(TOMEK, 'Tomek', { from: '2026-07-12', to: '2026-07-14' }),
+  member(TOMEK, 'Tomek', [{ from: '2026-07-12', to: '2026-07-14' }]),
+  // Leaves after the 11th and comes back on the 13th.
+  member(ZOSIA, 'Zosia', [
+    { from: '2026-07-10', to: '2026-07-11' },
+    { from: '2026-07-13', to: '2026-07-14' },
+  ]),
 ];
 
 let seq = 1000;
@@ -43,6 +49,7 @@ const meta = () => ({
   groupId: GROUP,
   version: 1,
   createdBy: USER,
+  createdByMember: ANIA,
   createdAt: '2026-07-10T10:00:00Z',
   updatedAt: '2026-07-10T10:00:00Z',
   deletedAt: null,

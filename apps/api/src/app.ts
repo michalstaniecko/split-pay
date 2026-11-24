@@ -1,21 +1,98 @@
 import { zValidator } from '@hono/zod-validator';
-import { splitEvenly } from '@split-pay/shared';
+import { AccountDeletion, defaultFeatureFlags, type FeatureFlags } from '@split-pay/shared';
 import { Hono } from 'hono';
 import { logger } from 'hono/logger';
-import { z } from 'zod';
+import type { Auth } from './auth';
+import type { Db } from './db/client';
+import { createRequireAdmin, isAdminEmail } from './middleware/require-admin';
+import { type AuthEnv, createRequireUser } from './middleware/require-user';
+import { deleteAccount } from './routes/account';
+import { activityRoutes } from './routes/activity';
+import { adminRoutes, reportRoutes } from './routes/moderation';
+import { linksRoutes } from './routes/group-links';
+import { groupsRoutes } from './routes/groups';
+import { myNotificationSettingsRoutes, myPushTokenRoutes } from './routes/notifications';
+import { openGraphRoutes } from './routes/open-graph';
+import { myPayoutDetailsRoutes } from './routes/payout-details';
+import { myAvatarRoutes } from './routes/photos';
+import { publicViewRoutes } from './routes/public-view';
+import { quickBillsRoutes } from './routes/quick-bills';
+import { ratesRoutes } from './routes/rates';
+import type { ObjectStorage } from './storage/object-storage';
 
-export const app = new Hono()
-  .use(logger())
-  .get('/health', (c) => c.json({ status: 'ok' as const }))
-  // Temporary demo endpoint — shows that packages/shared logic runs on the
-  // server. Remove once real resources exist.
-  .post(
-    '/dev/split-evenly',
-    zValidator('json', z.object({ total: z.number().int(), memberIds: z.array(z.string()).min(1) })),
-    (c) => {
-      const { total, memberIds } = c.req.valid('json');
-      return c.json({ allocations: splitEvenly(total, memberIds) });
-    },
+export interface AppDeps {
+  auth: Auth;
+  db: Db;
+  /** Admin emails (`ADMIN_EMAILS`, lowercase): app-wide moderators (#27); none when omitted. */
+  adminEmails?: readonly string[];
+  /** Feature flags served to the apps; defaults (all off) when omitted. */
+  flags?: FeatureFlags;
+  /** Photo bucket (ADR-0006); photo routes answer 503 when omitted. */
+  storage?: ObjectStorage;
+  /** Origin of the web app (`WEB_URL`), where link previews send people; unset until the domain exists. */
+  webUrl?: string | undefined;
+}
+
+/**
+ * Builds the HTTP app. IO (env, pools, OTP delivery) is injected so tests can
+ * run it against the test database with a capturing OTP sender.
+ * Keep routes chained in one expression (or `.route()` chained sub-apps) —
+ * the typed client (`hc`) infers its types from this chain.
+ */
+export const createApp = ({ auth, db, adminEmails = [], flags = defaultFeatureFlags, storage, webUrl }: AppDeps) => {
+  // A blocked session (#48) passes only where `blocked-session.ts` allows.
+  const requireUser = createRequireUser(auth, db);
+  const requireAdmin = createRequireAdmin(adminEmails);
+
+  return (
+    new Hono<AuthEnv>()
+      .use(logger())
+      .on(['GET', 'POST'], '/api/auth/*', (c) => auth.handler(c.req.raw))
+      .get('/health', (c) => c.json({ status: 'ok' as const }))
+      /** Feature flags. Public: the app reads them before and without signing in. */
+      .get('/flags', (c) => c.json<FeatureFlags>({ ...flags }))
+      /** The signed-in user. `blocked`: the app shows only "Konto zablokowane" (#48). */
+      .get('/me', requireUser, (c) => {
+        const user = c.get('user');
+        return c.json({
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          isAdmin: isAdminEmail(adminEmails, user.email),
+          blocked: c.get('blocked'),
+        });
+      })
+      /**
+       * Account deletion (ADR-0010, ADR-0019): personal data goes, the user's
+       * members stay without an account — with their last name unless `removeName`.
+       */
+      .delete('/me', requireUser, zValidator('json', AccountDeletion), async (c) => {
+        await deleteAccount(db, c.get('user'), c.req.valid('json'), storage);
+        return c.json({ deleted: true as const });
+      })
+      /** My payout details (Profile). */
+      .route('/me/payout-details', myPayoutDetailsRoutes({ db, requireUser }))
+      /** My avatar (Profile): upload, set, remove. */
+      .route('/me/avatar', myAvatarRoutes({ db, requireUser, storage }))
+      /** Push notifications (#24): this device's token and the global switch. */
+      .route('/me/push-tokens', myPushTokenRoutes({ db, requireUser }))
+      .route('/me/notifications', myNotificationSettingsRoutes({ db, requireUser }))
+      .route('/groups', groupsRoutes({ db, requireUser, storage }))
+      /** Activity: changes from all my groups, newest first (#21). */
+      .route('/activity', activityRoutes({ db, requireUser }))
+      /** Quick bill: group + members without an account + its expense in one step. */
+      .route('/quick-bills', quickBillsRoutes({ db, requireUser }))
+      /** Opening a group link in the app: preview + join. */
+      .route('/links', linksRoutes({ db, requireUser }))
+      /** The view-only web for a group link (no session) and its link previews. */
+      .route('/public/links', publicViewRoutes({ db }))
+      .route('/og', openGraphRoutes({ db, webUrl }))
+      /** Content reporting and the admin panel (#27). */
+      .route('/reports', reportRoutes({ db, requireUser }))
+      .route('/admin', adminRoutes({ db, requireUser, requireAdmin, storage }))
+      /** ECB exchange rates for a date (ADR-0014). */
+      .route('/rates', ratesRoutes({ db, requireUser }))
   );
+};
 
-export type AppType = typeof app;
+export type AppType = ReturnType<typeof createApp>;

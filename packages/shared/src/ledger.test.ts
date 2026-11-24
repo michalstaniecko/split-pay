@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { computeBalances, dailyStats, pairwiseTransfers, simplifiedTransfers, type Transfer } from './ledger';
+import {
+  computeBalances,
+  dailyStats,
+  dailyTotals,
+  memberShare,
+  pairwiseTransfers,
+  simplifiedTransfers,
+  type Transfer,
+} from './ledger';
 import type { Entry } from './model';
 import { ANIA, BARTEK, KASIA, TOMEK, expense, income, settlement, sum } from './test-fixtures';
 
@@ -68,6 +76,24 @@ describe('computeBalances', () => {
     });
   });
 
+  it('counts a foreign-currency entry at its frozen rate, converted total split exactly', () => {
+    // 10.00 EUR × 4.3157 = 43.157 → 43.16 PLN. Shares in EUR 3.34 / 3.33 / 3.33, converted in
+    // proportion to them so they add up to 43.16: 14.42 / 14.37 / 14.37.
+    const balances = computeBalances(
+      [
+        expense({
+          amount: 1_000,
+          currency: 'EUR',
+          rateToBase: '4.3157',
+          payers: [{ memberId: KASIA, amount: 1_000 }],
+          split: { mode: 'equal', memberIds: [ANIA, BARTEK, KASIA] },
+        }),
+      ],
+      'PLN',
+    );
+    expect(Object.fromEntries(balances)).toEqual({ [ANIA]: -1_442, [BARTEK]: -1_437, [KASIA]: 4_316 - 1_437 });
+  });
+
   it('skips deleted entries', () => {
     const [first] = trip;
     expect(computeBalances([{ ...first!, deletedAt: '2026-07-11T00:00:00Z' }], 'PLN').size).toBe(0);
@@ -82,6 +108,69 @@ describe('computeBalances', () => {
       'PLN',
     );
     expect(Object.fromEntries(balances)).toEqual({ [ANIA]: 0, [BARTEK]: 0 });
+  });
+});
+
+describe('memberShare', () => {
+  it("is the member's share of an entry in the base currency", () => {
+    expect(memberShare(trip[0]!, ANIA, 'PLN')).toBe(10_000);
+    expect(memberShare(trip[2]!, TOMEK, 'PLN')).toBe(8_000);
+    expect(memberShare(trip[3]!, TOMEK, 'PLN')).toBe(2_125);
+  });
+
+  it('is 0 for a member outside the split and for settlements', () => {
+    expect(memberShare(trip[1]!, TOMEK, 'PLN')).toBe(0);
+    expect(memberShare(settlement({ amount: 100, from: ANIA, to: BARTEK }), ANIA, 'PLN')).toBe(0);
+  });
+
+  it('is negative for an income (money owed to the member)', () => {
+    expect(memberShare(trip[4]!, BARTEK, 'PLN')).toBe(-10_000);
+  });
+});
+
+describe('dailyTotals', () => {
+  it("sums each day's expenses minus incomes in the base currency, skipping settlements and deleted entries", () => {
+    const entries = [
+      ...trip,
+      settlement({ date: '2026-07-11', amount: 500, from: ANIA, to: BARTEK }),
+      expense({
+        date: '2026-07-11',
+        amount: 999,
+        deletedAt: '2026-07-11T20:00:00Z',
+        payers: [{ memberId: ANIA, amount: 999 }],
+        split: { mode: 'equal', memberIds: [ANIA] },
+      }),
+    ];
+    expect(dailyTotals(entries, 'PLN')).toEqual(
+      new Map([
+        ['2026-07-10', 30_000],
+        ['2026-07-11', 12_000],
+        ['2026-07-12', 20_000],
+        ['2026-07-13', 8_500],
+        // The deposit refund: money back to the group, not spending.
+        ['2026-07-14', -40_000],
+      ]),
+    );
+  });
+
+  it('an income on a day with expenses reduces that day\'s total by its amount in the base currency', () => {
+    const entries = [
+      expense({
+        date: '2026-07-10',
+        amount: 30_000,
+        payers: [{ memberId: ANIA, amount: 30_000 }],
+        split: { mode: 'equal', memberIds: [ANIA, BARTEK] },
+      }),
+      income({
+        date: '2026-07-10',
+        amount: 1_000,
+        currency: 'EUR',
+        rateToBase: '4.25',
+        recipients: [{ memberId: BARTEK, amount: 1_000 }],
+        split: { mode: 'equal', memberIds: [ANIA, BARTEK, KASIA] },
+      }),
+    ];
+    expect(dailyTotals(entries, 'PLN')).toEqual(new Map([['2026-07-10', 30_000 - 4_250]]));
   });
 });
 

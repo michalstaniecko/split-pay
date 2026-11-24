@@ -1,6 +1,21 @@
 import { describe, expect, it } from 'vitest';
-import { Entry, Group, validateEntryInGroup } from './model';
-import { ANIA, BARTEK, KASIA, expense, group, members, settlement, uuid } from './test-fixtures';
+import {
+  type AttendanceRange,
+  canRenameMember,
+  Entry,
+  Group,
+  Member,
+  MemberRename,
+  NewGroup,
+  NewEntry,
+  NewMember,
+  NewQuickBill,
+  entryFromNew,
+  normalizeAttendance,
+  validateEntryInGroup,
+} from './model';
+import { ANIA, BARTEK, KASIA, TOMEK, USER, expense, group, member, members, settlement, uuid } from './test-fixtures';
+import { convert } from './money';
 
 describe('Entry', () => {
   const valid = expense({
@@ -67,6 +82,212 @@ describe('Group', () => {
   });
 });
 
+describe('NewGroup', () => {
+  const trip = {
+    id: uuid(90),
+    name: 'Mazury',
+    emoji: '⛵',
+    color: '#1E88E5',
+    baseCurrency: 'PLN',
+    startDate: '2026-07-10',
+    endDate: '2026-07-14',
+  };
+
+  it('accepts what the create-group form sends, with or without dates', () => {
+    expect(NewGroup.safeParse(trip).success).toBe(true);
+    expect(NewGroup.safeParse({ ...trip, startDate: null, endDate: null }).success).toBe(true);
+  });
+
+  it('applies the Group rules: both dates or neither, start not after end, non-blank name', () => {
+    expect(NewGroup.safeParse({ ...trip, endDate: null }).success).toBe(false);
+    expect(NewGroup.safeParse({ ...trip, startDate: '2026-07-15' }).success).toBe(false);
+    expect(NewGroup.safeParse({ ...trip, name: '   ' }).success).toBe(false);
+    expect(NewGroup.safeParse({ ...trip, color: 'blue' }).success).toBe(false);
+    expect(NewGroup.safeParse({ ...trip, baseCurrency: 'pln' }).success).toBe(false);
+  });
+
+  it('accepts a one-day trip', () => {
+    expect(NewGroup.safeParse({ ...trip, endDate: trip.startDate }).success).toBe(true);
+  });
+
+  it('trims the name and drops fields the server decides (settings, archiving)', () => {
+    const parsed = NewGroup.parse({ ...trip, name: '  Mazury ', simplifyDebts: false, archivedAt: '2026-01-01T00:00:00Z' });
+    expect(parsed).toEqual({ ...trip, name: 'Mazury' });
+  });
+});
+
+describe('Member', () => {
+  const withAttendance = (attendance: unknown) => Member.safeParse({ ...member(ANIA, 'Ania'), attendance });
+
+  it('accepts no attendance (whole trip) and canonical lists of ranges', () => {
+    expect(withAttendance(null).success).toBe(true);
+    expect(withAttendance([{ from: '2026-07-10', to: '2026-07-10' }]).success).toBe(true);
+    expect(
+      withAttendance([
+        { from: '2026-07-10', to: '2026-07-11' },
+        { from: '2026-07-13', to: '2026-07-14' },
+      ]).success,
+    ).toBe(true);
+  });
+
+  it('rejects an empty attendance list', () => {
+    expect(withAttendance([]).success).toBe(false);
+  });
+
+  it('rejects a range that starts after it ends', () => {
+    expect(withAttendance([{ from: '2026-07-12', to: '2026-07-11' }]).success).toBe(false);
+  });
+
+  it('rejects unsorted ranges', () => {
+    expect(
+      withAttendance([
+        { from: '2026-07-13', to: '2026-07-14' },
+        { from: '2026-07-10', to: '2026-07-11' },
+      ]).success,
+    ).toBe(false);
+  });
+
+  it('rejects overlapping ranges', () => {
+    expect(
+      withAttendance([
+        { from: '2026-07-10', to: '2026-07-12' },
+        { from: '2026-07-12', to: '2026-07-14' },
+      ]).success,
+    ).toBe(false);
+  });
+
+  it('rejects touching ranges', () => {
+    expect(
+      withAttendance([
+        { from: '2026-07-10', to: '2026-07-11' },
+        { from: '2026-07-12', to: '2026-07-14' },
+      ]).success,
+    ).toBe(false);
+    expect(
+      withAttendance([
+        { from: '2026-07-30', to: '2026-07-31' },
+        { from: '2026-08-01', to: '2026-08-02' },
+      ]).success,
+    ).toBe(false);
+  });
+
+  it('does not check attendance against the trip dates', () => {
+    expect(withAttendance([{ from: '2025-01-01', to: '2027-12-31' }]).success).toBe(true);
+  });
+});
+
+describe('NewMember', () => {
+  it('takes a client-generated id and a trimmed name; attendance is optional', () => {
+    expect(NewMember.parse({ id: ANIA, displayName: '  Tomek ' })).toEqual({ id: ANIA, displayName: 'Tomek' });
+    const attendance = [{ from: '2026-07-10', to: '2026-07-11' }];
+    expect(NewMember.parse({ id: ANIA, displayName: 'Tomek', attendance })).toEqual({
+      id: ANIA,
+      displayName: 'Tomek',
+      attendance,
+    });
+  });
+
+  it('rejects a blank or too long name and non-canonical attendance', () => {
+    expect(NewMember.safeParse({ id: ANIA, displayName: '   ' }).success).toBe(false);
+    expect(NewMember.safeParse({ id: ANIA, displayName: 'x'.repeat(61) }).success).toBe(false);
+    expect(NewMember.safeParse({ id: 'nope', displayName: 'Tomek' }).success).toBe(false);
+    const touching = [
+      { from: '2026-07-10', to: '2026-07-11' },
+      { from: '2026-07-12', to: '2026-07-14' },
+    ];
+    expect(NewMember.safeParse({ id: ANIA, displayName: 'Tomek', attendance: touching }).success).toBe(false);
+  });
+
+  it('cannot set an account (members are added without one)', () => {
+    expect(NewMember.parse({ id: ANIA, displayName: 'Tomek', userId: BARTEK })).not.toHaveProperty('userId');
+  });
+});
+
+describe('MemberRename', () => {
+  it('validates the new name like a member name', () => {
+    expect(MemberRename.parse({ displayName: ' Tomasz ' })).toEqual({ displayName: 'Tomasz' });
+    expect(MemberRename.safeParse({ displayName: '' }).success).toBe(false);
+  });
+
+  it('always sets a name: a removed name (marker) cannot be chosen', () => {
+    expect(MemberRename.safeParse({ displayName: null }).success).toBe(false);
+    expect(NewMember.safeParse({ id: ANIA, displayName: null }).success).toBe(false);
+  });
+});
+
+describe('Member name removed on account deletion (ADR-0019)', () => {
+  it('is stored as a marker (null), not as text', () => {
+    expect(Member.parse({ ...member(ANIA, 'Ania'), displayName: null }).displayName).toBeNull();
+  });
+});
+
+describe('canRenameMember', () => {
+  const ME = uuid(201);
+  it('lets anyone rename a member without an account (ADR-0008)', () => {
+    expect(canRenameMember(member(TOMEK, 'Tomek'), ME)).toBe(true);
+  });
+
+  it('lets a user rename their own member', () => {
+    expect(canRenameMember({ ...member(ANIA, 'Ania'), userId: ME }, ME)).toBe(true);
+  });
+
+  it("does not let others rename a member with an account", () => {
+    expect(canRenameMember({ ...member(BARTEK, 'Bartek'), userId: USER }, ME)).toBe(false);
+  });
+});
+
+describe('normalizeAttendance', () => {
+  const r = (from: string, to: string): AttendanceRange => ({ from, to });
+  const isValidAttendance = (attendance: AttendanceRange[]) =>
+    Member.safeParse({ ...member(ANIA, 'Ania'), attendance }).success;
+
+  it('sorts ranges by start date', () => {
+    expect(normalizeAttendance([r('2026-07-13', '2026-07-14'), r('2026-07-10', '2026-07-11')])).toEqual([
+      r('2026-07-10', '2026-07-11'),
+      r('2026-07-13', '2026-07-14'),
+    ]);
+  });
+
+  it('merges overlapping ranges', () => {
+    expect(normalizeAttendance([r('2026-07-10', '2026-07-12'), r('2026-07-11', '2026-07-14')])).toEqual([
+      r('2026-07-10', '2026-07-14'),
+    ]);
+    expect(normalizeAttendance([r('2026-07-10', '2026-07-14'), r('2026-07-11', '2026-07-12')])).toEqual([
+      r('2026-07-10', '2026-07-14'),
+    ]);
+  });
+
+  it('merges touching ranges, also across a month boundary', () => {
+    expect(normalizeAttendance([r('2026-07-10', '2026-07-11'), r('2026-07-12', '2026-07-14')])).toEqual([
+      r('2026-07-10', '2026-07-14'),
+    ]);
+    expect(normalizeAttendance([r('2026-08-01', '2026-08-02'), r('2026-07-30', '2026-07-31')])).toEqual([
+      r('2026-07-30', '2026-08-02'),
+    ]);
+  });
+
+  it('turns a per-day grid into ranges', () => {
+    const days = ['2026-07-14', '2026-07-10', '2026-07-11', '2026-07-13'];
+    expect(normalizeAttendance(days.map((d) => r(d, d)))).toEqual([
+      r('2026-07-10', '2026-07-11'),
+      r('2026-07-13', '2026-07-14'),
+    ]);
+  });
+
+  it('leaves a canonical list unchanged', () => {
+    const canonical = [r('2026-07-10', '2026-07-10'), r('2026-07-12', '2026-07-12'), r('2026-07-14', '2026-07-20')];
+    expect(normalizeAttendance(canonical)).toEqual(canonical);
+  });
+
+  it('returns attendance that passes the Member schema', () => {
+    const inputs = [
+      [r('2026-07-14', '2026-07-14'), r('2026-07-10', '2026-07-13'), r('2026-07-12', '2026-07-12')],
+      [r('2026-12-31', '2027-01-01'), r('2026-12-30', '2026-12-30'), r('2027-01-03', '2027-01-04')],
+    ];
+    for (const input of inputs) expect(isValidAttendance(normalizeAttendance(input))).toBe(true);
+  });
+});
+
 describe('validateEntryInGroup', () => {
   it('detects unknown members and a wrong base currency rate', () => {
     const e = expense({
@@ -81,10 +302,105 @@ describe('validateEntryInGroup', () => {
     ]);
   });
 
+  it('accepts any spelling of rate 1 for the base currency, exactly as the ledger converts it', () => {
+    for (const rateToBase of ['1', '1.0', '01', '001.0000000000']) {
+      const e = expense({ amount: 100, rateToBase, payers: [{ memberId: ANIA, amount: 100 }], split: { mode: 'equal', memberIds: [ANIA] } });
+      expect(validateEntryInGroup(e, group, members)).toEqual([]);
+      expect(convert(100, rateToBase, group.baseCurrency, group.baseCurrency)).toBe(100);
+    }
+  });
+
+  it('rejects a base currency rate that differs from 1 only in the last decimal place', () => {
+    const e = expense({ amount: 100, rateToBase: '1.0000000001', payers: [{ memberId: ANIA, amount: 100 }], split: { mode: 'equal', memberIds: [ANIA] } });
+    expect(validateEntryInGroup(e, group, members)).toEqual(['Rate for the base currency must be 1']);
+  });
+
   it('blocks entries in an archived group', () => {
     const e = expense({ amount: 100, payers: [{ memberId: ANIA, amount: 100 }], split: { mode: 'equal', memberIds: [ANIA] } });
     expect(validateEntryInGroup(e, { ...group, archivedAt: '2026-08-01T00:00:00Z' }, members)).toEqual([
       'Group is archived',
     ]);
+  });
+});
+
+describe('NewQuickBill', () => {
+  const valid = {
+    groupId: uuid(910),
+    expenseId: uuid(911),
+    title: ' Pizza ',
+    amount: 12_000,
+    currency: 'PLN',
+    date: '2026-11-23',
+    color: '#1E88E5',
+    people: [
+      { id: uuid(912), displayName: 'Kasia' },
+      { id: uuid(913), displayName: 'Tomek' },
+    ],
+  };
+
+  it('accepts a title, an amount and people without an account, trimming the title', () => {
+    const r = NewQuickBill.safeParse(valid);
+    expect(r.success && r.data.title).toBe('Pizza');
+  });
+
+  it('needs at least one other person, a positive amount and a title', () => {
+    expect(NewQuickBill.safeParse({ ...valid, people: [] }).success).toBe(false);
+    expect(NewQuickBill.safeParse({ ...valid, amount: 0 }).success).toBe(false);
+    expect(NewQuickBill.safeParse({ ...valid, title: '  ' }).success).toBe(false);
+  });
+
+  it('rejects repeated ids', () => {
+    expect(NewQuickBill.safeParse({ ...valid, expenseId: valid.groupId }).success).toBe(false);
+    const people = [valid.people[0], { ...valid.people[1], id: valid.people[0]!.id }];
+    expect(NewQuickBill.safeParse({ ...valid, people }).success).toBe(false);
+  });
+});
+
+describe('NewEntry / entryFromNew', () => {
+  const input = {
+    kind: 'expense' as const,
+    id: uuid(901),
+    date: '2026-07-10',
+    title: 'Pizza',
+    amount: 10_000,
+    currency: 'PLN',
+    rateToBase: '1',
+    category: 'food' as const,
+    receiptPhotoId: null,
+    payers: [{ memberId: ANIA, amount: 10_000 }],
+    split: { mode: 'equal' as const, memberIds: [ANIA, BARTEK] },
+  };
+  const meta = { groupId: group.id, createdBy: USER, createdByMember: ANIA, now: '2026-07-10T12:00:00.000Z' };
+
+  it('accepts every entry kind without the server-owned fields', () => {
+    expect(NewEntry.safeParse(input).success).toBe(true);
+    const income = { ...input, kind: 'income', payers: undefined, recipients: input.payers };
+    expect(NewEntry.safeParse(income).success).toBe(true);
+    const settlement = { kind: 'settlement', id: uuid(902), date: '2026-07-10', amount: 500, currency: 'PLN', rateToBase: '1', from: ANIA, to: BARTEK };
+    expect(NewEntry.safeParse(settlement).success).toBe(true);
+  });
+
+  it('completes it into version 1 of an Entry', () => {
+    const r = entryFromNew(input, meta);
+    expect(r.success && r.data).toEqual({
+      ...input,
+      groupId: group.id,
+      version: 1,
+      createdBy: USER,
+      createdByMember: ANIA,
+      createdAt: meta.now,
+      updatedAt: meta.now,
+      deletedAt: null,
+    });
+  });
+
+  it('remembers the member who added it, unknown (null) only for missing data (ADR-0019)', () => {
+    const fromUnknown = entryFromNew(input, { ...meta, createdByMember: null });
+    expect(fromUnknown.success && fromUnknown.data.createdByMember).toBeNull();
+    expect(NewEntry.parse({ ...input, createdByMember: BARTEK })).not.toHaveProperty('createdByMember');
+  });
+
+  it('runs the Entry cross-field checks', () => {
+    expect(entryFromNew({ ...input, payers: [{ memberId: ANIA, amount: 1 }] }, meta).success).toBe(false);
   });
 });
