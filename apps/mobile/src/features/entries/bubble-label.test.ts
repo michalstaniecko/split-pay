@@ -101,6 +101,17 @@ describe('payersBubbleLabel', () => {
     );
   });
 
+  it('uses the Polish plural form of the verb: one payer "Płaci", several (few, many) "Płacą"', () => {
+    activateLocale('pl');
+    expect(payersBubbleLabel({ ...pizza, payerNames: ['Kasia'], myShare: null })).toBe(
+      'Wydatek 90,00 zł: Pizza. Płaci: Kasia. 10 lipca 2026.',
+    );
+    expect(payersBubbleLabel({ ...pizza, payerNames: ['Kasia', 'Ania'], myShare: null })).toContain('Płacą: Kasia i Ania.');
+    expect(payersBubbleLabel({ ...pizza, payerNames: ['Kasia', 'Ania', 'Bartek', 'Ola', 'Tomek'], myShare: null })).toContain(
+      'Płacą: Kasia, Ania, Bartek, Ola i Tomek.',
+    );
+  });
+
   it('reads an income as received', () => {
     activateLocale('pl');
     expect(
@@ -117,6 +128,13 @@ describe('payersBubbleLabel', () => {
     expect(payersBubbleLabel({ ...en, kind: 'income', payerNames: ['Kasia', 'Ania'], myShare: null })).toBe(
       'Kasia and Ania received PLN 90.00 for Pizza, July 10, 2026.',
     );
+  });
+
+  it('in English, one payer and several payers read alike ("paid")', () => {
+    activateLocale('en');
+    const en = { ...pizza, amount: 'PLN 90.00', date: 'July 10, 2026', myShare: null };
+    expect(payersBubbleLabel({ ...en, payerNames: ['Kasia'] })).toBe('Kasia paid PLN 90.00 for Pizza, July 10, 2026.');
+    expect(payersBubbleLabel({ ...en, payerNames: ['Kasia', 'Ania'] })).toBe('Kasia and Ania paid PLN 90.00 for Pizza, July 10, 2026.');
   });
 
   it('a single payer is named alone', () => {

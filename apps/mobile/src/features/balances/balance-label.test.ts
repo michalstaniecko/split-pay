@@ -23,6 +23,29 @@ describe('bannerLabel', () => {
   });
 });
 
+describe('spoken amounts and plural forms', () => {
+  // Amounts always carry two decimals, so CLDR picks the fraction form: in
+  // Polish the genitive "złotego polskiego" for 1, 2 (few) and 5 (many) alike.
+  it('reads the Polish currency name in the fraction form for any amount', () => {
+    activateLocale('pl');
+    for (const [amount, text] of [
+      [1, '0,01 złotego polskiego'],
+      [100, '1,00 złotego polskiego'],
+      [200, '2,00 złotego polskiego'],
+      [500, '5,00 złotego polskiego'],
+    ] as const) {
+      expect(plain(bannerLabel({ kind: 'owe', amount }, pl))).toBe(`Do oddania: ${text}`);
+    }
+  });
+
+  it('reads the English currency name in the plural for any amount', () => {
+    activateLocale('en');
+    expect(bannerLabel({ kind: 'owed', amount: 100 }, en)).toBe('You are owed 1.00 Polish zlotys');
+    expect(bannerLabel({ kind: 'owed', amount: 200 }, en)).toBe('You are owed 2.00 Polish zlotys');
+    expect(bannerLabel({ kind: 'owed', amount: 1 }, en)).toBe('You are owed 0.01 Polish zlotys');
+  });
+});
+
 describe('balanceRowLabel', () => {
   const row = (name: string, amount: number, isMe = false) => ({ memberId: name, name, amount, isMe });
 

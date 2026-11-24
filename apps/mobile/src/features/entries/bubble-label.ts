@@ -1,4 +1,4 @@
-import { t } from '@lingui/core/macro';
+import { plural, t } from '@lingui/core/macro';
 import { type CurrencyCode, formatAmount, formatDate } from '@split-pay/shared';
 import type { EntryItem } from './conversation';
 import { incomeBubbleLabel } from './income-bubble-label';
@@ -16,7 +16,7 @@ function nameList(names: readonly string[]): string {
  * The screen-reader label of a bubble naming its payers (income: recipients),
  * one sentence read as one element (the bubble label pattern of #36):
  * "Wydatek 90,00 zł: Pizza. Płacą: Kasia, Ania i Bartek. 10 lipca 2026. Twój
- * udział 30,00 zł." Gender-neutral: names come after a colon, never as the
+ * udział 30,00 zł." The verb agrees in number ("Płaci: Kasia"). Gender-neutral: names come after a colon, never as the
  * subject of a past-tense verb (docs/SPEC.md → Language). Amounts and the date come formatted (`useFormatters`);
  * `myShare` is `null` when I have no share. Uses the active Lingui locale.
  */
@@ -30,10 +30,11 @@ export function payersBubbleLabel(input: {
   myShare: string | null;
 }): string {
   const names = nameList(input.payerNames);
+  const count = input.payerNames.length;
   const { amount, title, date } = input;
   const sentence =
     input.kind === 'expense'
-      ? t`Wydatek ${amount}: ${title}. Płacą: ${names}. ${date}.`
+      ? t`Wydatek ${amount}: ${title}. ${plural(count, { one: 'Płaci', few: 'Płacą', many: 'Płacą', other: 'Płacą' })}: ${names}. ${date}.`
       : t`Wpływ ${amount}: ${title}. Dla: ${names}. ${date}.`;
   if (input.myShare === null) return sentence;
   const share = input.myShare;

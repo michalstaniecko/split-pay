@@ -1842,8 +1842,8 @@ msgid "wydatek „{title}”"
 msgstr "wydatek „{title}”"
 
 #: src/features/entries/bubble-label.ts
-msgid "Wydatek {amount}: {title}. Płacą: {names}. {date}."
-msgstr "Wydatek {amount}: {title}. Płacą: {names}. {date}."
+msgid "Wydatek {amount}: {title}. {count, plural, one {Płaci} few {Płacą} many {Płacą} other {Płacą}}: {names}. {date}."
+msgstr "Wydatek {amount}: {title}. {count, plural, one {Płaci} few {Płacą} many {Płacą} other {Płacą}}: {names}. {date}."
 
 #: src/features/entries/bubble-label.ts
 msgid "Wydatek {amount}: {title}. Płaci: {payerName}. {date}."
