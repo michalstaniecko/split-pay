@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { decimalSeparator, resolveLocale } from './locale';
 
 const system = (...codes: (string | null)[]) => codes.map((languageCode) => ({ languageCode }));
@@ -28,8 +28,10 @@ describe('resolveLocale', () => {
 });
 
 describe('decimalSeparator', () => {
+  const formatToParts = Intl.NumberFormat.prototype.formatToParts;
+
   afterEach(() => {
-    vi.restoreAllMocks();
+    Intl.NumberFormat.prototype.formatToParts = formatToParts;
   });
 
   it("is ',' in Polish and '.' in English", () => {
@@ -38,10 +40,9 @@ describe('decimalSeparator', () => {
   });
 
   // Hermes on iOS has no Intl.NumberFormat#formatToParts (#58).
-  it('works without Intl.NumberFormat#formatToParts', () => {
-    vi.spyOn(Intl.NumberFormat.prototype, 'formatToParts').mockImplementation(() => {
-      throw new TypeError('undefined is not a function');
-    });
+  it('works where Intl.NumberFormat#formatToParts is missing', () => {
+    // @ts-expect-error simulating an engine without the method
+    Intl.NumberFormat.prototype.formatToParts = undefined;
     expect(decimalSeparator('pl')).toBe(',');
     expect(decimalSeparator('en')).toBe('.');
   });
