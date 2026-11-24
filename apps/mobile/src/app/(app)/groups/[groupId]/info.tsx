@@ -50,6 +50,8 @@ function GroupInfo({ group }: { group: GroupDetail }) {
   const dates = group.startDate && group.endDate ? `${format.date(group.startDate)} – ${format.date(group.endDate)}` : null;
   const soon = t`Wkrótce`;
   const avatars = useQuery(groupAvatarsQuery(group.id)).data;
+  // Gender-neutral: the owner's name follows a colon, never "założyciel".
+  const owner = rows.find((row) => row.isOwner)?.displayName;
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -69,6 +71,7 @@ function GroupInfo({ group }: { group: GroupDetail }) {
             {row.withoutAccount ? <PersonalClaimLinkButton groupId={group.id} groupName={group.name} member={row} /> : null}
           </View>
         ))}
+        {owner ? <Text style={styles.muted}>{t`Grupę założono: ${owner}`}</Text> : null}
         {archived ? null : (
           <Pressable
             accessibilityRole="button"
@@ -101,12 +104,11 @@ function GroupInfo({ group }: { group: GroupDetail }) {
   );
 }
 
-/** A member: name, badges (owner, me, without account); tappable when I may rename them. */
+/** A member: name, badges (me, without account); tappable when I may rename them. */
 function MemberItem({ row, onPress }: { row: MemberRow; onPress: () => void }) {
   const { t } = useLingui();
   const badges = [
     row.isMe ? t`Ty` : null,
-    row.isOwner ? t`założyciel` : null,
     row.withoutAccount ? t`bez konta` : null,
   ].filter((badge): badge is string => badge !== null);
   const content = (

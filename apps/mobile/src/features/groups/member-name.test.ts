@@ -8,7 +8,7 @@ describe('nameMembers (ADR-0019)', () => {
   it('keeps names and shows a removed name as "Deleted user" in the viewer’s language', () => {
     const group = { name: 'Mazury', members: [bartek, removed] };
 
-    expect(nameMembers(group, 'pl').members.map((m) => m.displayName)).toEqual(['Bartek', 'Usunięty użytkownik']);
+    expect(nameMembers(group, 'pl').members.map((m) => m.displayName)).toEqual(['Bartek', 'Usunięte konto']);
     expect(nameMembers(group, 'en').members.map((m) => m.displayName)).toEqual(['Bartek', 'Deleted user']);
   });
 

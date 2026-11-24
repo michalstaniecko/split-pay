@@ -98,7 +98,7 @@ describe('describeChange', () => {
         'Kwota: 100,00 zł → 120,00 zł',
         'Data: 11 lipca 2026 → 12 lipca 2026',
         'Kategoria: Jedzenie → Inne',
-        'Kto płaci: Ania → Bartek',
+        'Kto zapłacił: Ania → Bartek',
         'Podział: Po równo · Ania, Bartek → Po równo · Ania, Bartek, Kasia',
       ],
     });
@@ -109,7 +109,7 @@ describe('describeChange', () => {
 
   it('names a removed name (marker) "Deleted user" in the viewer’s language (ADR-0019)', () => {
     const renamed = { kind: 'member.rename', targetId: BARTEK, before: { displayName: null }, after: { displayName: 'Bartek' } };
-    expect(describe_('pl', renamed).title).toBe('Zmieniono imię: Usunięty użytkownik → Bartek');
+    expect(describe_('pl', renamed).title).toBe('Zmieniono imię: Usunięte konto → Bartek');
     expect(describe_('en', { kind: 'member.join', targetId: BARTEK, before: null, after: { displayName: null } }).title).toBe(
       'Joined the group: Deleted user',
     );

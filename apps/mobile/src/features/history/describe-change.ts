@@ -160,7 +160,7 @@ function entryEditDetails(before: Entry, after: Entry, context: ChangeDescriptio
       holders(before.kind === 'expense' ? before.payers : undefined, before.currency),
       holders(after.kind === 'expense' ? after.payers : undefined, after.currency),
     );
-    lines.push(t`Kto płaci: ${value}`);
+    lines.push(t`Kto zapłacił: ${value}`);
   }
   if (changed.has('recipients') && (before.kind === 'income' || after.kind === 'income')) {
     const value = arrow(

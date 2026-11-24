@@ -17,7 +17,8 @@ const MASCULINE_BY_DEFAULT = [
   word('winien'),
   word('rozliczony'),
   word('rozliczeni'),
-  word('zapłacił'),
+  // "Kto zapłacił" is fine: "kto" asks about anyone, not about a man.
+  /(?<!(?:^|\P{L})kto )(?<!\p{L})zapłacił(?!\p{L})/iu,
   word('otrzymał'),
   word('dodał'),
   word('zapłacili'),
@@ -31,6 +32,11 @@ const MASCULINE_BY_DEFAULT = [
   word('otrzymujący'),
   word('zgłaszający'),
   word('zablokowany'),
+  // "Usunięty użytkownik" / "Byli członkowie": say "Usunięte konto" and
+  // "Osoby, które opuściły grupę" instead. Lowercase "usunięty" describes an
+  // entry ("wpis"), not a person.
+  /(?<!\p{L})Usunięty(?!\p{L})/u,
+  word('byli'),
 ];
 
 describe('Polish catalog', () => {

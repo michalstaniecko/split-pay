@@ -15,7 +15,7 @@ type Choice = 'keepName' | 'removeName';
  * Two choices, keeping the name preselected: "Usuń konto" leaves the user's
  * members in their groups without an account under their last name; "Usuń
  * konto i moją nazwę z grup" clears the name too, so every viewer sees
- * "Usunięty użytkownik" in their own language. After a confirmation the API
+ * "Usunięte konto" in their own language. After a confirmation the API
  * removes the account; the device forgets the session and the auth guard
  * shows sign-in.
  */
@@ -40,12 +40,12 @@ export function DeleteAccountSection() {
     {
       value: 'keepName',
       label: t`Usuń konto`,
-      description: t`W grupach zostanie po Tobie członek bez konta pod Twoją ostatnią nazwą, więc znajomi nadal będą wiedzieć, kto to.`,
+      description: t`W grupach zostanie po Tobie członek bez konta pod obecną nazwą, więc znajomi nadal będą wiedzieć, kto to.`,
     },
     {
       value: 'removeName',
       label: t`Usuń konto i moją nazwę z grup`,
-      description: t`W grupach zostanie po Tobie członek bez konta, a wszyscy zobaczą zamiast nazwy „Usunięty użytkownik”.`,
+      description: t`W grupach zostanie po Tobie członek bez konta, a wszyscy zobaczą zamiast nazwy „Usunięte konto”.`,
     },
   ];
   const selected = options.find((o) => o.value === choice) ?? options[0]!;
@@ -55,7 +55,7 @@ export function DeleteAccountSection() {
       t`Usunąć konto?`,
       choice === 'keepName'
         ? t`Twój e-mail, sposoby logowania, zdjęcie profilowe i dane do przelewu zostaną usunięte. W grupach zostanie po Tobie członek bez konta pod obecną nazwą, a wydatki i salda się nie zmienią. Tego nie można cofnąć.`
-        : t`Twój e-mail, sposoby logowania, zdjęcie profilowe i dane do przelewu zostaną usunięte. W grupach zostanie po Tobie członek bez konta „Usunięty użytkownik”, a wydatki i salda się nie zmienią. Tego nie można cofnąć.`,
+        : t`Twój e-mail, sposoby logowania, zdjęcie profilowe i dane do przelewu zostaną usunięte. W grupach zostanie po Tobie członek bez konta „Usunięte konto”, a wydatki i salda się nie zmienią. Tego nie można cofnąć.`,
       [
         { text: t`Anuluj`, style: 'cancel' },
         { text: selected.label, style: 'destructive', onPress: () => deleteAccount.mutate(choice === 'removeName') },
