@@ -31,8 +31,12 @@ A member who has no account or has not yet claimed their profile; others enter t
 _Avoid_: Ghost, guest, placeholder, virtual person
 
 **Owner** (PL: Założyciel):
-The member who created the group; the only one who can permanently delete it.
+The member who created the group; the only one who can permanently delete it. Ownership belongs to the member, not the user: claiming the owner's member makes you the owner. If the owner's member has no account, every member may delete the group.
 _Avoid_: Admin, founder
+
+**Deleted user** (PL: Usunięty użytkownik):
+The name shown, in the viewer's own language, for a member whose user deleted their account and chose to remove their name too. Stored as a marker, not text. By default a deleted account keeps its member's last name instead.
+_Avoid_: Anonymous, unknown person (that is only a fallback for missing "added by" data)
 
 **Claim** (PL: Przejęcie):
 Linking a member without account to a user, transferring their whole history in the group to that user.
@@ -55,7 +59,7 @@ A secret, revocable link that leads to joining the group (in the app) or preview
 _Avoid_: Email invitation, group code
 
 **Personal claim link** (PL: Osobisty link przejęcia):
-A link pointing to a specific member without account to be claimed.
+A link pointing to a specific member without account to be claimed. Without the app it opens the same web view as the group link, with that member highlighted.
 
 ## Money
 
