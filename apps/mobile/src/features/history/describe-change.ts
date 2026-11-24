@@ -158,14 +158,14 @@ function entryEditDetails(before: Entry, after: Entry, context: ChangeDescriptio
       holders(before.kind === 'expense' ? before.payers : undefined, before.currency),
       holders(after.kind === 'expense' ? after.payers : undefined, after.currency),
     );
-    lines.push(t`Płacący: ${value}`);
+    lines.push(t`Kto płaci: ${value}`);
   }
   if (changed.has('recipients') && (before.kind === 'income' || after.kind === 'income')) {
     const value = arrow(
       holders(before.kind === 'income' ? before.recipients : undefined, before.currency),
       holders(after.kind === 'income' ? after.recipients : undefined, after.currency),
     );
-    lines.push(t`Otrzymujący: ${value}`);
+    lines.push(t`Kto otrzymuje: ${value}`);
   }
   if ((changed.has('split') || changed.has('amount')) && before.kind !== 'settlement' && after.kind !== 'settlement') {
     const splitText = (entry: Exclude<Entry, { kind: 'settlement' }>) => {

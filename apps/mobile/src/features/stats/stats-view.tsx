@@ -41,7 +41,7 @@ function DaysTable({ stats, members }: { stats: GroupStats; members: readonly { 
   const format = useFormatters();
   const table = statsTable(stats, members);
   const amount = (minor: number) => format.amount(minor, stats.baseCurrency);
-  const names = table.columns.map((c) => c.name ?? t`Była osoba`);
+  const names = table.columns.map((c) => c.name ?? t`Byli członkowie`);
 
   const row = (key: string, label: string, total: number, cells: StatsCell[], bold = false) => (
     <View key={key} style={[styles.row, bold && styles.totalsRow]}>
@@ -51,7 +51,7 @@ function DaysTable({ stats, members }: { stats: GroupStats; members: readonly { 
       </View>
       {cells.map((cell, i) => (
         <View
-          key={table.columns[i]!.memberId}
+          key={table.columns[i]!.memberId ?? 'former'}
           style={styles.cell}
           accessible
           accessibilityLabel={t`${names[i]!}, ${label}: zapłacone ${amount(cell.paid)}, zużyte ${amount(cell.consumed)}`}>
@@ -68,7 +68,7 @@ function DaysTable({ stats, members }: { stats: GroupStats; members: readonly { 
         <View style={[styles.row, styles.headerRow]} accessibilityRole="header">
           <Text style={[styles.dateCell, styles.headerText]}>{t`Dzień`}</Text>
           {names.map((name, i) => (
-            <View key={table.columns[i]!.memberId} style={styles.cell}>
+            <View key={table.columns[i]!.memberId ?? 'former'} style={styles.cell}>
               <Text style={styles.headerText} numberOfLines={2}>
                 {name}
               </Text>

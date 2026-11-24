@@ -42,7 +42,7 @@ export function BalanceBannerView({
   const state = bannerState(balances, myMemberId);
   const amount = format.amount(state.amount, balances.baseCurrency);
   const text =
-    state.kind === 'owe' ? t`Jesteś winien ${amount}` : state.kind === 'owed' ? t`Należy ci się ${amount}` : t`Wszystko rozliczone`;
+    state.kind === 'owe' ? t`Do oddania: ${amount}` : state.kind === 'owed' ? t`Należy ci się ${amount}` : t`Wszystko rozliczone`;
 
   return (
     <Pressable

@@ -66,10 +66,10 @@ export default function EntryConflictSheet() {
   return (
     <ScrollView contentContainerStyle={styles.content}>
       <Text style={styles.heading} accessibilityRole="header">
-        {t`Ktoś zmienił ten wpis w międzyczasie`}
+        {t`Ten wpis zmienił się w międzyczasie`}
       </Text>
       <Text style={styles.body}>
-        {t`Zanim twoja zmiana dotarła na serwer, ktoś inny zmienił ten wpis.`} {notSaved}{' '}
+        {t`Zanim Twoja zmiana dotarła na serwer, ten wpis został zmieniony.`} {notSaved}{' '}
         {t`Wybierz, która wersja zostaje.`}
       </Text>
       <View style={styles.version} accessible>

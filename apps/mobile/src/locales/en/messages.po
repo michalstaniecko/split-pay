@@ -45,10 +45,6 @@ msgstr "{0}, new entries. {preview}"
 msgid "{0}: przypomniano dziś"
 msgstr "{0}: reminded today"
 
-#: src/features/claims/claim-messages.tsx
-msgid "{claimerName} przejął profil {memberName}"
-msgstr "{claimerName} claimed the {memberName} profile"
-
 #: src/app/(app)/groups/[groupId]/info.tsx
 #: src/app/g/[token]/info.tsx
 msgid "{count, plural, one {# osoba} few {# osoby} many {# osób} other {# osoby}}"
@@ -80,24 +76,16 @@ msgid "{name}, to Twój link do grupy „{groupName}” w split-pay: {url}"
 msgstr "{name}, here is your link to the “{groupName}” group in split-pay: {url}"
 
 #: src/features/balances/balances-view.tsx
+msgid "{name}: do oddania {amount}"
+msgstr "{name}: owes {amount}"
+
+#: src/features/balances/balances-view.tsx
 msgid "{name}: należy się {amount}"
 msgstr "{name}: is owed {amount}"
 
 #: src/features/balances/balances-view.tsx
-msgid "{name}: rozliczony"
+msgid "{name}: rozliczono"
 msgstr "{name}: settled up"
-
-#: src/features/balances/balances-view.tsx
-msgid "{name}: winien {amount}"
-msgstr "{name}: owes {amount}"
-
-#: src/features/entries/bubble-label.ts
-msgid "{names} {count, plural, one {otrzymał(a)} few {otrzymali} many {otrzymali} other {otrzymali}} {amount} za {title}, {date}."
-msgstr "{names} received {amount} for {title}, {date}."
-
-#: src/features/entries/bubble-label.ts
-msgid "{names} {count, plural, one {zapłacił(a)} few {zapłacili} many {zapłacili} other {zapłacili}} {amount} za {title}, {date}."
-msgstr "{names} paid {amount} for {title}, {date}."
 
 #: src/features/entries/spoken-amount.ts
 msgid "{original}, czyli około {base}"
@@ -238,8 +226,8 @@ msgid "Brak zmian."
 msgstr "No changes."
 
 #: src/features/stats/stats-view.tsx
-msgid "Była osoba"
-msgstr "Former member"
+msgid "Byli członkowie"
+msgstr "Former members"
 
 #: src/features/history/describe-change.ts
 msgid "cały wyjazd"
@@ -318,6 +306,10 @@ msgstr "Days × people and categories"
 msgid "Do"
 msgstr "To"
 
+#: src/features/balances/balance-banner.tsx
+msgid "Do oddania: {amount}"
+msgstr "You owe {amount}"
+
 #: src/features/photos/photo-messages.ts
 msgid "Do tego wpisu wysłano już {perEntry} zdjęć — to limit."
 msgstr "{perEntry} photos have already been uploaded for this entry — that's the limit."
@@ -346,12 +338,6 @@ msgstr "Add a person without an account"
 msgid "Dodaj zdjęcie"
 msgstr "Add photo"
 
-#. placeholder {0}: format.dateTime(entry.createdAt)
-#: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
-#: src/app/g/[token]/entries/[entryId].tsx
-msgid "Dodał(a) {addedBy}, {0}"
-msgstr "Added by {addedBy}, {0}"
-
 #: src/features/history/describe-change.ts
 msgid "Dodano {what}"
 msgstr "Added {what}"
@@ -359,6 +345,12 @@ msgstr "Added {what}"
 #: src/features/history/describe-change.ts
 msgid "Dodano osobę bez konta: {name}"
 msgstr "Added a member without an account: {name}"
+
+#. placeholder {0}: format.dateTime(entry.createdAt)
+#: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
+#: src/app/g/[token]/entries/[entryId].tsx
+msgid "Dodano: {addedBy}, {0}"
+msgstr "Added by {addedBy}, {0}"
 
 #: src/features/entries/use-entry-labels.ts
 msgid "Dokładne kwoty"
@@ -435,6 +427,10 @@ msgstr "The group or the entry no longer exists, or you no longer have access to
 #: src/features/groups/group-lifecycle-section.tsx
 msgid "Grupa jest tylko do odczytu. Przywróć ją, żeby coś zmienić."
 msgstr "The group is read-only. Unarchive it to change anything."
+
+#: src/features/web-view/public-error.tsx
+msgid "Grupa ma już nowy link. Poproś kogoś z grupy o aktualny."
+msgstr "The group has a new link. Ask someone in the group for the current one."
 
 #: src/features/groups/group-lifecycle-section.tsx
 msgid "Grupa stanie się tylko do odczytu: nikt nie doda, nie zmieni ani nie usunie wpisów."
@@ -528,16 +524,12 @@ msgid "Jestem {personalName}"
 msgstr "I am {personalName}"
 
 #: src/app/g/[token]/index.tsx
-msgid "Jesteś jednym z nich?"
+msgid "Jesteś na tej liście?"
 msgstr "Are you one of them?"
 
 #: src/features/offline/offline-banner.tsx
 msgid "Jesteś offline. Nowe wpisy wyślemy po połączeniu."
 msgstr "You're offline. New entries will be sent once you're connected."
-
-#: src/features/balances/balance-banner.tsx
-msgid "Jesteś winien {amount}"
-msgstr "You owe {amount}"
 
 #: src/components/language-picker.tsx
 msgid "Język"
@@ -563,10 +555,6 @@ msgstr "Categories"
 #: src/app/(app)/quick-bill.tsx
 msgid "Każda osoba trafi do grupy jako osoba bez konta. Płacisz Ty, dzielimy po równo."
 msgstr "Each person joins the group as a member without an account. You pay, split equally."
-
-#: src/features/group-link/group-link-section.tsx
-msgid "Każdy, kto ma ten link, może dołączyć do grupy."
-msgstr "Anyone with this link can join the group."
 
 #: src/features/entries/split-fields.tsx
 msgid "Kilka osób otrzymało"
@@ -614,6 +602,10 @@ msgstr "Conflicting change"
 msgid "Konflikt zmian: {title}. Pokaż szczegóły"
 msgstr "Conflicting change: {title}. Show details"
 
+#: src/app/(app)/admin.tsx
+msgid "konto zablokowane"
+msgstr "blocked"
+
 #: src/app/(app)/groups/[groupId]/settle.tsx
 msgid "Kopiuj"
 msgstr "Copy"
@@ -634,18 +626,23 @@ msgstr "Who pays whom"
 msgid "Kto oddaje"
 msgstr "Who pays back"
 
-#: src/app/(app)/groups/[groupId]/expense-form.tsx
-#: src/app/(app)/groups/[groupId]/settle.tsx
-msgid "Ktoś usunął ten wpis w międzyczasie. Twoje zmiany nie zostały zapisane."
-msgstr "Someone deleted this entry in the meantime. Your changes were not saved."
+#: src/features/entries/entry-detail-body.tsx
+#: src/features/entries/split-fields.tsx
+msgid "Kto otrzymuje"
+msgstr "Received by"
 
-#: src/features/web-view/public-error.tsx
-msgid "Ktoś z grupy wygenerował nowy link. Poproś go o aktualny."
-msgstr "Someone in the group created a new link. Ask them for the current one."
+#: src/features/history/describe-change.ts
+msgid "Kto otrzymuje: {value}"
+msgstr "Received by: {value}"
 
-#: src/app/(app)/groups/[groupId]/entry-conflict.tsx
-msgid "Ktoś zmienił ten wpis w międzyczasie"
-msgstr "Someone changed this entry in the meantime"
+#: src/features/entries/entry-detail-body.tsx
+#: src/features/entries/split-fields.tsx
+msgid "Kto płaci"
+msgstr "Paid by"
+
+#: src/features/history/describe-change.ts
+msgid "Kto płaci: {value}"
+msgstr "Paid by: {value}"
 
 #: src/features/entries/entry-detail-body.tsx
 msgid "Kurs"
@@ -708,7 +705,7 @@ msgid "Nagość lub treści seksualne"
 msgstr "Nudity or sexual content"
 
 #: src/features/groups/group-settings-section.tsx
-msgid "Najmniej przelewów przy rozliczeniu. Wyłączone: każdy oddaje temu, kto za niego zapłacił."
+msgid "Najmniej przelewów przy rozliczeniu. Wyłączone: zwroty trafiają prosto do osób, które płaciły."
 msgstr "Fewest transfers when settling up. Off: everyone pays back whoever paid for them."
 
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
@@ -756,7 +753,7 @@ msgid "Nie można cofnąć tej zmiany w tej grupie."
 msgstr "This change can't be undone in this group."
 
 #: src/features/history/change-row.tsx
-msgid "Nie można cofnąć: później ktoś to jeszcze zmienił. Cofnij najpierw nowsze zmiany."
+msgid "Nie można cofnąć: później były tu kolejne zmiany. Cofnij najpierw nowsze."
 msgstr "Can't undo: someone changed it again later. Undo the newer changes first."
 
 #: src/features/claims/claim-messages.tsx
@@ -1003,10 +1000,6 @@ msgstr "Pay back"
 msgid "Oddaj {amount} – {0}"
 msgstr "Pay back {amount} – {0}"
 
-#: src/app/(app)/groups/[groupId]/settle.tsx
-msgid "Oddaj {recipient}"
-msgstr "Pay back {recipient}"
-
 #: src/app/(app)/admin.tsx
 msgid "Odrzuć zgłoszenie"
 msgstr "Dismiss report"
@@ -1035,19 +1028,6 @@ msgstr "Left the group: {name}"
 #: src/app/(app)/_layout.tsx
 msgid "Osoba"
 msgstr "Person"
-
-#: src/features/entries/split-fields.tsx
-msgid "Otrzymał(a)"
-msgstr "Received by"
-
-#: src/features/entries/entry-detail-body.tsx
-#: src/features/entries/split-fields.tsx
-msgid "Otrzymali"
-msgstr "Received by"
-
-#: src/features/history/describe-change.ts
-msgid "Otrzymujący: {value}"
-msgstr "Received by: {value}"
 
 #: src/app/(app)/admin.tsx
 msgid "Otwarte zgłoszenia"
@@ -1082,10 +1062,6 @@ msgstr "Receipt"
 #: src/features/entries/composer.tsx
 msgid "Pełny formularz wydatku"
 msgstr "Full expense form"
-
-#: src/features/history/describe-change.ts
-msgid "Płacący: {value}"
-msgstr "Paid by: {value}"
 
 #: src/features/entries/use-entry-labels.ts
 msgid "Po równo"
@@ -1200,6 +1176,10 @@ msgstr "Personal items ({0}) exceed the expense amount ({1})."
 msgid "Profil"
 msgstr "Profile"
 
+#: src/features/claims/claim-messages.tsx
+msgid "Przejęcie profilu {memberName}: {claimerName}"
+msgstr "{claimerName} claimed the {memberName} profile"
+
 #: src/features/history/describe-change.ts
 msgid "Przejęto profil {name}"
 msgstr "Claimed the {name} profile"
@@ -1278,7 +1258,7 @@ msgid "Salda ›"
 msgstr "Balances ›"
 
 #: src/app/(app)/groups/[groupId]/unsent-entry.tsx
-msgid "Serwer odrzucił wpis jako niepoprawny — na przykład ktoś z uczestników opuścił grupę."
+msgid "Serwer odrzucił wpis jako niepoprawny — na przykład jedna z osób we wpisie opuściła grupę."
 msgstr "The server rejected the entry as invalid, for example because a participant left the group."
 
 #: src/app/(app)/groups/[groupId]/unsent-entry.tsx
@@ -1319,6 +1299,10 @@ msgstr "Settlement {amount} from {payerName}. {date}."
 #: src/features/settlements/settlement-message.ts
 msgid "Spłata {spoken}. Od: {from}. Dla: {to}. {date}."
 msgstr "Settlement {spoken}. From: {from}. To: {to}. {date}."
+
+#: src/app/(app)/groups/[groupId]/settle.tsx
+msgid "Spłata dla: {recipient}"
+msgstr "Pay back {recipient}"
 
 #: src/features/settlements/settlement-message.ts
 msgid "Spłata: {from} → {to} · {amount}"
@@ -1426,6 +1410,15 @@ msgstr "This profile has already been claimed."
 #: src/app/(app)/groups/[groupId]/unsent-entry.tsx
 msgid "Ten wpis nie czeka już na wysłanie."
 msgstr "This entry is no longer waiting to be sent."
+
+#: src/app/(app)/groups/[groupId]/entry-conflict.tsx
+msgid "Ten wpis zmienił się w międzyczasie"
+msgstr "Someone changed this entry in the meantime"
+
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+#: src/app/(app)/groups/[groupId]/settle.tsx
+msgid "Ten wpis został w międzyczasie usunięty. Twoje zmiany nie zostały zapisane."
+msgstr "Someone deleted this entry in the meantime. Your changes were not saved."
 
 #: src/app/g/[token]/_layout.tsx
 msgid "To ja"
@@ -1715,8 +1708,12 @@ msgstr "income"
 msgid "wpływ „{title}”"
 msgstr "income “{title}”"
 
+#: src/features/entries/bubble-label.ts
+msgid "Wpływ {amount}: {title}. Dla: {names}. {date}."
+msgstr "{names} received {amount} for {title}, {date}."
+
 #: src/features/entries/income-bubble-label.ts
-msgid "Wpływ {amount}: {title}. Otrzymał(a): {recipients}. {date}."
+msgid "Wpływ {amount}: {title}. Dla: {recipients}. {date}."
 msgstr "Income {amount}: {title}. Received by {recipients}. {date}."
 
 #: src/app/g/[token]/index.tsx
@@ -1727,10 +1724,6 @@ msgstr "Back"
 msgid "Wspólne + osobiste"
 msgstr "Common + personal"
 
-#: src/features/balances/balances-view.tsx
-msgid "Wszyscy są rozliczeni."
-msgstr "Everyone is settled up."
-
 #: src/features/groups/group-lifecycle-section.tsx
 msgid "Wszystkie wpisy i salda znikną dla wszystkich członków. Tego nie da się cofnąć."
 msgstr "All entries and balances will be gone for every member. This can't be undone."
@@ -1738,6 +1731,10 @@ msgstr "All entries and balances will be gone for every member. This can't be un
 #: src/features/balances/balance-banner.tsx
 msgid "Wszystko rozliczone"
 msgstr "All settled up"
+
+#: src/features/balances/balances-view.tsx
+msgid "Wszystko rozliczone."
+msgstr "Everyone is settled up."
 
 #: src/features/entries/split-fields.tsx
 msgid "Wybierz co najmniej jedną osobę."
@@ -1752,7 +1749,7 @@ msgid "Wybierz kolor."
 msgstr "Choose a colour."
 
 #: src/app/g/[token]/me.tsx
-msgid "Wybierz siebie, żeby zobaczyć, ile jesteś winien. Zapamiętamy to w tej przeglądarce."
+msgid "Wybierz siebie, żeby zobaczyć, ile masz do oddania. Zapamiętamy to w tej przeglądarce."
 msgstr "Pick yourself to see how much you owe. This browser will remember it."
 
 #: src/app/(app)/new-group.tsx
@@ -1772,11 +1769,11 @@ msgid "Wybierz, kto oddaje."
 msgstr "Choose who pays back."
 
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
-msgid "Wybierz, kto otrzymał pieniądze."
+msgid "Wybierz, kto otrzymuje pieniądze."
 msgstr "Choose who received the money."
 
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
-msgid "Wybierz, kto zapłacił."
+msgid "Wybierz, kto płaci."
 msgstr "Choose who paid."
 
 #: src/app/(app)/groups/[groupId]/entry-conflict.tsx
@@ -1800,7 +1797,11 @@ msgid "wydatek „{title}”"
 msgstr "expense “{title}”"
 
 #: src/features/entries/bubble-label.ts
-msgid "Wydatek {amount}: {title}. Zapłacił(a): {payerName}. {date}."
+msgid "Wydatek {amount}: {title}. Płacą: {names}. {date}."
+msgstr "{names} paid {amount} for {title}, {date}."
+
+#: src/features/entries/bubble-label.ts
+msgid "Wydatek {amount}: {title}. Płaci: {payerName}. {date}."
 msgstr "Expense {amount}: {title}. Paid by {payerName}. {date}."
 
 #: src/app/(app)/new-group.tsx
@@ -1831,10 +1832,6 @@ msgstr "We'll email you a one-time code. No passwords."
 msgid "Wyślij"
 msgstr "Send"
 
-#: src/features/claims/personal-claim-link-button.tsx
-msgid "Wyślij {name} osobisty link"
-msgstr "Send {name} a personal link"
-
 #: src/app/(auth)/sign-in.tsx
 msgid "Wyślij kod"
 msgstr "Send code"
@@ -1847,6 +1844,10 @@ msgstr "Resend code"
 msgid "Wyślij link"
 msgstr "Send link"
 
+#: src/features/claims/personal-claim-link-button.tsx
+msgid "Wyślij osobisty link: {name}"
+msgstr "Send {name} a personal link"
+
 #: src/app/(app)/report-photo.tsx
 msgid "Wyślij zgłoszenie"
 msgstr "Send report"
@@ -1858,6 +1859,10 @@ msgstr "From library"
 #: src/app/(app)/quick-bill.tsx
 msgid "Z kim"
 msgstr "With whom"
+
+#: src/features/group-link/group-link-section.tsx
+msgid "Z tym linkiem można dołączyć do grupy."
+msgstr "Anyone with this link can join the group."
 
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
 #: src/features/entries/composer.tsx
@@ -1876,10 +1881,6 @@ msgstr "Block the account {0}?"
 #: src/app/(app)/admin.tsx
 msgid "Zablokowane konta"
 msgstr "Blocked accounts"
-
-#: src/app/(app)/admin.tsx
-msgid "zablokowany"
-msgstr "blocked"
 
 #: src/app/(app)/admin.tsx
 msgid "Zablokuj konto"
@@ -1931,7 +1932,7 @@ msgid "Zamknij"
 msgstr "Close"
 
 #: src/app/(app)/groups/[groupId]/entry-conflict.tsx
-msgid "Zanim twoja zmiana dotarła na serwer, ktoś inny zmienił ten wpis."
+msgid "Zanim Twoja zmiana dotarła na serwer, ten wpis został zmieniony."
 msgstr "Before your change reached the server, someone else changed this entry."
 
 #: src/features/profile/payout-details-section.tsx
@@ -1958,15 +1959,6 @@ msgstr "Save attendance"
 #: src/app/(app)/groups/[groupId]/settle.tsx
 msgid "Zapisz spłatę"
 msgstr "Save settlement"
-
-#: src/features/entries/split-fields.tsx
-msgid "Zapłacił(a)"
-msgstr "Paid by"
-
-#: src/features/entries/entry-detail-body.tsx
-#: src/features/entries/split-fields.tsx
-msgid "Zapłacili"
-msgstr "Paid by"
 
 #: src/app/(app)/index.tsx
 msgid "Zarchiwizowane"
@@ -2014,11 +2006,6 @@ msgstr "The photo has already been removed."
 msgid "ze zdjęciem paragonu"
 msgstr "with a receipt photo"
 
-#. placeholder {0}: report.reporter?.email ?? '—'
-#: src/app/(app)/admin.tsx
-msgid "Zgłaszający: {0}"
-msgstr "Reported by: {0}"
-
 #: src/app/(app)/groups/[groupId]/receipt.tsx
 msgid "Zgłoś"
 msgstr "Report"
@@ -2031,6 +2018,11 @@ msgstr "Report photo"
 #: src/features/moderation/reportable-member-avatar.tsx
 msgid "Zgłoś zdjęcie profilowe"
 msgstr "Report profile photo"
+
+#. placeholder {0}: report.reporter?.email ?? '—'
+#: src/app/(app)/admin.tsx
+msgid "Zgłoszenie od: {0}"
+msgstr "Reported by: {0}"
 
 #: src/app/(app)/groups/[groupId]/info.tsx
 msgid "Zmień"

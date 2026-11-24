@@ -60,7 +60,7 @@ export interface EntryItem {
   baseAmount: number | null;
 }
 
-/** A claim system message ("Tomek przejął profil Tomek", #18). */
+/** A claim system message ("Przejęcie profilu Tomek: Tomek", #18). */
 export interface ClaimItem<C extends ClaimLike = ClaimLike> {
   type: 'claim';
   key: string;

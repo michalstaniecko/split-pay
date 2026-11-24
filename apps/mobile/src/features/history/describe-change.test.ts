@@ -97,7 +97,7 @@ describe('describeChange', () => {
         'Kwota: 100,00 zł → 120,00 zł',
         'Data: 11 lipca 2026 → 12 lipca 2026',
         'Kategoria: Jedzenie → Inne',
-        'Płacący: Ania → Bartek',
+        'Kto płaci: Ania → Bartek',
         'Podział: Po równo · Ania, Bartek → Po równo · Ania, Bartek, Kasia',
       ],
     });

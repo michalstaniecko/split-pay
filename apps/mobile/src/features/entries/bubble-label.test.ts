@@ -51,7 +51,7 @@ const label = (locale: 'pl' | 'en', item: EntryItem) => {
 describe('entryBubbleLabel', () => {
   it('reads a foreign-currency expense in Polish: the original amount with its currency name, then the base amount', () => {
     expect(label('pl', bubble())).toBe(
-      'Wydatek 20,00 euro, czyli około 86,43 złotego polskiego: Kolacja. Zapłacił(a): Kasia. 11 lipca 2026. Twój udział 28,81 złotego polskiego.',
+      'Wydatek 20,00 euro, czyli około 86,43 złotego polskiego: Kolacja. Płaci: Kasia. 11 lipca 2026. Twój udział 28,81 złotego polskiego.',
     );
   });
 
@@ -71,7 +71,7 @@ describe('entryBubbleLabel', () => {
   it('names every payer of a foreign-currency expense paid by several people', () => {
     const several = bubble({ payerNames: ['Kasia', 'Ania', 'Bartek'], otherPayers: 2, myShare: null });
     expect(label('pl', several)).toBe(
-      'Kasia, Ania i Bartek zapłacili 20,00 euro, czyli około 86,43 złotego polskiego za Kolacja, 11 lipca 2026.',
+      'Wydatek 20,00 euro, czyli około 86,43 złotego polskiego: Kolacja. Płacą: Kasia, Ania i Bartek. 11 lipca 2026.',
     );
   });
 
@@ -79,7 +79,7 @@ describe('entryBubbleLabel', () => {
     const { payers, ...fields } = dinner;
     const refund: Entry = { ...fields, kind: 'income', amount: 10_000, title: 'Zwrot', recipients: payers };
     expect(label('pl', bubble({ entry: refund, baseAmount: 43_215, myShare: null }))).toBe(
-      'Wpływ 100,00 euro, czyli około 432,15 złotego polskiego: Zwrot. Otrzymał(a): Kasia. 11 lipca 2026.',
+      'Wpływ 100,00 euro, czyli około 432,15 złotego polskiego: Zwrot. Dla: Kasia. 11 lipca 2026.',
     );
   });
 });
@@ -90,13 +90,13 @@ describe('payersBubbleLabel', () => {
   it('names every payer in Polish, with the amount, title, date and my share', () => {
     activateLocale('pl');
     expect(payersBubbleLabel({ ...pizza, payerNames: ['Kasia', 'Ania', 'Bartek'], myShare: '30,00 zł' })).toBe(
-      'Kasia, Ania i Bartek zapłacili 90,00 zł za Pizza, 10 lipca 2026. Twój udział 30,00 zł.',
+      'Wydatek 90,00 zł: Pizza. Płacą: Kasia, Ania i Bartek. 10 lipca 2026. Twój udział 30,00 zł.',
     );
     expect(payersBubbleLabel({ ...pizza, payerNames: ['Kasia', 'Ania'], myShare: null })).toBe(
-      'Kasia i Ania zapłacili 90,00 zł za Pizza, 10 lipca 2026.',
+      'Wydatek 90,00 zł: Pizza. Płacą: Kasia i Ania. 10 lipca 2026.',
     );
     expect(payersBubbleLabel({ ...pizza, payerNames: ['Kasia', 'Ania', 'Bartek', 'Ola', 'Tomek'], myShare: null })).toBe(
-      'Kasia, Ania, Bartek, Ola i Tomek zapłacili 90,00 zł za Pizza, 10 lipca 2026.',
+      'Wydatek 90,00 zł: Pizza. Płacą: Kasia, Ania, Bartek, Ola i Tomek. 10 lipca 2026.',
     );
   });
 
@@ -104,7 +104,7 @@ describe('payersBubbleLabel', () => {
     activateLocale('pl');
     expect(
       payersBubbleLabel({ ...pizza, kind: 'income', title: 'Kaucja', payerNames: ['Kasia', 'Ania'], myShare: '-45,00 zł' }),
-    ).toBe('Kasia i Ania otrzymali 90,00 zł za Kaucja, 10 lipca 2026. Twój udział -45,00 zł.');
+    ).toBe('Wpływ 90,00 zł: Kaucja. Dla: Kasia i Ania. 10 lipca 2026. Twój udział -45,00 zł.');
   });
 
   it('names every payer in English', () => {

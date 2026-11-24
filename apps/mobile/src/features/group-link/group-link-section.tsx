@@ -39,7 +39,7 @@ export function GroupLinkSection({ groupId, groupName }: { groupId: string; grou
 
   return (
     <View style={styles.container}>
-      <Text style={styles.muted}>{t`Każdy, kto ma ten link, może dołączyć do grupy.`}</Text>
+      <Text style={styles.muted}>{t`Z tym linkiem można dołączyć do grupy.`}</Text>
       <QrCode value={url} label={t`Kod QR linku grupy`} />
       <Text style={styles.url} selectable numberOfLines={2}>
         {url}

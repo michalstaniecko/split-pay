@@ -46,7 +46,7 @@ export function BalancesView({
         </Text>
       </View>
       {rows.transfers.length === 0 ? (
-        <Text style={styles.muted}>{t`Wszyscy są rozliczeni.`}</Text>
+        <Text style={styles.muted}>{t`Wszystko rozliczone.`}</Text>
       ) : (
         <View style={styles.list}>
           {rows.transfers.map((transfer) => (
@@ -70,7 +70,7 @@ function BalanceItem({ row, currency }: { row: BalanceRow; currency: string }) {
   const amount = format.amount(Math.abs(row.amount), currency);
   const name = row.isMe ? t`${row.name} (Ty)` : row.name;
   const label =
-    row.amount > 0 ? t`${name}: należy się ${amount}` : row.amount < 0 ? t`${name}: winien ${amount}` : t`${name}: rozliczony`;
+    row.amount > 0 ? t`${name}: należy się ${amount}` : row.amount < 0 ? t`${name}: do oddania ${amount}` : t`${name}: rozliczono`;
   return (
     <View style={styles.row} accessible accessibilityLabel={label}>
       <Text style={[styles.name, row.isMe && styles.bold]}>{name}</Text>
