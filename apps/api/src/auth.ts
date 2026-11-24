@@ -6,15 +6,8 @@ import { APIError, createAuthMiddleware, getSessionFromCtx } from 'better-auth/a
 import { emailOTP } from 'better-auth/plugins';
 import type { Db } from './db/client';
 import * as authSchema from './db/auth-schema';
+import { blockedSessionMayUseAuth } from './blocked-session';
 import { isAccountBlocked } from './routes/moderation';
-
-/** Auth endpoints a blocked session may use (#48): signing in, reading the session, signing out. */
-const blockedSessionAuthPaths = new Set([
-  '/email-otp/send-verification-otp',
-  '/sign-in/email-otp',
-  '/get-session',
-  '/sign-out',
-]);
 
 export type OtpType = 'sign-in' | 'email-verification' | 'forget-password' | 'change-email';
 
@@ -54,13 +47,12 @@ export const createAuth = (deps: AuthDeps) =>
       // API tests see production behaviour.
       disableOriginCheck: false,
     },
-    // A blocked account (#27) can sign in, but its session reaches only account
-    // deletion (#48, ADR-0019): here that means reading the session and signing
-    // out. Sign-in itself has no session yet, so it passes. The API routes check
-    // blocking in `requireUser`.
+    // A blocked session reaches only what `blocked-session.ts` allows (#48,
+    // ADR-0019). Sign-in itself has no session yet, so it passes. The API
+    // routes check blocking in `requireUser`.
     hooks: {
       before: createAuthMiddleware(async (ctx) => {
-        if (blockedSessionAuthPaths.has(ctx.path)) return;
+        if (blockedSessionMayUseAuth(ctx.path)) return;
         const current = await getSessionFromCtx(ctx);
         if (current && (await isAccountBlocked(deps.db, current.user.id))) {
           throw APIError.from('FORBIDDEN', { code: ACCOUNT_BLOCKED, message: 'This account is blocked.' });

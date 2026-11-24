@@ -40,9 +40,8 @@ export interface AppDeps {
  * the typed client (`hc`) infers its types from this chain.
  */
 export const createApp = ({ auth, db, adminEmails = [], flags = defaultFeatureFlags, storage, webUrl }: AppDeps) => {
+  // A blocked session (#48) passes only where `blocked-session.ts` allows.
   const requireUser = createRequireUser(auth, db);
-  /** A blocked session (#48) reaches only these routes: who am I, and account deletion. */
-  const requireUserEvenIfBlocked = createRequireUser(auth, db, { allowBlocked: true });
   const requireAdmin = createRequireAdmin(adminEmails);
 
   return (
@@ -53,7 +52,7 @@ export const createApp = ({ auth, db, adminEmails = [], flags = defaultFeatureFl
       /** Feature flags. Public: the app reads them before and without signing in. */
       .get('/flags', (c) => c.json<FeatureFlags>({ ...flags }))
       /** The signed-in user. `blocked`: the app shows only "Konto zablokowane" (#48). */
-      .get('/me', requireUserEvenIfBlocked, (c) => {
+      .get('/me', requireUser, (c) => {
         const user = c.get('user');
         return c.json({
           id: user.id,
@@ -67,7 +66,7 @@ export const createApp = ({ auth, db, adminEmails = [], flags = defaultFeatureFl
        * Account deletion (ADR-0010, ADR-0019): personal data goes, the user's
        * members stay without an account — with their last name unless `removeName`.
        */
-      .delete('/me', requireUserEvenIfBlocked, zValidator('json', AccountDeletion), async (c) => {
+      .delete('/me', requireUser, zValidator('json', AccountDeletion), async (c) => {
         await deleteAccount(db, c.get('user'), c.req.valid('json'), storage);
         return c.json({ deleted: true as const });
       })
