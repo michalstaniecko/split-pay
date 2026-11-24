@@ -1,0 +1,7 @@
+{
+  "ios": {
+    "NSCameraUsageDescription": "split-pay uses the camera to photograph receipts and your profile picture.",
+    "NSPhotoLibraryUsageDescription": "split-pay lets you pick a receipt photo or a profile picture from your library.",
+    "NSFaceIDUsageDescription": "split-pay can use Face ID to protect your sign-in on this device."
+  }
+}
