@@ -4,7 +4,7 @@ import { onlineManager, useQuery } from '@tanstack/react-query';
 import { randomUUID } from 'expo-crypto';
 import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { Button } from '@/components/button';
 import { GroupNotFound } from '@/components/group-not-found';
@@ -238,192 +238,196 @@ function ExpenseFormView({ group, editing }: { group: GroupDetail; editing?: For
     errors.includes(field) && fieldError[field] !== '' ? <Text style={styles.error}>{fieldError[field]}</Text> : null;
 
   return (
-    <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView style={styles.flex} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <Text style={styles.heading}>
-          {editing ? (income ? t`Edytuj wpływ` : t`Edytuj wydatek`) : income ? t`Nowy wpływ` : t`Nowy wydatek`}
+    // No KeyboardAvoidingView: in an iOS form sheet it left the sheet blank whenever the form
+    // rendered on the first frame (group already cached, e.g. opened from the Conversation).
+    <ScrollView
+      style={styles.flex}
+      contentContainerStyle={styles.content}
+      keyboardShouldPersistTaps="handled"
+      automaticallyAdjustKeyboardInsets>
+      <Text style={styles.heading}>
+        {editing ? (income ? t`Edytuj wpływ` : t`Edytuj wydatek`) : income ? t`Nowy wpływ` : t`Nowy wydatek`}
+      </Text>
+
+      <View style={styles.chips} accessibilityRole="radiogroup" accessibilityLabel={t`Rodzaj wpisu`}>
+        {kinds.map(({ kind, label }) => {
+          const selected = (form.kind ?? 'expense') === kind;
+          return (
+            <Pressable
+              key={kind}
+              accessibilityRole="radio"
+              accessibilityState={{ checked: selected }}
+              onPress={() => update({ ...form, kind }, [])}
+              style={[styles.chip, selected && (kind === 'income' ? styles.chipIncome : styles.chipSelected)]}>
+              <Text style={styles.chipLabel}>{label}</Text>
+            </Pressable>
+          );
+        })}
+      </View>
+
+      <View style={styles.field}>
+        <Text style={styles.label}>{t`Kwota`}</Text>
+        <View style={[styles.amountRow, errors.includes('amount') && styles.inputInvalid]}>
+          <TextInput
+            value={form.amount}
+            onChangeText={(text) => update({ ...form, amount: cleanAmountInput(text, digits) }, ['amount'])}
+            placeholder="0"
+            accessibilityLabel={t`Kwota`}
+            placeholderTextColor={theme.colors.textMuted}
+            keyboardType="decimal-pad"
+            style={styles.amountInput}
+          />
+          <Text style={styles.currency}>{form.currency}</Text>
+        </View>
+        {baseAmount !== null ? <Text style={styles.value}>≈ {format.amount(baseAmount, group.baseCurrency)}</Text> : null}
+        {errorFor('amount')}
+      </View>
+
+      <View style={styles.field}>
+        <Text style={styles.label}>{t`Waluta`}</Text>
+        <View style={styles.chips} accessibilityRole="radiogroup">
+          {entryCurrencies(group.baseCurrency).map((currency) => (
+            <Pressable
+              key={currency}
+              accessibilityRole="radio"
+              accessibilityState={{ checked: form.currency === currency }}
+              onPress={() => update(withCurrency(form, currency, group.baseCurrency), ['amount', 'rate'])}
+              style={[styles.chip, form.currency === currency && styles.chipSelected]}>
+              <Text style={styles.chipLabel}>{currency}</Text>
+            </Pressable>
+          ))}
+        </View>
+      </View>
+
+      {foreign ? (
+        <View style={styles.field}>
+          <Text style={styles.label}>{t`Kurs: 1 ${form.currency} = ? ${group.baseCurrency}`}</Text>
+          <TextInput
+            value={form.rate}
+            onChangeText={(rate) => update(withRate(form, rate), ['rate'])}
+            placeholder="4,3215"
+            accessibilityLabel={t`Kurs: 1 ${form.currency} = ? ${group.baseCurrency}`}
+            placeholderTextColor={theme.colors.textMuted}
+            keyboardType="decimal-pad"
+            maxLength={20}
+            style={[styles.input, errors.includes('rate') && styles.inputInvalid]}
+          />
+          {rateSource ? <Text style={styles.label}>{rateSource}</Text> : null}
+          {errorFor('rate')}
+        </View>
+      ) : null}
+
+      <View style={styles.field}>
+        <Text style={styles.label}>{t`Tytuł`}</Text>
+        <TextInput
+          value={form.title}
+          onChangeText={(title) => update(withTitle(form, title), ['title'])}
+          placeholder={t`Za co?`}
+          accessibilityLabel={t`Tytuł`}
+          placeholderTextColor={theme.colors.textMuted}
+          maxLength={120}
+          style={[styles.input, errors.includes('title') && styles.inputInvalid]}
+        />
+        {errorFor('title')}
+      </View>
+
+      <View style={styles.field}>
+        <Text style={styles.label}>{t`Kategoria`}</Text>
+        <View style={styles.chips} accessibilityRole="radiogroup">
+          {Category.options.map((category) => (
+            <Pressable
+              key={category}
+              accessibilityRole="radio"
+              accessibilityState={{ checked: form.category === category }}
+              onPress={() => update({ ...form, category, categoryChosen: true }, [])}
+              style={[styles.chip, form.category === category && styles.chipSelected]}>
+              <Text style={styles.chipLabel}>
+                {CATEGORY_ICONS[category]} {labels.category[category]}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+      </View>
+
+      <PayersField
+        members={group.members}
+        myMemberId={me}
+        payerMemberId={form.payerMemberId}
+        payers={form.payers}
+        amountText={form.amount}
+        amount={amount}
+        digits={digits}
+        currency={form.currency}
+        showErrors={errors.includes('payerAmounts')}
+        onChangePayer={(payerMemberId) => update({ ...form, payerMemberId }, ['payer'])}
+        onChangePayers={(payers) => update({ ...form, payers }, ['payer', 'payerAmounts'])}
+        income={income}
+      />
+      {errorFor('payer')}
+
+      <View style={styles.field}>
+        {/* TODO: native date picker; a typed ISO date works on every platform for now (as in the group form). */}
+        <Text style={styles.label}>{t`Data`}</Text>
+        <TextInput
+          value={form.date}
+          onChangeText={(date) => update(withDate(form, date, group.members), ['date', 'split'])}
+          placeholder={t`RRRR-MM-DD`}
+          accessibilityLabel={t`Data`}
+          placeholderTextColor={theme.colors.textMuted}
+          keyboardType="numbers-and-punctuation"
+          maxLength={10}
+          style={[styles.input, errors.includes('date') && styles.inputInvalid]}
+        />
+        {errorFor('date')}
+      </View>
+
+      <SplitField
+        members={group.members}
+        myMemberId={me}
+        split={form.split}
+        participantIds={form.participantIds}
+        amount={amount}
+        digits={digits}
+        currency={form.currency}
+        showErrors={errors.includes('split')}
+        onChange={(split) => update({ ...form, split }, ['split'])}
+        onChangeParticipants={(participantIds) => update({ ...form, participantIds }, ['split'])}
+      />
+
+      <ReceiptField
+        draft={receipt}
+        storedUrl={receipt.kind === 'stored' ? storedReceipts.data?.get(editing?.id ?? '')?.url : undefined}
+        problem={receiptProblem}
+        onChange={(next) => {
+          setReceipt(next);
+          setReceiptProblem(null);
+        }}
+      />
+
+      {deletedMeanwhile ? (
+        <Text style={styles.error}>{t`Ten wpis został w międzyczasie usunięty. Twoje zmiany nie zostały zapisane.`}</Text>
+      ) : saving.error instanceof OutboxBlockedError ? (
+        <Text style={styles.error}>{t`Najpierw rozwiąż konflikt tego wpisu (czerwony „!”).`}</Text>
+      ) : saving.error instanceof LockedOfflineError ? (
+        <Text style={styles.error}>{t`Bez internetu możesz edytować tylko wpisy dodane przez siebie.`}</Text>
+      ) : saving.isError && !versionConflictEntry(saving.error) ? (
+        <Text style={styles.error}>
+          {editing
+            ? t`Nie udało się zapisać zmian. Spróbuj ponownie.`
+            : income
+              ? t`Nie udało się dodać wpływu. Spróbuj ponownie.`
+              : t`Nie udało się dodać wydatku. Spróbuj ponownie.`}
         </Text>
+      ) : null}
 
-        <View style={styles.chips} accessibilityRole="radiogroup" accessibilityLabel={t`Rodzaj wpisu`}>
-          {kinds.map(({ kind, label }) => {
-            const selected = (form.kind ?? 'expense') === kind;
-            return (
-              <Pressable
-                key={kind}
-                accessibilityRole="radio"
-                accessibilityState={{ checked: selected }}
-                onPress={() => update({ ...form, kind }, [])}
-                style={[styles.chip, selected && (kind === 'income' ? styles.chipIncome : styles.chipSelected)]}>
-                <Text style={styles.chipLabel}>{label}</Text>
-              </Pressable>
-            );
-          })}
-        </View>
-
-        <View style={styles.field}>
-          <Text style={styles.label}>{t`Kwota`}</Text>
-          <View style={[styles.amountRow, errors.includes('amount') && styles.inputInvalid]}>
-            <TextInput
-              value={form.amount}
-              onChangeText={(text) => update({ ...form, amount: cleanAmountInput(text, digits) }, ['amount'])}
-              placeholder="0"
-              accessibilityLabel={t`Kwota`}
-              placeholderTextColor={theme.colors.textMuted}
-              keyboardType="decimal-pad"
-              style={styles.amountInput}
-            />
-            <Text style={styles.currency}>{form.currency}</Text>
-          </View>
-          {baseAmount !== null ? <Text style={styles.value}>≈ {format.amount(baseAmount, group.baseCurrency)}</Text> : null}
-          {errorFor('amount')}
-        </View>
-
-        <View style={styles.field}>
-          <Text style={styles.label}>{t`Waluta`}</Text>
-          <View style={styles.chips} accessibilityRole="radiogroup">
-            {entryCurrencies(group.baseCurrency).map((currency) => (
-              <Pressable
-                key={currency}
-                accessibilityRole="radio"
-                accessibilityState={{ checked: form.currency === currency }}
-                onPress={() => update(withCurrency(form, currency, group.baseCurrency), ['amount', 'rate'])}
-                style={[styles.chip, form.currency === currency && styles.chipSelected]}>
-                <Text style={styles.chipLabel}>{currency}</Text>
-              </Pressable>
-            ))}
-          </View>
-        </View>
-
-        {foreign ? (
-          <View style={styles.field}>
-            <Text style={styles.label}>{t`Kurs: 1 ${form.currency} = ? ${group.baseCurrency}`}</Text>
-            <TextInput
-              value={form.rate}
-              onChangeText={(rate) => update(withRate(form, rate), ['rate'])}
-              placeholder="4,3215"
-              accessibilityLabel={t`Kurs: 1 ${form.currency} = ? ${group.baseCurrency}`}
-              placeholderTextColor={theme.colors.textMuted}
-              keyboardType="decimal-pad"
-              maxLength={20}
-              style={[styles.input, errors.includes('rate') && styles.inputInvalid]}
-            />
-            {rateSource ? <Text style={styles.label}>{rateSource}</Text> : null}
-            {errorFor('rate')}
-          </View>
-        ) : null}
-
-        <View style={styles.field}>
-          <Text style={styles.label}>{t`Tytuł`}</Text>
-          <TextInput
-            value={form.title}
-            onChangeText={(title) => update(withTitle(form, title), ['title'])}
-            placeholder={t`Za co?`}
-            accessibilityLabel={t`Tytuł`}
-            placeholderTextColor={theme.colors.textMuted}
-            maxLength={120}
-            style={[styles.input, errors.includes('title') && styles.inputInvalid]}
-          />
-          {errorFor('title')}
-        </View>
-
-        <View style={styles.field}>
-          <Text style={styles.label}>{t`Kategoria`}</Text>
-          <View style={styles.chips} accessibilityRole="radiogroup">
-            {Category.options.map((category) => (
-              <Pressable
-                key={category}
-                accessibilityRole="radio"
-                accessibilityState={{ checked: form.category === category }}
-                onPress={() => update({ ...form, category, categoryChosen: true }, [])}
-                style={[styles.chip, form.category === category && styles.chipSelected]}>
-                <Text style={styles.chipLabel}>
-                  {CATEGORY_ICONS[category]} {labels.category[category]}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-        </View>
-
-        <PayersField
-          members={group.members}
-          myMemberId={me}
-          payerMemberId={form.payerMemberId}
-          payers={form.payers}
-          amountText={form.amount}
-          amount={amount}
-          digits={digits}
-          currency={form.currency}
-          showErrors={errors.includes('payerAmounts')}
-          onChangePayer={(payerMemberId) => update({ ...form, payerMemberId }, ['payer'])}
-          onChangePayers={(payers) => update({ ...form, payers }, ['payer', 'payerAmounts'])}
-          income={income}
-        />
-        {errorFor('payer')}
-
-        <View style={styles.field}>
-          {/* TODO: native date picker; a typed ISO date works on every platform for now (as in the group form). */}
-          <Text style={styles.label}>{t`Data`}</Text>
-          <TextInput
-            value={form.date}
-            onChangeText={(date) => update(withDate(form, date, group.members), ['date', 'split'])}
-            placeholder={t`RRRR-MM-DD`}
-            accessibilityLabel={t`Data`}
-            placeholderTextColor={theme.colors.textMuted}
-            keyboardType="numbers-and-punctuation"
-            maxLength={10}
-            style={[styles.input, errors.includes('date') && styles.inputInvalid]}
-          />
-          {errorFor('date')}
-        </View>
-
-        <SplitField
-          members={group.members}
-          myMemberId={me}
-          split={form.split}
-          participantIds={form.participantIds}
-          amount={amount}
-          digits={digits}
-          currency={form.currency}
-          showErrors={errors.includes('split')}
-          onChange={(split) => update({ ...form, split }, ['split'])}
-          onChangeParticipants={(participantIds) => update({ ...form, participantIds }, ['split'])}
-        />
-
-        <ReceiptField
-          draft={receipt}
-          storedUrl={receipt.kind === 'stored' ? storedReceipts.data?.get(editing?.id ?? '')?.url : undefined}
-          problem={receiptProblem}
-          onChange={(next) => {
-            setReceipt(next);
-            setReceiptProblem(null);
-          }}
-        />
-
-        {deletedMeanwhile ? (
-          <Text style={styles.error}>{t`Ten wpis został w międzyczasie usunięty. Twoje zmiany nie zostały zapisane.`}</Text>
-        ) : saving.error instanceof OutboxBlockedError ? (
-          <Text style={styles.error}>{t`Najpierw rozwiąż konflikt tego wpisu (czerwony „!”).`}</Text>
-        ) : saving.error instanceof LockedOfflineError ? (
-          <Text style={styles.error}>{t`Bez internetu możesz edytować tylko wpisy dodane przez siebie.`}</Text>
-        ) : saving.isError && !versionConflictEntry(saving.error) ? (
-          <Text style={styles.error}>
-            {editing
-              ? t`Nie udało się zapisać zmian. Spróbuj ponownie.`
-              : income
-                ? t`Nie udało się dodać wpływu. Spróbuj ponownie.`
-                : t`Nie udało się dodać wydatku. Spróbuj ponownie.`}
-          </Text>
-        ) : null}
-
-        <Button
-          label={t`Zapisz`}
-          onPress={() => void submit()}
-          loading={saving.isPending || uploading}
-          disabled={deletedMeanwhile}
-        />
-        <Button variant="secondary" label={t`Anuluj`} onPress={closeSheet} />
-      </ScrollView>
-    </KeyboardAvoidingView>
+      <Button
+        label={t`Zapisz`}
+        onPress={() => void submit()}
+        loading={saving.isPending || uploading}
+        disabled={deletedMeanwhile}
+      />
+      <Button variant="secondary" label={t`Anuluj`} onPress={closeSheet} />
+    </ScrollView>
   );
 }
 
