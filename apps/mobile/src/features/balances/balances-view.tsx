@@ -2,7 +2,6 @@ import { useLingui } from '@lingui/react/macro';
 import type { ReactNode } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { StyleSheet } from 'react-native-unistyles';
-import { useLocale } from '@/i18n/locale-provider';
 import { useFormatters } from '@/i18n/use-formatters';
 import { balanceRowLabel } from './balance-label';
 import { type BalanceRow, drawerRows, type TransferRow } from './balances';
@@ -70,10 +69,9 @@ function BalanceItem({ row, currency }: { row: BalanceRow; currency: string }) {
   const { t } = useLingui();
   const format = useFormatters();
   const amount = format.amount(Math.abs(row.amount), currency);
-  const { locale } = useLocale();
   const name = row.isMe ? t`${row.name} (Ty)` : row.name;
   return (
-    <View style={styles.row} accessible accessibilityLabel={balanceRowLabel(row, { baseCurrency: currency, locale })}>
+    <View style={styles.row} accessible accessibilityLabel={balanceRowLabel(row, { baseCurrency: currency, spokenAmount: format.spokenAmount })}>
       <Text style={[styles.name, row.isMe && styles.bold]}>{name}</Text>
       <Text style={[styles.amount, row.amount > 0 && styles.positive, row.amount < 0 && styles.negative]}>
         {row.amount > 0 ? `+${amount}` : row.amount < 0 ? `−${amount}` : amount}

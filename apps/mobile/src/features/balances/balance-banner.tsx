@@ -4,7 +4,6 @@ import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
 import { StyleSheet } from 'react-native-unistyles';
-import { useLocale } from '@/i18n/locale-provider';
 import { useFormatters } from '@/i18n/use-formatters';
 import { bannerLabel } from './balance-label';
 import { useRefreshOnFocus } from '@/lib/use-refresh-on-focus';
@@ -42,7 +41,6 @@ export function BalanceBannerView({
 }) {
   const { t } = useLingui();
   const format = useFormatters();
-  const { locale } = useLocale();
   const state = bannerState(balances, myMemberId);
   const amount = format.amount(state.amount, balances.baseCurrency);
   const text =
@@ -51,7 +49,7 @@ export function BalanceBannerView({
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={bannerLabel(state, { baseCurrency: balances.baseCurrency, locale })}
+      accessibilityLabel={bannerLabel(state, { baseCurrency: balances.baseCurrency, spokenAmount: format.spokenAmount })}
       accessibilityHint={t`Pokazuje salda i kto komu ile oddaje`}
       onPress={onPress}
       style={({ pressed }) => [styles.banner, pressed && styles.pressed]}>

@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
+import { createFormatters } from '../../i18n/formatters';
 import { activateLocale } from '../../i18n/i18n';
 import { balanceRowLabel, bannerLabel } from './balance-label';
 
 // Intl separates groups with (narrow) no-break spaces; normalise them.
 const plain = (s: string) => s.replace(/[  ]/g, ' ');
-const pl = { baseCurrency: 'PLN', locale: 'pl' } as const;
-const en = { baseCurrency: 'PLN', locale: 'en' } as const;
+const pl = { baseCurrency: 'PLN', spokenAmount: createFormatters('pl').spokenAmount } as const;
+const en = { baseCurrency: 'PLN', spokenAmount: createFormatters('en').spokenAmount } as const;
 
 describe('bannerLabel', () => {
   it('reads my balance in Polish, impersonally, with the currency name', () => {
@@ -70,6 +71,6 @@ describe('balanceRowLabel', () => {
 
   it('spells out a foreign base currency', () => {
     activateLocale('en');
-    expect(balanceRowLabel(row('Bartek', -2_000), { baseCurrency: 'EUR', locale: 'en' })).toBe('Bartek: owes 20.00 euros');
+    expect(balanceRowLabel(row('Bartek', -2_000), { ...en, baseCurrency: 'EUR' })).toBe('Bartek: owes 20.00 euros');
   });
 });

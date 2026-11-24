@@ -1,14 +1,15 @@
 import { t } from '@lingui/core/macro';
-import { type CurrencyCode, formatAmount } from '@split-pay/shared';
+import type { CurrencyCode } from '@split-pay/shared';
+import type { Formatters } from '@/i18n/formatters';
 import type { BalanceRow, BannerState } from './balances';
 
+/** The base currency and the spoken-amount formatter (`useFormatters().spokenAmount`). */
 interface LabelContext {
   baseCurrency: CurrencyCode;
-  locale: string;
+  spokenAmount: Formatters['spokenAmount'];
 }
 
-const spoken = (amount: number, context: LabelContext) =>
-  formatAmount(Math.abs(amount), context.baseCurrency, context.locale, { currencyDisplay: 'name' });
+const spoken = (amount: number, context: LabelContext) => context.spokenAmount(Math.abs(amount), context.baseCurrency);
 
 /**
  * The balance banner for screen readers (#36), the currency spelled out and
