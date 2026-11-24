@@ -24,7 +24,7 @@ import {
 } from '@/features/web-view/public-view-query';
 import { useThisIsMe } from '@/features/web-view/this-is-me';
 import { WebFooter } from '@/features/web-view/web-footer';
-import { claimBannerMember } from '@/features/web-view/web-view';
+import { claimBanner } from '@/features/web-view/web-view';
 
 /**
  * The view-only web Conversation for a group link (SPEC "Web interface"):
@@ -32,7 +32,7 @@ import { claimBannerMember } from '@/features/web-view/web-view';
  * date, no composer and no long-press menu. "This is me" (remembered in the
  * browser) puts that member's bubbles on the end edge and drives the banner.
  * The header opens the limited Group info. A personal claim link adds a
- * banner naming its member, with "download the app". Native: `index.tsx` (join screen).
+ * banner naming its member, with "download the app" and "open in the app". Native: `index.tsx` (join screen).
  */
 export default function PublicConversationScreen() {
   const { theme } = useUnistyles();
@@ -51,7 +51,7 @@ function PublicConversation({ token, data }: { token: string; data: PublicGroup 
   const entries = useQuery(publicEntriesQuery(token));
   const balances = useQuery(publicBalancesQuery(token));
   const { me } = useThisIsMe(data);
-  const claimMember = claimBannerMember(data);
+  const banner = claimBanner({ token, claimFor: data.claimFor, members: data.members });
   const openInfo = () => router.push({ pathname: '/g/[token]/info', params: { token } });
 
   return (
@@ -83,7 +83,7 @@ function PublicConversation({ token, data }: { token: string; data: PublicGroup 
           ),
         }}
       />
-      {claimMember ? <ClaimBanner displayName={claimMember.displayName} /> : null}
+      {banner ? <ClaimBanner displayName={banner.member.displayName} openInAppUrl={banner.openInAppUrl} /> : null}
       {me === null ? (
         <Pressable
           accessibilityRole="button"

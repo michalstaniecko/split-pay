@@ -1051,6 +1051,7 @@ msgstr "Opens the day strip"
 msgid "Otwiera zdjęcie na pełnym ekranie"
 msgstr "Opens the photo full screen"
 
+#: src/features/web-view/claim-banner.tsx
 #: src/features/web-view/web-footer.tsx
 msgid "Otwórz w aplikacji"
 msgstr "Open in the app"

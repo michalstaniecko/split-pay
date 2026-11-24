@@ -1051,6 +1051,7 @@ msgstr "Otwiera pasek dni"
 msgid "Otwiera zdjęcie na pełnym ekranie"
 msgstr "Otwiera zdjęcie na pełnym ekranie"
 
+#: src/features/web-view/claim-banner.tsx
 #: src/features/web-view/web-footer.tsx
 msgid "Otwórz w aplikacji"
 msgstr "Otwórz w aplikacji"
