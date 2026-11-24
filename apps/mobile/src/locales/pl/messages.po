@@ -229,8 +229,8 @@ msgid "Brak zmian."
 msgstr "Brak zmian."
 
 #: src/features/stats/stats-view.tsx
-msgid "Była osoba"
-msgstr "Była osoba"
+msgid "Byli członkowie"
+msgstr "Byli członkowie"
 
 #: src/features/history/describe-change.ts
 msgid "cały wyjazd"

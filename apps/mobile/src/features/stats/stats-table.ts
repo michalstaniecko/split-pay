@@ -1,10 +1,11 @@
 import type { CategoryStats, GroupStats, LocalDate } from '@split-pay/shared';
 
-export interface StatsColumn {
-  memberId: string;
-  /** `null` for someone who appears in the stats but is no longer a member. */
-  name: string | null;
-}
+/**
+ * A member's column, or (`memberId` and `name` both `null`) the single
+ * "Byli członkowie" column summing everyone who appears in the stats but is no
+ * longer a member.
+ */
+export type StatsColumn = { memberId: string; name: string } | { memberId: null; name: null };
 
 export interface StatsCell {
   paid: number;
@@ -23,26 +24,23 @@ const ZERO: StatsCell = { paid: 0, consumed: 0 };
 
 /**
  * The days × people table of the Stats screen: a column per member (Group
- * info order, then any id found only in the stats), every cell filled.
+ * info order), then one for members who left, every cell filled.
  */
 export function statsTable(
   stats: GroupStats,
   members: readonly { id: string; displayName: string }[],
 ): StatsTable {
   const columns: StatsColumn[] = members.map((m) => ({ memberId: m.id, name: m.displayName }));
-  const known = new Set(columns.map((c) => c.memberId));
-  for (const m of stats.members) {
-    if (!known.has(m.memberId)) {
-      known.add(m.memberId);
-      columns.push({ memberId: m.memberId, name: null });
-    }
-  }
+  const current = new Set(members.map((m) => m.id));
+  if (stats.members.some((m) => !current.has(m.memberId))) columns.push({ memberId: null, name: null });
   const cells = (xs: GroupStats['members']) => {
-    const byId = new Map(xs.map((x) => [x.memberId, x]));
-    return columns.map((c): StatsCell => {
-      const x = byId.get(c.memberId);
-      return x ? { paid: x.paid, consumed: x.consumed } : { ...ZERO };
-    });
+    const byColumn = new Map<string | null, StatsCell>();
+    for (const x of xs) {
+      const key = current.has(x.memberId) ? x.memberId : null;
+      const cell = byColumn.get(key) ?? { ...ZERO };
+      byColumn.set(key, { paid: cell.paid + x.paid, consumed: cell.consumed + x.consumed });
+    }
+    return columns.map((c): StatsCell => byColumn.get(c.memberId) ?? { ...ZERO });
   };
   return {
     columns,
