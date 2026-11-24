@@ -14,18 +14,22 @@ const storeLinks = {
   fallback: sourceRepositoryUrl,
 };
 
+/** Opens the store of the visitor's phone (or the fallback page). */
+export function openDownloadApp() {
+  void openURL(downloadAppUrl(globalThis.navigator?.userAgent ?? '', storeLinks));
+}
+
 /**
  * Bottom of the view-only web (where the app has its composer): "download the
  * app", "open in the app" for this link, and the GitHub Sponsors link.
  */
 export function WebFooter({ token }: { token?: string }) {
   const { t } = useLingui();
-  const userAgent = globalThis.navigator?.userAgent ?? '';
   return (
     <View style={styles.footer}>
       <Text style={styles.text}>{t`To podgląd tylko do odczytu. Dodawaj wydatki w aplikacji.`}</Text>
       <View style={styles.actions}>
-        <Button label={t`Pobierz aplikację`} onPress={() => void openURL(downloadAppUrl(userAgent, storeLinks))} />
+        <Button label={t`Pobierz aplikację`} onPress={openDownloadApp} />
         {token ? (
           <Button
             variant="secondary"

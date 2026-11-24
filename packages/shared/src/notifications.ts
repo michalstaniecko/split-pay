@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { deletedUserName } from './account';
 import { formatAmount } from './format';
 import { type Entry, Id, type Member, referencedMemberIds } from './model';
 
@@ -141,8 +142,8 @@ export interface PushSummary {
   entryKind: Entry['kind'] | null;
   /** Pushes in the burst. */
   count: number;
-  /** The author's member name in the group. */
-  actorName: string;
+  /** The author's member name in the group; `null` = the name was removed (ADR-0019). */
+  actorName: string | null;
   /** Title of the (newest) entry; `null` for settlements. */
   entryTitle: string | null;
   /** Settlement amount or the nudged debt, in minor units of `currency`. */
@@ -176,7 +177,8 @@ function plPlural(count: number, forms: PluralForms): string {
  * Polish avoids gendered verbs ("Kasia: dodano 3 wydatki") except for the
  * claim, which matches the claim system message.
  */
-export function pushMessageBody(s: PushSummary, locale: string): string {
+export function pushMessageBody(summary: PushSummary, locale: string): string {
+  const s = { ...summary, actorName: summary.actorName ?? deletedUserName(locale) };
   const polish = locale.split('-')[0] === 'pl';
   const money = s.amount !== null && s.currency ? formatAmount(s.amount, s.currency, polish ? 'pl' : 'en') : null;
   switch (s.kind) {
@@ -184,9 +186,9 @@ export function pushMessageBody(s: PushSummary, locale: string): string {
       if (polish) return money ? `${s.actorName} przypomina o zwrocie ${money}` : `${s.actorName} przypomina o rozliczeniu`;
       return money ? `${s.actorName} reminds you to pay back ${money}` : `${s.actorName} reminds you to settle up`;
     case 'claim':
-      if (s.memberName === null) return polish ? `${s.actorName} przejął profil` : `${s.actorName} claimed a profile`;
+      if (s.memberName === null) return polish ? `Przejęcie profilu: ${s.actorName}` : `${s.actorName} claimed a profile`;
       return polish
-        ? `${s.actorName} przejął profil ${s.memberName}`
+        ? `Przejęcie profilu ${s.memberName}: ${s.actorName}`
         : `${s.actorName} claimed the ${s.memberName} profile`;
   }
   const entryKind = s.entryKind ?? 'expense';

@@ -10,8 +10,8 @@ export interface NotifyInput {
   groupId: Id;
   actorUserId: Id;
   event: NotificationEvent;
-  /** The author's name; defaults to their member's name in the group. */
-  actorName?: string;
+  /** The author's name; defaults to their member's name in the group (`null` = removed, ADR-0019). */
+  actorName?: string | null;
   /** Debt amount for a nudge (minor units of `currency`). */
   amount?: number;
   currency?: string;
@@ -70,7 +70,10 @@ export async function enqueueNotification(db: Db, input: NotifyInput): Promise<v
 
   const { event } = input;
   const actorName =
-    input.actorName ?? groupMembers.find((m) => m.userId === input.actorUserId)?.displayName ?? '';
+    // `null` = no name (removed, ADR-0019): the push reads "Deleted user" in the recipient's language.
+    input.actorName !== undefined
+      ? input.actorName
+      : (groupMembers.find((m) => m.userId === input.actorUserId)?.displayName ?? null);
   const details: Omit<QueueInsert, 'id' | 'recipientUserId' | 'kind'> = {
     groupId: input.groupId,
     actorUserId: input.actorUserId,
@@ -87,7 +90,7 @@ export async function enqueueNotification(db: Db, input: NotifyInput): Promise<v
   if (rows.length > 0) await db.insert(pushQueue).values(rows);
 }
 
-/** "<claimer> przejął profil <member>" for the other members of the group. */
+/** "Przejęcie profilu <member>: <claimer>" for the other members of the group. */
 export async function notifyClaim(
   db: Db,
   { groupId, memberId, userId, claimerName }: { groupId: Id; memberId: Id; userId: Id; claimerName: string },
@@ -98,7 +101,7 @@ export async function notifyClaim(
     actorUserId: userId,
     actorName: claimerName,
     event: { type: 'claim', memberId },
-    ...(member ? { memberName: member.displayName } : {}),
+    ...(member?.displayName ? { memberName: member.displayName } : {}),
   });
 }
 

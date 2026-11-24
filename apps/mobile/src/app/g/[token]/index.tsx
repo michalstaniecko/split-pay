@@ -1,5 +1,6 @@
 import { plural } from '@lingui/core/macro';
 import { useLingui } from '@lingui/react/macro';
+import { memberName } from '@split-pay/shared';
 import { useQuery } from '@tanstack/react-query';
 import { Redirect, router, Stack, useLocalSearchParams } from 'expo-router';
 import { DetailedError } from 'hono/client';
@@ -12,6 +13,7 @@ import { type ClaimableMember, joinChoices } from '@/features/claims/claims';
 import { useClaimMember } from '@/features/claims/claims-query';
 import { pendingJoin } from '@/features/group-link/group-link';
 import { linkPreviewQuery, useJoinGroup } from '@/features/group-link/group-link-query';
+import { useLocale } from '@/i18n/locale-provider';
 import { authClient } from '@/lib/auth-client';
 
 const openConversation = (groupId: string) => router.replace({ pathname: '/groups/[groupId]', params: { groupId } });
@@ -39,7 +41,7 @@ export default function GroupLinkRoute() {
 /**
  * Join screen: where a group link or a personal claim link
  * (`splitpay://g/<token>`) leads in the app (ADR-0007, ADR-0009). Group link:
- * "Dołącz jako nowa osoba" adds me as a member, or "Jesteś jednym z nich?"
+ * "Dołącz jako nowa osoba" adds me as a member, or "Jesteś na tej liście?"
  * claims a member without an account. Personal claim link: claim its member
  * directly. Either opens the group's Conversation; if I'm already in the group
  * it opens right away.
@@ -48,6 +50,7 @@ function JoinScreen() {
   const { t } = useLingui();
   const { theme } = useUnistyles();
   const { token } = useLocalSearchParams<{ token: string }>();
+  const { locale } = useLocale();
   const preview = useQuery(linkPreviewQuery(token));
   const join = useJoinGroup(token);
   const claim = useClaimMember(token);
@@ -90,7 +93,9 @@ function JoinScreen() {
   }
 
   const { group, memberCount } = preview.data;
-  const choices = joinChoices(preview.data);
+  // A member whose name was removed (ADR-0019) is offered as "Deleted user".
+  const claimable = preview.data.claimable.map((m) => ({ ...m, displayName: memberName(m, locale) }));
+  const choices = joinChoices({ ...preview.data, claimable });
   const busy = join.isPending || claim.isPending;
   const personalName = choices.kind === 'personal' ? choices.member.displayName : '';
   const onJoin = () => join.mutate(undefined, { onSuccess: ({ groupId }) => openConversation(groupId) });
@@ -138,7 +143,7 @@ function JoinScreen() {
           <Button label={t`Dołącz jako nowa osoba`} loading={join.isPending} disabled={busy} onPress={onJoin} />
           {choices.claimable.length > 0 ? (
             <>
-              <Text style={styles.subtitle}>{t`Jesteś jednym z nich?`}</Text>
+              <Text style={styles.subtitle}>{t`Jesteś na tej liście?`}</Text>
               <Text style={styles.text}>{t`Przejmij profil osoby bez konta razem z historią wydatków.`}</Text>
               {choices.claimable.map(claimButton)}
             </>

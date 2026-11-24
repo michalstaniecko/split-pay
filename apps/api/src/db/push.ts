@@ -90,8 +90,8 @@ export const pushQueue = pgTable(
     kind: text({ enum: ['entryCreated', 'entryEdited', 'entryDeleted', 'claim', 'nudge', 'sync'] }).notNull(),
     /** The author (no FK: the account may be deleted before sending). */
     actorUserId: uuid(),
-    /** The author's member name in the group at the time. */
-    actorName: text().notNull(),
+    /** The author's member name in the group at the time; `null` = removed (ADR-0019). */
+    actorName: text(),
     entryId: uuid(),
     entryKind: text({ enum: ['expense', 'income', 'settlement'] }),
     entryTitle: text(),

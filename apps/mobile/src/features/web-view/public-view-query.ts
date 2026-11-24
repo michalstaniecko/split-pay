@@ -1,6 +1,9 @@
 import type { Entry, GroupStats } from '@split-pay/shared';
-import { queryOptions } from '@tanstack/react-query';
+import { queryOptions, useQuery } from '@tanstack/react-query';
 import { DetailedError, type InferResponseType, parseResponse } from 'hono/client';
+import { useCallback } from 'react';
+import { type Named, nameMembers } from '@/features/groups/member-name';
+import { useLocale } from '@/i18n/locale-provider';
 import { publicApi } from '@/lib/public-api';
 
 const link = publicApi.public.links[':token'];
@@ -26,14 +29,24 @@ export const publicGroupQuery = (token: string) =>
     queryFn: () => parseResponse(link.$get({ param: { token } })),
     retry,
   });
-export type PublicGroup = InferResponseType<typeof link.$get, 200>;
+/** The public group as sent: a member's `displayName` may be the removed-name marker (`null`). */
+export type PublicGroupData = InferResponseType<typeof link.$get, 200>;
+/** The public group as the web shows it: every member named for the viewer (`usePublicGroup`). */
+export type PublicGroup = Omit<PublicGroupData, 'members'> & { members: Named<PublicGroupData['members'][number]>[] };
 export type PublicMember = PublicGroup['members'][number];
+
+/** `publicGroupQuery` with removed names shown as "Deleted user" in the UI language (ADR-0019). */
+export function usePublicGroup(token: string) {
+  const { locale } = useLocale();
+  const select = useCallback((group: PublicGroupData): PublicGroup => nameMembers(group, locale), [locale]);
+  return useQuery({ ...publicGroupQuery(token), select });
+}
 
 /**
  * An entry of the public view: `createdBy` is blanked (user ids are not
- * public), `addedBy` names the author's member instead; no receipt photo.
+ * public) — "added by" is `createdByMember`; no receipt photo.
  */
-export type PublicEntry = Entry & { addedBy: string | null };
+export type PublicEntry = Entry;
 
 /** Live entries in Conversation order. */
 export const publicEntriesQuery = (token: string) =>

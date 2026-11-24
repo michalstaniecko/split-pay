@@ -40,7 +40,8 @@ export interface AppDeps {
  * the typed client (`hc`) infers its types from this chain.
  */
 export const createApp = ({ auth, db, adminEmails = [], flags = defaultFeatureFlags, storage, webUrl }: AppDeps) => {
-  const requireUser = createRequireUser(auth);
+  // A blocked session (#48) passes only where `blocked-session.ts` allows.
+  const requireUser = createRequireUser(auth, db);
   const requireAdmin = createRequireAdmin(adminEmails);
 
   return (
@@ -50,14 +51,23 @@ export const createApp = ({ auth, db, adminEmails = [], flags = defaultFeatureFl
       .get('/health', (c) => c.json({ status: 'ok' as const }))
       /** Feature flags. Public: the app reads them before and without signing in. */
       .get('/flags', (c) => c.json<FeatureFlags>({ ...flags }))
-      /** The signed-in user. */
+      /** The signed-in user. `blocked`: the app shows only "Konto zablokowane" (#48). */
       .get('/me', requireUser, (c) => {
         const user = c.get('user');
-        return c.json({ id: user.id, email: user.email, name: user.name, isAdmin: isAdminEmail(adminEmails, user.email) });
+        return c.json({
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          isAdmin: isAdminEmail(adminEmails, user.email),
+          blocked: c.get('blocked'),
+        });
       })
-      /** Account deletion (ADR-0010): personal data goes, the user's members stay without an account. */
+      /**
+       * Account deletion (ADR-0010, ADR-0019): personal data goes, the user's
+       * members stay without an account — with their last name unless `removeName`.
+       */
       .delete('/me', requireUser, zValidator('json', AccountDeletion), async (c) => {
-        await deleteAccount(db, c.get('user'), c.req.valid('json').locale, storage);
+        await deleteAccount(db, c.get('user'), c.req.valid('json'), storage);
         return c.json({ deleted: true as const });
       })
       /** My payout details (Profile). */

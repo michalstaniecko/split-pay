@@ -1,6 +1,7 @@
 import { useLingui } from '@lingui/react/macro';
-import { minorUnitDigits } from '@split-pay/shared';
+import { type CurrencyCode, minorUnitDigits } from '@split-pay/shared';
 import { randomUUID } from 'expo-crypto';
+import { getLocales } from 'expo-localization';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
@@ -11,22 +12,23 @@ import { useCreateQuickBill } from '@/features/entries/entries-query';
 import { todayLocalDate } from '@/features/entries/expense-draft';
 import {
   addPerson,
+  defaultQuickBillCurrency,
   initialQuickBillDraft,
   parseQuickBillDraft,
   type QuickBillDraft,
   type QuickBillField,
   removePerson,
+  withQuickBillCurrency,
 } from '@/features/entries/quick-bill-form';
-import { GROUP_COLORS } from '@/features/groups/new-group-form';
+import { BASE_CURRENCIES, GROUP_COLORS } from '@/features/groups/new-group-form';
 import { closeSheet } from '@/lib/close-sheet';
-
-// TODO: a default currency per user (Profile) — the quick bill has no currency field in the MVP.
-const QUICK_BILL_CURRENCY = 'PLN';
 
 /**
  * "Szybki rachunek": amount, title and "Z kim" chips → in one step a group
  * named after the title (🧾), a member without an account per chip and one
- * equal-split expense paid by me, dated today (POST /quick-bills).
+ * equal-split expense paid by me, dated today (POST /quick-bills). The
+ * currency defaults to the device region's (PLN fallback) and becomes the
+ * group's base currency and the expense currency (rate 1).
  */
 export default function QuickBillSheet() {
   const { t } = useLingui();
@@ -39,19 +41,27 @@ export default function QuickBillSheet() {
     color: GROUP_COLORS[Math.floor(Math.random() * GROUP_COLORS.length)] ?? GROUP_COLORS[0],
   }));
   const [draft, setDraft] = useState<QuickBillDraft>(initialQuickBillDraft);
+  const [currency, setCurrency] = useState<CurrencyCode>(() =>
+    defaultQuickBillCurrency(getLocales()[0]?.currencyCode),
+  );
   const [errors, setErrors] = useState<QuickBillField[]>([]);
   const createQuickBill = useCreateQuickBill();
-  const digits = minorUnitDigits(QUICK_BILL_CURRENCY);
+  const digits = minorUnitDigits(currency);
 
   const update = (next: QuickBillDraft, fields: QuickBillField[]) => {
     setDraft(next);
     setErrors((current) => current.filter((f) => !fields.includes(f)));
   };
 
+  const changeCurrency = (next: CurrencyCode) => {
+    setCurrency(next);
+    update(withQuickBillCurrency(draft, next), ['amount']);
+  };
+
   const submit = () => {
     const parsed = parseQuickBillDraft(draft, {
       ...ids,
-      currency: QUICK_BILL_CURRENCY,
+      currency,
       today: todayLocalDate(),
     });
     if (!parsed.ok) {
@@ -83,9 +93,25 @@ export default function QuickBillSheet() {
               autoFocus
               style={styles.amountInput}
             />
-            <Text style={styles.currency}>{QUICK_BILL_CURRENCY}</Text>
+            <Text style={styles.currency}>{currency}</Text>
           </View>
           {errors.includes('amount') ? <Text style={styles.error}>{t`Podaj kwotę większą od zera.`}</Text> : null}
+        </View>
+
+        <View style={styles.field}>
+          <Text style={styles.label}>{t`Waluta`}</Text>
+          <View style={styles.chips} accessibilityRole="radiogroup">
+            {BASE_CURRENCIES.map((code) => (
+              <Pressable
+                key={code}
+                accessibilityRole="radio"
+                accessibilityState={{ checked: currency === code }}
+                onPress={() => changeCurrency(code)}
+                style={[styles.currencyChip, currency === code && styles.chipSelected]}>
+                <Text style={styles.currencyChipLabel}>{code}</Text>
+              </Pressable>
+            ))}
+          </View>
         </View>
 
         <View style={styles.field}>
@@ -225,6 +251,23 @@ const styles = StyleSheet.create((theme) => ({
   },
   chipLabel: {
     fontSize: theme.font.sizeSm,
+    color: theme.colors.text,
+  },
+  currencyChip: {
+    minHeight: 36,
+    justifyContent: 'center',
+    paddingHorizontal: theme.space(3),
+    borderRadius: theme.radius.pill,
+    borderWidth: 2,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.surface,
+  },
+  chipSelected: {
+    borderColor: theme.colors.primary,
+  },
+  currencyChipLabel: {
+    fontSize: theme.font.sizeSm,
+    fontWeight: theme.font.weightBold,
     color: theme.colors.text,
   },
 }));

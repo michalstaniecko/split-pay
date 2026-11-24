@@ -1,37 +1,43 @@
 import { useLingui } from '@lingui/react/macro';
-import { FlashList } from '@shopify/flash-list';
+import { FlashList, type FlashListRef } from '@shopify/flash-list';
 import { useQuery } from '@tanstack/react-query';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
-import { useMemo } from 'react';
+import type { LocalDate } from '@split-pay/shared';
+import { useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { GroupAvatar } from '@/components/group-avatar';
 import { BalanceBannerView } from '@/features/balances/balance-banner';
-import { conversationItems } from '@/features/entries/conversation';
+import { type ConversationItem, conversationItems } from '@/features/entries/conversation';
+import { dayStripDays } from '@/features/entries/day-strip';
+import { DayStrip } from '@/features/entries/day-strip-modal';
 import { DaySeparator, EntryBubble } from '@/features/entries/entry-bubble';
 import { SettlementSystemMessage } from '@/features/settlements/settlement-system-message';
+import { ClaimBanner } from '@/features/web-view/claim-banner';
 import { PublicError } from '@/features/web-view/public-error';
 import {
   type PublicEntry,
   type PublicGroup,
   publicBalancesQuery,
   publicEntriesQuery,
-  publicGroupQuery,
+  usePublicGroup,
 } from '@/features/web-view/public-view-query';
 import { useThisIsMe } from '@/features/web-view/this-is-me';
 import { WebFooter } from '@/features/web-view/web-footer';
+import { claimBannerMember } from '@/features/web-view/web-view';
 
 /**
  * The view-only web Conversation for a group link (SPEC "Web interface"):
  * the same layout as the app, read-only — balance banner, bubbles by entry
  * date, no composer and no long-press menu. "This is me" (remembered in the
  * browser) puts that member's bubbles on the end edge and drives the banner.
- * The header opens the limited Group info. Native: `index.tsx` (join screen).
+ * The header opens the limited Group info. A personal claim link adds a
+ * banner naming its member, with "download the app". Native: `index.tsx` (join screen).
  */
 export default function PublicConversationScreen() {
   const { theme } = useUnistyles();
   const { token } = useLocalSearchParams<{ token: string }>();
-  const group = useQuery(publicGroupQuery(token));
+  const group = usePublicGroup(token);
 
   if (group.isPending) return <ActivityIndicator style={styles.center} color={theme.colors.primary} />;
   if (group.isError) return <PublicError error={group.error} onRetry={() => void group.refetch()} />;
@@ -45,6 +51,7 @@ function PublicConversation({ token, data }: { token: string; data: PublicGroup 
   const entries = useQuery(publicEntriesQuery(token));
   const balances = useQuery(publicBalancesQuery(token));
   const { me } = useThisIsMe(data);
+  const claimMember = claimBannerMember(data);
   const openInfo = () => router.push({ pathname: '/g/[token]/info', params: { token } });
 
   return (
@@ -76,6 +83,7 @@ function PublicConversation({ token, data }: { token: string; data: PublicGroup 
           ),
         }}
       />
+      {claimMember ? <ClaimBanner displayName={claimMember.displayName} /> : null}
       {me === null ? (
         <Pressable
           accessibilityRole="button"
@@ -119,6 +127,11 @@ function EntryList({
     () => conversationItems(entries, { members: data.members, myMemberId: me, baseCurrency }),
     [entries, data.members, me, baseCurrency],
   );
+  // Day strip (#38), as in the app: a separator opens it, picking a day jumps to it.
+  const listRef = useRef<FlashListRef<ConversationItem>>(null);
+  const [stripDay, setStripDay] = useState<LocalDate | null>(null);
+  const { startDate, endDate } = data.group;
+  const stripDays = useMemo(() => dayStripDays(items, { startDate, endDate }), [items, startDate, endDate]);
 
   const openEntry = (entryId: string) =>
     router.push({ pathname: '/g/[token]/entries/[entryId]', params: { token, entryId } });
@@ -132,36 +145,45 @@ function EntryList({
   }
 
   return (
-    <FlashList
-      data={items}
-      keyExtractor={(item) => item.key}
-      getItemType={(item) => item.type}
-      stickyHeaderIndices={stickyHeaderIndices}
-      maintainVisibleContentPosition={{ startRenderingFromBottom: true }}
-      initialScrollIndex={items.length - 1}
-      contentContainerStyle={styles.list}
-      renderItem={({ item }) =>
-        item.type === 'day' ? (
-          <DaySeparator item={item} baseCurrency={baseCurrency} />
-        ) : item.type !== 'entry' ? null : item.entry.kind === 'settlement' ? (
-          // Settlements are system messages, not bubbles (ADR-0017).
-          <SettlementSystemMessage
-            entry={item.entry}
-            members={data.members}
-            myMemberId={me}
-            highlighted={false}
-            onPress={() => openEntry(item.entry.id)}
-          />
-        ) : (
-          <EntryBubble
-            item={item}
-            baseCurrency={baseCurrency}
-            highlighted={false}
-            onPress={() => openEntry(item.entry.id)}
-          />
-        )
-      }
-    />
+    <>
+      <FlashList
+        ref={listRef}
+        data={items}
+        keyExtractor={(item) => item.key}
+        getItemType={(item) => item.type}
+        stickyHeaderIndices={stickyHeaderIndices}
+        maintainVisibleContentPosition={{ startRenderingFromBottom: true }}
+        initialScrollIndex={items.length - 1}
+        contentContainerStyle={styles.list}
+        renderItem={({ item }) =>
+          item.type === 'day' ? (
+            <DaySeparator item={item} baseCurrency={baseCurrency} onPress={() => setStripDay(item.date)} />
+          ) : item.type !== 'entry' ? null : item.entry.kind === 'settlement' ? (
+            // Settlements are system messages, not bubbles (ADR-0017).
+            <SettlementSystemMessage
+              entry={item.entry}
+              members={data.members}
+              myMemberId={me}
+              highlighted={false}
+              onPress={() => openEntry(item.entry.id)}
+            />
+          ) : (
+            <EntryBubble
+              item={item}
+              baseCurrency={baseCurrency}
+              highlighted={false}
+              onPress={() => openEntry(item.entry.id)}
+            />
+          )
+        }
+      />
+      <DayStrip
+        days={stripDays}
+        current={stripDay}
+        onPick={(index) => void listRef.current?.scrollToIndex({ index, animated: true, viewPosition: 0 })}
+        onClose={() => setStripDay(null)}
+      />
+    </>
   );
 }
 

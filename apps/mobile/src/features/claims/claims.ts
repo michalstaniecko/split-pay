@@ -6,8 +6,8 @@ export interface ClaimLike {
 }
 
 /**
- * The claims shown as system messages in the Conversation ("Tomek przejął
- * profil Tomek"): the Conversation shows the current state only, so undone
+ * The claims shown as system messages in the Conversation ("Przejęcie
+ * profilu Tomek: Tomek"): the Conversation shows the current state only, so undone
  * claims disappear. Oldest first.
  */
 export function activeClaims<C extends ClaimLike>(claims: readonly C[]): C[] {
@@ -28,7 +28,7 @@ export interface ClaimableMember {
 
 /**
  * What the join screen offers for a link (GET /links/:token):
- * - `group` — a group link: join as a new person, or "Jesteś jednym z nich?" → claim one of `claimable`;
+ * - `group` — a group link: join as a new person, or "Jesteś na tej liście?" → claim one of `claimable`;
  * - `personal` — a personal claim link: claim `member` directly;
  * - `personal-taken` — a personal claim link whose member already has an account.
  */

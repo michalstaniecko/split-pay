@@ -26,12 +26,12 @@ export type ChangeData =
   /** Restore of a deleted entry ("Cofnij" or undo from the history). */
   | { kind: 'entry.restore'; before: Entry; after: Entry }
   /** A member without an account was added. */
-  | { kind: 'member.add'; before: null; after: { displayName: string } }
+  | { kind: 'member.add'; before: null; after: { displayName: string | null } }
   /** A user joined through a group link as a new member. */
-  | { kind: 'member.join'; before: null; after: { displayName: string } }
+  | { kind: 'member.join'; before: null; after: { displayName: string | null } }
   /** A user left the group (#25): their member stays, without an account. */
   | { kind: 'member.leave'; before: null; after: null }
-  | { kind: 'member.rename'; before: { displayName: string }; after: { displayName: string } }
+  | { kind: 'member.rename'; before: { displayName: string | null }; after: { displayName: string | null } }
   | { kind: 'member.attendance'; before: { attendance: Attendance | null }; after: { attendance: Attendance | null } }
   /** Only the settings that changed, before and after. */
   | { kind: 'settings.update'; before: GroupSettingsSnapshot; after: GroupSettingsSnapshot }
@@ -119,8 +119,11 @@ export type ActivityItem = Change & {
 /** A page of `GET /activity`, newest first. */
 export interface ActivityPage {
   items: ActivityItem[];
-  /** Current names of the members the items mention (actors and targets), by member id. */
-  memberNames: Record<Id, string>;
+  /**
+   * Current names of the members the items mention (actors and targets), by
+   * member id; `null` = the name was removed (ADR-0019, `memberName`).
+   */
+  memberNames: Record<Id, string | null>;
   /** Pass as `cursor` for the next (older) page; `null` on the last page. */
   nextCursor: string | null;
 }

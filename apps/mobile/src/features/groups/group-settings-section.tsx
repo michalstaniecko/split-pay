@@ -22,7 +22,7 @@ export function GroupSettingsSection({ group }: { group: GroupDetail }) {
       <View style={styles.row}>
         <View style={styles.text}>
           <Text style={styles.label}>{label}</Text>
-          <Text style={styles.hint}>{t`Najmniej przelewów przy rozliczeniu. Wyłączone: każdy oddaje temu, kto za niego zapłacił.`}</Text>
+          <Text style={styles.hint}>{t`Najmniej przelewów przy rozliczeniu. Wyłączone: zwroty trafiają prosto do osób, które płaciły.`}</Text>
         </View>
         <Switch
           accessibilityLabel={label}

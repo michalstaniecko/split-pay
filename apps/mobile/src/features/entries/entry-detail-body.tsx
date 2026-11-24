@@ -52,7 +52,7 @@ export function EntryDetailBody({
       {currencyRows}
       <Row label={t`Kategoria`}>{labels.category[entry.category]}</Row>
       <Row label={t`Data`}>{format.date(entry.date)}</Row>
-      <Section title={entry.kind === 'expense' ? t`Zapłacili` : t`Otrzymali`}>
+      <Section title={entry.kind === 'expense' ? t`Kto płaci` : t`Kto otrzymuje`}>
         {(entry.kind === 'expense' ? entry.payers : entry.recipients).map((h) => (
           <Row key={h.memberId} label={memberName(h.memberId)}>
             {amount(h.amount)}

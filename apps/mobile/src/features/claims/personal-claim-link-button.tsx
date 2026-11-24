@@ -37,7 +37,7 @@ export function PersonalClaimLinkButton({
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={t`Wyślij ${name} osobisty link`}
+      accessibilityLabel={t`Wyślij osobisty link: ${name}`}
       disabled={send.isPending}
       hitSlop={8}
       onPress={() => send.mutate()}

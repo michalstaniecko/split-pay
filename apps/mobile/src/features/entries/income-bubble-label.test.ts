@@ -11,6 +11,7 @@ const refund: Income = {
   groupId: id(100),
   version: 1,
   createdBy: id(200),
+  createdByMember: null,
   createdAt: '2026-07-14T10:00:00.000Z',
   updatedAt: '2026-07-14T10:00:00.000Z',
   deletedAt: null,
@@ -40,7 +41,7 @@ const label = (locale: 'pl' | 'en', item: { payerName?: string; otherPayers?: nu
 describe('incomeBubbleLabel', () => {
   it('reads an income with its recipient, amount with the currency name, title, date and my share (PL)', () => {
     expect(label('pl', { myShare: -10_000 })).toBe(
-      'Wpływ 400,00 złotego polskiego: Zwrot kaucji. Otrzymał(a): Kasia. 14 lipca 2026. Twój udział 100,00 złotego polskiego.',
+      'Wpływ 400,00 złotego polskiego: Zwrot kaucji. Dla: Kasia. 14 lipca 2026. Twój udział 100,00 złotego polskiego.',
     );
   });
 
@@ -51,9 +52,9 @@ describe('incomeBubbleLabel', () => {
   });
 
   it('counts the other recipients with Polish plural forms', () => {
-    expect(label('pl', { otherPayers: 1 })).toContain('Otrzymał(a): Kasia i 1 inna osoba.');
-    expect(label('pl', { otherPayers: 3 })).toContain('Otrzymał(a): Kasia i 3 inne osoby.');
-    expect(label('pl', { otherPayers: 5 })).toContain('Otrzymał(a): Kasia i 5 innych osób.');
+    expect(label('pl', { otherPayers: 1 })).toContain('Dla: Kasia i 1 inna osoba.');
+    expect(label('pl', { otherPayers: 3 })).toContain('Dla: Kasia i 3 inne osoby.');
+    expect(label('pl', { otherPayers: 5 })).toContain('Dla: Kasia i 5 innych osób.');
   });
 
   it('counts the other recipients with English plural forms', () => {
@@ -62,7 +63,7 @@ describe('incomeBubbleLabel', () => {
   });
 
   it('leaves my share out when I have none or am not a member', () => {
-    expect(label('pl', { myShare: 0 })).toBe('Wpływ 400,00 złotego polskiego: Zwrot kaucji. Otrzymał(a): Kasia. 14 lipca 2026.');
+    expect(label('pl', { myShare: 0 })).toBe('Wpływ 400,00 złotego polskiego: Zwrot kaucji. Dla: Kasia. 14 lipca 2026.');
     expect(label('en', { myShare: null })).toBe('Income 400.00 Polish zlotys: Zwrot kaucji. Received by Kasia. July 14, 2026.');
   });
 });

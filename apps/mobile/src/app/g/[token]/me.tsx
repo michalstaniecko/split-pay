@@ -1,18 +1,17 @@
 import { useLingui } from '@lingui/react/macro';
-import { useQuery } from '@tanstack/react-query';
 import { useLocalSearchParams } from 'expo-router';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { closePublicPage } from '@/features/web-view/navigation';
 import { PublicError } from '@/features/web-view/public-error';
-import { type PublicGroup, publicGroupQuery } from '@/features/web-view/public-view-query';
+import { type PublicGroup, usePublicGroup } from '@/features/web-view/public-view-query';
 import { useThisIsMe } from '@/features/web-view/this-is-me';
 
 /** "This is me" (view-only web): pick which member I am; remembered in this browser. */
 export default function ThisIsMeScreen() {
   const { theme } = useUnistyles();
   const { token } = useLocalSearchParams<{ token: string }>();
-  const group = useQuery(publicGroupQuery(token));
+  const group = usePublicGroup(token);
 
   if (group.isPending) return <ActivityIndicator style={styles.loading} color={theme.colors.primary} />;
   if (group.isError) return <PublicError error={group.error} onRetry={() => void group.refetch()} />;
@@ -30,7 +29,7 @@ function Picker({ token, data }: { token: string; data: PublicGroup }) {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Text style={styles.text}>
-        {t`Wybierz siebie, żeby zobaczyć, ile jesteś winien. Zapamiętamy to w tej przeglądarce.`}
+        {t`Wybierz siebie, żeby zobaczyć, ile masz do oddania. Zapamiętamy to w tej przeglądarce.`}
       </Text>
       <View style={styles.list} accessibilityRole="radiogroup">
         {data.members.map((member) => {

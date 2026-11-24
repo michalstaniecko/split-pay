@@ -6,7 +6,7 @@ export interface BannerState {
   amount: number;
 }
 
-/** My balance for the banner: "jesteś winien", "należy ci się" or settled up. */
+/** My balance for the banner: "do oddania", "należy ci się" or settled up. */
 export function bannerState(data: { balances: readonly Allocation[] }, myMemberId: string | null): BannerState {
   const amount = data.balances.find((b) => b.memberId === myMemberId)?.amount ?? 0;
   if (amount < 0) return { kind: 'owe', amount: -amount };
@@ -37,7 +37,7 @@ const directionOrder = { fromMe: 0, toMe: 1, others: 2 } as const;
  */
 export function drawerRows(
   data: { balances: readonly Allocation[]; transfers: readonly Transfer[] },
-  members: readonly Pick<Member, 'id' | 'displayName'>[],
+  members: readonly { id: string; displayName: string }[],
   myMemberId: string | null,
 ): { balances: BalanceRow[]; transfers: TransferRow[] } {
   const name = (memberId: string) => members.find((m) => m.id === memberId)?.displayName ?? '?';

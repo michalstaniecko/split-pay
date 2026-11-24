@@ -9,7 +9,8 @@ import { GroupNotFound } from '@/components/group-not-found';
 import { entriesQuery } from '@/features/entries/entries-query';
 import { EntryDetailBody } from '@/features/entries/entry-detail-body';
 import { editScreen, lockedOffline } from '@/features/entries/entry-edit';
-import { type GroupDetail, groupQuery } from '@/features/groups/groups-query';
+import { type GroupDetail, useGroup } from '@/features/groups/groups-query';
+import { addedBy as addedByName } from '@/features/groups/member-name';
 import { useIsOnline } from '@/features/offline/use-offline-sync';
 import { ReceiptPhoto } from '@/features/photos/receipt-photo';
 import { useFormatters } from '@/i18n/use-formatters';
@@ -28,7 +29,7 @@ export default function EntryDetailSheet() {
   const { t } = useLingui();
   const { theme } = useUnistyles();
   const { groupId, entryId } = useLocalSearchParams<{ groupId: string; entryId: string }>();
-  const group = useQuery(groupQuery(groupId));
+  const group = useGroup(groupId);
   const entries = useQuery(entriesQuery(groupId));
 
   if (group.isPending || entries.isPending) {
@@ -51,7 +52,7 @@ function EntryDetail({ group, entry }: { group: GroupDetail; entry: Entry }) {
   const { t } = useLingui();
   const format = useFormatters();
   const name = (memberId: string) => group.members.find((m) => m.id === memberId)?.displayName ?? '?';
-  const addedBy = group.members.find((m) => m.userId === entry.createdBy)?.displayName ?? t`nieznana osoba`;
+  const addedBy = addedByName(entry, group.members) ?? t`nieznana osoba`;
   const online = useIsOnline();
   const userId = authClient.useSession().data?.user.id;
   // Offline, only entries I added can be edited (ADR-0005).
@@ -69,7 +70,7 @@ function EntryDetail({ group, entry }: { group: GroupDetail; entry: Entry }) {
           ) : null
         }
       />
-      <Text style={styles.meta}>{t`Dodał(a) ${addedBy}, ${format.dateTime(entry.createdAt)}`}</Text>
+      <Text style={styles.meta}>{t`Dodano: ${addedBy}, ${format.dateTime(entry.createdAt)}`}</Text>
       {isEdited(entry) ? (
         <Pressable
           accessibilityRole="link"

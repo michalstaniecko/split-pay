@@ -27,6 +27,7 @@ const entry = (overrides: Partial<Expense> = {}): Expense => {
     groupId: G1,
     version: 1,
     createdBy: ANIA,
+    createdByMember: null,
     createdAt: at,
     updatedAt: at,
     deletedAt: null,

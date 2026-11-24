@@ -36,7 +36,7 @@ import {
 } from '@/features/entries/expense-draft';
 import { PayersField, SplitField } from '@/features/entries/split-fields';
 import { useEntryLabels } from '@/features/entries/use-entry-labels';
-import { type GroupDetail, groupQuery } from '@/features/groups/groups-query';
+import { type GroupDetail, useGroup } from '@/features/groups/groups-query';
 import { ratesQuery } from '@/features/rates/rates-query';
 import { LockedOfflineError, OutboxBlockedError } from '@/features/offline/offline-changes';
 import { pendingReceipt } from '@/features/photos/pending-receipt';
@@ -71,7 +71,7 @@ export default function ExpenseFormSheet() {
   const { t } = useLingui();
   const { theme } = useUnistyles();
   const { groupId, entryId } = useLocalSearchParams<{ groupId: string; entryId?: string }>();
-  const group = useQuery(groupQuery(groupId));
+  const group = useGroup(groupId);
   const entries = useQuery({ ...entriesQuery(groupId), enabled: entryId !== undefined });
   if (group.isPending || (entryId !== undefined && entries.isPending)) {
     return <ActivityIndicator style={styles.loading} color={theme.colors.primary} />;
@@ -218,7 +218,7 @@ function ExpenseFormView({ group, editing }: { group: GroupDetail; editing?: For
   const fieldError: Record<ExpenseFormField, string> = {
     amount: t`Podaj kwotę większą od zera.`,
     title: t`Podaj tytuł.`,
-    payer: income ? t`Wybierz, kto otrzymał pieniądze.` : t`Wybierz, kto zapłacił.`,
+    payer: income ? t`Wybierz, kto otrzymuje pieniądze.` : t`Wybierz, kto płaci.`,
     date: t`Podaj datę w formacie RRRR-MM-DD.`,
     rate: t`Podaj kurs większy od zera, np. 4,3215.`,
     // The split and payer sections show what doesn't add up themselves.
@@ -400,7 +400,7 @@ function ExpenseFormView({ group, editing }: { group: GroupDetail; editing?: For
         />
 
         {deletedMeanwhile ? (
-          <Text style={styles.error}>{t`Ktoś usunął ten wpis w międzyczasie. Twoje zmiany nie zostały zapisane.`}</Text>
+          <Text style={styles.error}>{t`Ten wpis został w międzyczasie usunięty. Twoje zmiany nie zostały zapisane.`}</Text>
         ) : saving.error instanceof OutboxBlockedError ? (
           <Text style={styles.error}>{t`Najpierw rozwiąż konflikt tego wpisu (czerwony „!”).`}</Text>
         ) : saving.error instanceof LockedOfflineError ? (

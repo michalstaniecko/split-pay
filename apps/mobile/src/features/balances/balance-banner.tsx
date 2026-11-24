@@ -5,6 +5,7 @@ import { router } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
 import { StyleSheet } from 'react-native-unistyles';
 import { useFormatters } from '@/i18n/use-formatters';
+import { bannerLabel } from './balance-label';
 import { useRefreshOnFocus } from '@/lib/use-refresh-on-focus';
 import { bannerState } from './balances';
 import { balancesQuery } from './balances-query';
@@ -13,6 +14,7 @@ import { balancesQuery } from './balances-query';
  * The balance banner on top of the Conversation: my balance in the base
  * currency; tap → the balance drawer. Text wraps (no fixed height), so it
  * grows to two lines with large Dynamic Type instead of truncating the amount.
+ * Screen readers hear the amount with the currency name (`bannerLabel`, #36).
  */
 export function BalanceBanner({ groupId, myMemberId }: { groupId: string; myMemberId: string | null }) {
   const balances = useQuery(balancesQuery(groupId));
@@ -42,12 +44,12 @@ export function BalanceBannerView({
   const state = bannerState(balances, myMemberId);
   const amount = format.amount(state.amount, balances.baseCurrency);
   const text =
-    state.kind === 'owe' ? t`Jesteś winien ${amount}` : state.kind === 'owed' ? t`Należy ci się ${amount}` : t`Wszystko rozliczone`;
+    state.kind === 'owe' ? t`Do oddania: ${amount}` : state.kind === 'owed' ? t`Należy ci się ${amount}` : t`Wszystko rozliczone`;
 
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={text}
+      accessibilityLabel={bannerLabel(state, { baseCurrency: balances.baseCurrency, spokenAmount: format.spokenAmount })}
       accessibilityHint={t`Pokazuje salda i kto komu ile oddaje`}
       onPress={onPress}
       style={({ pressed }) => [styles.banner, pressed && styles.pressed]}>

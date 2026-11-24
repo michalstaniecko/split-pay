@@ -102,7 +102,7 @@ describe('avatars (ADR-0006)', () => {
     const issued = await uploadAvatar(bartek);
     await setAvatar(bartek, issued.photoId);
 
-    expect((await client(bartek).me.$delete({ json: { locale: 'pl' } })).status).toBe(200);
+    expect((await client(bartek).me.$delete({ json: {} })).status).toBe(200);
     expect(storage.objects.has(issued.upload.fields.key!)).toBe(false);
     expect((await parseResponse(groupAvatars(ania))).avatars).toEqual([]);
   });

@@ -208,6 +208,17 @@ describe('MemberRename', () => {
     expect(MemberRename.parse({ displayName: ' Tomasz ' })).toEqual({ displayName: 'Tomasz' });
     expect(MemberRename.safeParse({ displayName: '' }).success).toBe(false);
   });
+
+  it('always sets a name: a removed name (marker) cannot be chosen', () => {
+    expect(MemberRename.safeParse({ displayName: null }).success).toBe(false);
+    expect(NewMember.safeParse({ id: ANIA, displayName: null }).success).toBe(false);
+  });
+});
+
+describe('Member name removed on account deletion (ADR-0019)', () => {
+  it('is stored as a marker (null), not as text', () => {
+    expect(Member.parse({ ...member(ANIA, 'Ania'), displayName: null }).displayName).toBeNull();
+  });
 });
 
 describe('canRenameMember', () => {
@@ -359,7 +370,7 @@ describe('NewEntry / entryFromNew', () => {
     payers: [{ memberId: ANIA, amount: 10_000 }],
     split: { mode: 'equal' as const, memberIds: [ANIA, BARTEK] },
   };
-  const meta = { groupId: group.id, createdBy: USER, now: '2026-07-10T12:00:00.000Z' };
+  const meta = { groupId: group.id, createdBy: USER, createdByMember: ANIA, now: '2026-07-10T12:00:00.000Z' };
 
   it('accepts every entry kind without the server-owned fields', () => {
     expect(NewEntry.safeParse(input).success).toBe(true);
@@ -376,10 +387,17 @@ describe('NewEntry / entryFromNew', () => {
       groupId: group.id,
       version: 1,
       createdBy: USER,
+      createdByMember: ANIA,
       createdAt: meta.now,
       updatedAt: meta.now,
       deletedAt: null,
     });
+  });
+
+  it('remembers the member who added it, unknown (null) only for missing data (ADR-0019)', () => {
+    const fromUnknown = entryFromNew(input, { ...meta, createdByMember: null });
+    expect(fromUnknown.success && fromUnknown.data.createdByMember).toBeNull();
+    expect(NewEntry.parse({ ...input, createdByMember: BARTEK })).not.toHaveProperty('createdByMember');
   });
 
   it('runs the Entry cross-field checks', () => {

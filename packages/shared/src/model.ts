@@ -73,10 +73,18 @@ export function normalizeAttendance(ranges: readonly AttendanceRange[]): Attenda
   return result;
 }
 
+/** A member's name as typed by people (adding, renaming, joining). */
+export const MemberName = z.string().trim().min(1).max(60);
+
 export const Member = z.object({
   id: Id,
   groupId: Id,
-  displayName: z.string().trim().min(1).max(60),
+  /**
+   * `null` = the name was removed when its user deleted their account
+   * (ADR-0019): a marker each viewer shows as "Deleted user" in their own
+   * language (`memberName`). Renaming replaces it with text.
+   */
+  displayName: MemberName.nullable(),
   /** `null` = member without account. */
   userId: Id.nullable(),
   attendance: Attendance.nullable(),
@@ -88,13 +96,14 @@ export type Member = z.infer<typeof Member>;
  * name. Attendance is optional (`null`/missing = whole trip). There is no
  * `userId` — an account is linked only by claiming.
  */
-export const NewMember = Member.pick({ id: true, displayName: true }).extend({
+export const NewMember = Member.pick({ id: true }).extend({
+  displayName: MemberName,
   attendance: Attendance.nullable().optional(),
 });
 export type NewMember = z.infer<typeof NewMember>;
 
 /** Renaming a member. */
-export const MemberRename = Member.pick({ displayName: true });
+export const MemberRename = z.object({ displayName: MemberName });
 export type MemberRename = z.infer<typeof MemberRename>;
 
 /**
@@ -216,6 +225,12 @@ const EntryMeta = {
   version: z.number().int().min(1),
   /** User who created the entry — only they may edit it offline. */
   createdBy: Id,
+  /**
+   * The member who added the entry ("added by", ADR-0019): survives account
+   * deletion and shows that member's current name. `null` only when unknown
+   * (entries whose author's account was gone before this was recorded).
+   */
+  createdByMember: Id.nullable(),
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
   deletedAt: z.iso.datetime().nullable(),
@@ -312,6 +327,7 @@ const serverOwned = {
   groupId: true,
   version: true,
   createdBy: true,
+  createdByMember: true,
   createdAt: true,
   updatedAt: true,
   deletedAt: true,
@@ -337,13 +353,14 @@ export type NewEntry = z.infer<typeof NewEntry>;
  */
 export function entryFromNew(
   input: NewEntry,
-  meta: { groupId: Id; createdBy: Id; now: string },
+  meta: { groupId: Id; createdBy: Id; createdByMember: Id | null; now: string },
 ): z.ZodSafeParseResult<Entry> {
   return Entry.safeParse({
     ...input,
     groupId: meta.groupId,
     version: 1,
     createdBy: meta.createdBy,
+    createdByMember: meta.createdByMember,
     createdAt: meta.now,
     updatedAt: meta.now,
     deletedAt: null,

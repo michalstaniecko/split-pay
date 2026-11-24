@@ -46,7 +46,7 @@ export default function UnsentEntrySheet() {
     state.error === 'archived'
       ? t`Grupa została zarchiwizowana — nie można już w niej nic zmieniać.`
       : state.error === 'invalid_entry'
-      ? t`Serwer odrzucił wpis jako niepoprawny — na przykład ktoś z uczestników opuścił grupę.`
+      ? t`Serwer odrzucił wpis jako niepoprawny — na przykład jedna z osób we wpisie opuściła grupę.`
       : state.error === 'not_found'
         ? t`Grupa albo wpis już nie istnieje lub nie masz do nich dostępu.`
         : state.error === 'conflict'

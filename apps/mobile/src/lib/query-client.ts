@@ -1,21 +1,33 @@
-import { focusManager, onlineManager, QueryCache, QueryClient } from '@tanstack/react-query';
+import { focusManager, MutationCache, onlineManager, QueryCache, QueryClient } from '@tanstack/react-query';
 import * as Network from 'expo-network';
 import { DetailedError } from 'hono/client';
 import { AppState, Platform } from 'react-native';
+import { isAccountBlockedResponse } from '@/features/moderation/moderation';
 import { authClient } from './auth-client';
 
+/**
+ * The API no longer accepts the session (expired or revoked): the query cache
+ * drops it locally; the root layout's guard then shows the sign-in screen.
+ */
 const isUnauthorized = (error: unknown) => error instanceof DetailedError && error.statusCode === 401;
 
-export const queryClient = new QueryClient({
+/** The account got blocked (#48): refetch `/me`, so the guard shows "Konto zablokowane". */
+const onAccountBlocked = (error: unknown) => {
+  if (isAccountBlockedResponse(error)) void queryClient.invalidateQueries({ queryKey: ['me'] });
+};
+
+export const queryClient: QueryClient = new QueryClient({
   queryCache: new QueryCache({
-    // The API no longer accepts the session (expired or revoked): drop it
-    // locally; the root layout's guard then shows the sign-in screen.
     onError: (error) => {
       if (isUnauthorized(error)) void authClient.signOut();
+      else onAccountBlocked(error);
     },
   }),
+  mutationCache: new MutationCache({ onError: onAccountBlocked }),
   defaultOptions: {
-    queries: { retry: (failureCount, error) => !isUnauthorized(error) && failureCount < 1 },
+    queries: {
+      retry: (failureCount, error) => !isUnauthorized(error) && !isAccountBlockedResponse(error) && failureCount < 1,
+    },
   },
 });
 

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createThisIsMeStore, downloadAppUrl, effectiveMe } from './web-view';
+import { claimBannerMember, createThisIsMeStore, downloadAppUrl, effectiveMe } from './web-view';
 
 const GROUP = '7f1c2a4e-0000-4000-8000-000000000001';
 const ANIA = '7f1c2a4e-0000-4000-8000-0000000000a1';
@@ -84,5 +84,24 @@ describe('downloadAppUrl', () => {
     expect(downloadAppUrl(DESKTOP, stores)).toBe(stores.fallback);
     expect(downloadAppUrl(IPHONE, { ...stores, appStore: undefined })).toBe(stores.fallback);
     expect(downloadAppUrl(ANDROID, { ...stores, playStore: '' })).toBe(stores.fallback);
+  });
+});
+
+describe('claimBannerMember (personal claim link banner)', () => {
+  const ania = { id: ANIA, displayName: 'Ania', hasAccount: true };
+  const tomek = { id: TOMEK, displayName: 'Tomek', hasAccount: false };
+  const members = [ania, tomek];
+
+  it('is the member a personal claim link is for', () => {
+    expect(claimBannerMember({ claimFor: TOMEK, members })).toEqual(tomek);
+  });
+
+  it('is nobody for a group link', () => {
+    expect(claimBannerMember({ claimFor: null, members })).toBeNull();
+  });
+
+  it('is nobody once the member is claimed or gone', () => {
+    expect(claimBannerMember({ claimFor: ANIA, members })).toBeNull();
+    expect(claimBannerMember({ claimFor: 'gone', members })).toBeNull();
   });
 });

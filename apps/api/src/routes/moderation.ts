@@ -18,8 +18,9 @@ import { deletePhotos, READ_URL_SECONDS } from './photos';
  *   nothing beyond "reported", so a report grants no access.
  * - `/admin/*`: app-wide admins (ADMIN_EMAILS allowlist, no group roles —
  *   ADR-0008) review open reports, remove photos, dismiss reports, and
- *   block/unblock accounts. A blocked account loses its sessions and can't
- *   sign in again (`auth.ts`), so every API call and upload is rejected (401).
+ *   block/unblock accounts. A blocked account loses its sessions (401). It
+ *   can sign in again, but that session reaches only `/me` and account
+ *   deletion (#48); everything else is 403 `account_blocked`.
  */
 
 const notFound = { error: 'not_found' as const };
@@ -177,7 +178,7 @@ export const adminRoutes = ({
           .orderBy(asc(accountBlocks.blockedAt));
         return c.json({ blocked: rows.map((r) => ({ ...r, blockedAt: r.blockedAt.toISOString() })) }, 200);
       })
-      /** Blocks an account: its sessions end and it can't sign in again. 400 for yourself. */
+      /** Blocks an account: its sessions end; signing in again leads only to account deletion (#48). 400 for yourself. */
       .post('/users/:userId/block', zValidator('json', AccountBlockRequest), async (c) => {
         const userId = c.req.param('userId');
         if (!Id.safeParse(userId).success) return c.json(notFound, 404);
@@ -196,7 +197,7 @@ export const adminRoutes = ({
         });
         return c.json({ blocked: true as const }, 200);
       })
-      /** Unblocks an account; it can sign in again. */
+      /** Unblocks an account; its sessions get normal access on the next request. */
       .delete('/users/:userId/block', async (c) => {
         const userId = c.req.param('userId');
         if (!Id.safeParse(userId).success) return c.json(notFound, 404);

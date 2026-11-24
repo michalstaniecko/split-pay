@@ -105,7 +105,7 @@ describe('public view-only web API (group link, no session)', () => {
       amount: 10_000,
       receiptPhotoId: null,
       createdBy: '00000000-0000-0000-0000-000000000000',
-      addedBy: aniaId,
+      createdByMember: aniaId,
     });
     expectNoPrivateData(body, [ania.userId, bartek.userId]);
   });
@@ -178,6 +178,20 @@ describe('public view-only web API (group link, no session)', () => {
     const body = await parseResponse(pub.$get({ param: { token } }));
     expect(body.group.id).toBe(groupId);
     expect(body.claimFor).toBe(tomekId);
+  });
+
+  it('opens a personal claim link of an already claimed member as the plain group view', async () => {
+    const { groupId, tomekId, ania, pub } = await setup();
+    const { token } = await parseResponse(
+      client(ania).groups[':groupId'].members[':memberId']['claim-link'].$get({ param: { groupId, memberId: tomekId } }),
+    );
+    const tomasz = await signIn('tomasz@example.com');
+    await parseResponse(client(tomasz).links[':token'].claim.$post({ param: { token }, json: { memberId: tomekId } }));
+
+    const body = await parseResponse(pub.$get({ param: { token } }));
+    expect(body.group.id).toBe(groupId);
+    expect(body.members.find((m) => m.id === tomekId)?.hasAccount).toBe(true);
+    expect(body.claimFor).toBeNull();
   });
 
   it('lets the web app on another origin read it (CORS)', async () => {

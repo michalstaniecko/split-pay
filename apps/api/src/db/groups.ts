@@ -45,7 +45,8 @@ export const members = pgTable(
     groupId: uuid()
       .notNull()
       .references(() => groups.id, { onDelete: 'cascade' }),
-    displayName: text().notNull(),
+    /** `null` = removed on account deletion (ADR-0019): shown as "Deleted user" per viewer. */
+    displayName: text(),
     /** `null` = member without account. */
     userId: uuid().references(() => user.id, { onDelete: 'set null' }),
     /** `null` = present for the whole trip (ADR-0018). */

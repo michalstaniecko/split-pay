@@ -2,10 +2,11 @@ import { expo } from '@better-auth/expo';
 import { ACCOUNT_BLOCKED } from '@split-pay/shared';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { APIError } from 'better-auth/api';
+import { APIError, createAuthMiddleware, getSessionFromCtx } from 'better-auth/api';
 import { emailOTP } from 'better-auth/plugins';
 import type { Db } from './db/client';
 import * as authSchema from './db/auth-schema';
+import { blockedSessionMayUseAuth } from './blocked-session';
 import { isAccountBlocked } from './routes/moderation';
 
 export type OtpType = 'sign-in' | 'email-verification' | 'forget-password' | 'change-email';
@@ -46,17 +47,17 @@ export const createAuth = (deps: AuthDeps) =>
       // API tests see production behaviour.
       disableOriginCheck: false,
     },
-    // Blocked accounts (#27) can't sign in: no new sessions. The app shows `ACCOUNT_BLOCKED`.
-    databaseHooks: {
-      session: {
-        create: {
-          async before(session) {
-            if (await isAccountBlocked(deps.db, session.userId)) {
-              throw APIError.from('FORBIDDEN', { code: ACCOUNT_BLOCKED, message: 'This account is blocked.' });
-            }
-          },
-        },
-      },
+    // A blocked session reaches only what `blocked-session.ts` allows (#48,
+    // ADR-0019). Sign-in itself has no session yet, so it passes. The API
+    // routes check blocking in `requireUser`.
+    hooks: {
+      before: createAuthMiddleware(async (ctx) => {
+        if (blockedSessionMayUseAuth(ctx.path)) return;
+        const current = await getSessionFromCtx(ctx);
+        if (current && (await isAccountBlocked(deps.db, current.user.id))) {
+          throw APIError.from('FORBIDDEN', { code: ACCOUNT_BLOCKED, message: 'This account is blocked.' });
+        }
+      }),
     },
     // `splitpay://` is the app scheme (app.json); expo() adds exp:// in development.
     trustedOrigins: ['splitpay://', ...(deps.trustedOrigins ?? [])],

@@ -3,7 +3,7 @@ import { onlineManager, queryOptions, useMutation, useQueryClient } from '@tanst
 import { parseResponse } from 'hono/client';
 import { groupKeys } from '@/features/groups/groups-query';
 import { localDb, localUserId } from '@/features/offline/local-session';
-import { enqueueCreate, isGroupSynced, readEntries, saveEntry } from '@/features/offline/local-store';
+import { enqueueCreate, isGroupSynced, readEntries, readGroupDetail, saveEntry } from '@/features/offline/local-store';
 import {
   enqueueDelete,
   enqueueEdit,
@@ -49,9 +49,14 @@ export function useCreateEntry(groupId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (input: NewEntry): Promise<Entry> => {
-      const parsed = entryFromNew(input, { groupId, createdBy: localUserId(), now: new Date().toISOString() });
+      const db = await localDb();
+      const createdBy = localUserId();
+      // "Added by" (ADR-0019): my member in the group; the server sets the same when it gets the entry.
+      const members = (await readGroupDetail(db, groupId))?.members ?? [];
+      const createdByMember = members.find((m) => m.userId === createdBy)?.id ?? null;
+      const parsed = entryFromNew(input, { groupId, createdBy, createdByMember, now: new Date().toISOString() });
       if (!parsed.success) throw parsed.error;
-      await enqueueCreate(await localDb(), parsed.data);
+      await enqueueCreate(db, parsed.data);
       return parsed.data;
     },
     onSuccess: async (entry) => {

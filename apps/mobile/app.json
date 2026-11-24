@@ -8,7 +8,14 @@
     "scheme": "splitpay",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/expo.icon",
+      "infoPlist": {
+        "CFBundleAllowMixedLocalizations": true
+      }
+    },
+    "locales": {
+      "pl": "./app-locales/pl.json",
+      "en": "./app-locales/en.json"
     },
     "android": {
       "adaptiveIcon": {
@@ -36,7 +43,12 @@
       "react-native-edge-to-edge",
       "expo-localization",
       "expo-sqlite",
-      "expo-secure-store",
+      [
+        "expo-secure-store",
+        {
+          "faceIDPermission": "split-pay can use Face ID to protect your sign-in on this device."
+        }
+      ],
       [
         "expo-notifications",
         {

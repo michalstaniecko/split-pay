@@ -44,13 +44,52 @@ describe('statsTable', () => {
     { id: BARTEK, displayName: 'Bartek' },
   ];
 
-  it('has a column per member in Group info order, plus anyone else who appears in the stats', () => {
+  it('has a column per member in Group info order, then one for members who left', () => {
     expect(statsTable(stats, members).columns).toEqual([
-      { memberId: TOMEK, name: 'Tomek' },
-      { memberId: ANIA, name: 'Ania' },
-      { memberId: BARTEK, name: 'Bartek' },
-      { memberId: GONE, name: null },
+      { kind: 'member', memberId: TOMEK, name: 'Tomek' },
+      { kind: 'member', memberId: ANIA, name: 'Ania' },
+      { kind: 'member', memberId: BARTEK, name: 'Bartek' },
+      { kind: 'former' },
     ]);
+  });
+
+  it('shows members who left together in one column', () => {
+    const GONE_TOO = '00000000-0000-4000-8000-000000000008';
+    const table = statsTable(
+      {
+        ...stats,
+        days: [
+          {
+            date: '2026-07-11',
+            total: 1_400,
+            members: [
+              { memberId: GONE, paid: 900, consumed: 700 },
+              { memberId: GONE_TOO, paid: 500, consumed: 700 },
+            ],
+          },
+        ],
+        members: [
+          { memberId: GONE, paid: 900, consumed: 700 },
+          { memberId: GONE_TOO, paid: 500, consumed: 700 },
+        ],
+        total: 1_400,
+      },
+      [{ id: ANIA, displayName: 'Ania' }],
+    );
+    expect(table.columns).toEqual([
+      { kind: 'member', memberId: ANIA, name: 'Ania' },
+      { kind: 'former' },
+    ]);
+    expect(table.rows[0]!.cells).toEqual([
+      { paid: 0, consumed: 0 },
+      { paid: 1_400, consumed: 1_400 },
+    ]);
+    expect(table.totals.cells).toEqual(table.rows[0]!.cells);
+  });
+
+  it('has no former-members column when nobody left', () => {
+    const table = statsTable(stats, [...members, { id: GONE, displayName: 'Ola' }]);
+    expect(table.columns.map((c) => (c.kind === 'member' ? c.name : 'former'))).toEqual(['Tomek', 'Ania', 'Bartek', 'Ola']);
   });
 
   it('fills every day × member cell, zero where the member had nothing that day', () => {

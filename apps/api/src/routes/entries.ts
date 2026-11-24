@@ -12,7 +12,7 @@ import {
   type NotificationEvent,
   validateEntryInGroup,
 } from '@split-pay/shared';
-import { and, asc, desc, eq, inArray, isNotNull, isNull } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, isNotNull, isNull, max, ne } from 'drizzle-orm';
 import { type Context, Hono } from 'hono';
 import type { Db } from '../db/client';
 import { entries, groups, members } from '../db/schema';
@@ -36,6 +36,7 @@ export function toEntryDto(row: EntryRow): Entry {
     groupId: row.groupId,
     version: row.version,
     createdBy: row.createdBy,
+    createdByMember: row.createdByMember,
     createdAt: iso(row.createdAt),
     updatedAt: iso(row.updatedAt),
     deletedAt: row.deletedAt ? iso(row.deletedAt) : null,
@@ -67,6 +68,7 @@ export function toEntryRow(entry: Entry): EntryInsert {
     kind: entry.kind,
     version: entry.version,
     createdBy: entry.createdBy,
+    createdByMember: entry.createdByMember,
     date: entry.date,
     amount: entry.amount,
     currency: entry.currency,
@@ -104,7 +106,12 @@ export async function createEntry(
   context: { group: Group; members: readonly Member[]; userId: Id; now?: Date },
 ): Promise<CreateEntryResult> {
   const now = context.now ?? new Date();
-  const parsed = entryFromNew(input, { groupId: context.group.id, createdBy: context.userId, now: iso(now) });
+  const parsed = entryFromNew(input, {
+    groupId: context.group.id,
+    createdBy: context.userId,
+    createdByMember: context.members.find((m) => m.userId === context.userId)?.id ?? null,
+    now: iso(now),
+  });
   if (!parsed.success) {
     return { status: 'invalid', issues: parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`) };
   }
@@ -171,6 +178,21 @@ export async function latestEntries(db: Db, groupIds: readonly Id[]) {
       { id: r.id, kind: r.kind, title: r.title, amount: r.amount, currency: r.currency, createdAt: iso(r.createdAt) },
     ]),
   );
+}
+
+/**
+ * Per group, when someone other than this user last added a live entry
+ * (`createdAt`; edits don't count). The app compares it with when the group
+ * was last opened on the device to mark the inbox row unread (#40).
+ */
+export async function latestEntriesByOthers(db: Db, groupIds: readonly Id[], userId: string) {
+  if (groupIds.length === 0) return new Map<Id, string>();
+  const rows = await db
+    .select({ groupId: entries.groupId, at: max(entries.createdAt) })
+    .from(entries)
+    .where(and(inArray(entries.groupId, [...groupIds]), isNull(entries.deletedAt), ne(entries.createdBy, userId)))
+    .groupBy(entries.groupId);
+  return new Map(rows.flatMap((r): [Id, string][] => (r.at ? [[r.groupId, iso(r.at)]] : [])));
 }
 
 export interface EntryPreview {
@@ -374,7 +396,8 @@ export async function editEntry(
   }
 
   // Every kind-specific column is rewritten, so a changed kind leaves no stale values behind.
-  const { id: _id, groupId: _groupId, createdBy: _by, createdAt: _at, ...changes } = toEntryRow(parsed.data);
+  const { id: _id, groupId: _groupId, createdBy: _by, createdByMember: _byMember, createdAt: _at, ...changes } =
+    toEntryRow(parsed.data);
   const [updated] = await tx
     .update(entries)
     .set({

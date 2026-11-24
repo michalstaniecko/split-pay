@@ -49,6 +49,7 @@ const meta = () => ({
   groupId: GROUP,
   version: 1,
   createdBy: USER,
+  createdByMember: ANIA,
   createdAt: '2026-07-10T10:00:00Z',
   updatedAt: '2026-07-10T10:00:00Z',
   deletedAt: null,

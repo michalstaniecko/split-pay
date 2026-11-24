@@ -1,6 +1,6 @@
 import { useLingui } from '@lingui/react/macro';
 import { FlashList, type FlashListRef } from '@shopify/flash-list';
-import type { Entry } from '@split-pay/shared';
+import type { Entry, LocalDate } from '@split-pay/shared';
 import { useQuery } from '@tanstack/react-query';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
@@ -20,6 +20,8 @@ import {
   myMemberId as findMyMemberId,
   newestAddedEntry,
 } from '@/features/entries/conversation';
+import { dayStripDays } from '@/features/entries/day-strip';
+import { DayStrip } from '@/features/entries/day-strip-modal';
 import { entriesQuery, useDeleteEntry, useRestoreEntry } from '@/features/entries/entries-query';
 import { EntryActionsMenu } from '@/features/entries/entry-actions-menu';
 import { DaySeparator, EntryBubble } from '@/features/entries/entry-bubble';
@@ -32,7 +34,8 @@ import {
   versionConflictEntry,
 } from '@/features/entries/entry-edit';
 import { UndoSnackbar } from '@/features/entries/undo-snackbar';
-import { type GroupDetail, groupQuery } from '@/features/groups/groups-query';
+import { useMarkGroupSeen } from '@/features/groups/group-unread-store';
+import { type GroupDetail, useGroup } from '@/features/groups/groups-query';
 import { groupAvatarsQuery, receiptsQuery } from '@/features/photos/photos-query';
 import { useFocusedEntry } from '@/features/notifications/use-focused-entry';
 import { OfflineBanner } from '@/features/offline/offline-banner';
@@ -60,12 +63,14 @@ export default function ConversationScreen() {
   const { theme } = useUnistyles();
   // `entryId`: opened from a notification — scroll to that bubble and highlight it.
   const { groupId, entryId } = useLocalSearchParams<{ groupId: string; entryId?: string }>();
-  const group = useQuery(groupQuery(groupId));
+  const group = useGroup(groupId);
   const entries = useQuery(entriesQuery(groupId));
   const claims = useQuery(claimsQuery(groupId));
   useRefreshOnFocus(group.refetch);
   useRefreshOnFocus(entries.refetch);
   useRefreshOnFocus(claims.refetch);
+  // Clears the inbox unread marker (#40).
+  useMarkGroupSeen(groupId, entries.data);
   const insets = useSafeAreaInsets();
   const session = authClient.useSession();
   const me = group.data ? findMyMemberId(group.data.members, session.data?.user.id) : null;
@@ -172,6 +177,13 @@ function Conversation({
   const newHighlightId = useNewEntryHighlight(items, listRef);
   const focusedId = useFocusedEntry(items, listRef, focusEntryId);
   const highlightId = focusedId ?? newHighlightId;
+  // Day strip (#38): opened from a sticky day separator, jumps to a day's separator by index.
+  const [stripDay, setStripDay] = useState<LocalDate | null>(null);
+  const stripDays = useMemo(
+    () => dayStripDays(items, { startDate: group.startDate, endDate: group.endDate }),
+    [items, group.startDate, group.endDate],
+  );
+  const jumpToDay = (index: number) => void listRef.current?.scrollToIndex({ index, animated: true, viewPosition: 0 });
 
   const actions = useEntryActionHandler(group);
   const conflicts = useEntryConflicts(group.id);
@@ -210,7 +222,7 @@ function Conversation({
           contentContainerStyle={styles.list}
           renderItem={({ item }) =>
             item.type === 'day' ? (
-              <DaySeparator item={item} baseCurrency={group.baseCurrency} />
+              <DaySeparator item={item} baseCurrency={group.baseCurrency} onPress={() => setStripDay(item.date)} />
             ) : item.type === 'claim' ? (
               <ClaimMessage group={group} claim={item.claim} />
             ) : item.entry.kind === 'settlement' ? (
@@ -253,6 +265,7 @@ function Conversation({
           }
         />
       )}
+      <DayStrip days={stripDays} current={stripDay} onPick={jumpToDay} onClose={() => setStripDay(null)} />
       {actions.elements}
     </View>
   );

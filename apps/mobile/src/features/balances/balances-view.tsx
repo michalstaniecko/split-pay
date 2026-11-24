@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { StyleSheet } from 'react-native-unistyles';
 import { useFormatters } from '@/i18n/use-formatters';
+import { balanceRowLabel } from './balance-label';
 import { type BalanceRow, drawerRows, type TransferRow } from './balances';
 
 /**
@@ -46,7 +47,7 @@ export function BalancesView({
         </Text>
       </View>
       {rows.transfers.length === 0 ? (
-        <Text style={styles.muted}>{t`Wszyscy są rozliczeni.`}</Text>
+        <Text style={styles.muted}>{t`Wszystko rozliczone.`}</Text>
       ) : (
         <View style={styles.list}>
           {rows.transfers.map((transfer) => (
@@ -69,10 +70,8 @@ function BalanceItem({ row, currency }: { row: BalanceRow; currency: string }) {
   const format = useFormatters();
   const amount = format.amount(Math.abs(row.amount), currency);
   const name = row.isMe ? t`${row.name} (Ty)` : row.name;
-  const label =
-    row.amount > 0 ? t`${name}: należy się ${amount}` : row.amount < 0 ? t`${name}: winien ${amount}` : t`${name}: rozliczony`;
   return (
-    <View style={styles.row} accessible accessibilityLabel={label}>
+    <View style={styles.row} accessible accessibilityLabel={balanceRowLabel(row, { baseCurrency: currency, spokenAmount: format.spokenAmount })}>
       <Text style={[styles.name, row.isMe && styles.bold]}>{name}</Text>
       <Text style={[styles.amount, row.amount > 0 && styles.positive, row.amount < 0 && styles.negative]}>
         {row.amount > 0 ? `+${amount}` : row.amount < 0 ? `−${amount}` : amount}

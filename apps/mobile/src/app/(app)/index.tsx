@@ -8,8 +8,11 @@ import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { Button } from '@/components/button';
 import { GroupAvatar } from '@/components/group-avatar';
 import { inboxSections } from '@/features/groups/group-lifecycle';
+import { useGroupUnread } from '@/features/groups/group-unread-store';
 import { type GroupListItem, groupsQuery } from '@/features/groups/groups-query';
 import { OfflineBanner } from '@/features/offline/offline-banner';
+import { InboxSearchField } from '@/features/search/inbox-search-field';
+import { InboxSearchResults } from '@/features/search/inbox-search-results';
 import { useFormatters } from '@/i18n/use-formatters';
 import { useRefreshOnFocus } from '@/lib/use-refresh-on-focus';
 
@@ -20,13 +23,17 @@ export default function InboxScreen() {
   const insets = useSafeAreaInsets();
   const groups = useQuery(groupsQuery());
   useRefreshOnFocus(groups.refetch);
+  const [query, setQuery] = useState('');
 
   const openNew = () => router.push('/new');
 
   return (
     <View style={styles.container}>
       <OfflineBanner />
-      {groups.isPending ? (
+      <InboxSearchField value={query} onChange={setQuery} />
+      {query.trim() !== '' ? (
+        <InboxSearchResults query={query} />
+      ) : groups.isPending ? (
         <ActivityIndicator style={styles.center} color={theme.colors.primary} />
       ) : groups.isError ? (
         <View style={styles.center}>
@@ -95,23 +102,29 @@ function InboxRow({ group }: { group: GroupListItem }) {
   const format = useFormatters();
   const dates =
     group.startDate && group.endDate ? `${format.date(group.startDate)} – ${format.date(group.endDate)}` : null;
-  // The most recently added entry (API `lastEntry`); unread state comes later.
+  // The most recently added entry (API `lastEntry`).
   const last = group.lastEntry;
+  // Bold with a dot when others added entries since I last opened it here; no counters (#40).
+  const unread = useGroupUnread(group.id, group.lastEntryByOthersAt);
   const preview = last
     ? `${last.title ?? t`Spłata`} · ${format.amount(last.amount, last.currency)}`
     : (dates ?? t`Brak wpisów`);
   return (
     <Link href={{ pathname: '/groups/[groupId]', params: { groupId: group.id } }} asChild>
-      <Pressable accessibilityRole="button" style={({ pressed }) => [styles.row, pressed && styles.pressed]}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={unread ? t`${group.name}, nowe wpisy. ${preview}` : undefined}
+        style={({ pressed }) => [styles.row, pressed && styles.pressed]}>
         <GroupAvatar emoji={group.emoji} color={group.color} />
         <View style={styles.rowText}>
-          <Text style={styles.name} numberOfLines={1}>
+          <Text style={[styles.name, unread && styles.unreadText]} numberOfLines={1}>
             {group.name}
           </Text>
-          <Text style={styles.preview} numberOfLines={1}>
+          <Text style={[styles.preview, unread && styles.unreadPreview]} numberOfLines={1}>
             {preview}
           </Text>
         </View>
+        {unread ? <View style={styles.unreadDot} /> : null}
       </Pressable>
     </Link>
   );
@@ -160,8 +173,21 @@ const styles = StyleSheet.create((theme) => ({
   },
   name: {
     fontSize: theme.font.sizeMd,
+    fontWeight: '500',
+    color: theme.colors.text,
+  },
+  unreadText: {
+    fontWeight: theme.font.weightBold,
+  },
+  unreadPreview: {
     fontWeight: theme.font.weightBold,
     color: theme.colors.text,
+  },
+  unreadDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: theme.colors.primary,
   },
   muted: {
     fontSize: theme.font.sizeSm,

@@ -8,6 +8,7 @@ import {
   formatAmount,
   formatDate,
   type MemberAmount,
+  memberName,
   resolveSplit,
   type SplitMode,
 } from '@split-pay/shared';
@@ -65,16 +66,17 @@ export function describeChange(change: Change, context: ChangeDescriptionContext
       return { title: t`Zmieniono ${what}`, details: entryEditDetails(change.before, change.after, context) };
     }
     case 'member.add': {
-      const name = change.after.displayName;
+      const name = memberName(change.after, context.locale);
       return only(t`Dodano osobę bez konta: ${name}`);
     }
     case 'member.join': {
-      const name = change.after.displayName;
+      const name = memberName(change.after, context.locale);
       return only(t`Dołączenie do grupy: ${name}`);
     }
     case 'member.rename': {
-      const before = change.before.displayName;
-      const after = change.after.displayName;
+      // A removed name (ADR-0019) reads "Deleted user" in the viewer's language.
+      const before = memberName(change.before, context.locale);
+      const after = memberName(change.after, context.locale);
       return only(t`Zmieniono imię: ${before} → ${after}`);
     }
     case 'member.attendance': {
@@ -158,14 +160,14 @@ function entryEditDetails(before: Entry, after: Entry, context: ChangeDescriptio
       holders(before.kind === 'expense' ? before.payers : undefined, before.currency),
       holders(after.kind === 'expense' ? after.payers : undefined, after.currency),
     );
-    lines.push(t`Płacący: ${value}`);
+    lines.push(t`Kto płaci: ${value}`);
   }
   if (changed.has('recipients') && (before.kind === 'income' || after.kind === 'income')) {
     const value = arrow(
       holders(before.kind === 'income' ? before.recipients : undefined, before.currency),
       holders(after.kind === 'income' ? after.recipients : undefined, after.currency),
     );
-    lines.push(t`Otrzymujący: ${value}`);
+    lines.push(t`Kto otrzymuje: ${value}`);
   }
   if ((changed.has('split') || changed.has('amount')) && before.kind !== 'settlement' && after.kind !== 'settlement') {
     const splitText = (entry: Exclude<Entry, { kind: 'settlement' }>) => {

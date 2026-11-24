@@ -21,7 +21,7 @@ import { myMemberId } from '@/features/entries/conversation';
 import { entriesQuery, useCreateEntry, useEditEntry } from '@/features/entries/entries-query';
 import { versionConflictEntry } from '@/features/entries/entry-edit';
 import { todayLocalDate } from '@/features/entries/expense-draft';
-import { type GroupDetail, groupQuery } from '@/features/groups/groups-query';
+import { type GroupDetail, useGroup } from '@/features/groups/groups-query';
 import {
   editedSettlement,
   parseSettleForm,
@@ -61,7 +61,7 @@ export default function SettleSheet() {
     amount?: string;
     entryId?: string;
   }>();
-  const group = useQuery(groupQuery(groupId));
+  const group = useGroup(groupId);
   const entries = useQuery({ ...entriesQuery(groupId), enabled: entryId !== undefined });
   const { data: session } = authClient.useSession();
 
@@ -203,7 +203,7 @@ function SettleSheetForm({
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView style={styles.container} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <Text style={styles.title}>{editing ? t`Edytuj spłatę` : suggested ? t`Oddaj ${recipient}` : t`Inna spłata`}</Text>
+        <Text style={styles.title}>{editing ? t`Edytuj spłatę` : suggested ? t`Spłata dla: ${recipient}` : t`Inna spłata`}</Text>
 
         {suggested ? null : (
           <>
@@ -232,7 +232,7 @@ function SettleSheetForm({
         {form.to !== '' ? <PayoutDetailsBox groupId={group.id} memberId={form.to} /> : null}
 
         {deletedMeanwhile ? (
-          <Text style={styles.error}>{t`Ktoś usunął ten wpis w międzyczasie. Twoje zmiany nie zostały zapisane.`}</Text>
+          <Text style={styles.error}>{t`Ten wpis został w międzyczasie usunięty. Twoje zmiany nie zostały zapisane.`}</Text>
         ) : saving.error instanceof OutboxBlockedError ? (
           <Text style={styles.error}>{t`Najpierw rozwiąż konflikt tego wpisu (czerwony „!”).`}</Text>
         ) : saving.error instanceof LockedOfflineError ? (
