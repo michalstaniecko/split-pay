@@ -46,7 +46,7 @@
       [
         "expo-secure-store",
         {
-          "faceIDPermission": "split-pay can use Face ID to protect your sign-in on this device."
+          "faceIDPermission": false
         }
       ],
       [
