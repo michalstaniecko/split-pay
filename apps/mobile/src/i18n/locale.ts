@@ -2,9 +2,14 @@
 export const appLocales = ['pl', 'en'] as const;
 export type AppLocale = (typeof appLocales)[number];
 
-/** The locale's decimal separator ("," in Polish, "." in English). */
+/**
+ * The locale's decimal separator ("," in Polish, "." in English).
+ *
+ * Read from `format(1.5)` ("1,5" / "1.5") rather than `formatToParts`, which
+ * Hermes on iOS does not implement.
+ */
 export function decimalSeparator(locale: string): string {
-  return new Intl.NumberFormat(locale).formatToParts(1.5).find((part) => part.type === 'decimal')?.value ?? '.';
+  return new Intl.NumberFormat(locale, { useGrouping: false }).format(1.5).slice(1, -1) || '.';
 }
 
 /** Used when none of the system languages is supported. */
