@@ -220,6 +220,10 @@ msgstr "No entries"
 msgid "Brak wydatków — statystyki pojawią się po dodaniu pierwszego."
 msgstr "No expenses yet — stats appear once the first one is added."
 
+#: src/features/search/inbox-search-results.tsx
+msgid "Brak wyników"
+msgstr "No results"
+
 #: src/app/(app)/admin.tsx
 msgid "Brak zablokowanych kont."
 msgstr "No blocked accounts."
@@ -442,6 +446,10 @@ msgstr "The group will disappear from your list. Your entries stay in the group.
 #: src/app/(app)/groups/[groupId]/unsent-entry.tsx
 msgid "Grupa została zarchiwizowana — nie można już w niej nic zmieniać."
 msgstr "The group was archived, so nothing in it can be changed any more."
+
+#: src/features/search/inbox-search-results.tsx
+msgid "Grupy"
+msgstr "Groups"
 
 #: src/features/entries/entry-actions-menu.tsx
 msgid "Historia"
@@ -865,6 +873,10 @@ msgstr "Couldn't upload the photo. Try again."
 #: src/app/(app)/report-photo.tsx
 msgid "Nie udało się wysłać zgłoszenia. Spróbuj ponownie."
 msgstr "Couldn't send the report. Try again."
+
+#: src/features/search/inbox-search-results.tsx
+msgid "Nie udało się wyszukać."
+msgstr "Couldn't search."
 
 #: src/features/groups/attendance-grid-view.tsx
 msgid "Nie udało się zapisać obecności. Spróbuj ponownie."
@@ -1347,6 +1359,10 @@ msgstr "System"
 msgid "Szczegóły (opcjonalnie)"
 msgstr "Details (optional)"
 
+#: src/features/search/inbox-search-field.tsx
+msgid "Szukaj grup i wydatków"
+msgstr "Search groups and expenses"
+
 #: src/app/(app)/_layout.tsx
 #: src/app/(app)/new.tsx
 #: src/app/(app)/quick-bill.tsx
@@ -1661,6 +1677,10 @@ msgstr "An entry with this ID already exists in another group."
 msgid "Wpisujesz za nią wydatki. Później może przejąć swój profil."
 msgstr "You enter their expenses. They can claim their profile later."
 
+#: src/features/search/inbox-search-results.tsx
+msgid "Wpisy"
+msgstr "Entries"
+
 #: src/features/entries/split-fields.tsx
 msgid "Wpisz co najmniej jedną pozycję osobistą."
 msgstr "Enter at least one personal item."
@@ -1752,6 +1772,10 @@ msgstr "Choose who paid."
 #: src/app/(app)/groups/[groupId]/entry-conflict.tsx
 msgid "Wybierz, która wersja zostaje."
 msgstr "Choose which version to keep."
+
+#: src/features/search/inbox-search-field.tsx
+msgid "Wyczyść wyszukiwanie"
+msgstr "Clear search"
 
 #: src/features/history/describe-change.ts
 msgid "wydatek"
