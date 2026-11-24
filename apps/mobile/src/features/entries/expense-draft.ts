@@ -108,7 +108,7 @@ export interface ExpenseForm {
   payers: PayersForm;
   /**
    * Expense (default) or income (#13): for an income `payerMemberId` (or
-   * `payers`) are the recipients — the person chips read "Otrzymał(a)" instead of "Zapłacił(a)".
+   * `payers`) are the recipients — the person chips read "Kto otrzymuje" instead of "Kto płaci".
    */
   kind?: ExpenseFormKind;
 }

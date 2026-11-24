@@ -240,6 +240,21 @@ describe('quick bills', () => {
     expect(inbox[0]).toMatchObject({ id: input.groupId, lastEntry: { title: 'Pizza' } });
   });
 
+  it('the chosen currency is the group base currency and the expense currency at rate 1 (#46)', async () => {
+    const ania = await signIn('ania@example.com');
+    const input = { ...quickBill(), currency: 'EUR' };
+
+    const res = await client(ania)['quick-bills'].$post({ json: input });
+    expect(res.status).toBe(201);
+    const { group } = (await res.json()) as { group: Record<string, unknown> };
+    expect(group).toMatchObject({ baseCurrency: 'EUR' });
+
+    const entries = await parseResponse(
+      client(ania).groups[':groupId'].entries.$get({ param: { groupId: input.groupId } }),
+    );
+    expect(entries).toEqual([expect.objectContaining({ currency: 'EUR', rateToBase: '1', amount: 12_001 })]);
+  });
+
   it('repeating the same quick bill does not duplicate anything; another user gets 409', async () => {
     const ania = await signIn('ania@example.com');
     const input = quickBill();

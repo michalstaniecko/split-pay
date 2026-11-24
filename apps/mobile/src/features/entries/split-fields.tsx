@@ -94,13 +94,7 @@ export function PayersField({
 
   return (
     <View style={styles.field}>
-      <Text style={styles.label}>{income
-          ? payers.multiple
-            ? t`Otrzymali`
-            : t`Otrzymał(a)`
-          : payers.multiple
-            ? t`Zapłacili`
-            : t`Zapłacił(a)`}</Text>
+      <Text style={styles.label}>{income ? t`Kto otrzymuje` : t`Kto płaci`}</Text>
       {payers.multiple ? (
         members.map((m) => (
           <AmountRow

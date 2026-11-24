@@ -41,7 +41,7 @@ export default function GroupLinkRoute() {
 /**
  * Join screen: where a group link or a personal claim link
  * (`splitpay://g/<token>`) leads in the app (ADR-0007, ADR-0009). Group link:
- * "Dołącz jako nowa osoba" adds me as a member, or "Jesteś jednym z nich?"
+ * "Dołącz jako nowa osoba" adds me as a member, or "Jesteś na tej liście?"
  * claims a member without an account. Personal claim link: claim its member
  * directly. Either opens the group's Conversation; if I'm already in the group
  * it opens right away.
@@ -143,7 +143,7 @@ function JoinScreen() {
           <Button label={t`Dołącz jako nowa osoba`} loading={join.isPending} disabled={busy} onPress={onJoin} />
           {choices.claimable.length > 0 ? (
             <>
-              <Text style={styles.subtitle}>{t`Jesteś jednym z nich?`}</Text>
+              <Text style={styles.subtitle}>{t`Jesteś na tej liście?`}</Text>
               <Text style={styles.text}>{t`Przejmij profil osoby bez konta razem z historią wydatków.`}</Text>
               {choices.claimable.map(claimButton)}
             </>

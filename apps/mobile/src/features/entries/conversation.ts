@@ -29,6 +29,14 @@ export interface DayItem {
   total: number;
 }
 
+/**
+ * The total a day separator shows: its net total when positive, else `null`
+ * — a day with only incomes, or netting to zero, shows just the date (#43).
+ */
+export function separatorTotal(item: DayItem): number | null {
+  return item.total > 0 ? item.total : null;
+}
+
 /** One bubble. */
 export interface EntryItem {
   type: 'entry';
@@ -52,7 +60,7 @@ export interface EntryItem {
   baseAmount: number | null;
 }
 
-/** A claim system message ("Tomek przejął profil Tomek", #18). */
+/** A claim system message ("Przejęcie profilu Tomek: Tomek", #18). */
 export interface ClaimItem<C extends ClaimLike = ClaimLike> {
   type: 'claim';
   key: string;

@@ -1,6 +1,6 @@
 import type { Entry, Member } from '@split-pay/shared';
 import { describe, expect, it } from 'vitest';
-import { type ConversationItem, conversationItems, myMemberId, newestAddedEntry } from './conversation';
+import { type ConversationItem, conversationItems, myMemberId, newestAddedEntry, separatorTotal } from './conversation';
 
 const id = (n: number) => `00000000-0000-4000-8000-${n.toString().padStart(12, '0')}`;
 const GROUP = id(100);
@@ -187,6 +187,30 @@ describe('conversationItems', () => {
     it("reduce the day separator's total", () => {
       const { items } = conversationItems([aniaEarly, bartekLate, refund], { members, myMemberId: ANIA, baseCurrency: 'PLN' });
       expect(items[0]).toMatchObject({ type: 'day', date: '2026-07-11', total: 1800 - 600 });
+    });
+
+    describe('separator total shown', () => {
+      const day = (entries: Entry[]) => {
+        const first = conversationItems(entries, { members, myMemberId: ANIA, baseCurrency: 'PLN' }).items[0];
+        if (first?.type !== 'day') throw new Error('expected a day separator');
+        return first;
+      };
+
+      it('is the net total on a normal day', () => {
+        expect(separatorTotal(day([aniaEarly, bartekLate, refund]))).toBe(1200);
+      });
+
+      it('is hidden on a day with only an income', () => {
+        const only = day([refund]);
+        expect(only.total).toBe(-600);
+        expect(separatorTotal(only)).toBeNull();
+      });
+
+      it('is hidden on a day netting to zero', () => {
+        const even = day([expense('2026-07-11', '2026-07-11T08:00:00.000Z', [{ memberId: ANIA, amount: 600 }], 600), refund]);
+        expect(even.total).toBe(0);
+        expect(separatorTotal(even)).toBeNull();
+      });
     });
   });
 

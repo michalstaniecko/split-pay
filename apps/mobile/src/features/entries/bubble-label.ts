@@ -1,4 +1,4 @@
-import { plural, t } from '@lingui/core/macro';
+import { t } from '@lingui/core/macro';
 import { type CurrencyCode, formatAmount, formatDate } from '@split-pay/shared';
 import type { EntryItem } from './conversation';
 import { incomeBubbleLabel } from './income-bubble-label';
@@ -15,8 +15,9 @@ function nameList(names: readonly string[]): string {
 /**
  * The screen-reader label of a bubble naming its payers (income: recipients),
  * one sentence read as one element (the bubble label pattern of #36):
- * "Kasia, Ania i Bartek zapłacili 90,00 zł za Pizza, 10 lipca 2026. Twój
- * udział 30,00 zł." Amounts and the date come formatted (`useFormatters`);
+ * "Wydatek 90,00 zł: Pizza. Płacą: Kasia, Ania i Bartek. 10 lipca 2026. Twój
+ * udział 30,00 zł." Gender-neutral: names come after a colon, never as the
+ * subject of a past-tense verb (docs/SPEC.md → Language). Amounts and the date come formatted (`useFormatters`);
  * `myShare` is `null` when I have no share. Uses the active Lingui locale.
  */
 export function payersBubbleLabel(input: {
@@ -29,12 +30,11 @@ export function payersBubbleLabel(input: {
   myShare: string | null;
 }): string {
   const names = nameList(input.payerNames);
-  const count = input.payerNames.length;
   const { amount, title, date } = input;
   const sentence =
     input.kind === 'expense'
-      ? t`${names} ${plural(count, { one: 'zapłacił(a)', few: 'zapłacili', many: 'zapłacili', other: 'zapłacili' })} ${amount} za ${title}, ${date}.`
-      : t`${names} ${plural(count, { one: 'otrzymał(a)', few: 'otrzymali', many: 'otrzymali', other: 'otrzymali' })} ${amount} za ${title}, ${date}.`;
+      ? t`Wydatek ${amount}: ${title}. Płacą: ${names}. ${date}.`
+      : t`Wpływ ${amount}: ${title}. Dla: ${names}. ${date}.`;
   if (input.myShare === null) return sentence;
   const share = input.myShare;
   return `${sentence} ${t`Twój udział ${share}.`}`;
@@ -44,7 +44,7 @@ export function payersBubbleLabel(input: {
  * The screen-reader label of any bubble, one sentence for the whole bubble in
  * the active UI language (#36 pattern): incomes via `incomeBubbleLabel`,
  * several payers via `payersBubbleLabel`, otherwise "Wydatek 20,00 euro,
- * czyli około 86,43 złotego polskiego: Kolacja. Zapłacił(a): Kasia.
+ * czyli około 86,43 złotego polskiego: Kolacja. Płaci: Kasia.
  * 11 lipca 2026. Twój udział 28,81 złotego polskiego."
  * Amounts spell the currency out; a foreign-currency entry reads the
  * original amount, then the base amount (#14).
@@ -65,7 +65,7 @@ export function entryBubbleLabel(item: EntryItem, context: { baseCurrency: Curre
     return payersBubbleLabel({ kind: 'expense', payerNames, title: entry.title, amount, date, myShare: spokenShare });
   }
   const title = entry.title;
-  const sentence = t`Wydatek ${amount}: ${title}. Zapłacił(a): ${payerName}. ${date}.`;
+  const sentence = t`Wydatek ${amount}: ${title}. Płaci: ${payerName}. ${date}.`;
   if (spokenShare === null) return sentence;
   const share = spokenShare;
   return `${sentence} ${t`Twój udział ${share}.`}`;

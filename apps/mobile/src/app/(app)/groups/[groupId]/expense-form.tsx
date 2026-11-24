@@ -218,7 +218,7 @@ function ExpenseFormView({ group, editing }: { group: GroupDetail; editing?: For
   const fieldError: Record<ExpenseFormField, string> = {
     amount: t`Podaj kwotę większą od zera.`,
     title: t`Podaj tytuł.`,
-    payer: income ? t`Wybierz, kto otrzymał pieniądze.` : t`Wybierz, kto zapłacił.`,
+    payer: income ? t`Wybierz, kto otrzymuje pieniądze.` : t`Wybierz, kto płaci.`,
     date: t`Podaj datę w formacie RRRR-MM-DD.`,
     rate: t`Podaj kurs większy od zera, np. 4,3215.`,
     // The split and payer sections show what doesn't add up themselves.
@@ -400,7 +400,7 @@ function ExpenseFormView({ group, editing }: { group: GroupDetail; editing?: For
         />
 
         {deletedMeanwhile ? (
-          <Text style={styles.error}>{t`Ktoś usunął ten wpis w międzyczasie. Twoje zmiany nie zostały zapisane.`}</Text>
+          <Text style={styles.error}>{t`Ten wpis został w międzyczasie usunięty. Twoje zmiany nie zostały zapisane.`}</Text>
         ) : saving.error instanceof OutboxBlockedError ? (
           <Text style={styles.error}>{t`Najpierw rozwiąż konflikt tego wpisu (czerwony „!”).`}</Text>
         ) : saving.error instanceof LockedOfflineError ? (

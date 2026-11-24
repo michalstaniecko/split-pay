@@ -70,7 +70,7 @@ function EntryDetail({ group, entry }: { group: GroupDetail; entry: Entry }) {
           ) : null
         }
       />
-      <Text style={styles.meta}>{t`Dodał(a) ${addedBy}, ${format.dateTime(entry.createdAt)}`}</Text>
+      <Text style={styles.meta}>{t`Dodano: ${addedBy}, ${format.dateTime(entry.createdAt)}`}</Text>
       {isEdited(entry) ? (
         <Pressable
           accessibilityRole="link"

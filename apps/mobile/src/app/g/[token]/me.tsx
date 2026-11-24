@@ -29,7 +29,7 @@ function Picker({ token, data }: { token: string; data: PublicGroup }) {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Text style={styles.text}>
-        {t`Wybierz siebie, żeby zobaczyć, ile jesteś winien. Zapamiętamy to w tej przeglądarce.`}
+        {t`Wybierz siebie, żeby zobaczyć, ile masz do oddania. Zapamiętamy to w tej przeglądarce.`}
       </Text>
       <View style={styles.list} accessibilityRole="radiogroup">
         {data.members.map((member) => {

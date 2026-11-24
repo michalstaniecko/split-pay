@@ -4,8 +4,11 @@ import type { BatchItem } from 'drizzle-orm/batch';
 import type { LocalDb } from './local-db';
 import { type CachedGroup, type EntryPreview, localEntries, localGroups, localMembers, localOutbox } from './local-schema';
 
-/** An inbox row as cached: the group + its last-entry preview (API `GET /groups` item). */
-export type CachedGroupListItem = CachedGroup & { lastEntry: EntryPreview | null };
+/**
+ * An inbox row as cached (API `GET /groups` item): the group, its last-entry
+ * preview and when someone else last added an entry (unread marker, #40).
+ */
+export type CachedGroupListItem = CachedGroup & { lastEntry: EntryPreview | null; lastEntryByOthersAt: string | null };
 /** A group with its members (API `GET /groups/:groupId`). */
 export type CachedGroupDetail = CachedGroup & { members: Member[] };
 /** One delta sync response (API `GET /groups/:groupId/sync`). */
@@ -39,7 +42,12 @@ export const entryRow = (e: Entry) => ({
   data: e,
 });
 
-const groupRow = ({ members: _members, lastEntry: _lastEntry, ...data }: CachedGroup & { members?: unknown; lastEntry?: unknown }) => ({
+const groupRow = ({
+  members: _members,
+  lastEntry: _lastEntry,
+  lastEntryByOthersAt: _lastEntryByOthersAt,
+  ...data
+}: CachedGroup & { members?: unknown; lastEntry?: unknown; lastEntryByOthersAt?: unknown }) => ({
   id: data.id,
   data: data as CachedGroup,
   lastActivityAt: data.lastActivityAt,
@@ -68,7 +76,7 @@ export async function saveGroupList(db: LocalDb, items: readonly CachedGroupList
     .where(ids.length > 0 ? notInArray(localGroups.id, ids) : undefined);
   const batch: BatchItem<'sqlite'>[] = gone.length > 0 ? dropGroups(db, gone.map((g) => g.id)) : [];
   for (const item of items) {
-    const row = { ...groupRow(item), lastEntry: item.lastEntry };
+    const row = { ...groupRow(item), lastEntry: item.lastEntry, lastEntryByOthersAt: item.lastEntryByOthersAt };
     batch.push(db.insert(localGroups).values(row).onConflictDoUpdate({ target: localGroups.id, set: row }));
   }
   if (batch.length > 0) await db.batch(batch as Batch);
@@ -145,8 +153,10 @@ export async function readGroupList(db: LocalDb): Promise<CachedGroupListItem[]>
   return groups
     .map((g): CachedGroupListItem => {
       const mine = newestQueued.get(g.id);
-      if (!mine || mine.createdAt <= g.lastActivityAt) return { ...g.data, lastActivityAt: g.lastActivityAt, lastEntry: g.lastEntry ?? null };
-      return { ...g.data, lastActivityAt: mine.createdAt, lastEntry: previewOf(mine) };
+      // My queued entries never mark a group unread: `lastEntryByOthersAt` stays the server's.
+      const row = { ...g.data, lastEntryByOthersAt: g.lastEntryByOthersAt ?? null };
+      if (!mine || mine.createdAt <= g.lastActivityAt) return { ...row, lastActivityAt: g.lastActivityAt, lastEntry: g.lastEntry ?? null };
+      return { ...row, lastActivityAt: mine.createdAt, lastEntry: previewOf(mine) };
     })
     .sort(
       (a, b) =>

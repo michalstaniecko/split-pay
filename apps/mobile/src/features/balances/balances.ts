@@ -6,7 +6,7 @@ export interface BannerState {
   amount: number;
 }
 
-/** My balance for the banner: "jesteś winien", "należy ci się" or settled up. */
+/** My balance for the banner: "do oddania", "należy ci się" or settled up. */
 export function bannerState(data: { balances: readonly Allocation[] }, myMemberId: string | null): BannerState {
   const amount = data.balances.find((b) => b.memberId === myMemberId)?.amount ?? 0;
   if (amount < 0) return { kind: 'owe', amount: -amount };

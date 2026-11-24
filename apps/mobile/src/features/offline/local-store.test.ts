@@ -80,8 +80,8 @@ const preview = (e: Entry): EntryPreview => ({
 describe('local store: inbox', () => {
   it('caches the group list and reads it back, most recent activity first', async () => {
     const db = await nodeLocalDb();
-    const older = { ...group(G1, { lastActivityAt: '2026-07-01T10:00:00.000Z' }), lastEntry: null };
-    const newer = { ...group(G2, { lastActivityAt: '2026-07-03T10:00:00.000Z' }), lastEntry: null };
+    const older = { ...group(G1, { lastActivityAt: '2026-07-01T10:00:00.000Z' }), lastEntry: null, lastEntryByOthersAt: null };
+    const newer = { ...group(G2, { lastActivityAt: '2026-07-03T10:00:00.000Z' }), lastEntry: null, lastEntryByOthersAt: null };
 
     await saveGroupList(db, [older, newer]);
 
@@ -91,8 +91,8 @@ describe('local store: inbox', () => {
   it('drops groups the server no longer lists, with their members and entries', async () => {
     const db = await nodeLocalDb();
     await saveGroupList(db, [
-      { ...group(G1), lastEntry: null },
-      { ...group(G2), lastEntry: null },
+      { ...group(G1), lastEntry: null, lastEntryByOthersAt: null },
+      { ...group(G2), lastEntry: null, lastEntryByOthersAt: null },
     ]);
     await applyGroupDelta(db, {
       group: { ...group(G1), members: [member(ANIA, G1, 'Ania')] },
@@ -100,7 +100,7 @@ describe('local store: inbox', () => {
       cursor: '2026-07-02T10:00:00.000Z',
     });
 
-    await saveGroupList(db, [{ ...group(G2), lastEntry: null }]);
+    await saveGroupList(db, [{ ...group(G2), lastEntry: null, lastEntryByOthersAt: null }]);
 
     expect((await readGroupList(db)).map((g) => g.id)).toEqual([G2]);
     expect(await readGroupDetail(db, G1)).toBeUndefined();
@@ -110,7 +110,7 @@ describe('local store: inbox', () => {
   it("previews the server's last entry; a delta sync doesn't replace it", async () => {
     const db = await nodeLocalDb();
     const serverLast = entry(G1, { title: 'Z serwera' });
-    await saveGroupList(db, [{ ...group(G1), lastEntry: preview(serverLast) }]);
+    await saveGroupList(db, [{ ...group(G1), lastEntry: preview(serverLast), lastEntryByOthersAt: null }]);
     await applyGroupDelta(db, {
       group: { ...group(G1), members: [member(ANIA, G1, 'Ania')] },
       entries: [entry(G1, { createdAt: '2026-07-01T09:00:00.000Z', title: 'Starszy' })],
@@ -120,20 +120,33 @@ describe('local store: inbox', () => {
     expect((await readGroupList(db))[0]?.lastEntry).toEqual(preview(serverLast));
   });
 
+  it("keeps when others last added an entry (unread marker); a delta sync doesn't replace it", async () => {
+    const db = await nodeLocalDb();
+    await saveGroupList(db, [{ ...group(G1), lastEntry: null, lastEntryByOthersAt: '2026-07-02T10:00:00.000Z' }]);
+    await applyGroupDelta(db, {
+      group: { ...group(G1), members: [member(ANIA, G1, 'Ania')] },
+      entries: [],
+      cursor: '2026-07-03T10:00:00.000Z',
+    });
+    await enqueueCreate(db, entry(G1, { createdAt: '2026-07-04T08:00:00.000Z' }));
+
+    expect((await readGroupList(db))[0]?.lastEntryByOthersAt).toBe('2026-07-02T10:00:00.000Z');
+  });
+
   it('lists groups whose entries need pulling: new, never pulled, or with new activity', async () => {
     const db = await nodeLocalDb();
     const G3 = '00000000-0000-4000-8000-000000000003';
     await saveGroupList(db, [
-      { ...group(G1), lastEntry: null },
-      { ...group(G2), lastEntry: null },
+      { ...group(G1), lastEntry: null, lastEntryByOthersAt: null },
+      { ...group(G2), lastEntry: null, lastEntryByOthersAt: null },
     ]);
     await applyGroupDelta(db, { group: { ...group(G1), members: [] }, entries: [], cursor: null });
     await applyGroupDelta(db, { group: { ...group(G2), members: [] }, entries: [], cursor: null });
 
     const listed = [
-      { ...group(G1), lastEntry: null },
-      { ...group(G2, { lastActivityAt: '2026-07-09T10:00:00.000Z' }), lastEntry: null },
-      { ...group(G3), lastEntry: null },
+      { ...group(G1), lastEntry: null, lastEntryByOthersAt: null },
+      { ...group(G2, { lastActivityAt: '2026-07-09T10:00:00.000Z' }), lastEntry: null, lastEntryByOthersAt: null },
+      { ...group(G3), lastEntry: null, lastEntryByOthersAt: null },
     ];
     expect(await groupsNeedingSync(db, listed)).toEqual([G2, G3]);
   });
@@ -141,8 +154,8 @@ describe('local store: inbox', () => {
   it('an entry waiting in the outbox moves its group up and becomes the preview', async () => {
     const db = await nodeLocalDb();
     await saveGroupList(db, [
-      { ...group(G1, { lastActivityAt: '2026-07-01T10:00:00.000Z' }), lastEntry: null },
-      { ...group(G2, { lastActivityAt: '2026-07-03T10:00:00.000Z' }), lastEntry: null },
+      { ...group(G1, { lastActivityAt: '2026-07-01T10:00:00.000Z' }), lastEntry: null, lastEntryByOthersAt: null },
+      { ...group(G2, { lastActivityAt: '2026-07-03T10:00:00.000Z' }), lastEntry: null, lastEntryByOthersAt: null },
     ]);
     const queued = entry(G1, { createdAt: '2026-07-04T08:00:00.000Z', updatedAt: '2026-07-04T08:00:00.000Z' });
 

@@ -45,7 +45,7 @@ export function ChangeRow({ group, change }: { group: GroupDetail; change: Chang
   const failureMessage = (failure: UndoFailure) => {
     switch (failure) {
       case 'changedSince':
-        return t`Nie można cofnąć: później ktoś to jeszcze zmienił. Cofnij najpierw nowsze zmiany.`;
+        return t`Nie można cofnąć: później były tu kolejne zmiany. Cofnij najpierw nowsze.`;
       case 'forbidden':
         return t`Tylko ta osoba może zmienić swoje imię.`;
       case 'notUndoable':

@@ -9,8 +9,8 @@ import { canUndoClaim } from './claims';
 import { type Claim, useUndoClaim } from './claims-query';
 
 /**
- * A claim as a system message in the Conversation (ADR-0017): "Tomek przejął
- * profil Tomek", placed among the entries by claim time (`conversationItems`).
+ * A claim as a system message in the Conversation (ADR-0017): "Przejęcie
+ * profilu Tomek: Tomek", placed among the entries by claim time (`conversationItems`).
  * Long-press (or the accessibility action) → undo, open to any member, except
  * in an archived group (`canUndoClaim`). Undone claims disappear (the
  * Conversation shows the current state).
@@ -30,7 +30,7 @@ export function ClaimMessage({
   // Names removed on account deletion (ADR-0019) read "Deleted user" in my language.
   const claimerName = nameOf({ displayName: claim.claimerName }, locale);
   const memberName = nameOf({ displayName: claim.memberName }, locale);
-  const text = t`${claimerName} przejął profil ${memberName}`;
+  const text = t`Przejęcie profilu ${memberName}: ${claimerName}`;
   const undoLabel = t`Cofnij przejęcie`;
 
   const runUndo = () =>

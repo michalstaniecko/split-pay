@@ -36,6 +36,19 @@ function toDecimalString(amount: MinorAmount, digits: number): string {
 }
 
 /**
+ * A calendar date as short parts for compact day pickers (the day strip),
+ * e.g. `formatDayParts('2026-11-23', 'en')` → `{ weekday: 'Mon', day: '23', month: 'Nov' }`.
+ * Formatted in UTC like `formatDate`, so it never shifts by a day.
+ */
+export function formatDayParts(date: LocalDate, locale: string): { weekday: string; day: string; month: string } {
+  const [year, month, day] = date.split('-').map(Number) as [number, number, number];
+  const utc = new Date(Date.UTC(year, month - 1, day));
+  const part = (options: Intl.DateTimeFormatOptions) =>
+    new Intl.DateTimeFormat(locale, { ...options, timeZone: 'UTC' }).format(utc);
+  return { weekday: part({ weekday: 'short' }), day: part({ day: 'numeric' }), month: part({ month: 'short' }) };
+}
+
+/**
  * Formats a calendar date ("YYYY-MM-DD", see `LocalDate`) in the given locale,
  * e.g. `formatDate('2026-11-23', 'pl')` → "23 listopada 2026". The date has no
  * time zone, so it is formatted in UTC and never shifts by a day.

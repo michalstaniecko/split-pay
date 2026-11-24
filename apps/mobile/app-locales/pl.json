@@ -1,0 +1,7 @@
+{
+  "ios": {
+    "NSCameraUsageDescription": "split-pay używa aparatu do robienia zdjęć paragonów i zdjęcia profilowego.",
+    "NSPhotoLibraryUsageDescription": "split-pay pozwala wybrać z biblioteki zdjęcie paragonu lub zdjęcie profilowe.",
+    "NSFaceIDUsageDescription": "split-pay może używać Face ID, żeby chronić dane logowania na tym urządzeniu."
+  }
+}

@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { addPerson, initialQuickBillDraft, parseQuickBillDraft, removePerson } from './quick-bill-form';
+import {
+  addPerson,
+  defaultQuickBillCurrency,
+  initialQuickBillDraft,
+  parseQuickBillDraft,
+  removePerson,
+  withQuickBillCurrency,
+} from './quick-bill-form';
 
 const id = (n: number) => `00000000-0000-4000-8000-${n.toString().padStart(12, '0')}`;
 const ids = { groupId: id(1), expenseId: id(2) };
@@ -44,5 +51,30 @@ describe('parseQuickBillDraft', () => {
       ok: false,
       errors: ['amount', 'title', 'people'],
     });
+  });
+});
+
+describe('defaultQuickBillCurrency', () => {
+  it("uses the device region's currency when it is offered", () => {
+    expect(defaultQuickBillCurrency('EUR')).toBe('EUR');
+  });
+
+  it('falls back to PLN when the region currency is unknown', () => {
+    expect(defaultQuickBillCurrency(null)).toBe('PLN');
+    expect(defaultQuickBillCurrency(undefined)).toBe('PLN');
+    expect(defaultQuickBillCurrency('')).toBe('PLN');
+  });
+
+  it('falls back to PLN when the region currency is not offered', () => {
+    expect(defaultQuickBillCurrency('BRL')).toBe('PLN');
+    expect(defaultQuickBillCurrency('eur?')).toBe('PLN');
+  });
+});
+
+describe('withQuickBillCurrency', () => {
+  it("trims the typed amount to the new currency's minor digits", () => {
+    const draft = { ...initialQuickBillDraft(), amount: '12,345' };
+    expect(withQuickBillCurrency(draft, 'KWD').amount).toBe('12,345');
+    expect(withQuickBillCurrency(draft, 'EUR').amount).toBe('12,34');
   });
 });

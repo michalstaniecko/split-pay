@@ -45,7 +45,7 @@ export function DeleteAccountSection() {
     {
       value: 'removeName',
       label: t`Usuń konto i moją nazwę z grup`,
-      description: t`W grupach zostaniesz osobą bez konta, a każdy zobaczy zamiast nazwy „Usunięty użytkownik”.`,
+      description: t`W grupach zostaniesz osobą bez konta, a wszyscy zobaczą zamiast nazwy „Usunięty użytkownik”.`,
     },
   ];
   const selected = options.find((o) => o.value === choice) ?? options[0]!;

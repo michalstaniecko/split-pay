@@ -113,11 +113,11 @@ function ReportCard({ report, actions }: { report: AdminReport; actions: ReturnT
         {kind} · {format.date(report.createdAt.slice(0, 10))}
       </Text>
       <Text style={styles.muted} selectable>
-        {t`Zgłaszający: ${report.reporter?.email ?? '—'}`}
+        {t`Zgłoszenie od: ${report.reporter?.email ?? '—'}`}
       </Text>
       <Text style={styles.muted} selectable>
         {t`Autor zdjęcia: ${account?.email ?? '—'}`}
-        {account?.blocked ? ` · ${t`zablokowany`}` : ''}
+        {account?.blocked ? ` · ${t`konto zablokowane`}` : ''}
       </Text>
       {photo ? (
         <Button

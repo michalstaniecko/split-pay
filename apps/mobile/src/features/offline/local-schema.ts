@@ -43,6 +43,8 @@ export const localGroups = sqliteTable('groups', {
   data: text({ mode: 'json' }).$type<CachedGroup>().notNull(),
   /** The server's inbox preview (`GET /groups`); a newer queued entry of mine overrides it. */
   lastEntry: text({ mode: 'json' }).$type<EntryPreview | null>(),
+  /** When someone else last added an entry (`GET /groups`), for the inbox unread marker (#40). */
+  lastEntryByOthersAt: text(),
   lastActivityAt: text().notNull(),
   createdAt: text().notNull(),
   /** Delta sync cursor (`GET /groups/:groupId/sync?since=`); null until the first delta sync. */
