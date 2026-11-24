@@ -98,22 +98,17 @@ describe('claimBanner (personal claim link banner)', () => {
   const ania = { id: ANIA, displayName: 'Ania', hasAccount: true };
   const tomek = { id: TOMEK, displayName: 'Tomek', hasAccount: false };
   const members = [ania, tomek];
-  const token = 'claim-token-tomek';
 
   it('names the member a personal claim link is for', () => {
-    expect(claimBanner({ token, claimFor: TOMEK, members })?.member).toEqual(tomek);
-  });
-
-  it('offers "open in the app" with the same personal claim link', () => {
-    expect(claimBanner({ token, claimFor: TOMEK, members })?.openInAppUrl).toBe('splitpay://g/claim-token-tomek');
+    expect(claimBanner({ claimFor: TOMEK, members })).toEqual(tomek);
   });
 
   it('is not shown for a group link', () => {
-    expect(claimBanner({ token, claimFor: null, members })).toBeNull();
+    expect(claimBanner({ claimFor: null, members })).toBeNull();
   });
 
-  it('is not shown (nor "open in the app") once the member is claimed or gone', () => {
-    expect(claimBanner({ token, claimFor: ANIA, members })).toBeNull();
-    expect(claimBanner({ token, claimFor: 'gone', members })).toBeNull();
+  it('is not shown once the member is claimed or gone', () => {
+    expect(claimBanner({ claimFor: ANIA, members })).toBeNull();
+    expect(claimBanner({ claimFor: 'gone', members })).toBeNull();
   });
 });

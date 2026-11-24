@@ -4,6 +4,7 @@ import { Text, View } from 'react-native';
 import { StyleSheet } from 'react-native-unistyles';
 import { Button } from '@/components/button';
 import { openDownloadApp } from './web-footer';
+import { openInAppUrl } from './web-view';
 
 /**
  * Top of the view-only web opened from a personal claim link (SPEC "Members
@@ -11,7 +12,7 @@ import { openDownloadApp } from './web-footer';
  * made for and asks them to claim the profile in the app: "download the app",
  * or "open in the app" with the same link, landing on claiming this member.
  */
-export function ClaimBanner({ displayName, openInAppUrl }: { displayName: string; openInAppUrl: string }) {
+export function ClaimBanner({ displayName, token }: { displayName: string; token: string }) {
   const { t } = useLingui();
   return (
     <View style={styles.banner} accessibilityRole="summary">
@@ -23,7 +24,7 @@ export function ClaimBanner({ displayName, openInAppUrl }: { displayName: string
       </View>
       <View style={styles.actions}>
         <Button label={t`Pobierz aplikację`} onPress={openDownloadApp} />
-        <Button variant="secondary" label={t`Otwórz w aplikacji`} onPress={() => void openURL(openInAppUrl)} />
+        <Button variant="secondary" label={t`Otwórz w aplikacji`} onPress={() => void openURL(openInAppUrl(token))} />
       </View>
     </View>
   );

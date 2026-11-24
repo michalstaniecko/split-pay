@@ -63,16 +63,13 @@ export function openInAppUrl(token: string): string {
 /**
  * The personal claim link banner ("To Twój profil — przejmij go w aplikacji"):
  * the member the link is for, while they are still in the group without an
- * account, and "open in the app" for the same link. `null` = no banner (group
- * link, or already claimed).
+ * account. `null` = no banner (group link, or already claimed).
  */
 export function claimBanner<M extends { id: string; hasAccount: boolean }>(input: {
-  token: string;
   claimFor: string | null;
   members: readonly M[];
-}): { member: M; openInAppUrl: string } | null {
-  const member = input.members.find((m) => m.id === input.claimFor && !m.hasAccount);
-  return member ? { member, openInAppUrl: openInAppUrl(input.token) } : null;
+}): M | null {
+  return input.members.find((m) => m.id === input.claimFor && !m.hasAccount) ?? null;
 }
 
 /**

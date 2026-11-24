@@ -51,7 +51,7 @@ function PublicConversation({ token, data }: { token: string; data: PublicGroup 
   const entries = useQuery(publicEntriesQuery(token));
   const balances = useQuery(publicBalancesQuery(token));
   const { me } = useThisIsMe(data);
-  const banner = claimBanner({ token, claimFor: data.claimFor, members: data.members });
+  const claimMember = claimBanner({ claimFor: data.claimFor, members: data.members });
   const openInfo = () => router.push({ pathname: '/g/[token]/info', params: { token } });
 
   return (
@@ -83,7 +83,7 @@ function PublicConversation({ token, data }: { token: string; data: PublicGroup 
           ),
         }}
       />
-      {banner ? <ClaimBanner displayName={banner.member.displayName} openInAppUrl={banner.openInAppUrl} /> : null}
+      {claimMember ? <ClaimBanner displayName={claimMember.displayName} token={token} /> : null}
       {me === null ? (
         <Pressable
           accessibilityRole="button"
