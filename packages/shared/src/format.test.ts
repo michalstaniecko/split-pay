@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatAmount, formatDate } from './format';
+import { formatAmount, formatDate, formatDayParts } from './format';
 
 // Intl separates groups and the currency symbol with (narrow) no-break spaces;
 // normalise them so the expectations stay readable.
@@ -49,5 +49,18 @@ describe('formatDate', () => {
   it('does not shift the day with the device time zone', () => {
     expect(formatDate('2026-01-01', 'en')).toBe('January 1, 2026');
     expect(formatDate('2026-12-31', 'en')).toBe('December 31, 2026');
+  });
+});
+
+describe('formatDayParts', () => {
+  it('splits a calendar date into a short weekday, day of month and short month', () => {
+    // 23 November 2026 is a Monday.
+    expect(formatDayParts('2026-11-23', 'en')).toEqual({ weekday: 'Mon', day: '23', month: 'Nov' });
+    expect(formatDayParts('2026-11-23', 'pl')).toEqual({ weekday: 'pon.', day: '23', month: 'lis' });
+  });
+
+  it('does not shift the day with the device time zone', () => {
+    // 1 January 2026 is a Thursday.
+    expect(formatDayParts('2026-01-01', 'en')).toEqual({ weekday: 'Thu', day: '1', month: 'Jan' });
   });
 });
