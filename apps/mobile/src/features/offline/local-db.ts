@@ -65,6 +65,9 @@ export const LOCAL_MIGRATIONS: readonly string[] = [
   );
   CREATE INDEX outbox_entry_id_idx ON outbox (entry_id);
   `,
+  `
+  ALTER TABLE groups ADD COLUMN last_entry_by_others_at TEXT;
+  `,
 ];
 
 /**
