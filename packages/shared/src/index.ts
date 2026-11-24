@@ -16,6 +16,7 @@ export * from './notifications';
 export * from './payout-details';
 export * from './photos';
 export * from './rates';
+export * from './reports';
 export * from './settle-up';
 export * from './split';
 export * from './stats';

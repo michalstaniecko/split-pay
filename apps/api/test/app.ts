@@ -16,7 +16,7 @@ export interface SentOtp {
  * instead of being logged.
  */
 export function createTestApp(
-  options: { flags?: FeatureFlags; webUrl?: string; storage?: MemoryStorage | null } = {},
+  options: { flags?: FeatureFlags; webUrl?: string; storage?: MemoryStorage | null; adminEmails?: string[] } = {},
 ) {
   // Photos go to an in-memory bucket (ADR-0006); `storage.objects` shows what is stored.
   // `storage: null` = photos not configured.

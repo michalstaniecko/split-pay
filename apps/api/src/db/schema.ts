@@ -10,3 +10,4 @@ export * from './push';
 export * from './rates';
 export * from './photos';
 export * from './changes';
+export * from './moderation';
