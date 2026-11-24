@@ -15,6 +15,7 @@ import {
   validateEntryInGroup,
 } from './model';
 import { ANIA, BARTEK, KASIA, TOMEK, USER, expense, group, member, members, settlement, uuid } from './test-fixtures';
+import { convert } from './money';
 
 describe('Entry', () => {
   const valid = expense({
@@ -288,6 +289,19 @@ describe('validateEntryInGroup', () => {
       'Rate for the base currency must be 1',
       `Unknown member: ${uuid(999)}`,
     ]);
+  });
+
+  it('accepts any spelling of rate 1 for the base currency, exactly as the ledger converts it', () => {
+    for (const rateToBase of ['1', '1.0', '01', '001.0000000000']) {
+      const e = expense({ amount: 100, rateToBase, payers: [{ memberId: ANIA, amount: 100 }], split: { mode: 'equal', memberIds: [ANIA] } });
+      expect(validateEntryInGroup(e, group, members)).toEqual([]);
+      expect(convert(100, rateToBase, group.baseCurrency, group.baseCurrency)).toBe(100);
+    }
+  });
+
+  it('rejects a base currency rate that differs from 1 only in the last decimal place', () => {
+    const e = expense({ amount: 100, rateToBase: '1.0000000001', payers: [{ memberId: ANIA, amount: 100 }], split: { mode: 'equal', memberIds: [ANIA] } });
+    expect(validateEntryInGroup(e, group, members)).toEqual(['Rate for the base currency must be 1']);
   });
 
   it('blocks entries in an archived group', () => {

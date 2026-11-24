@@ -22,6 +22,11 @@ export const ExchangeRate = z
   .refine((s) => /[1-9]/.test(s), 'Rate must be positive');
 export type ExchangeRate = z.infer<typeof ExchangeRate>;
 
+/** Whether a rate is exactly 1 ("1", "1.00", "01"…), compared as a decimal string, never as a float. */
+export function isUnitRate(rate: ExchangeRate): boolean {
+  return /^0*1(\.0+)?$/.test(rate);
+}
+
 /** Number of decimal places of a currency (e.g. PLN → 2, JPY → 0, KWD → 3). */
 export function minorUnitDigits(currency: CurrencyCode): number {
   return new Intl.NumberFormat('en', { style: 'currency', currency }).resolvedOptions()
@@ -56,7 +61,7 @@ export function convert(
   to: CurrencyCode,
 ): MinorAmount {
   if (from === to) {
-    if (rate !== '1' && !/^1\.0+$/.test(rate)) throw new RangeError('Rate for the same currency must be 1');
+    if (!isUnitRate(rate)) throw new RangeError('Rate for the same currency must be 1');
     return amount;
   }
   ExchangeRate.parse(rate);

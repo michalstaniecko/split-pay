@@ -23,6 +23,12 @@ describe('s3Storage', () => {
     );
   });
 
+  it('caps a read URL at the 7-day maximum SigV4 allows', async () => {
+    const storage = s3Storage({ ...awsExample, now: () => new Date('2013-05-24T00:00:00Z') });
+    const url = new URL(await storage.signedReadUrl('test.txt', { expiresInSeconds: 30 * 24 * 3600 }));
+    expect(url.searchParams.get('X-Amz-Expires')).toBe('604800');
+  });
+
   it('uses path-style URLs for stores like MinIO', async () => {
     const storage = s3Storage({
       ...awsExample,
@@ -85,5 +91,16 @@ describe('s3Storage', () => {
   it('fails when the store refuses a delete (the retention job retries the next day)', async () => {
     const storage = s3Storage({ ...awsExample, fetch: async () => new Response('denied', { status: 403 }) });
     await expect(storage.deleteObjects(['a.jpg'])).rejects.toThrow(/403/);
+  });
+
+  it('keeps the response body of the store out of the thrown error', async () => {
+    const body = '<Error><Code>AccessDenied</Code><RequestId>internal-request-id</RequestId></Error>';
+    const storage = s3Storage({ ...awsExample, fetch: async () => new Response(body, { status: 403 }) });
+    const error: Error = await storage.deleteObjects(['a.jpg']).then(
+      () => { throw new Error('expected a rejection'); },
+      (e: Error) => e,
+    );
+    expect(error.message).toMatch(/403/);
+    expect(error.message).not.toMatch(/AccessDenied|internal-request-id/);
   });
 });

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { CurrencyCode, ExchangeRate, MinorAmount, PositiveMinorAmount } from './money';
+import { CurrencyCode, ExchangeRate, MinorAmount, PositiveMinorAmount, isUnitRate } from './money';
 
 /**
  * Data model of group entries (expense, income, settlement).
@@ -407,7 +407,7 @@ export function validateEntryInGroup(entry: Entry, group: Group, members: readon
   const errors: string[] = [];
   if (entry.groupId !== group.id) errors.push('Entry belongs to another group');
   if (group.archivedAt !== null) errors.push('Group is archived');
-  if (entry.currency === group.baseCurrency && Number(entry.rateToBase) !== 1) {
+  if (entry.currency === group.baseCurrency && !isUnitRate(entry.rateToBase)) {
     errors.push('Rate for the base currency must be 1');
   }
   const known = new Set(members.filter((m) => m.groupId === group.id).map((m) => m.id));

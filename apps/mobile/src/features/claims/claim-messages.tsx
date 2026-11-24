@@ -3,17 +3,26 @@ import { router } from 'expo-router';
 import { Alert, Pressable, Text } from 'react-native';
 import { StyleSheet } from 'react-native-unistyles';
 import { authClient } from '@/lib/auth-client';
+import { canUndoClaim } from './claims';
 import { type Claim, useUndoClaim } from './claims-query';
 
 /**
  * A claim as a system message in the Conversation (ADR-0017): "Tomek przejął
  * profil Tomek", placed among the entries by claim time (`conversationItems`).
- * Long-press (or the accessibility action) → undo, open to any member. Undone
- * claims disappear (the Conversation shows the current state).
+ * Long-press (or the accessibility action) → undo, open to any member, except
+ * in an archived group (`canUndoClaim`). Undone claims disappear (the
+ * Conversation shows the current state).
  */
-export function ClaimMessage({ groupId, claim }: { groupId: string; claim: Claim }) {
+export function ClaimMessage({
+  group,
+  claim,
+}: {
+  group: { id: string; archivedAt: string | null };
+  claim: Claim;
+}) {
   const { t } = useLingui();
-  const undo = useUndoClaim(groupId);
+  const undo = useUndoClaim(group.id);
+  const undoable = canUndoClaim(group);
   const { data: session } = authClient.useSession();
   const { claimerName, memberName } = claim;
   const text = t`${claimerName} przejął profil ${memberName}`;
@@ -37,12 +46,12 @@ export function ClaimMessage({ groupId, claim }: { groupId: string; claim: Claim
     <Pressable
       accessibilityRole="text"
       accessibilityLabel={text}
-      accessibilityActions={[{ name: 'undo', label: undoLabel }]}
+      accessibilityActions={undoable ? [{ name: 'undo', label: undoLabel }] : []}
       onAccessibilityAction={(event) => {
-        if (event.nativeEvent.actionName === 'undo') confirmUndo();
+        if (undoable && event.nativeEvent.actionName === 'undo') confirmUndo();
       }}
-      onLongPress={confirmUndo}
-      disabled={undo.isPending}
+      onLongPress={undoable ? confirmUndo : undefined}
+      disabled={!undoable || undo.isPending}
       style={({ pressed }) => [styles.message, (pressed || undo.isPending) && styles.pressed]}>
       <Text style={styles.text}>{text}</Text>
     </Pressable>

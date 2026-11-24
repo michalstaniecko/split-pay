@@ -212,7 +212,7 @@ function Conversation({
             item.type === 'day' ? (
               <DaySeparator item={item} baseCurrency={group.baseCurrency} />
             ) : item.type === 'claim' ? (
-              <ClaimMessage groupId={group.id} claim={item.claim} />
+              <ClaimMessage group={group} claim={item.claim} />
             ) : item.entry.kind === 'settlement' ? (
               // Settlements are system messages, not bubbles (ADR-0017).
               <SettlementSystemMessage

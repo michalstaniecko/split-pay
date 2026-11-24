@@ -16,9 +16,12 @@ export interface S3Config {
 
 const ALGORITHM = 'AWS4-HMAC-SHA256';
 const EMPTY_SHA256 = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
+/** SigV4 presigned URLs live at most 7 days. */
+const MAX_EXPIRES_SECONDS = 604800;
 
 const sha256Hex = (data: string) => createHash('sha256').update(data, 'utf8').digest('hex');
 const hmac = (key: string | Buffer, data: string) => createHmac('sha256', key).update(data, 'utf8').digest();
+const hmacHex = (key: Buffer, data: string) => createHmac('sha256', key).update(data, 'utf8').digest('hex');
 
 /** RFC 3986 encoding as SigV4 wants it. */
 const encode = (s: string) =>
@@ -43,30 +46,33 @@ export function s3Storage(config: S3Config): ObjectStorage {
   const bucketPath = config.forcePathStyle ? `/${encode(config.bucket)}` : '';
   const objectPath = (key: string) => `${bucketPath}/${encodeKey(key)}`;
 
-  function scope(date: Date) {
+  /** The credential and the signing functions for a request made at `date`. */
+  function signer(date: Date) {
     const day = amzDate(date).slice(0, 8);
     const signingKey = hmac(
       hmac(hmac(hmac(`AWS4${config.secretAccessKey}`, day), config.region), 's3'),
       'aws4_request',
     );
     const credentialScope = `${day}/${config.region}/s3/aws4_request`;
-    return { signingKey, credentialScope, credential: `${config.accessKeyId}/${credentialScope}` };
-  }
-
-  function signature(date: Date, canonicalRequest: string) {
-    const { signingKey, credentialScope } = scope(date);
-    const stringToSign = [ALGORITHM, amzDate(date), credentialScope, sha256Hex(canonicalRequest)].join('\n');
-    return createHmac('sha256', signingKey).update(stringToSign, 'utf8').digest('hex');
+    return {
+      credential: `${config.accessKeyId}/${credentialScope}`,
+      /** Signature of a canonical request (query-string or header auth). */
+      signRequest: (canonicalRequest: string) =>
+        hmacHex(signingKey, [ALGORITHM, amzDate(date), credentialScope, sha256Hex(canonicalRequest)].join('\n')),
+      /** Signature of a base64 POST policy. */
+      signPolicy: (policy: string) => hmacHex(signingKey, policy),
+    };
   }
 
   return {
     async signedReadUrl(key, { expiresInSeconds }) {
       const date = now();
+      const { credential, signRequest } = signer(date);
       const query: [string, string][] = [
         ['X-Amz-Algorithm', ALGORITHM],
-        ['X-Amz-Credential', scope(date).credential],
+        ['X-Amz-Credential', credential],
         ['X-Amz-Date', amzDate(date)],
-        ['X-Amz-Expires', String(expiresInSeconds)],
+        ['X-Amz-Expires', String(Math.min(expiresInSeconds, MAX_EXPIRES_SECONDS))],
         ['X-Amz-SignedHeaders', 'host'],
       ];
       const canonicalQuery = query
@@ -76,12 +82,12 @@ export function s3Storage(config: S3Config): ObjectStorage {
       const canonicalRequest = ['GET', objectPath(key), canonicalQuery, `host:${host}`, '', 'host', 'UNSIGNED-PAYLOAD'].join(
         '\n',
       );
-      return `${origin}${objectPath(key)}?${canonicalQuery}&X-Amz-Signature=${signature(date, canonicalRequest)}`;
+      return `${origin}${objectPath(key)}?${canonicalQuery}&X-Amz-Signature=${signRequest(canonicalRequest)}`;
     },
 
     async presignUpload(key, { contentType, maxBytes, expiresInSeconds }) {
       const date = now();
-      const { signingKey, credential } = scope(date);
+      const { credential, signPolicy } = signer(date);
       const fields = {
         key,
         'Content-Type': contentType,
@@ -100,16 +106,16 @@ export function s3Storage(config: S3Config): ObjectStorage {
         }),
         'utf8',
       ).toString('base64');
-      const policySignature = createHmac('sha256', signingKey).update(policy, 'utf8').digest('hex');
       return {
         url: `${origin}${bucketPath}/`,
-        fields: { ...fields, policy, 'x-amz-signature': policySignature },
+        fields: { ...fields, policy, 'x-amz-signature': signPolicy(policy) },
       };
     },
 
     async deleteObjects(keys) {
       for (const key of keys) {
         const date = now();
+        const { credential, signRequest } = signer(date);
         const headers = { host, 'x-amz-content-sha256': EMPTY_SHA256, 'x-amz-date': amzDate(date) };
         const signedHeaders = Object.keys(headers).join(';');
         const canonicalRequest = [
@@ -121,15 +127,17 @@ export function s3Storage(config: S3Config): ObjectStorage {
           signedHeaders,
           EMPTY_SHA256,
         ].join('\n');
-        const authorization = `${ALGORITHM} Credential=${scope(date).credential}, SignedHeaders=${signedHeaders}, Signature=${signature(date, canonicalRequest)}`;
+        const authorization = `${ALGORITHM} Credential=${credential}, SignedHeaders=${signedHeaders}, Signature=${signRequest(canonicalRequest)}`;
         const { host: _host, ...sent } = headers;
         const res = await doFetch(`${origin}${objectPath(key)}`, {
           method: 'DELETE',
           headers: { ...sent, authorization },
         });
+        // The body (error XML) is never surfaced: it may carry store internals into logs.
+        await res.body?.cancel();
         // 404: already gone — deleting is idempotent.
         if (!res.ok && res.status !== 404) {
-          throw new Error(`object storage refused to delete ${key}: ${res.status} ${await res.text()}`);
+          throw new Error(`object storage refused to delete ${key}: ${res.status}`);
         }
       }
     },

@@ -16,6 +16,11 @@ export function activeClaims<C extends ClaimLike>(claims: readonly C[]): C[] {
     .sort((a, b) => a.claimedAt.localeCompare(b.claimedAt) || a.id.localeCompare(b.id));
 }
 
+/** Undoing a claim is a write: not offered in an archived (read-only) group. */
+export function canUndoClaim(group: { archivedAt: string | null }): boolean {
+  return group.archivedAt === null;
+}
+
 export interface ClaimableMember {
   id: string;
   displayName: string;

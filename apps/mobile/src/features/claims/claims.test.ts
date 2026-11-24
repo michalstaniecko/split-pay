@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { activeClaims, joinChoices } from './claims';
+import { activeClaims, canUndoClaim, joinChoices } from './claims';
 
 const claim = (id: string, claimedAt: string, undoneAt: string | null = null) => ({
   id,
@@ -17,6 +17,16 @@ describe('activeClaims', () => {
     const b = claim('b', '2026-07-10T10:00:00.000Z', '2026-07-10T11:00:00.000Z');
     const c = claim('c', '2026-07-10T09:00:00.000Z');
     expect(activeClaims([a, b, c]).map((x) => x.id)).toEqual(['c', 'a']);
+  });
+});
+
+describe('canUndoClaim', () => {
+  it('offers undo in an active group', () => {
+    expect(canUndoClaim({ archivedAt: null })).toBe(true);
+  });
+
+  it('hides undo in an archived group (read-only, the API answers 409)', () => {
+    expect(canUndoClaim({ archivedAt: '2026-08-01T00:00:00.000Z' })).toBe(false);
   });
 });
 

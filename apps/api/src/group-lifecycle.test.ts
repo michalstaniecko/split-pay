@@ -102,6 +102,17 @@ describe('group lifecycle: archive, leave, delete', () => {
       expect(await claim.json()).toEqual({ error: 'archived' });
     });
 
+    it('a member can still mute or unmute an archived group (personal setting)', async () => {
+      const { groupId, g } = await setup();
+      await parseResponse(g.archive.$put({ param: { groupId } }));
+
+      const muted = await g.notifications.$put({ param: { groupId }, json: { enabled: false } });
+      expect(muted.status).toBe(200);
+      expect(await parseResponse(g.notifications.$get({ param: { groupId } }))).toEqual({ enabled: false });
+      await parseResponse(g.notifications.$put({ param: { groupId }, json: { enabled: true } }));
+      expect(await parseResponse(g.notifications.$get({ param: { groupId } }))).toEqual({ enabled: true });
+    });
+
     it('after unarchiving, writes work again', async () => {
       const { groupId, aniaId, bartekId, g } = await setup();
       await parseResponse(g.archive.$put({ param: { groupId } }));

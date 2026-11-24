@@ -9,6 +9,7 @@ import {
   minorUnitDigits,
 } from '@split-pay/shared';
 import { DetailedError } from 'hono/client';
+import { decimalSeparator } from '../../i18n/locale';
 import { type ExpenseForm, type ExpenseGroup, type ParsedExpenseForm, parseExpenseForm } from './expense-draft';
 import { initialPayersForm, initialSplitForm, type SplitForm } from './split-form';
 
@@ -102,7 +103,7 @@ export function editedEntry(
 
 /** "Kopiuj kwotę": the bare number in the locale's decimal format, no currency, no grouping. */
 export function amountForClipboard(minor: MinorAmount, currency: CurrencyCode, locale: string): string {
-  const separator = new Intl.NumberFormat(locale).formatToParts(1.5).find((p) => p.type === 'decimal')?.value ?? '.';
+  const separator = decimalSeparator(locale);
   const digits = minorUnitDigits(currency);
   if (digits === 0) return String(minor);
   const text = String(minor).padStart(digits + 1, '0');
