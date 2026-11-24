@@ -36,6 +36,7 @@ export function toEntryDto(row: EntryRow): Entry {
     groupId: row.groupId,
     version: row.version,
     createdBy: row.createdBy,
+    createdByMember: row.createdByMember,
     createdAt: iso(row.createdAt),
     updatedAt: iso(row.updatedAt),
     deletedAt: row.deletedAt ? iso(row.deletedAt) : null,
@@ -67,6 +68,7 @@ export function toEntryRow(entry: Entry): EntryInsert {
     kind: entry.kind,
     version: entry.version,
     createdBy: entry.createdBy,
+    createdByMember: entry.createdByMember,
     date: entry.date,
     amount: entry.amount,
     currency: entry.currency,
@@ -104,7 +106,12 @@ export async function createEntry(
   context: { group: Group; members: readonly Member[]; userId: Id; now?: Date },
 ): Promise<CreateEntryResult> {
   const now = context.now ?? new Date();
-  const parsed = entryFromNew(input, { groupId: context.group.id, createdBy: context.userId, now: iso(now) });
+  const parsed = entryFromNew(input, {
+    groupId: context.group.id,
+    createdBy: context.userId,
+    createdByMember: context.members.find((m) => m.userId === context.userId)?.id ?? null,
+    now: iso(now),
+  });
   if (!parsed.success) {
     return { status: 'invalid', issues: parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`) };
   }
@@ -374,7 +381,8 @@ export async function editEntry(
   }
 
   // Every kind-specific column is rewritten, so a changed kind leaves no stale values behind.
-  const { id: _id, groupId: _groupId, createdBy: _by, createdAt: _at, ...changes } = toEntryRow(parsed.data);
+  const { id: _id, groupId: _groupId, createdBy: _by, createdByMember: _byMember, createdAt: _at, ...changes } =
+    toEntryRow(parsed.data);
   const [updated] = await tx
     .update(entries)
     .set({

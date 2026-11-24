@@ -65,6 +65,7 @@ describe('editing and deleting entries', () => {
       groupId: created.groupId,
       version: 2,
       createdBy: ania.userId,
+      createdByMember: created.createdByMember,
       createdAt: created.createdAt,
       updatedAt: expect.any(String),
       deletedAt: null,

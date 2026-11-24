@@ -366,16 +366,27 @@ describe('change history', () => {
     expect((await client().groups[':groupId'].changes.$get({ param: { groupId }, query: {} })).status).toBe(401);
   });
 
-  it('deleting an account removes its names from the history', async () => {
+  it('deleting an account keeps its names in the history by default (ADR-0019)', async () => {
     const { bartek, bartekId, g, groupId, history } = await setup();
     await parseResponse(
       g(bartek).members[':memberId'].$patch({ param: { groupId, memberId: bartekId }, json: { displayName: 'Bartłomiej K.' } }),
     );
-    await parseResponse(client(bartek).me.$delete({ json: { locale: 'pl' } }));
+    await parseResponse(client(bartek).me.$delete({ json: {} }));
 
-    const names = (await history())
-      .filter((c) => c.targetId === bartekId)
-      .flatMap((c) => [JSON.stringify(c.before), JSON.stringify(c.after)]);
+    const rename = (await history()).find((c) => c.kind === 'member.rename' && c.targetId === bartekId);
+    expect(rename?.after).toEqual({ displayName: 'Bartłomiej K.' });
+  });
+
+  it('deleting an account with its name removes its names from the history (marker)', async () => {
+    const { bartek, bartekId, g, groupId, history } = await setup();
+    await parseResponse(
+      g(bartek).members[':memberId'].$patch({ param: { groupId, memberId: bartekId }, json: { displayName: 'Bartłomiej K.' } }),
+    );
+    await parseResponse(client(bartek).me.$delete({ json: { removeName: true } }));
+
+    const mine = (await history()).filter((c) => c.targetId === bartekId);
+    expect(mine.find((c) => c.kind === 'member.rename')).toMatchObject({ before: { displayName: null }, after: { displayName: null } });
+    const names = mine.flatMap((c) => [JSON.stringify(c.before), JSON.stringify(c.after)]);
     expect(names.join(' ')).not.toMatch(/bart/i);
   });
 });

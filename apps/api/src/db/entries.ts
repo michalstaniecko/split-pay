@@ -33,6 +33,11 @@ export const entries = pgTable(
      * group's history (ADR-0010).
      */
     createdBy: uuid().notNull(),
+    /**
+     * The member who added the entry ("added by", ADR-0019) — survives account
+     * deletion. `null` only when unknown (author gone before this column).
+     */
+    createdByMember: uuid(),
     date: date({ mode: 'string' }).notNull(),
     /** Minor units of `currency` (ADR-0003). */
     amount: bigint({ mode: 'number' }).notNull(),

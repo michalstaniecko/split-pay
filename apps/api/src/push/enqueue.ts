@@ -70,6 +70,7 @@ export async function enqueueNotification(db: Db, input: NotifyInput): Promise<v
 
   const { event } = input;
   const actorName =
+    // Empty = no name (removed, ADR-0019): the push reads "Deleted user" in the recipient's language.
     input.actorName ?? groupMembers.find((m) => m.userId === input.actorUserId)?.displayName ?? '';
   const details: Omit<QueueInsert, 'id' | 'recipientUserId' | 'kind'> = {
     groupId: input.groupId,
@@ -98,7 +99,7 @@ export async function notifyClaim(
     actorUserId: userId,
     actorName: claimerName,
     event: { type: 'claim', memberId },
-    ...(member ? { memberName: member.displayName } : {}),
+    ...(member?.displayName ? { memberName: member.displayName } : {}),
   });
 }
 

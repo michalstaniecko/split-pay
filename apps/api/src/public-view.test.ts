@@ -105,7 +105,7 @@ describe('public view-only web API (group link, no session)', () => {
       amount: 10_000,
       receiptPhotoId: null,
       createdBy: '00000000-0000-0000-0000-000000000000',
-      addedBy: aniaId,
+      createdByMember: aniaId,
     });
     expectNoPrivateData(body, [ania.userId, bartek.userId]);
   });

@@ -353,7 +353,7 @@ describe('push notifications', () => {
 
   it('deleting the account deletes its push tokens', async () => {
     const { bartek } = await setup();
-    const res = await client(bartek).me.$delete({ json: { locale: 'pl' } });
+    const res = await client(bartek).me.$delete({ json: {} });
     expect(res.status).toBe(200);
     const rows = await testDb.pool.query('SELECT token FROM push_tokens');
     expect(rows.rows).toEqual([{ token: 'ExponentPushToken[kasia]' }]);

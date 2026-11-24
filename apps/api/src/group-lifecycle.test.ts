@@ -207,7 +207,7 @@ describe('group lifecycle: archive, leave, delete', () => {
     it('once the owner deleted their account, any member can delete the group', async () => {
       const { ania, bartek, groupId } = await setup();
       expect((await client(bartek).groups[':groupId'].$delete({ param: { groupId } })).status).toBe(403);
-      await parseResponse(client(ania).me.$delete({ json: { locale: 'pl' } }));
+      await parseResponse(client(ania).me.$delete({ json: {} }));
 
       expect((await client(bartek).groups[':groupId'].$delete({ param: { groupId } })).status).toBe(200);
     });
