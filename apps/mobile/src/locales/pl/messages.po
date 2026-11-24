@@ -1078,6 +1078,7 @@ msgstr "Po równo"
 msgid "Pobieram kurs EBC…"
 msgstr "Pobieram kurs EBC…"
 
+#: src/features/web-view/claim-banner.tsx
 #: src/features/web-view/web-footer.tsx
 msgid "Pobierz aplikację"
 msgstr "Pobierz aplikację"
@@ -1428,6 +1429,10 @@ msgstr "To nie wygląda na numer telefonu."
 #: src/features/web-view/web-footer.tsx
 msgid "To podgląd tylko do odczytu. Dodawaj wydatki w aplikacji."
 msgstr "To podgląd tylko do odczytu. Dodawaj wydatki w aplikacji."
+
+#: src/features/web-view/claim-banner.tsx
+msgid "To Twój profil — przejmij go w aplikacji"
+msgstr "To Twój profil — przejmij go w aplikacji"
 
 #: src/features/balances/balances-view.tsx
 msgid "Tobie"

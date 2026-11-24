@@ -10,6 +10,7 @@ import { BalanceBannerView } from '@/features/balances/balance-banner';
 import { conversationItems } from '@/features/entries/conversation';
 import { DaySeparator, EntryBubble } from '@/features/entries/entry-bubble';
 import { SettlementSystemMessage } from '@/features/settlements/settlement-system-message';
+import { ClaimBanner } from '@/features/web-view/claim-banner';
 import { PublicError } from '@/features/web-view/public-error';
 import {
   type PublicEntry,
@@ -20,13 +21,15 @@ import {
 } from '@/features/web-view/public-view-query';
 import { useThisIsMe } from '@/features/web-view/this-is-me';
 import { WebFooter } from '@/features/web-view/web-footer';
+import { claimBannerMember } from '@/features/web-view/web-view';
 
 /**
  * The view-only web Conversation for a group link (SPEC "Web interface"):
  * the same layout as the app, read-only — balance banner, bubbles by entry
  * date, no composer and no long-press menu. "This is me" (remembered in the
  * browser) puts that member's bubbles on the end edge and drives the banner.
- * The header opens the limited Group info. Native: `index.tsx` (join screen).
+ * The header opens the limited Group info. A personal claim link adds a
+ * banner naming its member, with "download the app". Native: `index.tsx` (join screen).
  */
 export default function PublicConversationScreen() {
   const { theme } = useUnistyles();
@@ -45,6 +48,7 @@ function PublicConversation({ token, data }: { token: string; data: PublicGroup 
   const entries = useQuery(publicEntriesQuery(token));
   const balances = useQuery(publicBalancesQuery(token));
   const { me } = useThisIsMe(data);
+  const claimMember = claimBannerMember(data);
   const openInfo = () => router.push({ pathname: '/g/[token]/info', params: { token } });
 
   return (
@@ -76,6 +80,7 @@ function PublicConversation({ token, data }: { token: string; data: PublicGroup 
           ),
         }}
       />
+      {claimMember ? <ClaimBanner displayName={claimMember.displayName} /> : null}
       {me === null ? (
         <Pressable
           accessibilityRole="button"
