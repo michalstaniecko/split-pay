@@ -12,13 +12,14 @@
       "infoPlist": {
         "CFBundleAllowMixedLocalizations": true
       },
-      "bundleIdentifier": "com.website.ihumbak.split-pay"
+      "bundleIdentifier": "com.website.ihumbak.splitpay"
     },
     "locales": {
       "pl": "./app-locales/pl.json",
       "en": "./app-locales/en.json"
     },
     "android": {
+      "package": "com.website.ihumbak.splitpay",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
