@@ -1,8 +1,8 @@
 import { QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { SplashScreen, Stack } from 'expo-router';
 import { useEffect } from 'react';
-import { useLastKnownBlocked } from '@/features/moderation/blocked-status-store';
-import { sessionArea } from '@/features/moderation/moderation';
+import { blockedStatus } from '@/features/moderation/blocked-status-store';
+import { useSessionArea } from '@/features/moderation/use-session-area';
 import { meQuery } from '@/features/profile/me-query';
 import { LocaleProvider } from '@/i18n/locale-provider';
 import { authClient } from '@/lib/auth-client';
@@ -39,8 +39,7 @@ function RootNavigator() {
 
   // Offline or on an error, the status this device last saw keeps a blocked
   // user out of the inbox (the offline cache would otherwise show it).
-  const lastKnownBlocked = useLastKnownBlocked({ pending: isPending, userId: session?.user.id }, me.data);
-  const area = sessionArea(signedIn, me.data, lastKnownBlocked);
+  const area = useSessionArea({ pending: isPending, userId: session?.user.id }, me.data, blockedStatus);
   // Where a guarded route sends the user instead (e.g. the app's start URL "/" while signed out).
   const home = area === 'auth' ? '/sign-in' : area === 'blocked' ? '/blocked' : '/';
   return (
