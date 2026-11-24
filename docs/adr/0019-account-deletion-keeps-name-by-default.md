@@ -1,10 +1,10 @@
 # Account deletion keeps the member's name by default
 
-ADR-0010 turned a deleted account into a member without an account named "Deleted user". In practice that name hid who the person was from the friends whose balances still include them. The display name is not real identity data: the app never asks for a real name, and other members often typed it themselves. So deletion now offers two choices. **"Usuń konto"** (the default) removes the email, sign-in methods, avatar and payout details, and leaves the member in every group as a member without an account with their **last name**. **"Usuń konto i moją nazwę z grup"** does the same and also clears the name. A cleared name is stored as a marker, not as text, and each viewer sees it as "Usunięty użytkownik" / "Deleted user" in their own language.
+ADR-0010 turned a deleted account into a member without an account named "Deleted user". In practice that name hid who the person was from the friends whose balances still include them. The display name is not real identity data: the app never asks for a real name, and other members often typed it themselves. So deletion now offers two choices. **"Usuń konto"** (the default) removes the email, sign-in methods, avatar and payout details, and leaves the member in every group as a member without an account with their **last name**. **"Usuń konto i moją nazwę z grup"** does the same and also clears the name. A cleared name is stored as a marker, not as text, and each viewer sees it as "Usunięte konto" / "Deleted user" in their own language.
 
 Every entry also remembers which **member** added it, not only which user. Deleting the account no longer turns "added by" into "unknown person". It shows that member's current name.
 
-A **blocked** user can still sign in, but only to a "Konto zablokowane" screen whose single action is account deletion. That way the right to erasure (GDPR) and Apple's in-app deletion requirement work without manual support.
+A **blocked** user can still sign in, but only to a "Konto zablokowane" screen whose only actions are signing out and account deletion. That way the right to erasure (GDPR) and Apple's in-app deletion requirement work without manual support.
 
 ## Consequences
 
