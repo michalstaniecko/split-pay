@@ -16,6 +16,8 @@ export interface S3Config {
 
 const ALGORITHM = 'AWS4-HMAC-SHA256';
 const EMPTY_SHA256 = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
+/** SigV4 presigned URLs live at most 7 days. */
+const MAX_EXPIRES_SECONDS = 604800;
 
 const sha256Hex = (data: string) => createHash('sha256').update(data, 'utf8').digest('hex');
 const hmac = (key: string | Buffer, data: string) => createHmac('sha256', key).update(data, 'utf8').digest();
@@ -66,7 +68,7 @@ export function s3Storage(config: S3Config): ObjectStorage {
         ['X-Amz-Algorithm', ALGORITHM],
         ['X-Amz-Credential', scope(date).credential],
         ['X-Amz-Date', amzDate(date)],
-        ['X-Amz-Expires', String(expiresInSeconds)],
+        ['X-Amz-Expires', String(Math.min(expiresInSeconds, MAX_EXPIRES_SECONDS))],
         ['X-Amz-SignedHeaders', 'host'],
       ];
       const canonicalQuery = query
@@ -127,9 +129,11 @@ export function s3Storage(config: S3Config): ObjectStorage {
           method: 'DELETE',
           headers: { ...sent, authorization },
         });
+        // The body (error XML) is never surfaced: it may carry store internals into logs.
+        await res.body?.cancel();
         // 404: already gone — deleting is idempotent.
         if (!res.ok && res.status !== 404) {
-          throw new Error(`object storage refused to delete ${key}: ${res.status} ${await res.text()}`);
+          throw new Error(`object storage refused to delete ${key}: ${res.status}`);
         }
       }
     },
