@@ -11,7 +11,7 @@ import type { ObjectStorage } from '../storage/object-storage';
 import { balancesRoutes, groupSettingsRoutes } from './balances';
 import { memberIdOfUser, recordChange } from './change-log';
 import { deltaSyncRoutes } from './delta-sync';
-import { entriesRoutes, latestEntries } from './entries';
+import { entriesRoutes, latestEntries, latestEntriesByOthers } from './entries';
 import { historyRoutes } from './history';
 import { claimLinkRoutes, claimRoutes } from './claims';
 import { groupLifecycleRoutes, rejectWritesToArchived } from './group-lifecycle';
@@ -96,12 +96,18 @@ export const groupsRoutes = ({
           .from(groups)
           .innerJoin(members, and(eq(members.groupId, groups.id), eq(members.userId, c.get('user').id)))
           .orderBy(desc(groups.lastActivityAt), desc(groups.createdAt), asc(groups.id));
-        const previews = await latestEntries(
-          db,
-          rows.map((r) => r.group.id),
-        );
+        const groupIds = rows.map((r) => r.group.id);
+        const previews = await latestEntries(db, groupIds);
+        const byOthers = await latestEntriesByOthers(db, groupIds, c.get('user').id);
         // `lastEntry`: the most recently added entry, previewed in the inbox row.
-        return c.json(rows.map((r) => ({ ...toGroupDto(r.group), lastEntry: previews.get(r.group.id) ?? null })));
+        // `lastEntryByOthersAt`: when someone else last added one (unread marker, #40).
+        return c.json(
+          rows.map((r) => ({
+            ...toGroupDto(r.group),
+            lastEntry: previews.get(r.group.id) ?? null,
+            lastEntryByOthersAt: byOthers.get(r.group.id) ?? null,
+          })),
+        );
       })
       .route('/:groupId/entries', entriesRoutes({ db }))
       /** Delta sync for the offline cache (ADR-0005): `routes/delta-sync.ts`. */

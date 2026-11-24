@@ -94,6 +94,47 @@ describe('groups', () => {
     expect(list[0]?.lastActivityAt).toEqual(expect.any(String));
   });
 
+  it('tells each member when someone else last added an entry (the inbox unread marker)', async () => {
+    const ania = await signIn('ania@example.com');
+    const bartek = await signIn('bartek@example.com');
+    const group = newGroup();
+    const { ownerMemberId } = await parseResponse(client(ania).groups.$post({ json: group }));
+    const { token } = await parseResponse(client(ania).groups[':groupId'].link.$get({ param: { groupId: group.id } }));
+    const { memberId: bartekId } = await parseResponse(client(bartek).links[':token'].join.$post({ param: { token } }));
+    const expense = (payer: string, title: string) => ({
+      kind: 'expense' as const,
+      id: randomUUID(),
+      date: '2026-07-11',
+      title,
+      amount: 10_000,
+      currency: 'PLN',
+      rateToBase: '1',
+      category: 'food' as const,
+      receiptPhotoId: null,
+      payers: [{ memberId: payer, amount: 10_000 }],
+      split: { mode: 'equal' as const, memberIds: [payer] },
+    });
+    const add = (session: typeof ania, payer: string, title: string) =>
+      parseResponse(client(session).groups[':groupId'].entries.$post({ param: { groupId: group.id }, json: expense(payer, title) }));
+    const inboxRow = async (session: typeof ania) =>
+      (await parseResponse(client(session).groups.$get())).find((g) => g.id === group.id)!;
+
+    expect((await inboxRow(ania)).lastEntryByOthersAt).toBeNull();
+
+    const pizza = await add(bartek, bartekId, 'Pizza');
+    // My own entries, even newer ones, never count.
+    const mine = await add(ania, ownerMemberId, 'Lody');
+    expect((await inboxRow(ania)).lastEntryByOthersAt).toBe(pizza.createdAt);
+    expect((await inboxRow(bartek)).lastEntryByOthersAt).toBe(mine.createdAt);
+
+    // A deleted entry no longer counts.
+    await client(bartek).groups[':groupId'].entries[':entryId'].$delete({
+      param: { groupId: group.id, entryId: pizza.id },
+      query: { baseVersion: String(pizza.version) },
+    });
+    expect((await inboxRow(ania)).lastEntryByOthersAt).toBeNull();
+  });
+
   it("gives no access to other users' groups", async () => {
     const ania = await signIn('ania@example.com');
     const bartek = await signIn('bartek@example.com');

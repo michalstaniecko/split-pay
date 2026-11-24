@@ -12,7 +12,7 @@ import {
   type NotificationEvent,
   validateEntryInGroup,
 } from '@split-pay/shared';
-import { and, asc, desc, eq, inArray, isNotNull, isNull } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, isNotNull, isNull, max, ne } from 'drizzle-orm';
 import { type Context, Hono } from 'hono';
 import type { Db } from '../db/client';
 import { entries, groups, members } from '../db/schema';
@@ -171,6 +171,21 @@ export async function latestEntries(db: Db, groupIds: readonly Id[]) {
       { id: r.id, kind: r.kind, title: r.title, amount: r.amount, currency: r.currency, createdAt: iso(r.createdAt) },
     ]),
   );
+}
+
+/**
+ * Per group, when someone other than this user last added a live entry
+ * (`createdAt`; edits don't count). The app compares it with when the group
+ * was last opened on the device to mark the inbox row unread (#40).
+ */
+export async function latestEntriesByOthers(db: Db, groupIds: readonly Id[], userId: string) {
+  if (groupIds.length === 0) return new Map<Id, string>();
+  const rows = await db
+    .select({ groupId: entries.groupId, at: max(entries.createdAt) })
+    .from(entries)
+    .where(and(inArray(entries.groupId, [...groupIds]), isNull(entries.deletedAt), ne(entries.createdBy, userId)))
+    .groupBy(entries.groupId);
+  return new Map(rows.flatMap((r): [Id, string][] => (r.at ? [[r.groupId, iso(r.at)]] : [])));
 }
 
 export interface EntryPreview {
