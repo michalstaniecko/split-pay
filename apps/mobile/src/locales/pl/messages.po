@@ -35,6 +35,11 @@ msgstr "{0}, {label}: zapłacone {1}, zużyte {2}"
 msgid "{0}, informacje o grupie"
 msgstr "{0}, informacje o grupie"
 
+#. placeholder {0}: group.name
+#: src/app/(app)/index.tsx
+msgid "{0}, nowe wpisy. {preview}"
+msgstr "{0}, nowe wpisy. {preview}"
+
 #. placeholder {0}: transfer.fromName
 #: src/features/notifications/nudge-button.tsx
 msgid "{0}: przypomniano dziś"
