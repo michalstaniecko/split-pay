@@ -1,9 +1,12 @@
-import { openDatabaseAsync, type SQLiteBindValue } from 'expo-sqlite';
+import { deleteDatabaseAsync, openDatabaseAsync, type SQLiteBindValue, type SQLiteDatabase } from 'expo-sqlite';
 import { createLocalDb, type LocalDb } from './local-db';
 
 /** Opens (creating and migrating if needed) a local database file on the device (expo-sqlite). */
+const open = new Map<string, SQLiteDatabase>();
+
 export async function openLocalDb(name: string): Promise<LocalDb> {
   const sqlite = await openDatabaseAsync(name);
+  open.set(name, sqlite);
   await sqlite.execAsync('PRAGMA journal_mode = WAL;');
   return createLocalDb({
     all: async (sql, params) => {
@@ -20,4 +23,12 @@ export async function openLocalDb(name: string): Promise<LocalDb> {
     },
     exec: (sql) => sqlite.execAsync(sql),
   });
+}
+
+/** Closes (if open) and deletes a local database file — account deletion. */
+export async function deleteLocalDbFile(name: string): Promise<void> {
+  const sqlite = open.get(name);
+  open.delete(name);
+  await sqlite?.closeAsync().catch(() => undefined);
+  await deleteDatabaseAsync(name);
 }

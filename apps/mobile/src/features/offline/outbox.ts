@@ -70,10 +70,23 @@ export async function flushOutbox(
         return { sent, stopped: true, groupIds: [...groupIds] };
       case 'sent': {
         const values = entryRow(outcome.entry);
-        await db.batch([
-          db.delete(localOutbox).where(eq(localOutbox.seq, op.seq)),
-          db.insert(localEntries).values(values).onConflictDoUpdate({ target: localEntries.id, set: values }),
-        ]);
+        const now = await db.select().from(localOutbox).where(eq(localOutbox.entryId, op.entryId));
+        const row = now.find((r) => r.seq === op.seq);
+        if (row && JSON.stringify(row.payload) !== JSON.stringify(op.payload)) {
+          // Edited on this device while it was being sent (#23): send that as an edit of what the server now has.
+          await db
+            .update(localOutbox)
+            .set({ change: 'edit', baseVersion: outcome.entry.version })
+            .where(eq(localOutbox.seq, op.seq));
+        } else if (now.some((r) => r.seq !== op.seq)) {
+          // Later changes of the entry still wait: the cached copy stays my version until they are accepted too.
+          await db.delete(localOutbox).where(eq(localOutbox.seq, op.seq));
+        } else {
+          await db.batch([
+            db.delete(localOutbox).where(eq(localOutbox.seq, op.seq)),
+            db.insert(localEntries).values(values).onConflictDoUpdate({ target: localEntries.id, set: values }),
+          ]);
+        }
         sent += 1;
         groupIds.add(op.groupId);
         break;

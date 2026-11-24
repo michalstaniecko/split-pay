@@ -8,3 +8,6 @@ import type { LocalDb } from './local-db';
 export async function openLocalDb(_name: string): Promise<LocalDb> {
   throw new Error('The offline cache is not available on web');
 }
+
+/** Nothing to delete on web (no offline cache). */
+export async function deleteLocalDbFile(_name: string): Promise<void> {}

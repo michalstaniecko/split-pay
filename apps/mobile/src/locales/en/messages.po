@@ -115,10 +115,6 @@ msgstr "{payerName} and {otherPayers, plural, one {# other person} other {# othe
 msgid "{rest} i {last}"
 msgstr "{rest} and {last}"
 
-#: src/app/(app)/groups/[groupId]/entry-conflict.tsx
-msgid "{title} — usunięty"
-msgstr "{title} — deleted"
-
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
 #: src/features/entries/entry-bubble.tsx
 msgid "↓ Wpływ"
@@ -139,10 +135,6 @@ msgstr "📷 Take a photo"
 #: src/app/(auth)/sign-in.tsx
 msgid "Adres e-mail"
 msgstr "Email address"
-
-#: src/app/(app)/groups/[groupId]/entry-conflict.tsx
-msgid "Aktualna wersja"
-msgstr "Current version"
 
 #: src/app/(app)/_layout.tsx
 #: src/components/inbox-header-buttons.tsx
@@ -174,6 +166,12 @@ msgstr "Cancel"
 #: src/features/groups/group-lifecycle-section.tsx
 msgid "Archiwizuj grupę"
 msgstr "Archive group"
+
+#: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+#: src/app/(app)/groups/[groupId]/settle.tsx
+msgid "Bez internetu możesz edytować tylko wpisy dodane przez siebie."
+msgstr "Offline, you can only edit entries you added."
 
 #: src/app/(app)/groups/[groupId]/info.tsx
 #: src/app/g/[token]/info.tsx
@@ -443,6 +441,10 @@ msgstr "Entry history"
 msgid "Historia zmian"
 msgstr "Change history"
 
+#: src/app/(app)/groups/[groupId]/entry-conflict.tsx
+msgid "Ich wersja"
+msgstr "Their version"
+
 #: src/app/(app)/groups/[groupId]/member.tsx
 msgid "Imię"
 msgstr "Name"
@@ -673,6 +675,12 @@ msgstr "Theme"
 #: src/features/groups/group-settings-section.tsx
 msgid "Najmniej przelewów przy rozliczeniu. Wyłączone: każdy oddaje temu, kto za niego zapłacił."
 msgstr "Fewest transfers when settling up. Off: everyone pays back whoever paid for them."
+
+#: src/app/(app)/groups/[groupId]/expense-form.tsx
+#: src/app/(app)/groups/[groupId]/index.tsx
+#: src/app/(app)/groups/[groupId]/settle.tsx
+msgid "Najpierw rozwiąż konflikt tego wpisu (czerwony „!”)."
+msgstr "Resolve this entry's conflict first (red “!”)."
 
 #: src/features/balances/balance-banner.tsx
 msgid "Należy ci się {amount}"
@@ -1132,6 +1140,10 @@ msgstr "Remind: {0}"
 msgid "Przywróć z archiwum"
 msgstr "Unarchive"
 
+#: src/app/(app)/groups/[groupId]/entry-conflict.tsx
+msgid "Przywrócenie wpisu"
+msgstr "Restoring the entry"
+
 #: src/features/history/describe-change.ts
 msgid "Przywrócono {what}"
 msgstr "Restored {what}"
@@ -1361,6 +1373,10 @@ msgid "Twój udział {share}."
 msgstr "Your share {share}."
 
 #: src/app/(app)/groups/[groupId]/entry-conflict.tsx
+msgid "Twoja wersja"
+msgstr "Your version"
+
+#: src/app/(app)/groups/[groupId]/entry-conflict.tsx
 msgid "Twoje zmiany nie zostały zapisane."
 msgstr "Your changes were not saved."
 
@@ -1465,6 +1481,10 @@ msgstr "Delete “{name}” permanently?"
 msgid "Usunąć konto?"
 msgstr "Delete account?"
 
+#: src/app/(app)/groups/[groupId]/entry-conflict.tsx
+msgid "Usunięcie wpisu"
+msgstr "Deleting the entry"
+
 #: src/features/history/describe-change.ts
 msgid "Usunięto {what}"
 msgstr "Deleted {what}"
@@ -1473,6 +1493,10 @@ msgstr "Deleted {what}"
 #: src/app/(app)/groups/[groupId]/index.tsx
 msgid "Usunięto: {0}"
 msgstr "Deleted: {0}"
+
+#: src/app/(app)/groups/[groupId]/entry-conflict.tsx
+msgid "usunięty"
+msgstr "deleted"
 
 #: src/features/profile/delete-account-section.tsx
 msgid "Usuwanie konta…"
@@ -1506,14 +1530,6 @@ msgstr "Currency"
 #: src/app/(app)/new-group.tsx
 msgid "Waluta bazowa"
 msgstr "Base currency"
-
-#: src/app/(app)/groups/[groupId]/entry-conflict.tsx
-msgid "Wczytaj i edytuj"
-msgstr "Reload and edit"
-
-#: src/app/(app)/groups/[groupId]/entry-conflict.tsx
-msgid "Wczytaj ponownie"
-msgstr "Reload"
 
 #: src/features/web-view/sponsor-link.web.tsx
 msgid "Wesprzyj split-pay na GitHub Sponsors"
@@ -1645,6 +1661,10 @@ msgstr "Choose who received the money."
 msgid "Wybierz, kto zapłacił."
 msgstr "Choose who paid."
 
+#: src/app/(app)/groups/[groupId]/entry-conflict.tsx
+msgid "Wybierz, która wersja zostaje."
+msgstr "Choose which version to keep."
+
 #: src/features/history/describe-change.ts
 msgid "wydatek"
 msgstr "expense"
@@ -1721,6 +1741,18 @@ msgstr "What for?"
 #: src/app/(app)/quick-bill.tsx
 msgid "Za co? np. Pizza u Kasi"
 msgstr "What for? e.g. Pizza at Kasia's"
+
+#: src/app/(app)/groups/[groupId]/entry-conflict.tsx
+msgid "Zachowaj ich wersję"
+msgstr "Keep their version"
+
+#: src/app/(app)/groups/[groupId]/entry-conflict.tsx
+msgid "Zachowaj ich wersję i edytuj"
+msgstr "Keep their version and edit"
+
+#: src/app/(app)/groups/[groupId]/entry-conflict.tsx
+msgid "Zachowaj moją wersję"
+msgstr "Keep my version"
 
 #: src/features/entries/use-entry-labels.ts
 msgid "Zakupy spożywcze"
@@ -1846,7 +1878,7 @@ msgstr "Change photo"
 msgid "Zmień, kim jestem"
 msgstr "Change who I am"
 
-#. placeholder {0}: format.dateTime(current.updatedAt)
+#. placeholder {0}: format.dateTime(entry.updatedAt)
 #: src/app/(app)/groups/[groupId]/entry-conflict.tsx
 msgid "Zmieniono {0}"
 msgstr "Changed {0}"

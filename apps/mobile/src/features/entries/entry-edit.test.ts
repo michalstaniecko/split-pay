@@ -7,6 +7,7 @@ import {
   entryActions,
   expenseFormFromEntry,
   type FormEntry,
+  lockedOffline,
   versionConflictEntry,
 } from './entry-edit';
 import { withDate } from './expense-draft';
@@ -221,5 +222,21 @@ describe('entryActions', () => {
 
   it('only Historia and Kopiuj kwotę in an archived group', () => {
     expect(entryActions(pizza, { archivedAt: '2026-08-01T00:00:00.000Z' })).toEqual(['history', 'copyAmount']);
+  });
+
+  it('offline, only entries I added can be edited or deleted (ADR-0005)', () => {
+    const author = pizza.createdBy;
+    expect(entryActions(pizza, open, { offline: true, userId: author })).toEqual(['edit', 'delete', 'history', 'copyAmount']);
+    expect(entryActions(pizza, open, { offline: true, userId: KASIA })).toEqual(['history', 'copyAmount']);
+    expect(entryActions(pizza, open, { offline: false, userId: KASIA })).toEqual(['edit', 'delete', 'history', 'copyAmount']);
+  });
+});
+
+describe('lockedOffline', () => {
+  it("others' entries are read-only offline; mine never are", () => {
+    expect(lockedOffline(pizza, { offline: true, userId: KASIA })).toBe(true);
+    expect(lockedOffline(pizza, { offline: true, userId: undefined })).toBe(true);
+    expect(lockedOffline(pizza, { offline: true, userId: pizza.createdBy })).toBe(false);
+    expect(lockedOffline(pizza, { offline: false, userId: KASIA })).toBe(false);
   });
 });
