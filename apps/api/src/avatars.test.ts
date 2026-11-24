@@ -54,7 +54,9 @@ describe('avatars (ADR-0006)', () => {
     await setAvatar(bartek, issued.photoId);
 
     const seen = await parseResponse(groupAvatars(bartek));
-    expect(seen.avatars).toEqual([{ memberId: bartekMemberId, url: expect.stringContaining(issued.photoId) }]);
+    expect(seen.avatars).toEqual([
+      { memberId: bartekMemberId, photoId: issued.photoId, url: expect.stringContaining(issued.photoId) },
+    ]);
     expect((await groupAvatars(celina)).status).toBe(404);
     expect((await app.request(`/groups/${group.id}/avatars`)).status).toBe(401);
   });

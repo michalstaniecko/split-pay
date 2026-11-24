@@ -1,7 +1,7 @@
 import { useLingui } from '@lingui/react/macro';
 import { useQuery } from '@tanstack/react-query';
 import { Image } from 'expo-image';
-import { useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StyleSheet } from 'react-native-unistyles';
@@ -11,7 +11,7 @@ import { closeSheet } from '@/lib/close-sheet';
 
 /**
  * Full-screen receipt viewer (from the entry detail sheet): the whole photo
- * on black, pinch to zoom (iOS scroll view zoom), "Zamknij".
+ * on black, pinch to zoom (iOS scroll view zoom), "Zamknij", "Zgłoś" (#27).
  */
 export default function ReceiptViewer() {
   const { t } = useLingui();
@@ -50,6 +50,16 @@ export default function ReceiptViewer() {
         style={[styles.close, { top: insets.top + 12 }]}>
         <Text style={styles.text}>{t`Zamknij`}</Text>
       </Pressable>
+      {/* DSA reporting (#27). */}
+      {receipt ? (
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => router.push({ pathname: '/report-photo', params: { photoId: receipt.photoId } })}
+          hitSlop={12}
+          style={[styles.report, { top: insets.top + 12 }]}>
+          <Text style={styles.text}>{t`Zgłoś`}</Text>
+        </Pressable>
+      ) : null}
     </View>
   );
 }
@@ -75,6 +85,14 @@ const styles = StyleSheet.create((theme) => ({
   close: {
     position: 'absolute',
     end: theme.space(4),
+    paddingVertical: theme.space(2),
+    paddingHorizontal: theme.space(3),
+    borderRadius: theme.radius.pill,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+  },
+  report: {
+    position: 'absolute',
+    start: theme.space(4),
     paddingVertical: theme.space(2),
     paddingHorizontal: theme.space(3),
     borderRadius: theme.radius.pill,

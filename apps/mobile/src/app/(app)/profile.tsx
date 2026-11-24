@@ -1,5 +1,6 @@
 import { useLingui } from '@lingui/react/macro';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { router } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { StyleSheet } from 'react-native-unistyles';
@@ -50,6 +51,10 @@ export default function ProfileScreen() {
         <LanguagePicker />
         <ThemePicker />
         <Button variant="secondary" label={t`Wyloguj się`} onPress={() => void signOut()} loading={signingOut} />
+        {/* Admins only (ADMIN_EMAILS on the API, #27). */}
+        {me.data?.isAdmin ? (
+          <Button variant="secondary" label={t`Panel administratora`} onPress={() => router.push('/admin')} />
+        ) : null}
         <AboutSection />
         <DeleteAccountSection />
       </PlaceholderScreen>

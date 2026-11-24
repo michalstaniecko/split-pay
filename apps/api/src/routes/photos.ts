@@ -187,7 +187,7 @@ export const groupAvatarRoutes = ({ db, storage }: { db: Db; storage: ObjectStor
     if (!group) return c.json({ error: 'not_found' as const }, 404);
     if (!storage) return c.json(storageUnavailable, 503);
     const rows = await db
-      .select({ memberId: members.id, key: photos.objectKey })
+      .select({ memberId: members.id, photoId: photos.id, key: photos.objectKey })
       .from(members)
       .innerJoin(
         photos,
@@ -196,7 +196,7 @@ export const groupAvatarRoutes = ({ db, storage }: { db: Db; storage: ObjectStor
       .where(eq(members.groupId, group.id));
     const expiresAt = readExpiry();
     const avatars = await Promise.all(
-      rows.map(async (r) => ({ memberId: r.memberId, url: await readUrl(storage, r.key) })),
+      rows.map(async (r) => ({ memberId: r.memberId, photoId: r.photoId, url: await readUrl(storage, r.key) })),
     );
     return c.json({ avatars, expiresAt }, 200);
   });

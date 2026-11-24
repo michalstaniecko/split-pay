@@ -15,7 +15,7 @@ import { GroupSettingsSection } from '@/features/groups/group-settings-section';
 import { type GroupDetail, groupQuery } from '@/features/groups/groups-query';
 import { type MemberRow, memberRows } from '@/features/groups/member-form';
 import { HistorySection } from '@/features/history/history-section';
-import { MemberAvatar } from '@/features/photos/member-avatar';
+import { ReportableMemberAvatar } from '@/features/moderation/reportable-member-avatar';
 import { groupAvatarsQuery } from '@/features/photos/photos-query';
 import { useFormatters } from '@/i18n/use-formatters';
 import { authClient } from '@/lib/auth-client';
@@ -64,7 +64,7 @@ function GroupInfo({ group }: { group: GroupDetail }) {
         subtitle={t`${plural(count, { one: '# osoba', few: '# osoby', many: '# osób', other: '# osoby' })}`}>
         {rows.map((row) => (
           <View key={row.id} style={styles.memberLine}>
-            <MemberAvatar name={row.displayName} url={avatars?.get(row.id)} size={32} />
+            <ReportableMemberAvatar groupId={group.id} member={row} url={avatars?.get(row.id)} size={32} />
             <MemberItem row={row} onPress={() => openMemberSheet(row.id)} />
             {row.withoutAccount ? <PersonalClaimLinkButton groupId={group.id} groupName={group.name} member={row} /> : null}
           </View>
