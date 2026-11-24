@@ -106,9 +106,7 @@ describe('group lifecycle: archive, leave, delete', () => {
       const g = client(bartek).groups[':groupId'];
       await parseResponse(g.archive.$put({ param: { groupId } }));
 
-      const revoked = await g.link.revoke.$post({ param: { groupId } });
-      expect(revoked.status).toBe(200);
-      const { token: fresh } = await revoked.json();
+      const { token: fresh } = await parseResponse(g.link.revoke.$post({ param: { groupId } }));
       expect(fresh).not.toBe(token);
       expect(await parseResponse(g.link.$get({ param: { groupId } }))).toEqual({ token: fresh });
       const kasia = await signIn('kasia@example.com');
