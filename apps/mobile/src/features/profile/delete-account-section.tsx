@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { parseResponse } from 'hono/client';
 import { Alert, Pressable, Text, View } from 'react-native';
 import { StyleSheet } from 'react-native-unistyles';
+import { forgetLocalUser } from '@/features/offline/local-session';
 import { useLocale } from '@/i18n/locale-provider';
 import { api } from '@/lib/api';
 import { authClient } from '@/lib/auth-client';
@@ -17,12 +18,15 @@ export function DeleteAccountSection() {
   const { t } = useLingui();
   const { locale } = useLocale();
   const queryClient = useQueryClient();
+  const userId = authClient.useSession().data?.user.id;
   const deleteAccount = useMutation({
     mutationFn: () => parseResponse(api.me.$delete({ json: { locale } })),
     onSuccess: async () => {
       // The server session is gone already; this clears the stored cookie and session.
       await authClient.signOut().catch(() => undefined);
       queryClient.clear();
+      // The deleted account's offline cache and outbox leave the device too.
+      if (userId) await forgetLocalUser(userId).catch(() => undefined);
     },
     onError: () => Alert.alert(t`Nie udało się usunąć konta. Spróbuj ponownie.`),
   });

@@ -8,13 +8,15 @@ import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { Button } from '@/components/button';
 import { GroupNotFound } from '@/components/group-not-found';
 import { CATEGORY_ICONS, entriesQuery } from '@/features/entries/entries-query';
-import { editScreen } from '@/features/entries/entry-edit';
+import { editScreen, lockedOffline } from '@/features/entries/entry-edit';
 import { useEntryLabels } from '@/features/entries/use-entry-labels';
 import { type GroupDetail, groupQuery } from '@/features/groups/groups-query';
+import { useIsOnline } from '@/features/offline/use-offline-sync';
 import { ReceiptPhoto } from '@/features/photos/receipt-photo';
 import { formatRate } from '@/features/rates/rate-format';
 import { useLocale } from '@/i18n/locale-provider';
 import { useFormatters } from '@/i18n/use-formatters';
+import { authClient } from '@/lib/auth-client';
 import { closeSheet } from '@/lib/close-sheet';
 
 /**
@@ -56,6 +58,10 @@ function EntryDetail({ group, entry }: { group: GroupDetail; entry: Entry }) {
   const addedBy = group.members.find((m) => m.userId === entry.createdBy)?.displayName ?? t`nieznana osoba`;
   const amount = (minor: number) => format.amount(minor, entry.currency);
   const currencyRows = <CurrencyRows entry={entry} baseCurrency={group.baseCurrency} />;
+  const online = useIsOnline();
+  const userId = authClient.useSession().data?.user.id;
+  // Offline, only entries I added can be edited (ADR-0005).
+  const locked = lockedOffline(entry, { offline: !online, userId });
 
   return (
     <ScrollView contentContainerStyle={styles.content}>
@@ -106,7 +112,10 @@ function EntryDetail({ group, entry }: { group: GroupDetail; entry: Entry }) {
           <Text style={[styles.meta, styles.link]}>{t`edytowano ${format.dateTime(entry.updatedAt)}`}</Text>
         </Pressable>
       ) : null}
-      {group.archivedAt === null ? (
+      {group.archivedAt === null && locked ? (
+        <Text style={styles.meta}>{t`Bez internetu możesz edytować tylko wpisy dodane przez siebie.`}</Text>
+      ) : null}
+      {group.archivedAt === null && !locked ? (
         <Button
           label={t`Edytuj`}
           onPress={() => router.replace({ pathname: editScreen(entry), params: { groupId: group.id, entryId: entry.id } })}

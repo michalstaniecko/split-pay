@@ -1,14 +1,21 @@
 import { type Category, type Entry, entryFromNew, type NewEntry, type NewQuickBill } from '@split-pay/shared';
-import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
+import { onlineManager, queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import { parseResponse } from 'hono/client';
 import { groupKeys } from '@/features/groups/groups-query';
 import { localDb, localUserId } from '@/features/offline/local-session';
 import { enqueueCreate, isGroupSynced, readEntries, saveEntry } from '@/features/offline/local-store';
+import {
+  enqueueDelete,
+  enqueueEdit,
+  enqueueRestore,
+  LockedOfflineError,
+  mustQueueChange,
+} from '@/features/offline/offline-changes';
 import { clearConflict, markConflict } from '@/features/offline/outbox';
 import { invalidateOutbox } from '@/features/offline/outbox-query';
 import { attemptSync, flushNow, syncGroup } from '@/features/offline/sync';
 import { api } from '@/lib/api';
-import { versionConflictEntry } from './entry-edit';
+import { lockedOffline, versionConflictEntry } from './entry-edit';
 
 /** Entry query keys live under the group's key, so invalidating the group refreshes them too. */
 export const entryKeys = {
@@ -57,6 +64,26 @@ export function useCreateEntry(groupId: string) {
   });
 }
 
+/**
+ * Runs a change of an existing entry through the outbox when it must wait
+ * (offline, or earlier changes of the entry still queued — #23): returns the
+ * local result and starts sending; `null` = go straight to the API. Offline,
+ * only my own entries can be changed (ADR-0005).
+ */
+/** Results of changes made through the outbox: already stored locally, nothing to confirm. */
+const queuedResults = new WeakSet<Entry>();
+
+async function queuedChange(entry: Entry, change: (db: Awaited<ReturnType<typeof localDb>>, now: string) => Promise<Entry>) {
+  const db = await localDb();
+  const online = onlineManager.isOnline();
+  if (!(await mustQueueChange(db, entry.id, online))) return null;
+  if (lockedOffline(entry, { offline: !online, userId: localUserId() })) throw new LockedOfflineError();
+  const result = await change(db, new Date().toISOString());
+  queuedResults.add(result);
+  void flushNow().catch(() => undefined);
+  return result;
+}
+
 /** Records a change refused as a version conflict: red "!" on the bubble (outbox state, #23 resolves it). */
 async function recordConflict(
   queryClient: ReturnType<typeof useQueryClient>,
@@ -69,6 +96,7 @@ async function recordConflict(
 
 /** Stores the server's copy of a changed entry in the cache and clears its conflict mark. */
 async function confirmChange(queryClient: ReturnType<typeof useQueryClient>, groupId: string, entry: Entry) {
+  if (queuedResults.has(entry)) return invalidateOutbox(queryClient, groupId);
   const db = await localDb();
   await saveEntry(db, entry);
   await clearConflict(db, entry.id);
@@ -89,11 +117,14 @@ function cacheEntry(queryClient: ReturnType<typeof useQueryClient>, groupId: str
  * version `base`. A 409 version conflict marks the entry in the outbox
  * (red "!" on the bubble, persisted in the outbox) and leaves the cache alone; the error is still
  * thrown to the caller (use `versionConflictEntry(error)`).
+ * Offline (or behind queued changes of the entry) the edit is queued instead
+ * and resolves to my local version (🕓 on the bubble).
  */
 export function useEditEntry(groupId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ base, input }: { base: Entry; input: NewEntry }): Promise<Entry> =>
+      (await queuedChange(base, (db, now) => enqueueEdit(db, base, input, now))) ??
       parseResponse(
         api.groups[':groupId'].entries[':entryId'].$put({
           param: { groupId, entryId: base.id },
@@ -133,6 +164,7 @@ export function useDeleteEntry(groupId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (entry: Entry): Promise<Entry> =>
+      (await queuedChange(entry, (db, now) => enqueueDelete(db, entry, now))) ??
       parseResponse(
         api.groups[':groupId'].entries[':entryId'].$delete({
           param: { groupId, entryId: entry.id },
@@ -172,6 +204,7 @@ export function useRestoreEntry(groupId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (deleted: Entry): Promise<Entry> =>
+      (await queuedChange(deleted, (db, now) => enqueueRestore(db, deleted, now))) ??
       parseResponse(
         api.groups[':groupId'].entries[':entryId'].restore.$post({
           param: { groupId, entryId: deleted.id },

@@ -7,6 +7,7 @@ import type { Db } from './db/client';
 import { createRequireAdmin, isAdminEmail } from './middleware/require-admin';
 import { type AuthEnv, createRequireUser } from './middleware/require-user';
 import { deleteAccount } from './routes/account';
+import { activityRoutes } from './routes/activity';
 import { adminRoutes, reportRoutes } from './routes/moderation';
 import { linksRoutes } from './routes/group-links';
 import { groupsRoutes } from './routes/groups';
@@ -67,6 +68,8 @@ export const createApp = ({ auth, db, adminEmails = [], flags = defaultFeatureFl
       .route('/me/push-tokens', myPushTokenRoutes({ db, requireUser }))
       .route('/me/notifications', myNotificationSettingsRoutes({ db, requireUser }))
       .route('/groups', groupsRoutes({ db, requireUser, storage }))
+      /** Activity: changes from all my groups, newest first (#21). */
+      .route('/activity', activityRoutes({ db, requireUser }))
       /** Quick bill: group + members without an account + its expense in one step. */
       .route('/quick-bills', quickBillsRoutes({ db, requireUser }))
       /** Opening a group link in the app: preview + join. */
