@@ -1415,10 +1415,6 @@ msgid "Ten link jest dla osoby „{personalName}”. Przejmij ten profil razem z
 msgstr "Ten link jest dla osoby „{personalName}”. Przejmij ten profil razem z historią wydatków."
 
 #: src/app/g/[token]/index.tsx
-msgid "Ten profil ma już konto. Poproś kogoś z grupy o link grupy."
-msgstr "Ten profil ma już konto. Poproś kogoś z grupy o link grupy."
-
-#: src/app/g/[token]/index.tsx
 msgid "Ten profil został już przejęty."
 msgstr "Ten profil został już przejęty."
 

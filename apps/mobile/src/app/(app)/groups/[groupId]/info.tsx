@@ -8,6 +8,7 @@ import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { GroupAvatar } from '@/components/group-avatar';
 import { GroupNotFound } from '@/components/group-not-found';
 import { PersonalClaimLinkButton } from '@/features/claims/personal-claim-link-button';
+import { canShareLinks } from '@/features/group-link/group-link';
 import { GroupLinkSection } from '@/features/group-link/group-link-section';
 import { AttendanceGridView } from '@/features/groups/attendance-grid-view';
 import { GroupLifecycleSection } from '@/features/groups/group-lifecycle-section';
@@ -21,7 +22,7 @@ import { useFormatters } from '@/i18n/use-formatters';
 import { authClient } from '@/lib/auth-client';
 
 /**
- * Group info (GLOSSARY): members, group link, Stats, change history,
+ * Group info (GLOSSARY): members, group link (not when archived), Stats, change history,
  * settings, then leave / archive / delete at the bottom.
  */
 export default function GroupInfoScreen() {
@@ -39,6 +40,7 @@ function GroupInfo({ group }: { group: GroupDetail }) {
   const format = useFormatters();
   const { data: session } = authClient.useSession();
   const archived = group.archivedAt !== null;
+  const shareLinks = canShareLinks(group);
   // Archived group: read-only, so no adding or renaming members.
   const rows = memberRows(group, session?.user.id).map((row) => (archived ? { ...row, canRename: false } : row));
   const openMemberSheet = (memberId?: string) =>
@@ -68,7 +70,7 @@ function GroupInfo({ group }: { group: GroupDetail }) {
           <View key={row.id} style={styles.memberLine}>
             <ReportableMemberAvatar groupId={group.id} member={row} url={avatars?.get(row.id)} size={32} />
             <MemberItem row={row} onPress={() => openMemberSheet(row.id)} />
-            {row.withoutAccount ? <PersonalClaimLinkButton groupId={group.id} groupName={group.name} member={row} /> : null}
+            {shareLinks && row.withoutAccount ? <PersonalClaimLinkButton groupId={group.id} groupName={group.name} member={row} /> : null}
           </View>
         ))}
         {owner ? <Text style={styles.muted}>{t`Grupę założono: ${owner}`}</Text> : null}
@@ -82,9 +84,11 @@ function GroupInfo({ group }: { group: GroupDetail }) {
         )}
         <AttendanceGridView group={group} />
       </Section>
-      <Section title={t`Link grupy`}>
-        <GroupLinkSection groupId={group.id} groupName={group.name} />
-      </Section>
+      {shareLinks ? (
+        <Section title={t`Link grupy`}>
+          <GroupLinkSection groupId={group.id} groupName={group.name} />
+        </Section>
+      ) : null}
       <Pressable
         accessibilityRole="button"
         accessibilityHint={t`Dni × osoby i kategorie`}

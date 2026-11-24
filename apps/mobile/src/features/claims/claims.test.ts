@@ -46,7 +46,7 @@ describe('joinChoices', () => {
     expect(joinChoices({ claimFor: 't', claimable: [tomek] })).toEqual({ kind: 'personal', member: tomek });
   });
 
-  it('a personal claim link whose member already has an account has nothing to offer', () => {
-    expect(joinChoices({ claimFor: 't', claimable: [] })).toEqual({ kind: 'personal-taken' });
+  it('a personal claim link whose member already has an account acts as a group link', () => {
+    expect(joinChoices({ claimFor: 't', claimable: [zosia] })).toEqual({ kind: 'group', claimable: [zosia] });
   });
 });

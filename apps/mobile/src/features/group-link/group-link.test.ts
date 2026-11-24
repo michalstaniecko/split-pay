@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { groupLinkUrl, joinTokenFromPath, pendingJoin, qrModules } from './group-link';
+import { canShareLinks, groupLinkUrl, joinTokenFromPath, pendingJoin, qrModules } from './group-link';
 
 const TOKEN = 'q3Jx0_Vb-8yT2kLmNoPqRsTuVwXyZ012';
 
@@ -64,5 +64,12 @@ describe('pendingJoin', () => {
     pendingJoin.remember(TOKEN);
     expect(pendingJoin.take()).toBe(TOKEN);
     expect(pendingJoin.take()).toBeUndefined();
+  });
+});
+
+describe('canShareLinks', () => {
+  it('shares the group link and personal claim links only while the group is not archived', () => {
+    expect(canShareLinks({ archivedAt: null })).toBe(true);
+    expect(canShareLinks({ archivedAt: '2026-08-01T10:00:00.000Z' })).toBe(false);
   });
 });
