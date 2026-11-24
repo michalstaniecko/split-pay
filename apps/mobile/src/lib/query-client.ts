@@ -5,13 +5,13 @@ import { AppState, Platform } from 'react-native';
 import { isAccountBlockedResponse } from '@/features/moderation/moderation';
 import { authClient } from './auth-client';
 
+/**
+ * The API no longer accepts the session (expired or revoked): the query cache
+ * drops it locally; the root layout's guard then shows the sign-in screen.
+ */
 const isUnauthorized = (error: unknown) => error instanceof DetailedError && error.statusCode === 401;
 
-/**
- * The API no longer accepts the session (expired or revoked): drop it
- * locally; the root layout's guard then shows the sign-in screen. The account
- * got blocked (#48): refetch `/me`, so the guard shows "Konto zablokowane".
- */
+/** The account got blocked (#48): refetch `/me`, so the guard shows "Konto zablokowane". */
 const onAccountBlocked = (error: unknown) => {
   if (isAccountBlockedResponse(error)) void queryClient.invalidateQueries({ queryKey: ['me'] });
 };
