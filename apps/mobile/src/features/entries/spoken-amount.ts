@@ -1,5 +1,6 @@
 import { t } from '@lingui/core/macro';
-import { type CurrencyCode, type Entry, formatAmount } from '@split-pay/shared';
+import type { CurrencyCode, Entry } from '@split-pay/shared';
+import { createFormatters } from '../../i18n/formatters';
 
 /**
  * An entry's amount for screen readers, the currency spelled out. A
@@ -11,10 +12,9 @@ export function spokenEntryAmount(
   baseAmount: number | null,
   context: { baseCurrency: CurrencyCode; locale: string },
 ): string {
-  const spoken = (amount: number, currency: CurrencyCode) =>
-    formatAmount(amount, currency, context.locale, { currencyDisplay: 'name' });
-  const original = spoken(entry.amount, entry.currency);
+  const { spokenAmount } = createFormatters(context.locale);
+  const original = spokenAmount(entry.amount, entry.currency);
   if (baseAmount === null) return original;
-  const base = spoken(baseAmount, context.baseCurrency);
+  const base = spokenAmount(baseAmount, context.baseCurrency);
   return t`${original}, czyli około ${base}`;
 }

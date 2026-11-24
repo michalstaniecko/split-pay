@@ -1,5 +1,6 @@
 import { plural, t } from '@lingui/core/macro';
-import { type CurrencyCode, formatAmount, formatDate } from '@split-pay/shared';
+import { type CurrencyCode, formatDate } from '@split-pay/shared';
+import { createFormatters } from '../../i18n/formatters';
 import type { EntryItem } from './conversation';
 import { incomeBubbleLabel } from './income-bubble-label';
 import { spokenEntryAmount } from './spoken-amount';
@@ -58,10 +59,8 @@ export function entryBubbleLabel(item: EntryItem, context: { baseCurrency: Curre
   const date = formatDate(entry.date, context.locale);
   if (entry.kind === 'settlement') return t`Spłata ${amount}. Od: ${payerName}. ${date}.`;
 
-  const spokenShare =
-    myShare === null || myShare === 0
-      ? null
-      : formatAmount(myShare, context.baseCurrency, context.locale, { currencyDisplay: 'name' });
+  const { spokenAmount } = createFormatters(context.locale);
+  const spokenShare = myShare === null || myShare === 0 ? null : spokenAmount(myShare, context.baseCurrency);
   if (otherPayers > 0) {
     return payersBubbleLabel({ kind: 'expense', payerNames, title: entry.title, amount, date, myShare: spokenShare });
   }
