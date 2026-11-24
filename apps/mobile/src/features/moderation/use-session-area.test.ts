@@ -1,13 +1,16 @@
+import { createRequire } from 'node:module';
 import { createElement, type ReactElement } from 'react';
-// @ts-expect-error -- the app has no @types/react-dom; only `renderToString` is used.
-import { renderToString as untypedRenderToString } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { createBlockedStatusStore, type SessionArea } from './moderation';
-import { useSessionArea } from './use-session-area';
+import { syncBlockedStatus, useSessionArea } from './use-session-area';
 
-// Server rendering runs the hook without a DOM (effects don't run, so the
-// tests seed the store directly instead of through `GET /me`'s answer).
-const renderToString: (element: ReactElement) => string = untypedRenderToString;
+// Server rendering runs the hook without a DOM. Effects don't run there, so
+// these tests seed the store directly; `syncBlockedStatus` (the effect's body)
+// is tested on its own below. The app has no @types/react-dom, hence the
+// typed `require` of the one function used.
+const { renderToString } = createRequire(import.meta.url)('react-dom/server') as {
+  renderToString: (element: ReactElement) => string;
+};
 
 const memoryStorage = () => {
   const data = new Map<string, string>();
@@ -53,5 +56,49 @@ describe('useSessionArea (root layout)', () => {
     const store = createBlockedStatusStore(memoryStorage());
     store.remember('u1', true);
     expect(renderArea({ pending: false, userId: undefined }, undefined, store)).toBe('auth');
+  });
+});
+
+describe('syncBlockedStatus (the root layout keeping the store in step)', () => {
+  const signedIn = { pending: false, userId: 'u1' };
+
+  it("remembers the API's answer that the account is blocked", () => {
+    const store = createBlockedStatusStore(memoryStorage());
+    syncBlockedStatus(signedIn, { blocked: true }, store);
+    expect(store.isBlocked('u1')).toBe(true);
+  });
+
+  it("clears the remembered block on the API's answer that the account is unblocked", () => {
+    const store = createBlockedStatusStore(memoryStorage());
+    store.remember('u1', true);
+    syncBlockedStatus(signedIn, { blocked: false }, store);
+    expect(store.isBlocked('u1')).toBe(false);
+  });
+
+  it('offline or on an error, keeps the status this device last saw', () => {
+    const store = createBlockedStatusStore(memoryStorage());
+    store.remember('u1', true);
+    syncBlockedStatus(signedIn, undefined, store);
+    expect(store.isBlocked('u1')).toBe(true);
+  });
+
+  it('signing out forgets the remembered block', () => {
+    const store = createBlockedStatusStore(memoryStorage());
+    store.remember('u1', true);
+    syncBlockedStatus({ pending: false, userId: undefined }, undefined, store);
+    expect(store.isBlocked('u1')).toBe(false);
+  });
+
+  it('while the session is loading, forgets nothing', () => {
+    const store = createBlockedStatusStore(memoryStorage());
+    store.remember('u1', true);
+    syncBlockedStatus({ pending: true, userId: undefined }, undefined, store);
+    expect(store.isBlocked('u1')).toBe(true);
+  });
+
+  it('persists the status in device storage for the next launch', () => {
+    const storage = memoryStorage();
+    syncBlockedStatus(signedIn, { blocked: true }, createBlockedStatusStore(storage));
+    expect(createBlockedStatusStore(storage).isBlocked('u1')).toBe(true);
   });
 });

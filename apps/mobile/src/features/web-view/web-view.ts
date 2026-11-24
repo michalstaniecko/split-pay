@@ -65,7 +65,7 @@ export function openInAppUrl(token: string): string {
  * the member the link is for, while they are still in the group without an
  * account. `null` = no banner (group link, or already claimed).
  */
-export function claimBanner<M extends { id: string; hasAccount: boolean }>(input: {
+export function claimBannerMember<M extends { id: string; hasAccount: boolean }>(input: {
   claimFor: string | null;
   members: readonly M[];
 }): M | null {

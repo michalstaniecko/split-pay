@@ -56,8 +56,9 @@ export const publicViewRoutes = ({ db }: { db: Db }) => {
       .get('/:token', async (c) => {
         const link = await groupOf(c.req.param('token'));
         if (!link) return c.json(notFound, 404);
-        const { group, claimFor } = link;
+        const { group } = link;
         const rows = await membersOf(db, group.id);
+        const claimFor = rows.some((m) => m.id === link.claimFor && m.userId === null) ? link.claimFor : null;
         return c.json(
           {
             group: {

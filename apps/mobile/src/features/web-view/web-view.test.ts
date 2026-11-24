@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { claimBanner, createThisIsMeStore, downloadAppUrl, effectiveMe, openInAppUrl } from './web-view';
+import { claimBannerMember, createThisIsMeStore, downloadAppUrl, effectiveMe, openInAppUrl } from './web-view';
 
 const GROUP = '7f1c2a4e-0000-4000-8000-000000000001';
 const ANIA = '7f1c2a4e-0000-4000-8000-0000000000a1';
@@ -94,21 +94,21 @@ describe('openInAppUrl', () => {
   });
 });
 
-describe('claimBanner (personal claim link banner)', () => {
+describe('claimBannerMember (personal claim link banner)', () => {
   const ania = { id: ANIA, displayName: 'Ania', hasAccount: true };
   const tomek = { id: TOMEK, displayName: 'Tomek', hasAccount: false };
   const members = [ania, tomek];
 
   it('names the member a personal claim link is for', () => {
-    expect(claimBanner({ claimFor: TOMEK, members })).toEqual(tomek);
+    expect(claimBannerMember({ claimFor: TOMEK, members })).toEqual(tomek);
   });
 
   it('is not shown for a group link', () => {
-    expect(claimBanner({ claimFor: null, members })).toBeNull();
+    expect(claimBannerMember({ claimFor: null, members })).toBeNull();
   });
 
   it('is not shown once the member is claimed or gone', () => {
-    expect(claimBanner({ claimFor: ANIA, members })).toBeNull();
-    expect(claimBanner({ claimFor: 'gone', members })).toBeNull();
+    expect(claimBannerMember({ claimFor: ANIA, members })).toBeNull();
+    expect(claimBannerMember({ claimFor: 'gone', members })).toBeNull();
   });
 });

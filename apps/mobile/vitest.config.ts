@@ -6,6 +6,6 @@ export default defineConfig({
   // `failOnMissing`: any untranslated message in a catalog fails the test run.
   plugins: [lingui({ macroTransform: true, failOnMissing: true })],
   test: {
-    include: ['src/**/*.test.ts'],
+    include: ['src/**/*.test.{ts,tsx}'],
   },
 });

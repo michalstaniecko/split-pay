@@ -24,7 +24,7 @@ import {
 } from '@/features/web-view/public-view-query';
 import { useThisIsMe } from '@/features/web-view/this-is-me';
 import { WebFooter } from '@/features/web-view/web-footer';
-import { claimBanner } from '@/features/web-view/web-view';
+import { claimBannerMember } from '@/features/web-view/web-view';
 
 /**
  * The view-only web Conversation for a group link (SPEC "Web interface"):
@@ -51,7 +51,7 @@ function PublicConversation({ token, data }: { token: string; data: PublicGroup 
   const entries = useQuery(publicEntriesQuery(token));
   const balances = useQuery(publicBalancesQuery(token));
   const { me } = useThisIsMe(data);
-  const claimMember = claimBanner({ claimFor: data.claimFor, members: data.members });
+  const claimMember = claimBannerMember({ claimFor: data.claimFor, members: data.members });
   const openInfo = () => router.push({ pathname: '/g/[token]/info', params: { token } });
 
   return (

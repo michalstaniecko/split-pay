@@ -40,8 +40,7 @@ const toClaimDto = (c: ClaimRow, memberName: string | null) => ({
 /**
  * What a link token opens: a group link (any member may be claimed, or join
  * as a new person) or a personal claim link (`claimFor` = the one member to
- * claim). A personal claim link whose member is already claimed opens as a
- * group link (`claimFor` = null). Unknown and revoked tokens → undefined.
+ * claim). Unknown and revoked tokens → undefined.
  */
 export async function resolveLinkToken(
   db: Db,
@@ -54,14 +53,11 @@ export async function resolveLinkToken(
     .where(eq(groupLinks.token, token));
   if (shared) return { group: shared.group, claimFor: null };
   const [personal] = await db
-    .select({ group: groups, memberId: memberClaimLinks.memberId, userId: members.userId })
+    .select({ group: groups, memberId: memberClaimLinks.memberId })
     .from(memberClaimLinks)
     .innerJoin(groups, eq(groups.id, memberClaimLinks.groupId))
-    .innerJoin(members, eq(members.id, memberClaimLinks.memberId))
     .where(eq(memberClaimLinks.token, token));
-  if (!personal) return undefined;
-  // Once its member has an account, a personal claim link acts as a group link.
-  return { group: personal.group, claimFor: personal.userId === null ? personal.memberId : null };
+  return personal ? { group: personal.group, claimFor: personal.memberId } : undefined;
 }
 
 /** Postgres unique violation (possibly wrapped by Drizzle). */

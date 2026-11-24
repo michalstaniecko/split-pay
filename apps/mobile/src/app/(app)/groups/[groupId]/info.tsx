@@ -39,10 +39,9 @@ function GroupInfo({ group }: { group: GroupDetail }) {
   const { t } = useLingui();
   const format = useFormatters();
   const { data: session } = authClient.useSession();
-  // False only in an archived group: read-only and closed to joining, so no
-  // links, and no adding or renaming members either.
-  const shareLinks = canShareLinks(group);
-  const rows = memberRows(group, session?.user.id).map((row) => (shareLinks ? row : { ...row, canRename: false }));
+  // An archived group is read-only and closed to joining: no links, no adding or renaming members.
+  const archived = !canShareLinks(group);
+  const rows = memberRows(group, session?.user.id).map((row) => (archived ? { ...row, canRename: false } : row));
   const openMemberSheet = (memberId?: string) =>
     router.push({
       pathname: '/groups/[groupId]/member',
@@ -70,11 +69,11 @@ function GroupInfo({ group }: { group: GroupDetail }) {
           <View key={row.id} style={styles.memberLine}>
             <ReportableMemberAvatar groupId={group.id} member={row} url={avatars?.get(row.id)} size={32} />
             <MemberItem row={row} onPress={() => openMemberSheet(row.id)} />
-            {shareLinks && row.withoutAccount ? <PersonalClaimLinkButton groupId={group.id} groupName={group.name} member={row} /> : null}
+            {!archived && row.withoutAccount ? <PersonalClaimLinkButton groupId={group.id} groupName={group.name} member={row} /> : null}
           </View>
         ))}
         {owner ? <Text style={styles.muted}>{t`Grupę założono: ${owner}`}</Text> : null}
-        {shareLinks ? (
+        {!archived ? (
           <Pressable
             accessibilityRole="button"
             onPress={() => openMemberSheet()}
@@ -84,7 +83,7 @@ function GroupInfo({ group }: { group: GroupDetail }) {
         ) : null}
         <AttendanceGridView group={group} />
       </Section>
-      {shareLinks ? (
+      {!archived ? (
         <Section title={t`Link grupy`}>
           <GroupLinkSection groupId={group.id} groupName={group.name} />
         </Section>

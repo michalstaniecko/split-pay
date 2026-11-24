@@ -60,22 +60,26 @@ export const linksRoutes = ({ db, requireUser }: { db: Db; requireUser: Middlewa
     /**
      * What the join screen shows: the group, how many members it has, whether
      * I'm one, and the members without an account I could claim. A personal
-     * claim link (`claimFor`) offers only its member.
+     * claim link (`claimFor`) offers only its member; once that member is
+     * claimed it offers nobody (`claimFor` = null) — only joining as a new
+     * person, since the link still can't claim anyone else.
      */
     .get('/:token', async (c) => {
       const link = await resolveLinkToken(db, c.req.param('token'));
       if (!link) return c.json({ error: 'not_found' as const }, 404);
-      const { group, claimFor } = link;
+      const { group } = link;
       const all = await db
         .select()
         .from(members)
         .where(eq(members.groupId, group.id))
         .orderBy(asc(members.createdAt), asc(members.id));
       const isMember = all.some((m) => m.userId === c.get('user').id);
+      const personalMember = link.claimFor === null ? undefined : all.find((m) => m.id === link.claimFor);
+      const claimFor = personalMember?.userId === null ? personalMember.id : null;
       const claimable = isMember
         ? []
         : claimableMembers(all)
-            .filter((m) => claimFor === null || m.id === claimFor)
+            .filter((m) => (link.claimFor === null ? true : m.id === claimFor))
             .map((m) => ({ id: m.id, displayName: m.displayName }));
       return c.json(
         {
