@@ -37,7 +37,7 @@ Expo Go is not enough — the app uses native modules, so run it via a developme
 
 ## Support
 
-The project is free and open source. If you'd like to support it — GitHub Sponsors (link coming soon).
+The project is free and open source. If you'd like to support it — [GitHub Sponsors](https://github.com/sponsors/michalstaniecko).
 
 ## License
 
