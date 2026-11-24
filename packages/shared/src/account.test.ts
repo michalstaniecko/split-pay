@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { AccountDeletion, deletedUserName, memberName } from './account';
 
 describe('deletedUserName', () => {
-  it('is "Usunięty użytkownik" in Polish and "Deleted user" in English', () => {
-    expect(deletedUserName('pl')).toBe('Usunięty użytkownik');
+  it('is "Usunięte konto" in Polish and "Deleted user" in English', () => {
+    expect(deletedUserName('pl')).toBe('Usunięte konto');
     expect(deletedUserName('en')).toBe('Deleted user');
   });
 
@@ -26,7 +26,7 @@ describe('AccountDeletion', () => {
 describe('memberName', () => {
   it('is the member’s name, or "Deleted user" in the viewer’s language when it was removed', () => {
     expect(memberName({ displayName: 'Bartek' }, 'en')).toBe('Bartek');
-    expect(memberName({ displayName: null }, 'pl')).toBe('Usunięty użytkownik');
+    expect(memberName({ displayName: null }, 'pl')).toBe('Usunięte konto');
     expect(memberName({ displayName: null }, 'en')).toBe('Deleted user');
   });
 });

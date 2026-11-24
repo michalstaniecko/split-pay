@@ -64,7 +64,7 @@ export type GroupDetail = Omit<GroupDetailData, 'members'> & { members: Named<Gr
 
 /**
  * `groupQuery` for screens: members whose name was removed on account
- * deletion read "Usunięty użytkownik" / "Deleted user" in the UI language (ADR-0019).
+ * deletion read "Usunięte konto" / "Deleted user" in the UI language (ADR-0019).
  */
 export function useGroup(groupId: string) {
   const { locale } = useLocale();

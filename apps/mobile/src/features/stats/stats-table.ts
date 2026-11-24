@@ -1,7 +1,7 @@
 import type { CategoryStats, GroupStats, LocalDate } from '@split-pay/shared';
 
 /**
- * A member's column, or the single "Byli członkowie" column (`former`)
+ * A member's column, or the single "Poza grupą" column (`former`)
  * summing everyone who appears in the stats but is no longer a member.
  */
 export type StatsColumn = { kind: 'member'; memberId: string; name: string } | { kind: 'former' };

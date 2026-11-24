@@ -6,7 +6,7 @@ import { z } from 'zod';
  * (`displayName: null`), so each viewer reads it in their own language.
  */
 export const DELETED_USER_NAMES = {
-  pl: 'Usunięty użytkownik',
+  pl: 'Usunięte konto',
   en: 'Deleted user',
 } as const;
 

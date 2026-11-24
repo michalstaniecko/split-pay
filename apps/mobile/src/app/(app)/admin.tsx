@@ -116,7 +116,7 @@ function ReportCard({ report, actions }: { report: AdminReport; actions: ReturnT
         {t`Zgłoszenie od: ${report.reporter?.email ?? '—'}`}
       </Text>
       <Text style={styles.muted} selectable>
-        {t`Autor zdjęcia: ${account?.email ?? '—'}`}
+        {t`Zdjęcie dodano: ${account?.email ?? '—'}`}
         {account?.blocked ? ` · ${t`konto zablokowane`}` : ''}
       </Text>
       {photo ? (
