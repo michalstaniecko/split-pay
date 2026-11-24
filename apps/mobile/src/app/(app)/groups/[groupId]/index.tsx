@@ -32,6 +32,7 @@ import {
   versionConflictEntry,
 } from '@/features/entries/entry-edit';
 import { UndoSnackbar } from '@/features/entries/undo-snackbar';
+import { useMarkGroupSeen } from '@/features/groups/group-unread-store';
 import { type GroupDetail, groupQuery } from '@/features/groups/groups-query';
 import { groupAvatarsQuery, receiptsQuery } from '@/features/photos/photos-query';
 import { useFocusedEntry } from '@/features/notifications/use-focused-entry';
@@ -66,6 +67,8 @@ export default function ConversationScreen() {
   useRefreshOnFocus(group.refetch);
   useRefreshOnFocus(entries.refetch);
   useRefreshOnFocus(claims.refetch);
+  // Clears the inbox unread marker (#40).
+  useMarkGroupSeen(groupId, entries.data);
   const insets = useSafeAreaInsets();
   const session = authClient.useSession();
   const me = group.data ? findMyMemberId(group.data.members, session.data?.user.id) : null;
