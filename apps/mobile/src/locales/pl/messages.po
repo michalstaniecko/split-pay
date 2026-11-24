@@ -1806,8 +1806,8 @@ msgid "Wybierz, kto otrzymuje pieniądze."
 msgstr "Wybierz, kto otrzymuje pieniądze."
 
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
-msgid "Wybierz, kto płaci."
-msgstr "Wybierz, kto płaci."
+msgid "Wybierz, kto zapłacił."
+msgstr "Wybierz, kto zapłacił."
 
 #: src/app/(app)/groups/[groupId]/entry-conflict.tsx
 msgid "Wybierz, która wersja zostaje."

@@ -218,7 +218,7 @@ function ExpenseFormView({ group, editing }: { group: GroupDetail; editing?: For
   const fieldError: Record<ExpenseFormField, string> = {
     amount: t`Podaj kwotę większą od zera.`,
     title: t`Podaj tytuł.`,
-    payer: income ? t`Wybierz, kto otrzymuje pieniądze.` : t`Wybierz, kto płaci.`,
+    payer: income ? t`Wybierz, kto otrzymuje pieniądze.` : t`Wybierz, kto zapłacił.`,
     date: t`Podaj datę w formacie RRRR-MM-DD.`,
     rate: t`Podaj kurs większy od zera, np. 4,3215.`,
     // The split and payer sections show what doesn't add up themselves.

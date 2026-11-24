@@ -32,11 +32,17 @@ const MASCULINE_BY_DEFAULT = [
   word('otrzymujący'),
   word('zgłaszający'),
   word('zablokowany'),
-  // "Usunięty użytkownik" / "Byli członkowie": say "Usunięte konto" and
-  // "Osoby, które opuściły grupę" instead. Lowercase "usunięty" describes an
-  // entry ("wpis"), not a person.
+  // "Usunięty użytkownik" / "Byli członkowie": say "Usunięte konto", and
+  // "Osoby, które opuściły grupę" in lists or "Poza grupą" in the stats
+  // column. Lowercase "usunięty" describes an entry ("wpis"), not a person.
   /(?<!\p{L})Usunięty(?!\p{L})/u,
   word('byli'),
+];
+
+// Superseded copy that isn't gendered but must not come back.
+const RETIRED = [
+  // Expense forms ask "Kto zapłacił" (the expense already happened).
+  /(?<!\p{L})kto płaci(?!\p{L})/iu,
 ];
 
 describe('Polish catalog', () => {
@@ -46,6 +52,13 @@ describe('Polish catalog', () => {
 
   it.each(MASCULINE_BY_DEFAULT.map((pattern) => [String(pattern), pattern] as const))(
     'has no masculine-by-default form %s',
+    (_, pattern) => {
+      expect(messages.filter((m) => pattern.test(m))).toEqual([]);
+    },
+  );
+
+  it.each(RETIRED.map((pattern) => [String(pattern), pattern] as const))(
+    'has no retired copy %s',
     (_, pattern) => {
       expect(messages.filter((m) => pattern.test(m))).toEqual([]);
     },

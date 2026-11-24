@@ -1806,7 +1806,7 @@ msgid "Wybierz, kto otrzymuje pieniądze."
 msgstr "Choose who received the money."
 
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
-msgid "Wybierz, kto płaci."
+msgid "Wybierz, kto zapłacił."
 msgstr "Choose who paid."
 
 #: src/app/(app)/groups/[groupId]/entry-conflict.tsx
