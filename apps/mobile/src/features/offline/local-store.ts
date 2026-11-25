@@ -11,6 +11,8 @@ import { type CachedGroup, type EntryPreview, localEntries, localGroups, localMe
 export type CachedGroupListItem = CachedGroup & { lastEntry: EntryPreview | null; lastEntryByOthersAt: string | null };
 /** A group with its members (API `GET /groups/:groupId`). */
 export type CachedGroupDetail = CachedGroup & { members: Member[] };
+/** Whether a group is a local group (ADR-0021) — added on reading; false for everything from the API. */
+export type Locality = { local: boolean };
 /** One delta sync response (API `GET /groups/:groupId/sync`). */
 export interface GroupDelta {
   group: CachedGroupDetail;
@@ -46,8 +48,9 @@ const groupRow = ({
   members: _members,
   lastEntry: _lastEntry,
   lastEntryByOthersAt: _lastEntryByOthersAt,
+  local: _local,
   ...data
-}: CachedGroup & { members?: unknown; lastEntry?: unknown; lastEntryByOthersAt?: unknown }) => ({
+}: CachedGroup & { members?: unknown; lastEntry?: unknown; lastEntryByOthersAt?: unknown; local?: unknown }) => ({
   id: data.id,
   data: data as CachedGroup,
   lastActivityAt: data.lastActivityAt,
@@ -136,7 +139,7 @@ export async function applyGroupDelta(db: LocalDb, delta: GroupDelta, now = new 
  * preview. An entry of mine still in the outbox counts as newer activity and
  * becomes the preview, so an entry added offline shows in the inbox at once.
  */
-export async function readGroupList(db: LocalDb): Promise<CachedGroupListItem[]> {
+export async function readGroupList(db: LocalDb): Promise<(CachedGroupListItem & Locality)[]> {
   const groups = await db.select().from(localGroups);
   const queued = await db
     .select({ groupId: localEntries.groupId, data: localEntries.data })
@@ -151,10 +154,10 @@ export async function readGroupList(db: LocalDb): Promise<CachedGroupListItem[]>
   const newestQueued = new Map(queued.map((r) => [r.groupId, r.data]));
 
   return groups
-    .map((g): CachedGroupListItem => {
+    .map((g): CachedGroupListItem & Locality => {
       const mine = newestQueued.get(g.id);
       // My queued entries never mark a group unread: `lastEntryByOthersAt` stays the server's.
-      const row = { ...g.data, lastEntryByOthersAt: g.lastEntryByOthersAt ?? null };
+      const row = { ...g.data, local: g.local, lastEntryByOthersAt: g.lastEntryByOthersAt ?? null };
       if (!mine || mine.createdAt <= g.lastActivityAt) return { ...row, lastActivityAt: g.lastActivityAt, lastEntry: g.lastEntry ?? null };
       return { ...row, lastActivityAt: mine.createdAt, lastEntry: previewOf(mine) };
     })
@@ -185,15 +188,18 @@ export async function saveEntry(db: LocalDb, entry: Entry): Promise<void> {
 }
 
 /** One cached group with its members, or `undefined` when it isn't cached (yet). */
-export async function readGroupDetail(db: LocalDb, groupId: string): Promise<CachedGroupDetail | undefined> {
-  const [group] = await db.select({ data: localGroups.data }).from(localGroups).where(eq(localGroups.id, groupId));
+export async function readGroupDetail(db: LocalDb, groupId: string): Promise<(CachedGroupDetail & Locality) | undefined> {
+  const [group] = await db
+    .select({ data: localGroups.data, local: localGroups.local })
+    .from(localGroups)
+    .where(eq(localGroups.id, groupId));
   if (!group) return undefined;
   const members = await db
     .select({ data: localMembers.data })
     .from(localMembers)
     .where(eq(localMembers.groupId, groupId))
     .orderBy(asc(localMembers.position));
-  return { ...group.data, members: members.map((m) => m.data) };
+  return { ...group.data, local: group.local, members: members.map((m) => m.data) };
 }
 
 /** Whether the group's members and entries were pulled at least once. */

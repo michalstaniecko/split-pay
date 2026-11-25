@@ -85,7 +85,19 @@ describe('local store: inbox', () => {
 
     await saveGroupList(db, [older, newer]);
 
-    expect(await readGroupList(db)).toEqual([newer, older]);
+    expect(await readGroupList(db)).toEqual([
+      { ...newer, local: false },
+      { ...older, local: false },
+    ]);
+  });
+
+  it('groups from the API are not local', async () => {
+    const db = await nodeLocalDb();
+    await saveGroupList(db, [{ ...group(G1), lastEntry: null, lastEntryByOthersAt: null }]);
+    await applyGroupDelta(db, { group: { ...group(G1), members: [] }, entries: [], cursor: null });
+
+    expect((await readGroupList(db))[0]?.local).toBe(false);
+    expect((await readGroupDetail(db, G1))?.local).toBe(false);
   });
 
   it('drops groups the server no longer lists, with their members and entries', async () => {
@@ -174,7 +186,7 @@ describe('local store: group and entries', () => {
     const members = [member(BARTEK, G1, 'Bartek'), member(ANIA, G1, 'Ania')];
     await applyGroupDelta(db, { group: { ...group(G1), members }, entries: [], cursor: null });
 
-    expect(await readGroupDetail(db, G1)).toEqual({ ...group(G1), members });
+    expect(await readGroupDetail(db, G1)).toEqual({ ...group(G1), local: false, members });
   });
 
   it('replaces the member list on every sync (removed members disappear)', async () => {

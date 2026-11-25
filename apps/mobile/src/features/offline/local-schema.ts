@@ -47,6 +47,8 @@ export const localGroups = sqliteTable('groups', {
   lastEntryByOthersAt: text(),
   lastActivityAt: text().notNull(),
   createdAt: text().notNull(),
+  /** A local group (ADR-0021): lives only in the device database, never synced. False for groups from the API. */
+  local: integer({ mode: 'boolean' }).notNull().default(false),
   /** Delta sync cursor (`GET /groups/:groupId/sync?since=`); null until the first delta sync. */
   cursor: text(),
   /** When the group's members and entries were last pulled; null = only the inbox row is cached. */

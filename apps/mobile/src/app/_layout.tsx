@@ -1,14 +1,18 @@
 import { QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { SplashScreen, Stack } from 'expo-router';
 import { useEffect } from 'react';
+import { Platform } from 'react-native';
 import { blockedStatus } from '@/features/moderation/blocked-status-store';
 import { useSessionArea } from '@/features/moderation/use-session-area';
+import { openDeviceDb } from '@/features/offline/local-session';
 import { meQuery } from '@/features/profile/me-query';
 import { LocaleProvider } from '@/i18n/locale-provider';
 import { authClient } from '@/lib/auth-client';
 import { queryClient } from '@/lib/query-client';
 
 void SplashScreen.preventAutoHideAsync();
+// Local groups live in the device database, signed in or not (ADR-0021); web has none.
+if (Platform.OS !== 'web') openDeviceDb();
 
 export default function RootLayout() {
   return (

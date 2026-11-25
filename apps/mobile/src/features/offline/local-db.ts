@@ -68,6 +68,9 @@ export const LOCAL_MIGRATIONS: readonly string[] = [
   `
   ALTER TABLE groups ADD COLUMN last_entry_by_others_at TEXT;
   `,
+  `
+  ALTER TABLE groups ADD COLUMN local INTEGER NOT NULL DEFAULT 0;
+  `,
 ];
 
 /**
