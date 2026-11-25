@@ -12,7 +12,7 @@ import {
   requireLocalGroup,
 } from '@/features/offline/local-group-store';
 import { groupWriteNetwork, localGroupsDb, onGroupSource, syncedWrite } from '@/features/offline/local-groups';
-import { deviceDbIfAny, hasCacheUser, cacheDb } from '@/features/offline/local-session';
+import { deviceDbIfAny, localDatabases } from '@/features/offline/local-session';
 import { isGroupSynced, readGroupDetail } from '@/features/offline/local-store';
 import { attemptSync, syncGroup, syncGroupList } from '@/features/offline/sync';
 import { useLocale } from '@/i18n/locale-provider';
@@ -40,10 +40,10 @@ export const groupsQuery = () =>
     queryKey: groupKeys.list(),
     queryFn: async (): Promise<GroupListItem[]> => {
       const device = await deviceDbIfAny();
-      if (!hasCacheUser()) return readInbox({ user: null, device });
+      if (!localDatabases.hasUser()) return readInbox({ user: null, device });
       const syncError = await attemptSync(syncGroupList);
       // The cache holds exactly what GET /groups returned (+ my queued entries); local groups join them.
-      const user = await cacheDb();
+      const user = await localDatabases.userDb();
       const groups = await readInbox({ user, device });
       if (groups.length === 0 && syncError) throw syncError;
       return groups;
@@ -67,9 +67,9 @@ export const groupQuery = (groupId: string) =>
       onGroupSource(groupId, {
         local: (db) => requireLocalGroup(db, groupId),
         synced: async () => {
-          if (!hasCacheUser()) throw new Error('Group not found');
+          if (!localDatabases.hasUser()) throw new Error('Group not found');
           const syncError = await attemptSync(() => syncGroup(groupId));
-          const db = await cacheDb();
+          const db = await localDatabases.userDb();
           // Only the inbox row (no members yet) doesn't count as cached.
           const group = (await isGroupSynced(db, groupId)) ? await readGroupDetail(db, groupId) : undefined;
           if (group) return group;

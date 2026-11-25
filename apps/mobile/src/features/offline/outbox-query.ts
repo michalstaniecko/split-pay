@@ -1,7 +1,7 @@
 import { queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { groupKeys } from '@/features/groups/groups-query';
 import { onGroupSource } from './local-groups';
-import { cacheDb } from './local-session';
+import { localDatabases } from './local-session';
 import { discardOutbox, type OutboxEntryState, readOutboxState, retryOutbox } from './outbox';
 import { flushNow } from './sync';
 
@@ -21,7 +21,7 @@ export const outboxQuery = (groupId: string) =>
     queryFn: () =>
       onGroupSource(groupId, {
         local: async () => EMPTY,
-        synced: async () => readOutboxState(await cacheDb(), groupId),
+        synced: async () => readOutboxState(await localDatabases.userDb(), groupId),
       }),
     networkMode: 'always',
   });
@@ -45,7 +45,7 @@ export function useRetryOutbox(groupId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (entryId: string) => {
-      await retryOutbox(await cacheDb(), entryId);
+      await retryOutbox(await localDatabases.userDb(), entryId);
       await flushNow();
     },
     onSettled: () => invalidateOutbox(queryClient, groupId),
@@ -56,7 +56,7 @@ export function useRetryOutbox(groupId: string) {
 export function useDiscardOutbox(groupId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (entryId: string) => discardOutbox(await cacheDb(), entryId),
+    mutationFn: async (entryId: string) => discardOutbox(await localDatabases.userDb(), entryId),
     onSettled: () => invalidateOutbox(queryClient, groupId),
   });
 }

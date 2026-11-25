@@ -4,7 +4,7 @@ import { parseResponse } from 'hono/client';
 import { useState } from 'react';
 import { Alert, Pressable, Text, View } from 'react-native';
 import { StyleSheet } from 'react-native-unistyles';
-import { forgetUserCache } from '@/features/offline/local-session';
+import { localDatabases } from '@/features/offline/local-session';
 import { api } from '@/lib/api';
 import { authClient } from '@/lib/auth-client';
 
@@ -31,7 +31,7 @@ export function DeleteAccountSection() {
       await authClient.signOut().catch(() => undefined);
       queryClient.clear();
       // The deleted account's offline cache and outbox leave the device too.
-      if (userId) await forgetUserCache(userId).catch(() => undefined);
+      if (userId) await localDatabases.forgetUser(userId).catch(() => undefined);
     },
     onError: () => Alert.alert(t`Nie udało się usunąć konta. Spróbuj ponownie.`),
   });
