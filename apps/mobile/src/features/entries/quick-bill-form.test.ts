@@ -3,6 +3,7 @@ import {
   addPerson,
   defaultQuickBillCurrency,
   initialQuickBillDraft,
+  parseLocalQuickBillDraft,
   parseQuickBillDraft,
   removePerson,
   withQuickBillCurrency,
@@ -76,5 +77,32 @@ describe('withQuickBillCurrency', () => {
     const draft = { ...initialQuickBillDraft(), amount: '12,345' };
     expect(withQuickBillCurrency(draft, 'KWD').amount).toBe('12,345');
     expect(withQuickBillCurrency(draft, 'EUR').amount).toBe('12,34');
+  });
+});
+
+describe('parseLocalQuickBillDraft (without an account)', () => {
+  const draft = { amount: '90', title: 'Pizza', personName: '', people: [{ id: id(10), displayName: 'Kasia' }] };
+  const me = id(20);
+
+  it('adds the device member ("Ja") who pays, with a trimmed name', () => {
+    expect(parseLocalQuickBillDraft(draft, { ...context, deviceMember: { id: me, name: ' Michał ' } })).toEqual({
+      ok: true,
+      value: {
+        ...ids,
+        title: 'Pizza',
+        amount: 9000,
+        currency: 'PLN',
+        date: '2026-11-23',
+        color: '#1E88E5',
+        people: draft.people,
+        deviceMember: { id: me, displayName: 'Michał' },
+      },
+    });
+  });
+
+  it('asks for my name together with the other invalid fields', () => {
+    expect(
+      parseLocalQuickBillDraft({ ...draft, title: ' ' }, { ...context, deviceMember: { id: me, name: '  ' } }),
+    ).toEqual({ ok: false, errors: ['title', 'deviceMember'] });
   });
 });

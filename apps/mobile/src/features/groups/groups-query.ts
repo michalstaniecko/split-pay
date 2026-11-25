@@ -3,8 +3,17 @@ import { queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/r
 import { type InferResponseType, parseResponse } from 'hono/client';
 import { useCallback } from 'react';
 import { type Named, nameMembers } from '@/features/groups/member-name';
-import { localDb } from '@/features/offline/local-session';
-import { isGroupSynced, readGroupDetail, readGroupList } from '@/features/offline/local-store';
+import {
+  addLocalMember,
+  createLocalGroup,
+  type NewLocalGroup,
+  readInbox,
+  renameLocalMember,
+  requireLocalGroup,
+} from '@/features/offline/local-group-store';
+import { groupWriteNetwork, localGroupsDb, onGroupSource, syncedWrite } from '@/features/offline/local-groups';
+import { deviceDbIfAny, localDatabases } from '@/features/offline/local-session';
+import { isGroupSynced, readGroupDetail } from '@/features/offline/local-store';
 import { attemptSync, syncGroup, syncGroupList } from '@/features/offline/sync';
 import { useLocale } from '@/i18n/locale-provider';
 import { api } from '@/lib/api';
@@ -22,43 +31,62 @@ export const groupKeys = {
 
 /**
  * The inbox: my groups, most recent activity first (GET /groups), read from
- * the offline cache after a sync attempt (ADR-0005) — works offline.
+ * the offline cache after a sync attempt (ADR-0005) — works offline — merged
+ * with the local groups on this device (ADR-0021). Signed out, only the local
+ * groups, and nothing calls the API.
  */
 export const groupsQuery = () =>
   queryOptions({
     queryKey: groupKeys.list(),
     queryFn: async (): Promise<GroupListItem[]> => {
+      const device = await deviceDbIfAny();
+      if (!localDatabases.hasUser()) return readInbox({ user: null, device });
       const syncError = await attemptSync(syncGroupList);
-      // The cache holds exactly what GET /groups returned (+ my queued entries).
-      const groups = (await readGroupList(await localDb())) as GroupListItem[];
+      // The cache holds exactly what GET /groups returned (+ my queued entries); local groups join them.
+      const user = await localDatabases.userDb();
+      const groups = await readInbox({ user, device });
       if (groups.length === 0 && syncError) throw syncError;
       return groups;
     },
     // Reads the device cache, so it must also run offline.
     networkMode: 'always',
   });
-export type GroupListItem = InferResponseType<typeof api.groups.$get, 200>[number];
+/** An inbox row; `local` marks a local group (ADR-0021), false for groups from the API. */
+export type GroupListItem = InferResponseType<typeof api.groups.$get, 200>[number] & { local: boolean };
 
 /**
- * One group with its members (GET /groups/:groupId shape), from the offline
- * cache after a delta sync attempt. Not cached + sync failed → that error
- * (404 = not a member any more; the cache forgot the group).
+ * One group with its members (GET /groups/:groupId shape): a local group from
+ * the device database, any other from the offline cache after a delta sync
+ * attempt. Not cached + sync failed → that error (404 = not a member any
+ * more; the cache forgot the group).
  */
 export const groupQuery = (groupId: string) =>
   queryOptions({
     queryKey: groupKeys.detail(groupId),
-    queryFn: async (): Promise<GroupDetailData> => {
-      const syncError = await attemptSync(() => syncGroup(groupId));
-      const db = await localDb();
-      // Only the inbox row (no members yet) doesn't count as cached.
-      const group = (await isGroupSynced(db, groupId)) ? await readGroupDetail(db, groupId) : undefined;
-      if (group) return group as GroupDetailData;
-      throw syncError ?? new Error('Group not cached');
-    },
+    queryFn: (): Promise<GroupDetailData> =>
+      onGroupSource(groupId, {
+        local: (db) => requireLocalGroup(db, groupId),
+        synced: async () => {
+          if (!localDatabases.hasUser()) throw new Error('Group not found');
+          const syncError = await attemptSync(() => syncGroup(groupId));
+          const db = await localDatabases.userDb();
+          // Only the inbox row (no members yet) doesn't count as cached.
+          const group = (await isGroupSynced(db, groupId)) ? await readGroupDetail(db, groupId) : undefined;
+          if (group) return group;
+          throw syncError ?? new Error('Group not cached');
+        },
+      }),
     networkMode: 'always',
   });
-/** The group as stored: a member's `displayName` may be the removed-name marker (`null`). */
-export type GroupDetailData = InferResponseType<(typeof api.groups)[':groupId']['$get'], 200>;
+/**
+ * The group as stored: a member's `displayName` may be the removed-name marker
+ * (`null`); `local` marks a local group (ADR-0021), false for groups from the
+ * API; `deviceMemberId` is a local group's device member ("Ja").
+ */
+export type GroupDetailData = InferResponseType<(typeof api.groups)[':groupId']['$get'], 200> & {
+  local: boolean;
+  deviceMemberId?: string;
+};
 /** The group as screens show it: every member named for the viewer (`useGroup`). */
 export type GroupDetail = Omit<GroupDetailData, 'members'> & { members: Named<GroupDetailData['members'][number]>[] };
 
@@ -72,11 +100,20 @@ export function useGroup(groupId: string) {
   return useQuery({ ...groupQuery(groupId), select });
 }
 
-/** Creates a group; the id is generated by the caller so a retry cannot duplicate it. */
+/**
+ * Creates a group; the id is generated by the caller so a retry cannot
+ * duplicate it. A `NewLocalGroup` (signed out) goes to the device database
+ * with its device member and people; signed in, groups are always synced.
+ */
 export function useCreateGroup() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (input: NewGroup) => parseResponse(api.groups.$post({ json: input })),
+    // A local group's write runs offline too; a synced one pauses offline (no outbox).
+    ...groupWriteNetwork,
+    mutationFn: async (input: NewGroup | NewLocalGroup): Promise<void> => {
+      if ('deviceMember' in input) await createLocalGroup(await localGroupsDb(), input);
+      else await syncedWrite(() => parseResponse(api.groups.$post({ json: input })));
+    },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: groupKeys.list() });
     },
@@ -87,8 +124,15 @@ export function useCreateGroup() {
 export function useAddMember(groupId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (input: NewMember) =>
-      parseResponse(api.groups[':groupId'].members.$post({ param: { groupId }, json: input })),
+    // A local group's write runs offline too; a synced one pauses offline (no outbox).
+    ...groupWriteNetwork,
+    mutationFn: (input: NewMember): Promise<void> =>
+      onGroupSource(groupId, {
+        local: (db) => addLocalMember(db, groupId, input),
+        synced: async () => {
+          await parseResponse(api.groups[':groupId'].members.$post({ param: { groupId }, json: input }));
+        },
+      }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: groupKeys.detail(groupId) });
     },
@@ -99,10 +143,17 @@ export function useAddMember(groupId: string) {
 export function useRenameMember(groupId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ memberId, ...input }: MemberRename & { memberId: string }) =>
-      parseResponse(
-        api.groups[':groupId'].members[':memberId'].$patch({ param: { groupId, memberId }, json: input }),
-      ),
+    // A local group's write runs offline too; a synced one pauses offline (no outbox).
+    ...groupWriteNetwork,
+    mutationFn: ({ memberId, ...input }: MemberRename & { memberId: string }): Promise<void> =>
+      onGroupSource(groupId, {
+        local: (db) => renameLocalMember(db, groupId, memberId, input),
+        synced: async () => {
+          await parseResponse(
+            api.groups[':groupId'].members[':memberId'].$patch({ param: { groupId, memberId }, json: input }),
+          );
+        },
+      }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: groupKeys.detail(groupId) });
     },

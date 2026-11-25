@@ -1,5 +1,6 @@
-import { type CurrencyCode, type LocalDate, minorUnitDigits, NewQuickBill } from '@split-pay/shared';
-import { BASE_CURRENCIES } from '../groups/new-group-form';
+import { type CurrencyCode, type LocalDate, MemberName, minorUnitDigits, NewQuickBill } from '@split-pay/shared';
+import { BASE_CURRENCIES, type PersonDraft } from '../groups/new-group-form';
+import type { NewLocalQuickBill } from '../offline/local-group-store';
 import { cleanAmountInput, parseAmountInput } from './amount-input';
 
 /** The "Szybki rachunek" sheet: amount, title and "Z kim" chips. */
@@ -12,7 +13,7 @@ export interface QuickBillDraft {
   people: { id: string; displayName: string }[];
 }
 
-export type QuickBillField = 'amount' | 'title' | 'people';
+export type QuickBillField = 'amount' | 'title' | 'people' | 'deviceMember';
 const FIELDS: readonly QuickBillField[] = ['amount', 'title', 'people'];
 
 export const initialQuickBillDraft = (): QuickBillDraft => ({ amount: '', title: '', personName: '', people: [] });
@@ -78,4 +79,26 @@ export function parseQuickBillDraft(
   const invalid = new Set(result.error.issues.map((i) => i.path[0]));
   if (amount === null) invalid.add('amount');
   return { ok: false, errors: FIELDS.filter((f) => invalid.has(f)) };
+}
+
+export type ParsedLocalQuickBill = { ok: true; value: NewLocalQuickBill } | { ok: false; errors: QuickBillField[] };
+
+/**
+ * The quick bill of a local group (ADR-0021): the sheet as `parseQuickBillDraft`
+ * reads it, plus the device member ("Ja") who pays — the name stored on this
+ * device, or typed in on the first local group.
+ */
+export function parseLocalQuickBillDraft(
+  draft: QuickBillDraft,
+  context: Parameters<typeof parseQuickBillDraft>[1] & { deviceMember: PersonDraft },
+): ParsedLocalQuickBill {
+  const { deviceMember, ...rest } = context;
+  const bill = parseQuickBillDraft(draft, rest);
+  const me = MemberName.safeParse(deviceMember.name);
+  if (bill.ok && me.success) {
+    return { ok: true, value: { ...bill.value, deviceMember: { id: deviceMember.id, displayName: me.data } } };
+  }
+  const errors = bill.ok ? [] : [...bill.errors];
+  if (!me.success) errors.push('deviceMember');
+  return { ok: false, errors };
 }

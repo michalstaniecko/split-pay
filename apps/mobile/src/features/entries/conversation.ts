@@ -12,10 +12,17 @@ import {
 import { activeClaims, type ClaimLike } from '../claims/claims';
 import { todayLocalDate } from './expense-draft';
 
-/** My member in a group: the one linked to my account (`null` when signed out or not found). */
-export function myMemberId(members: readonly Pick<Member, 'id' | 'userId'>[], userId: string | undefined): string | null {
+/**
+ * My member in a group: the one linked to my account (`null` when signed out
+ * or not found); in a local group, its device member ("Ja", ADR-0021).
+ */
+export function myMemberId(
+  group: { local?: boolean; deviceMemberId?: string; members: readonly Pick<Member, 'id' | 'userId'>[] },
+  userId: string | undefined,
+): string | null {
+  if (group.local) return group.deviceMemberId ?? null;
   if (!userId) return null;
-  return members.find((m) => m.userId === userId)?.id ?? null;
+  return group.members.find((m) => m.userId === userId)?.id ?? null;
 }
 
 /**

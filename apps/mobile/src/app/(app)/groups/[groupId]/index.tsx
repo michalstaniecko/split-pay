@@ -1,6 +1,6 @@
 import { useLingui } from '@lingui/react/macro';
 import { FlashList, type FlashListRef } from '@shopify/flash-list';
-import type { Entry, LocalDate } from '@split-pay/shared';
+import { availableGroupActions, type Entry, type LocalDate } from '@split-pay/shared';
 import { useQuery } from '@tanstack/react-query';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
@@ -73,7 +73,7 @@ export default function ConversationScreen() {
   useMarkGroupSeen(groupId, entries.data);
   const insets = useSafeAreaInsets();
   const session = authClient.useSession();
-  const me = group.data ? findMyMemberId(group.data.members, session.data?.user.id) : null;
+  const me = group.data ? findMyMemberId(group.data, session.data?.user.id) : null;
 
   const openInfo = () => router.push({ pathname: '/groups/[groupId]/info', params: { groupId } });
 
@@ -291,7 +291,10 @@ function useEntryActionHandler(group: GroupDetail) {
   const online = useIsOnline();
   const userId = authClient.useSession().data?.user.id;
   // Offline, others' entries are read-only (ADR-0005): no Edytuj / Usuń on them.
-  const actionsFor = (entry: Entry) => entryActions(entry, group, { offline: !online, userId });
+  // A local group has no change history (ADR-0021).
+  const { changeHistory } = availableGroupActions(group);
+  const actionsFor = (entry: Entry) =>
+    entryActions(entry, group, { offline: !online, userId }).filter((action) => changeHistory || action !== 'history');
 
   const run = (entry: Entry, action: EntryAction) => {
     switch (action) {

@@ -1,5 +1,5 @@
 import { useLingui } from '@lingui/react/macro';
-import { type Member, minorUnitDigits, RECEIPT_MAX_DIMENSION } from '@split-pay/shared';
+import { availableGroupActions, type Member, minorUnitDigits, RECEIPT_MAX_DIMENSION } from '@split-pay/shared';
 import { randomUUID } from 'expo-crypto';
 import { type ComponentRef, useRef, useState } from 'react';
 import { Platform, Pressable, Text, TextInput, View } from 'react-native';
@@ -17,7 +17,8 @@ import { canSendComposer, composerExpense, type ExpenseGroup, todayLocalDate } f
  * model, ADR-0017). Amount comes first — "next" moves to the title, whose
  * return key sends. Send creates an equal-split expense paid by me on the
  * default date (`composerExpense`). "+" opens the full form with these values;
- * 📷 takes the receipt photo first, then opens the same form with it (#26).
+ * 📷 takes the receipt photo first, then opens the same form with it (#26) —
+ * not in a local group, which has no receipt photos (ADR-0021).
  */
 export function Composer({
   group,
@@ -25,7 +26,7 @@ export function Composer({
   myMemberId,
   onOpenForm,
 }: {
-  group: ExpenseGroup;
+  group: ExpenseGroup & { local: boolean };
   members: readonly Member[];
   myMemberId: string | null;
   onOpenForm: () => void;
@@ -80,17 +81,19 @@ export function Composer({
           style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}>
           <Text style={styles.plus}>+</Text>
         </Pressable>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={t`Zdjęcie paragonu`}
-          accessibilityHint={t`Zrób zdjęcie, potem uzupełnij wydatek`}
-          accessibilityState={{ busy: takingPhoto }}
-          disabled={takingPhoto}
-          hitSlop={8}
-          onPress={() => void takeReceipt()}
-          style={({ pressed }) => [styles.iconButton, (pressed || takingPhoto) && styles.pressed]}>
-          <Text style={styles.camera}>📷</Text>
-        </Pressable>
+        {availableGroupActions(group).receiptPhotos ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t`Zdjęcie paragonu`}
+            accessibilityHint={t`Zrób zdjęcie, potem uzupełnij wydatek`}
+            accessibilityState={{ busy: takingPhoto }}
+            disabled={takingPhoto}
+            hitSlop={8}
+            onPress={() => void takeReceipt()}
+            style={({ pressed }) => [styles.iconButton, (pressed || takingPhoto) && styles.pressed]}>
+            <Text style={styles.camera}>📷</Text>
+          </Pressable>
+        ) : null}
         <View style={styles.amountField}>
           <TextInput
             value={draft.amount}

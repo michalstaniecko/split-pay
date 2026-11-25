@@ -11,7 +11,7 @@ import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
  * The DDL lives in `local-migrations.ts`; `local-store.test.ts` checks both agree.
  */
 
-/** A group as cached from the API (`GET /groups` / delta sync), without members. */
+/** A group as cached from the API (`GET /groups` / delta sync) or a local group (ADR-0021), without members. */
 export interface CachedGroup {
   id: string;
   name: string;
@@ -25,6 +25,8 @@ export interface CachedGroup {
   ownerMemberId: string;
   createdAt: string;
   lastActivityAt: string;
+  /** A local group's device member ("Ja", ADR-0021); never set in a group from the API. */
+  deviceMemberId?: string;
   [field: string]: unknown;
 }
 
@@ -47,6 +49,8 @@ export const localGroups = sqliteTable('groups', {
   lastEntryByOthersAt: text(),
   lastActivityAt: text().notNull(),
   createdAt: text().notNull(),
+  /** A local group (ADR-0021): lives only in the device database, never synced. False for groups from the API. */
+  local: integer({ mode: 'boolean' }).notNull().default(false),
   /** Delta sync cursor (`GET /groups/:groupId/sync?since=`); null until the first delta sync. */
   cursor: text(),
   /** When the group's members and entries were last pulled; null = only the inbox row is cached. */

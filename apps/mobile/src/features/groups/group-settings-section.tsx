@@ -1,4 +1,5 @@
 import { useLingui } from '@lingui/react/macro';
+import { availableGroupActions } from '@split-pay/shared';
 import { Switch, Text, View } from 'react-native';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { useUpdateGroupSettings } from '@/features/balances/balances-query';
@@ -6,8 +7,8 @@ import { GroupNotificationsSwitch } from '@/features/notifications/notification-
 import type { GroupDetail } from './groups-query';
 
 /**
- * Group info → settings. Debt simplification for now; base currency, dates
- * and notifications come with their slices.
+ * Group info → settings: debt simplification, then the group's push
+ * notifications (not in a local group, ADR-0021).
  */
 export function GroupSettingsSection({ group }: { group: GroupDetail }) {
   const { t } = useLingui();
@@ -33,7 +34,7 @@ export function GroupSettingsSection({ group }: { group: GroupDetail }) {
         />
       </View>
       {update.isError ? <Text style={styles.error}>{t`Nie udało się zapisać. Spróbuj ponownie.`}</Text> : null}
-      <GroupNotificationsSwitch groupId={group.id} />
+      {availableGroupActions(group).pushSettings ? <GroupNotificationsSwitch groupId={group.id} /> : null}
     </View>
   );
 }

@@ -1,5 +1,6 @@
 import { plural } from '@lingui/core/macro';
 import { useLingui } from '@lingui/react/macro';
+import { availableGroupActions, type GroupActions } from '@split-pay/shared';
 import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import type { ReactNode } from 'react';
@@ -17,13 +18,16 @@ import { type GroupDetail, useGroup } from '@/features/groups/groups-query';
 import { type MemberRow, memberRows } from '@/features/groups/member-form';
 import { HistorySection } from '@/features/history/history-section';
 import { ReportableMemberAvatar } from '@/features/moderation/reportable-member-avatar';
+import { LocalDataNotice } from '@/features/offline/local-data-notice';
 import { groupAvatarsQuery } from '@/features/photos/photos-query';
 import { useFormatters } from '@/i18n/use-formatters';
 import { authClient } from '@/lib/auth-client';
 
 /**
  * Group info (GLOSSARY): members, group link (not when archived), Stats, change history,
- * settings, then leave / archive / delete at the bottom.
+ * settings, then leave / archive / delete at the bottom. A local group (ADR-0021)
+ * shows the "Dane są tylko na tym telefonie" notice and only what works on this
+ * phone alone (`availableGroupActions`).
  */
 export default function GroupInfoScreen() {
   const { theme } = useUnistyles();
@@ -41,6 +45,7 @@ function GroupInfo({ group }: { group: GroupDetail }) {
   const { data: session } = authClient.useSession();
   // An archived group is read-only and closed to joining: no links, no adding or renaming members.
   const archived = !canShareLinks(group);
+  const actions = availableGroupActions(group);
   const rows = memberRows(group, session?.user.id).map((row) => (archived ? { ...row, canRename: false } : row));
   const openMemberSheet = (memberId?: string) =>
     router.push({
@@ -61,6 +66,7 @@ function GroupInfo({ group }: { group: GroupDetail }) {
         <Text style={styles.name}>{group.name}</Text>
         <Text style={styles.muted}>{dates ? `${dates} · ${group.baseCurrency}` : group.baseCurrency}</Text>
       </View>
+      {group.local ? <LocalDataNotice /> : null}
 
       <Section
         title={t`Członkowie`}
@@ -68,8 +74,8 @@ function GroupInfo({ group }: { group: GroupDetail }) {
         {rows.map((row) => (
           <View key={row.id} style={styles.memberLine}>
             <ReportableMemberAvatar groupId={group.id} member={row} url={avatars?.get(row.id)} size={32} />
-            <MemberItem row={row} onPress={() => openMemberSheet(row.id)} />
-            {!archived && row.withoutAccount ? <PersonalClaimLinkButton groupId={group.id} groupName={group.name} member={row} /> : null}
+            <MemberItem row={row} accountBadge={actions.claiming} onPress={() => openMemberSheet(row.id)} />
+            {!archived && actions.claiming && row.withoutAccount ? <PersonalClaimLinkButton groupId={group.id} groupName={group.name} member={row} /> : null}
           </View>
         ))}
         {owner ? <Text style={styles.muted}>{t`Grupę założono: ${owner}`}</Text> : null}
@@ -78,41 +84,55 @@ function GroupInfo({ group }: { group: GroupDetail }) {
             accessibilityRole="button"
             onPress={() => openMemberSheet()}
             style={({ pressed }) => [styles.addRow, pressed && styles.pressed]}>
-            <Text style={styles.addLabel}>{t`+ Dodaj osobę bez konta`}</Text>
+            <Text style={styles.addLabel}>{actions.claiming ? t`+ Dodaj osobę bez konta` : t`+ Dodaj osobę`}</Text>
           </Pressable>
         ) : null}
-        <AttendanceGridView group={group} />
+        {actions.tripDates ? <AttendanceGridView group={group} /> : null}
       </Section>
-      {!archived ? (
-        <Section title={t`Link grupy`}>
-          <GroupLinkSection groupId={group.id} groupName={group.name} />
-        </Section>
-      ) : null}
-      <Pressable
-        accessibilityRole="button"
-        accessibilityHint={t`Dni × osoby i kategorie`}
-        onPress={() => router.push({ pathname: '/groups/[groupId]/stats', params: { groupId: group.id } })}
-        style={({ pressed }) => [styles.section, styles.sectionHeader, pressed && styles.pressed]}>
-        <Text style={styles.sectionTitle}>{t`Statystyki`}</Text>
-        <Text style={styles.chevron}>{t`Pokaż`}</Text>
-      </Pressable>
-      <Section title={t`Historia zmian`}>
-        <HistorySection group={group} />
-      </Section>
-      <Section title={t`Ustawienia`}>
-        <GroupSettingsSection group={group} />
-      </Section>
-      <GroupLifecycleSection group={group} />
+      <OtherSections group={group} actions={actions} archived={archived} />
     </ScrollView>
   );
 }
 
+/** Group link, Stats, change history, settings, then leave / archive / delete — as far as the group offers them. */
+function OtherSections({ group, actions, archived }: { group: GroupDetail; actions: GroupActions; archived: boolean }) {
+  const { t } = useLingui();
+  return (
+    <>
+      {actions.groupLink && !archived ? (
+        <Section title={t`Link grupy`}>
+          <GroupLinkSection groupId={group.id} groupName={group.name} />
+        </Section>
+      ) : null}
+      {actions.stats ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityHint={t`Dni × osoby i kategorie`}
+          onPress={() => router.push({ pathname: '/groups/[groupId]/stats', params: { groupId: group.id } })}
+          style={({ pressed }) => [styles.section, styles.sectionHeader, pressed && styles.pressed]}>
+          <Text style={styles.sectionTitle}>{t`Statystyki`}</Text>
+          <Text style={styles.chevron}>{t`Pokaż`}</Text>
+        </Pressable>
+      ) : null}
+      {actions.changeHistory ? (
+        <Section title={t`Historia zmian`}>
+          <HistorySection group={group} />
+        </Section>
+      ) : null}
+      <Section title={t`Ustawienia`}>
+        <GroupSettingsSection group={group} />
+      </Section>
+      <GroupLifecycleSection group={group} />
+    </>
+  );
+}
+
 /** A member: name, badges (me, without account); tappable when I may rename them. */
-function MemberItem({ row, onPress }: { row: MemberRow; onPress: () => void }) {
+function MemberItem({ row, accountBadge, onPress }: { row: MemberRow; accountBadge: boolean; onPress: () => void }) {
   const { t } = useLingui();
   const badges = [
     row.isMe ? t`Ty` : null,
-    row.withoutAccount ? t`bez konta` : null,
+    accountBadge && row.withoutAccount ? t`bez konta` : null,
   ].filter((badge): badge is string => badge !== null);
   const content = (
     <>

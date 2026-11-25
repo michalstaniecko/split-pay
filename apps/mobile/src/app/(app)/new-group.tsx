@@ -12,50 +12,88 @@ import {
   GROUP_COLORS,
   GROUP_EMOJIS,
   initialNewGroupDraft,
+  type LocalGroupField,
   type NewGroupDraft,
   type NewGroupField,
+  type PersonDraft,
+  parseLocalGroupDraft,
   parseNewGroupDraft,
 } from '@/features/groups/new-group-form';
+import { deviceMemberName } from '@/features/offline/device-member-name';
+import { LocalDataNotice } from '@/features/offline/local-data-notice';
+import { authClient } from '@/lib/auth-client';
 import { closeSheet } from '@/lib/close-sheet';
 
-/** Create-group form: name, emoji/colour, base currency, optional dates (a trip). */
+const newPerson = (): PersonDraft => ({ id: randomUUID(), name: '' });
+
+/**
+ * Create-group form: name, emoji/colour, base currency, optional dates (a trip).
+ * Signed out it creates a local group (ADR-0021): no dates, but the device
+ * member ("Ja": asked on the first local group on this device, then reused)
+ * and the other people typed in by hand.
+ */
 export default function NewGroupScreen() {
   const { t } = useLingui();
   const { theme } = useUnistyles();
+  const local = !authClient.useSession().data;
   // One id per form: a retry after a lost response cannot create a second group.
   const [id] = useState(() => randomUUID());
   const [draft, setDraft] = useState<NewGroupDraft>(initialNewGroupDraft);
-  const [errors, setErrors] = useState<NewGroupField[]>([]);
+  const [errors, setErrors] = useState<(NewGroupField | LocalGroupField)[]>([]);
+  // Local group: only the first one on this device asks for my name and shows the data notice.
+  const [storedName] = useState(deviceMemberName.get);
+  const [me, setMe] = useState<PersonDraft>(() => ({ id: randomUUID(), name: storedName ?? '' }));
+  const [people, setPeople] = useState<PersonDraft[]>(() => [newPerson()]);
   const createGroup = useCreateGroup();
 
   const update = (patch: Partial<NewGroupDraft>) => {
     setDraft((d) => ({ ...d, ...patch }));
     setErrors((current) => current.filter((field) => !(field in patch)));
   };
+  const updatePerson = (personId: string, name: string) => {
+    setPeople((current) => current.map((p) => (p.id === personId ? { ...p, name } : p)));
+    setErrors((current) => current.filter((field) => field !== 'people'));
+  };
+
+  const opened = () => {
+    closeSheet();
+    router.push({ pathname: '/groups/[groupId]', params: { groupId: id } });
+  };
 
   const submit = () => {
+    if (local) {
+      const parsed = parseLocalGroupDraft(draft, id, me, people);
+      if (!parsed.ok) {
+        setErrors(parsed.errors);
+        return;
+      }
+      createGroup.mutate(parsed.value, {
+        onSuccess: () => {
+          if (storedName === null) deviceMemberName.remember(parsed.value.deviceMember.displayName);
+          opened();
+        },
+      });
+      return;
+    }
     const parsed = parseNewGroupDraft(draft, id);
     if (!parsed.ok) {
       setErrors(parsed.errors);
       return;
     }
-    createGroup.mutate(parsed.value, {
-      onSuccess: (group) => {
-        closeSheet();
-        router.push({ pathname: '/groups/[groupId]', params: { groupId: group.id } });
-      },
-    });
+    createGroup.mutate(parsed.value, { onSuccess: opened });
   };
 
-  const fieldError: Record<NewGroupField, string> = {
+  const fieldError: Record<NewGroupField | LocalGroupField, string> = {
     name: t`Podaj nazwę grupy.`,
     emoji: t`Wybierz emoji.`,
     color: t`Wybierz kolor.`,
     baseCurrency: t`Wybierz walutę.`,
     startDate: t`Podaj datę początku w formacie RRRR-MM-DD.`,
     endDate: t`Podaj datę końca (RRRR-MM-DD), nie wcześniejszą niż początek.`,
+    deviceMember: t`Podaj swoje imię.`,
+    people: t`Imię może mieć najwyżej 60 znaków.`,
   };
-  const errorFor = (field: NewGroupField) =>
+  const errorFor = (field: NewGroupField | LocalGroupField) =>
     errors.includes(field) ? <Text style={styles.error}>{fieldError[field]}</Text> : null;
 
   return (
@@ -129,51 +167,102 @@ export default function NewGroupScreen() {
           </View>
         </View>
 
-        <View style={styles.switchRow}>
-          <View style={styles.flex}>
-            <Text style={styles.switchLabel}>{t`Wyjazd z datami`}</Text>
-            <Text style={styles.hint}>{t`Daty pozwalają dzielić koszty według obecności.`}</Text>
-          </View>
-          <Switch
-            value={draft.hasDates}
-            onValueChange={(hasDates) => update({ hasDates, startDate: draft.startDate, endDate: draft.endDate })}
-            accessibilityLabel={t`Wyjazd z datami`}
-          />
-        </View>
+        {local ? (
+          <>
+            {/* My name is asked once per device; later local groups use the stored one. */}
+            {storedName === null ? (
+              <View style={styles.field}>
+                <Text style={styles.label}>{t`Twoje imię`}</Text>
+                <TextInput
+                  value={me.name}
+                  onChangeText={(name) => {
+                    setMe((m) => ({ ...m, name }));
+                    setErrors((current) => current.filter((field) => field !== 'deviceMember'));
+                  }}
+                  placeholder={t`np. Kasia`}
+                  placeholderTextColor={theme.colors.textMuted}
+                  maxLength={60}
+                  accessibilityLabel={t`Twoje imię`}
+                  style={[styles.input, errors.includes('deviceMember') && styles.inputInvalid]}
+                />
+                {errorFor('deviceMember')}
+              </View>
+            ) : null}
+            <View style={styles.field}>
+              <Text style={styles.label}>{t`Pozostałe osoby`}</Text>
+              {people.map((person, index) => (
+                <TextInput
+                  key={person.id}
+                  value={person.name}
+                  onChangeText={(name) => updatePerson(person.id, name)}
+                  placeholder={t`Imię`}
+                  placeholderTextColor={theme.colors.textMuted}
+                  maxLength={60}
+                  accessibilityLabel={t`Osoba ${index + 1}`}
+                  style={styles.input}
+                />
+              ))}
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => setPeople((current) => [...current, newPerson()])}
+                style={styles.addPerson}>
+                <Text style={styles.addPersonLabel}>{t`+ Dodaj osobę`}</Text>
+              </Pressable>
+              {errorFor('people')}
+            </View>
+            {storedName === null ? <LocalDataNotice /> : null}
+          </>
+        ) : (
+          <>
+            <View style={styles.switchRow}>
+              <View style={styles.flex}>
+                <Text style={styles.switchLabel}>{t`Wyjazd z datami`}</Text>
+                <Text style={styles.hint}>{t`Daty pozwalają dzielić koszty według obecności.`}</Text>
+              </View>
+              <Switch
+                value={draft.hasDates}
+                onValueChange={(hasDates) => update({ hasDates, startDate: draft.startDate, endDate: draft.endDate })}
+                accessibilityLabel={t`Wyjazd z datami`}
+              />
+            </View>
 
-        {draft.hasDates ? (
-          // TODO: native date pickers; typed ISO dates keep the form working on every platform for now.
-          <View style={styles.dates}>
-            <View style={[styles.field, styles.flex]}>
-              <Text style={styles.label}>{t`Od`}</Text>
-              <TextInput
-                value={draft.startDate}
-                onChangeText={(startDate) => update({ startDate })}
-                placeholder={t`RRRR-MM-DD`}
-                placeholderTextColor={theme.colors.textMuted}
-                keyboardType="numbers-and-punctuation"
-                maxLength={10}
-                style={[styles.input, errors.includes('startDate') && styles.inputInvalid]}
-              />
-              {errorFor('startDate')}
-            </View>
-            <View style={[styles.field, styles.flex]}>
-              <Text style={styles.label}>{t`Do`}</Text>
-              <TextInput
-                value={draft.endDate}
-                onChangeText={(endDate) => update({ endDate })}
-                placeholder={t`RRRR-MM-DD`}
-                placeholderTextColor={theme.colors.textMuted}
-                keyboardType="numbers-and-punctuation"
-                maxLength={10}
-                style={[styles.input, errors.includes('endDate') && styles.inputInvalid]}
-              />
-              {errorFor('endDate')}
-            </View>
-          </View>
+            {draft.hasDates ? (
+              // TODO: native date pickers; typed ISO dates keep the form working on every platform for now.
+              <View style={styles.dates}>
+                <View style={[styles.field, styles.flex]}>
+                  <Text style={styles.label}>{t`Od`}</Text>
+                  <TextInput
+                    value={draft.startDate}
+                    onChangeText={(startDate) => update({ startDate })}
+                    placeholder={t`RRRR-MM-DD`}
+                    placeholderTextColor={theme.colors.textMuted}
+                    keyboardType="numbers-and-punctuation"
+                    maxLength={10}
+                    style={[styles.input, errors.includes('startDate') && styles.inputInvalid]}
+                  />
+                  {errorFor('startDate')}
+                </View>
+                <View style={[styles.field, styles.flex]}>
+                  <Text style={styles.label}>{t`Do`}</Text>
+                  <TextInput
+                    value={draft.endDate}
+                    onChangeText={(endDate) => update({ endDate })}
+                    placeholder={t`RRRR-MM-DD`}
+                    placeholderTextColor={theme.colors.textMuted}
+                    keyboardType="numbers-and-punctuation"
+                    maxLength={10}
+                    style={[styles.input, errors.includes('endDate') && styles.inputInvalid]}
+                  />
+                  {errorFor('endDate')}
+                </View>
+              </View>
+            ) : null}
+          </>
+        )}
+
+        {createGroup.isError ? (
+          <Text style={styles.error}>{t`Nie udało się utworzyć grupy. Spróbuj ponownie.`}</Text>
         ) : null}
-
-        {createGroup.isError ? <Text style={styles.error}>{t`Nie udało się utworzyć grupy. Spróbuj ponownie.`}</Text> : null}
 
         <Button label={t`Utwórz grupę`} onPress={submit} loading={createGroup.isPending} />
         <Button variant="secondary" label={t`Anuluj`} onPress={closeSheet} />
@@ -281,5 +370,14 @@ const styles = StyleSheet.create((theme) => ({
   dates: {
     flexDirection: 'row',
     gap: theme.space(3),
+  },
+  addPerson: {
+    minHeight: 44,
+    justifyContent: 'center',
+  },
+  addPersonLabel: {
+    fontSize: theme.font.sizeMd,
+    fontWeight: theme.font.weightBold,
+    color: theme.colors.primary,
   },
 }));

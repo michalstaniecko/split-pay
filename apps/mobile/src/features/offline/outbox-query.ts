@@ -1,6 +1,7 @@
 import { queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { groupKeys } from '@/features/groups/groups-query';
-import { localDb } from './local-session';
+import { onGroupSource } from './local-groups';
+import { localDatabases } from './local-session';
 import { discardOutbox, type OutboxEntryState, readOutboxState, retryOutbox } from './outbox';
 import { flushNow } from './sync';
 
@@ -10,11 +11,18 @@ export const outboxKeys = {
 
 const EMPTY: ReadonlyMap<string, OutboxEntryState> = new Map();
 
-/** The group's entries with an outbox state (🕓 queued, red "!" failed / conflict), from the local database. */
+/**
+ * The group's entries with an outbox state (🕓 queued, red "!" failed / conflict),
+ * from the local database. A local group has no outbox (ADR-0021).
+ */
 export const outboxQuery = (groupId: string) =>
   queryOptions({
     queryKey: outboxKeys.group(groupId),
-    queryFn: async (): Promise<ReadonlyMap<string, OutboxEntryState>> => readOutboxState(await localDb(), groupId),
+    queryFn: () =>
+      onGroupSource(groupId, {
+        local: async () => EMPTY,
+        synced: async () => readOutboxState(await localDatabases.userDb(), groupId),
+      }),
     networkMode: 'always',
   });
 
@@ -37,7 +45,7 @@ export function useRetryOutbox(groupId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (entryId: string) => {
-      await retryOutbox(await localDb(), entryId);
+      await retryOutbox(await localDatabases.userDb(), entryId);
       await flushNow();
     },
     onSettled: () => invalidateOutbox(queryClient, groupId),
@@ -48,7 +56,7 @@ export function useRetryOutbox(groupId: string) {
 export function useDiscardOutbox(groupId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (entryId: string) => discardOutbox(await localDb(), entryId),
+    mutationFn: async (entryId: string) => discardOutbox(await localDatabases.userDb(), entryId),
     onSettled: () => invalidateOutbox(queryClient, groupId),
   });
 }

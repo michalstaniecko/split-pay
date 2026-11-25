@@ -51,6 +51,10 @@ msgstr "{0}: przypomniano dziś"
 msgid "{count, plural, one {# osoba} few {# osoby} many {# osób} other {# osoby}}"
 msgstr "{count, plural, one {# osoba} few {# osoby} many {# osób} other {# osoby}}"
 
+#: src/app/(app)/profile.tsx
+msgid "{count, plural, one {# zmiana z tego telefonu nie została jeszcze wysłana i po wylogowaniu przepadnie.} few {# zmiany z tego telefonu nie zostały jeszcze wysłane i po wylogowaniu przepadną.} many {# zmian z tego telefonu nie zostało jeszcze wysłanych i po wylogowaniu przepadną.} other {# zmiany z tego telefonu nie zostały jeszcze wysłane i po wylogowaniu przepadną.}}"
+msgstr "{count, plural, one {# zmiana z tego telefonu nie została jeszcze wysłana i po wylogowaniu przepadnie.} few {# zmiany z tego telefonu nie zostały jeszcze wysłane i po wylogowaniu przepadną.} many {# zmian z tego telefonu nie zostało jeszcze wysłanych i po wylogowaniu przepadną.} other {# zmiany z tego telefonu nie zostały jeszcze wysłane i po wylogowaniu przepadną.}}"
+
 #: src/features/balances/balances-view.tsx
 msgid "{from} → {to}: {amount}"
 msgstr "{from} → {to}: {amount}"
@@ -110,6 +114,11 @@ msgid "↓ Wpływ"
 msgstr "↓ Wpływ"
 
 #: src/app/(app)/groups/[groupId]/info.tsx
+#: src/app/(app)/new-group.tsx
+msgid "+ Dodaj osobę"
+msgstr "+ Dodaj osobę"
+
+#: src/app/(app)/groups/[groupId]/info.tsx
 msgid "+ Dodaj osobę bez konta"
 msgstr "+ Dodaj osobę bez konta"
 
@@ -147,6 +156,7 @@ msgstr "Alkohol"
 #: src/app/(app)/groups/[groupId]/member.tsx
 #: src/app/(app)/new-group.tsx
 #: src/app/(app)/new.tsx
+#: src/app/(app)/profile.tsx
 #: src/app/(app)/quick-bill.tsx
 #: src/app/(app)/report-photo.tsx
 #: src/features/claims/claim-messages.tsx
@@ -181,6 +191,10 @@ msgstr "Bez upraszczania długów"
 #: src/features/web-view/public-error.tsx
 msgid "Błąd"
 msgstr "Błąd"
+
+#: src/features/balances/settle-up-summary-actions.tsx
+msgid "BLIK"
+msgstr "BLIK"
 
 #: src/app/(app)/groups/[groupId]/settle.tsx
 msgid "Brak danych do spłaty. Zapytaj o nie bezpośrednio."
@@ -271,6 +285,10 @@ msgstr "Członkowie"
 msgid "Dane do spłaty"
 msgstr "Dane do spłaty"
 
+#: src/features/offline/local-data-notice.tsx
+msgid "Dane są tylko na tym telefonie"
+msgstr "Dane są tylko na tym telefonie"
+
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
 #: src/features/entries/entry-detail-body.tsx
 msgid "Data"
@@ -319,6 +337,7 @@ msgstr "Dodaj"
 msgid "Dodaj co najmniej jedną osobę."
 msgstr "Dodaj co najmniej jedną osobę."
 
+#: src/app/(app)/groups/[groupId]/member.tsx
 #: src/app/(app)/quick-bill.tsx
 msgid "Dodaj osobę"
 msgstr "Dodaj osobę"
@@ -421,6 +440,10 @@ msgstr "Grupa albo wpis już nie istnieje lub nie masz do nich dostępu."
 msgid "Grupa jest tylko do odczytu. Przywróć ją, żeby coś zmienić."
 msgstr "Grupa jest tylko do odczytu. Przywróć ją, żeby coś zmienić."
 
+#: src/features/offline/local-data-notice.tsx
+msgid "Grupa lokalna nie trafia na serwer. Odinstalowanie aplikacji albo zmiana telefonu usuwa jej dane."
+msgstr "Grupa lokalna nie trafia na serwer. Odinstalowanie aplikacji albo zmiana telefonu usuwa jej dane."
+
 #: src/features/web-view/public-error.tsx
 msgid "Grupa ma już nowy link. Poproś kogoś z grupy o aktualny."
 msgstr "Grupa ma już nowy link. Poproś kogoś z grupy o aktualny."
@@ -440,6 +463,10 @@ msgstr "Grupa zniknie z Twojej listy. Twoje wpisy zostaną w grupie."
 #: src/app/(app)/groups/[groupId]/unsent-entry.tsx
 msgid "Grupa została zarchiwizowana — nie można już w niej nic zmieniać."
 msgstr "Grupa została zarchiwizowana — nie można już w niej nic zmieniać."
+
+#: src/features/groups/group-lifecycle-section.tsx
+msgid "Grupa, jej członkowie i wszystkie wpisy znikną z tego telefonu. Tego nie da się cofnąć."
+msgstr "Grupa, jej członkowie i wszystkie wpisy znikną z tego telefonu. Tego nie da się cofnąć."
 
 #: src/app/(app)/groups/[groupId]/info.tsx
 msgid "Grupę założono: {owner}"
@@ -468,8 +495,13 @@ msgid "Ich wersja"
 msgstr "Ich wersja"
 
 #: src/app/(app)/groups/[groupId]/member.tsx
+#: src/app/(app)/new-group.tsx
 msgid "Imię"
 msgstr "Imię"
+
+#: src/app/(app)/new-group.tsx
+msgid "Imię może mieć najwyżej 60 znaków."
+msgstr "Imię może mieć najwyżej 60 znaków."
 
 #: src/app/(app)/quick-bill.tsx
 msgid "Imię, potem Enter"
@@ -611,7 +643,12 @@ msgstr "konto zablokowane"
 msgid "Konto zablokowane"
 msgstr "Konto zablokowane"
 
+#: src/app/(auth)/sign-in.tsx
+msgid "Kontynuuj bez konta"
+msgstr "Kontynuuj bez konta"
+
 #: src/app/(app)/groups/[groupId]/settle.tsx
+#: src/features/balances/settle-up-summary-actions.tsx
 msgid "Kopiuj"
 msgstr "Kopiuj"
 
@@ -971,8 +1008,17 @@ msgid "Nowy wydatek"
 msgstr "Nowy wydatek"
 
 #: src/app/(app)/new-group.tsx
+#: src/app/(app)/quick-bill.tsx
+msgid "np. Kasia"
+msgstr "np. Kasia"
+
+#: src/app/(app)/new-group.tsx
 msgid "np. Mazury 2026"
 msgstr "np. Mazury 2026"
+
+#: src/features/balances/settle-up-summary-actions.tsx
+msgid "Nr konta"
+msgstr "Nr konta"
 
 #: src/app/(app)/groups/[groupId]/settle.tsx
 #: src/features/profile/payout-details-section.tsx
@@ -1038,6 +1084,11 @@ msgstr "Opuszczenie grupy: {name}"
 #: src/app/(app)/_layout.tsx
 msgid "Osoba"
 msgstr "Osoba"
+
+#. placeholder {0}: index + 1
+#: src/app/(app)/new-group.tsx
+msgid "Osoba {0}"
+msgstr "Osoba {0}"
 
 #: src/app/(app)/admin.tsx
 msgid "Otwarte zgłoszenia"
@@ -1125,6 +1176,11 @@ msgstr "Podaj nazwę grupy."
 msgid "Podaj poprawny adres e-mail."
 msgstr "Podaj poprawny adres e-mail."
 
+#: src/app/(app)/new-group.tsx
+#: src/app/(app)/quick-bill.tsx
+msgid "Podaj swoje imię."
+msgstr "Podaj swoje imię."
+
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
 #: src/app/(app)/quick-bill.tsx
 msgid "Podaj tytuł."
@@ -1174,6 +1230,10 @@ msgstr "Powód zgłoszenia"
 #: src/features/stats/stats-view.tsx
 msgid "Poza grupą"
 msgstr "Poza grupą"
+
+#: src/app/(app)/new-group.tsx
+msgid "Pozostałe osoby"
+msgstr "Pozostałe osoby"
 
 #: src/features/moderation/reportable-member-avatar.tsx
 msgid "Pozwala zgłosić zdjęcie"
@@ -1285,6 +1345,7 @@ msgid "Serwer odrzucił wpis."
 msgstr "Serwer odrzucił wpis."
 
 #: src/app/(app)/groups/[groupId]/settle.tsx
+#: src/features/balances/settle-up-summary-actions.tsx
 msgid "Skopiowano"
 msgstr "Skopiowano"
 
@@ -1498,6 +1559,11 @@ msgstr "Twój udział {share}."
 msgid "Twoja wersja"
 msgstr "Twoja wersja"
 
+#: src/app/(app)/new-group.tsx
+#: src/app/(app)/quick-bill.tsx
+msgid "Twoje imię"
+msgstr "Twoje imię"
+
 #: src/app/(app)/groups/[groupId]/entry-conflict.tsx
 msgid "Twoje zmiany nie zostały zapisane."
 msgstr "Twoje zmiany nie zostały zapisane."
@@ -1510,6 +1576,10 @@ msgstr "Twoje zmiany nie zostały zapisane."
 #: src/features/settlements/settlement-message.ts
 msgid "Ty"
 msgstr "Ty"
+
+#: src/features/offline/local-data-notice.tsx
+msgid "Tylko na tym telefonie"
+msgstr "Tylko na tym telefonie"
 
 #: src/features/history/change-row.tsx
 msgid "Tylko ta osoba może zmienić swoje imię."
@@ -1524,6 +1594,10 @@ msgstr "Tytuł"
 #: src/features/history/describe-change.ts
 msgid "Tytuł: {value}"
 msgstr "Tytuł: {value}"
+
+#: src/features/balances/settle-up-summary-actions.tsx
+msgid "Udostępnij"
+msgstr "Udostępnij"
 
 #: src/features/group-link/group-link-section.tsx
 msgid "Udostępnij link"
@@ -1572,6 +1646,10 @@ msgid "Usuń {0}"
 msgstr "Usuń {0}"
 
 #: src/features/groups/group-lifecycle-section.tsx
+msgid "Usuń grupę"
+msgstr "Usuń grupę"
+
+#: src/features/groups/group-lifecycle-section.tsx
 msgid "Usuń grupę na zawsze"
 msgstr "Usuń grupę na zawsze"
 
@@ -1600,6 +1678,10 @@ msgstr "Usuń zdjęcie"
 #: src/features/groups/group-lifecycle-section.tsx
 msgid "Usunąć grupę „{name}” na zawsze?"
 msgstr "Usunąć grupę „{name}” na zawsze?"
+
+#: src/features/groups/group-lifecycle-section.tsx
+msgid "Usunąć grupę „{name}”?"
+msgstr "Usunąć grupę „{name}”?"
 
 #: src/features/profile/delete-account-section.tsx
 msgid "Usunąć konto?"
@@ -1858,6 +1940,10 @@ msgid "Wyłączono upraszczanie długów"
 msgstr "Wyłączono upraszczanie długów"
 
 #: src/app/(app)/profile.tsx
+msgid "Wylogować się?"
+msgstr "Wylogować się?"
+
+#: src/app/(app)/profile.tsx
 #: src/app/blocked.tsx
 msgid "Wyloguj się"
 msgstr "Wyloguj się"
@@ -1951,6 +2037,14 @@ msgstr "Zaloguj"
 #: src/app/(auth)/sign-in.tsx
 msgid "Zaloguj się"
 msgstr "Zaloguj się"
+
+#: src/app/(auth)/sign-in.tsx
+msgid "Zaloguj się, by dołączyć do grupy."
+msgstr "Zaloguj się, by dołączyć do grupy."
+
+#: src/app/(app)/index.tsx
+msgid "Zaloguj się, by zapraszać znajomych"
+msgstr "Zaloguj się, by zapraszać znajomych"
 
 #: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
 #: src/app/(app)/groups/[groupId]/entry-conflict.tsx

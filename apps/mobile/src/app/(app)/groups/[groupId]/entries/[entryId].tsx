@@ -1,5 +1,5 @@
 import { useLingui } from '@lingui/react/macro';
-import { type Entry, isEdited } from '@split-pay/shared';
+import { availableGroupActions, type Entry, isEdited } from '@split-pay/shared';
 import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
@@ -24,6 +24,7 @@ import { closeSheet } from '@/lib/close-sheet';
  * settlement).
  * "edytowano" opens the entry's change history (#20).
  * The receipt photo (#26) opens a full-screen viewer.
+ * A local group (ADR-0021) has neither: "edytowano" is plain text there.
  */
 export default function EntryDetailSheet() {
   const { t } = useLingui();
@@ -55,8 +56,10 @@ function EntryDetail({ group, entry }: { group: GroupDetail; entry: Entry }) {
   const addedBy = addedByName(entry, group.members) ?? t`nieznana osoba`;
   const online = useIsOnline();
   const userId = authClient.useSession().data?.user.id;
-  // Offline, only entries I added can be edited (ADR-0005).
-  const locked = lockedOffline(entry, { offline: !online, userId });
+  // Offline, only entries I added can be edited (ADR-0005); a local group's always can.
+  const locked = lockedOffline(entry, { offline: !online, userId }, group);
+  const actions = availableGroupActions(group);
+  const edited = t`edytowano ${format.dateTime(entry.updatedAt)}`;
 
   return (
     <ScrollView contentContainerStyle={styles.content}>
@@ -65,13 +68,14 @@ function EntryDetail({ group, entry }: { group: GroupDetail; entry: Entry }) {
         baseCurrency={group.baseCurrency}
         memberName={name}
         receiptPhoto={
-          entry.kind !== 'settlement' && entry.receiptPhotoId !== null ? (
+          actions.receiptPhotos && entry.kind !== 'settlement' && entry.receiptPhotoId !== null ? (
             <ReceiptPhoto groupId={group.id} entryId={entry.id} />
           ) : null
         }
       />
       <Text style={styles.meta}>{t`Dodano: ${addedBy}, ${format.dateTime(entry.createdAt)}`}</Text>
-      {isEdited(entry) ? (
+      {isEdited(entry) && !actions.changeHistory ? <Text style={styles.meta}>{edited}</Text> : null}
+      {isEdited(entry) && actions.changeHistory ? (
         <Pressable
           accessibilityRole="link"
           accessibilityHint={t`Otwiera historię wpisu`}
@@ -79,7 +83,7 @@ function EntryDetail({ group, entry }: { group: GroupDetail; entry: Entry }) {
             router.replace({ pathname: '/groups/[groupId]/history', params: { groupId: group.id, entryId: entry.id } })
           }
           style={({ pressed }) => pressed && styles.pressed}>
-          <Text style={[styles.meta, styles.link]}>{t`edytowano ${format.dateTime(entry.updatedAt)}`}</Text>
+          <Text style={[styles.meta, styles.link]}>{edited}</Text>
         </Pressable>
       ) : null}
       {group.archivedAt === null && locked ? (

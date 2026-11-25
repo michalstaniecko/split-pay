@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { applyGroupDelta, enqueueCreate, readEntries } from './local-store';
 import {
   classifySendError,
+  countUnsentChanges,
   discardOutbox,
   flushOutbox,
   markConflict,
@@ -268,5 +269,35 @@ describe('classifySendError', () => {
     expect(classifySendError(http(409, { error: 'archived' }))).toEqual({ type: 'failed', error: 'archived' });
     expect(classifySendError(http(404, { error: 'not_found' }))).toEqual({ type: 'failed', error: 'not_found' });
     expect(classifySendError(http(403, 'nope'))).toEqual({ type: 'failed', error: 'http_403' });
+  });
+});
+
+describe('unsent changes (signing out)', () => {
+  it('counts every operation still in the outbox: queued, refused or in conflict', async () => {
+    const db = await setup();
+    const sent = entry();
+    const refused = entry();
+    const waiting = entry();
+    for (const e of [sent, refused, waiting]) await enqueueCreate(db, e);
+    expect(await countUnsentChanges(db)).toBe(3);
+
+    const { send } = transport({
+      [sent.id]: { type: 'sent', entry: stored(sent) },
+      [refused.id]: { type: 'failed', error: 'forbidden' },
+      [waiting.id]: { type: 'retry_later' },
+    });
+    await flushOutbox(db, send);
+
+    expect(await countUnsentChanges(db)).toBe(2);
+  });
+
+  it('is zero once everything was sent', async () => {
+    const db = await setup();
+    const e = entry();
+    await enqueueCreate(db, e);
+
+    await flushOutbox(db, transport().send);
+
+    expect(await countUnsentChanges(db)).toBe(0);
   });
 });

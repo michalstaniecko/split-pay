@@ -23,12 +23,23 @@ export interface MemberRow {
 /**
  * Members as Group info lists them. `myUserId` is the signed-in user
  * (undefined while the session loads — then only members without an account
- * are renamable).
+ * are renamable). In a local group (ADR-0021) the device member is me, there
+ * is no owner, and anyone can be renamed.
  */
 export function memberRows(
-  group: { ownerMemberId: string; members: readonly Named<Member>[] },
+  group: { ownerMemberId: string; local?: boolean; deviceMemberId?: string; members: readonly Named<Member>[] },
   myUserId: string | undefined,
 ): MemberRow[] {
+  if (group.local) {
+    return group.members.map((member) => ({
+      id: member.id,
+      displayName: member.displayName,
+      isOwner: false,
+      isMe: member.id === group.deviceMemberId,
+      withoutAccount: true,
+      canRename: true,
+    }));
+  }
   return group.members.map((member) => ({
     id: member.id,
     displayName: member.displayName,

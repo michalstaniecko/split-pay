@@ -1,21 +1,34 @@
 import { onlineManager, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useSyncExternalStore } from 'react';
+import { useEffect, useRef, useSyncExternalStore } from 'react';
 import { authClient } from '@/lib/auth-client';
-import { selectLocalUser } from './local-session';
+import { localDatabases } from './local-session';
 import { invalidateOutbox } from './outbox-query';
 import { flushNow, onOutboxSent } from './sync';
 
 /**
- * Wires the offline cache into the signed-in app (call once, in the `(app)`
- * layout): selects the user's local database before any screen queries it,
+ * Wires the offline cache into the app (call once, in the `(app)` layout):
+ * selects the signed-in user's local database before any screen queries it
+ * (none while signed out), re-reads every query when someone signs in or out,
  * sends the outbox on start and whenever the connection comes back, and
  * refreshes the bubbles of groups whose operations were sent.
  */
 export function useOfflineSync(): void {
   const userId = authClient.useSession().data?.user.id;
   // During render on purpose: child screens query the cache in their first render.
-  if (userId) selectLocalUser(userId);
+  // Signed out (local groups only, ADR-0021) no user's cache is in use.
+  if (userId) localDatabases.selectUser(userId);
+  else localDatabases.deselectUser();
   const queryClient = useQueryClient();
+
+  // Signing in or out while the app is open (local groups stay on screen,
+  // ADR-0021): the inbox and everything read for the previous account (or
+  // none) is read again from the right databases.
+  const shownFor = useRef(userId);
+  useEffect(() => {
+    if (shownFor.current === userId) return;
+    shownFor.current = userId;
+    void queryClient.resetQueries();
+  }, [userId, queryClient]);
 
   useEffect(() => {
     if (!userId) return;

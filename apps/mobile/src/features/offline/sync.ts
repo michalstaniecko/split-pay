@@ -2,7 +2,7 @@ import type { Entry } from '@split-pay/shared';
 import { onlineManager } from '@tanstack/react-query';
 import { DetailedError, parseResponse } from 'hono/client';
 import { api } from '@/lib/api';
-import { localDb } from './local-session';
+import { localDatabases } from './local-session';
 import {
   applyGroupDelta,
   type CachedGroupListItem,
@@ -90,7 +90,7 @@ export function flushNow(): Promise<void> {
     return flushing;
   }
   flushing = (async () => {
-    const db = await localDb();
+    const db = await localDatabases.userDb();
     do {
       flushAgain = false;
       const result = await flushOutbox(db, sendOp);
@@ -116,7 +116,7 @@ export function syncGroup(groupId: string): Promise<void> {
   const run = (async () => {
     if (!onlineManager.isOnline()) throw new OfflineError();
     await flushNow();
-    const db = await localDb();
+    const db = await localDatabases.userDb();
     const since = await readSyncCursor(db, groupId);
     try {
       const delta = await parseResponse(
@@ -143,7 +143,7 @@ export function syncGroupList(): Promise<void> {
   listSync ??= (async () => {
     if (!onlineManager.isOnline()) throw new OfflineError();
     await flushNow();
-    const db = await localDb();
+    const db = await localDatabases.userDb();
     const items = (await parseResponse(api.groups.$get())) as CachedGroupListItem[];
     const stale = await groupsNeedingSync(db, items);
     await saveGroupList(db, items);

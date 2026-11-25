@@ -42,9 +42,15 @@ const expense = (date: string, createdAt: string, payers: { memberId: string; am
 
 describe('myMemberId', () => {
   it("is the member linked to the user's account", () => {
-    expect(myMemberId(members, ANIA_USER)).toBe(ANIA);
-    expect(myMemberId(members, id(999))).toBeNull();
-    expect(myMemberId(members, undefined)).toBeNull();
+    expect(myMemberId({ members }, ANIA_USER)).toBe(ANIA);
+    expect(myMemberId({ members }, id(999))).toBeNull();
+    expect(myMemberId({ members }, undefined)).toBeNull();
+  });
+
+  it('in a local group is the device member ("Ja"), signed in or not', () => {
+    const local = { local: true, deviceMemberId: BARTEK, members: members.map((m) => ({ ...m, userId: null })) };
+    expect(myMemberId(local, undefined)).toBe(BARTEK);
+    expect(myMemberId(local, ANIA_USER)).toBe(BARTEK);
   });
 });
 

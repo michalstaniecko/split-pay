@@ -21,12 +21,20 @@ const openConversation = (groupId: string) => router.replace({ pathname: '/group
 /**
  * A group link opened in the app. This route lives outside the signed-in
  * group because on the web the same URL is the view-only web
- * (`index.web.tsx`). Signed out: sign in first — the link is remembered
- * (`+native-intent.tsx`) and reopened afterwards (`usePendingJoin`).
+ * (`index.web.tsx`). Signed out — fresh or after "Kontynuuj bez konta"
+ * (ADR-0021): sign in first, told why — the link stays pending and is reopened
+ * afterwards (`usePendingJoin`).
  */
 export default function GroupLinkRoute() {
   const { theme } = useUnistyles();
+  const { token } = useLocalSearchParams<{ token: string }>();
   const session = authClient.useSession();
+  const signedOut = !session.isPending && !session.data;
+  // Deep links are remembered by `+native-intent.tsx` already; this also keeps
+  // a link opened from inside the app.
+  useEffect(() => {
+    if (signedOut && token) pendingJoin.remember(token);
+  }, [signedOut, token]);
   if (session.isPending) {
     return (
       <View style={styles.center}>
@@ -34,7 +42,7 @@ export default function GroupLinkRoute() {
       </View>
     );
   }
-  if (!session.data) return <Redirect href="/sign-in" />;
+  if (!session.data) return <Redirect href={{ pathname: '/sign-in', params: { reason: 'join' } }} />;
   return <JoinScreen />;
 }
 

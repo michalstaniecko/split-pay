@@ -4,7 +4,8 @@ import { pendingJoin } from './group-link';
 
 /**
  * After signing in, opens the join screen for a group link that arrived while
- * signed out (see `pendingJoin`). Called once by the signed-in app layout.
+ * signed out — fresh or after "Kontynuuj bez konta" (see `pendingJoin`).
+ * Mounted by the app layout once there is a session.
  */
 export function usePendingJoin() {
   const pathname = usePathname();

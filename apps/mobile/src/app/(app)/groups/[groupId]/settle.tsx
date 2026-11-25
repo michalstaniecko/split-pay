@@ -1,5 +1,6 @@
 import { useLingui } from '@lingui/react/macro';
 import {
+  availableGroupActions,
   defaultEntryDate,
   formatBankAccount,
   hasPayoutDetails,
@@ -69,7 +70,7 @@ export default function SettleSheet() {
   if (!group.data || (entryId !== undefined && entries.isPending)) {
     return <ActivityIndicator style={styles.loading} color={theme.colors.primary} />;
   }
-  const me = myMemberId(group.data.members, session?.user.id);
+  const me = myMemberId(group.data, session?.user.id);
   if (entryId !== undefined) {
     const entry = entries.data?.find((e) => e.id === entryId);
     if (entry?.kind !== 'settlement') {
@@ -234,7 +235,10 @@ function SettleSheetForm({
         {errorFor('amount')}
       </View>
 
-      {form.to !== '' ? <PayoutDetailsBox groupId={group.id} memberId={form.to} /> : null}
+      {/* A local group has no payout details (ADR-0021). */}
+      {form.to !== '' && availableGroupActions(group).payoutDetails ? (
+        <PayoutDetailsBox groupId={group.id} memberId={form.to} />
+      ) : null}
 
       {deletedMeanwhile ? (
         <Text style={styles.error}>{t`Ten wpis został w międzyczasie usunięty. Twoje zmiany nie zostały zapisane.`}</Text>

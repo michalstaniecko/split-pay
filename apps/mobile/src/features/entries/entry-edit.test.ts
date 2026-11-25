@@ -231,6 +231,12 @@ describe('entryActions', () => {
     expect(entryActions(pizza, open, { offline: true, userId: KASIA })).toEqual(['history', 'copyAmount']);
     expect(entryActions(pizza, open, { offline: false, userId: KASIA })).toEqual(['edit', 'delete', 'history', 'copyAmount']);
   });
+
+  it('in a local group any entry can be edited or deleted, offline too, and there is no history (ADR-0021)', () => {
+    const local = { archivedAt: null, local: true };
+    expect(entryActions(pizza, local, { offline: true, userId: undefined })).toEqual(['edit', 'delete', 'copyAmount']);
+    expect(entryActions(pizza, local)).toEqual(['edit', 'delete', 'copyAmount']);
+  });
 });
 
 describe('lockedOffline', () => {
@@ -239,5 +245,9 @@ describe('lockedOffline', () => {
     expect(lockedOffline(pizza, { offline: true, userId: undefined })).toBe(true);
     expect(lockedOffline(pizza, { offline: true, userId: pizza.createdBy })).toBe(false);
     expect(lockedOffline(pizza, { offline: false, userId: KASIA })).toBe(false);
+  });
+
+  it('never locks an entry of a local group — it has a single author', () => {
+    expect(lockedOffline(pizza, { offline: true, userId: undefined }, { local: true })).toBe(false);
   });
 });

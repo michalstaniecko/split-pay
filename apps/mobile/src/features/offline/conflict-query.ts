@@ -1,5 +1,5 @@
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
-import { localDb } from './local-session';
+import { localDatabases } from './local-session';
 import { type ConflictVersions, keepMine, keepTheirs, readConflict } from './offline-changes';
 import { invalidateOutbox, outboxKeys } from './outbox-query';
 import { flushNow } from './sync';
@@ -8,7 +8,7 @@ import { flushNow } from './sync';
 export const conflictQuery = (groupId: string, entryId: string) =>
   queryOptions({
     queryKey: [...outboxKeys.group(groupId), 'conflict', entryId] as const,
-    queryFn: async (): Promise<ConflictVersions | null> => readConflict(await localDb(), entryId),
+    queryFn: async (): Promise<ConflictVersions | null> => readConflict(await localDatabases.userDb(), entryId),
     networkMode: 'always',
   });
 
@@ -17,7 +17,7 @@ export function useKeepMine(groupId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (entryId: string) => {
-      await keepMine(await localDb(), entryId);
+      await keepMine(await localDatabases.userDb(), entryId);
       void flushNow().catch(() => undefined);
     },
     onSettled: () => invalidateOutbox(queryClient, groupId),
@@ -28,7 +28,7 @@ export function useKeepMine(groupId: string) {
 export function useKeepTheirs(groupId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (entryId: string) => keepTheirs(await localDb(), entryId),
+    mutationFn: async (entryId: string) => keepTheirs(await localDatabases.userDb(), entryId),
     onSettled: () => invalidateOutbox(queryClient, groupId),
   });
 }

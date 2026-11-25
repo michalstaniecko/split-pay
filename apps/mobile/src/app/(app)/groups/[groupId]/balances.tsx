@@ -1,4 +1,5 @@
 import { useLingui } from '@lingui/react/macro';
+import { availableGroupActions } from '@split-pay/shared';
 import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ActivityIndicator, ScrollView } from 'react-native';
@@ -8,6 +9,7 @@ import { GroupNotFound } from '@/components/group-not-found';
 import type { TransferRow } from '@/features/balances/balances';
 import { balancesQuery, type GroupBalances } from '@/features/balances/balances-query';
 import { BalancesView } from '@/features/balances/balances-view';
+import { SettleUpSummaryActions } from '@/features/balances/settle-up-summary-actions';
 import { myMemberId } from '@/features/entries/conversation';
 import { type GroupDetail, useGroup } from '@/features/groups/groups-query';
 import { NudgeButton } from '@/features/notifications/nudge-button';
@@ -19,7 +21,8 @@ import { authClient } from '@/lib/auth-client';
  * (toggled in Group info → settings). "Oddaj" on my own transfer opens the
  * settle sheet with the recipient's payout details and the suggested amount;
  * "Przypomnij" on a transfer owed to me nudges the debtor by push (#24);
- * "Inna spłata" at the bottom opens it with from / to / amount pickers.
+ * "Inna spłata" at the bottom opens it with from / to / amount pickers;
+ * "Udostępnij" / "Kopiuj" send the settle-up summary.
  */
 export default function BalancesSheet() {
   const { theme } = useUnistyles();
@@ -36,7 +39,7 @@ export default function BalancesSheet() {
 function Drawer({ group, balances }: { group: GroupDetail; balances: GroupBalances }) {
   const { t } = useLingui();
   const { data: session } = authClient.useSession();
-  const me = myMemberId(group.members, session?.user.id);
+  const me = myMemberId(group, session?.user.id);
   const archived = group.archivedAt !== null;
 
   const pay = (transfer: TransferRow) =>
@@ -53,8 +56,13 @@ function Drawer({ group, balances }: { group: GroupDetail; balances: GroupBalanc
         me={me}
         // Archived group: no "Oddaj" (SPEC).
         payAction={(transfer) => (transfer.direction === 'fromMe' && !archived ? () => pay(transfer) : undefined)}
-        nudge={(transfer) => <NudgeButton group={group} transfer={transfer} />}
+        nudge={
+          availableGroupActions(group).reminders
+            ? (transfer) => <NudgeButton group={group} transfer={transfer} />
+            : undefined
+        }
       />
+      <SettleUpSummaryActions group={group} balances={balances} />
       {archived ? null : (
         <Button
           variant="secondary"
