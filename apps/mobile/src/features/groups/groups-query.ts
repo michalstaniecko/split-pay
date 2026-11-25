@@ -37,7 +37,8 @@ export const groupsQuery = () =>
     // Reads the device cache, so it must also run offline.
     networkMode: 'always',
   });
-export type GroupListItem = InferResponseType<typeof api.groups.$get, 200>[number];
+/** An inbox row; `local` marks a local group (ADR-0021), false for groups from the API. */
+export type GroupListItem = InferResponseType<typeof api.groups.$get, 200>[number] & { local: boolean };
 
 /**
  * One group with its members (GET /groups/:groupId shape), from the offline
@@ -57,8 +58,11 @@ export const groupQuery = (groupId: string) =>
     },
     networkMode: 'always',
   });
-/** The group as stored: a member's `displayName` may be the removed-name marker (`null`). */
-export type GroupDetailData = InferResponseType<(typeof api.groups)[':groupId']['$get'], 200>;
+/**
+ * The group as stored: a member's `displayName` may be the removed-name marker
+ * (`null`); `local` marks a local group (ADR-0021), false for groups from the API.
+ */
+export type GroupDetailData = InferResponseType<(typeof api.groups)[':groupId']['$get'], 200> & { local: boolean };
 /** The group as screens show it: every member named for the viewer (`useGroup`). */
 export type GroupDetail = Omit<GroupDetailData, 'members'> & { members: Named<GroupDetailData['members'][number]>[] };
 
