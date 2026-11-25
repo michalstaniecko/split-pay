@@ -2,12 +2,15 @@ import {
   type Entry,
   entryFromEdit,
   entryFromNew,
+  equalExpenseDefaults,
   type GroupSettingsUpdate,
   type Member,
   type MemberRename,
   type NewEntry,
   type NewGroup,
   type NewMember,
+  NewQuickBill,
+  QUICK_BILL_EMOJI,
   type SettleUp,
   settleUp,
   validateEntryInGroup,
@@ -20,6 +23,7 @@ import {
   byLastActivity,
   type CachedGroupDetail,
   type CachedGroupListItem,
+  entryRow,
   type Locality,
   previewOf,
   readEntries,
@@ -85,6 +89,71 @@ export async function createLocalGroup(db: LocalDb, input: NewLocalGroup, now = 
     db.insert(localGroups).values({ id: group.id, data: group, lastActivityAt: at, createdAt: at, local: true }),
     ...members.map((m, position) => db.insert(localMembers).values({ id: m.id, groupId: m.groupId, position, data: m })),
   ] as Batch);
+}
+
+/** A quick bill without an account: the `NewQuickBill` sheet plus the device member ("Ja") who pays. */
+export type NewLocalQuickBill = NewQuickBill & { deviceMember: Pick<NewMember, 'id' | 'displayName'> };
+
+/**
+ * Creates a quick bill as a local group in one write (GLOSSARY *Quick bill*,
+ * ADR-0021): a 🧾 group named after the title, the device member first, then
+ * the people, and one expense paid by the device member, split equally among
+ * everyone — the same result as POST /quick-bills, on the device only.
+ * Nothing is written when the input is invalid.
+ */
+export async function createLocalQuickBill(
+  db: LocalDb,
+  input: NewLocalQuickBill,
+  now = new Date(),
+): Promise<{ group: LocalGroup }> {
+  const bill = NewQuickBill.parse(input);
+  const at = now.toISOString();
+  const deviceMemberId = input.deviceMember.id;
+  const members = [input.deviceMember, ...bill.people].map((m) => memberOf(bill.groupId, m));
+  const group: LocalGroup = {
+    id: bill.groupId,
+    name: bill.title,
+    emoji: QUICK_BILL_EMOJI,
+    color: bill.color,
+    baseCurrency: bill.currency,
+    startDate: null,
+    endDate: null,
+    simplifyDebts: true,
+    archivedAt: null,
+    ownerMemberId: deviceMemberId,
+    deviceMemberId,
+    createdAt: at,
+    lastActivityAt: at,
+  };
+  const parsed = entryFromNew(
+    equalExpenseDefaults({
+      id: bill.expenseId,
+      title: bill.title,
+      amount: bill.amount,
+      currency: bill.currency,
+      date: bill.date,
+      payerMemberId: deviceMemberId,
+      members,
+    }),
+    { groupId: group.id, createdBy: deviceMemberId, createdByMember: deviceMemberId, now: at },
+  );
+  if (!parsed.success) throw parsed.error;
+  const expense = parsed.data;
+  const issues = validateEntryInGroup(expense, group, members);
+  if (issues.length > 0) throw new Error(issues.join('; '));
+  await db.batch([
+    db.insert(localGroups).values({
+      id: group.id,
+      data: group,
+      lastActivityAt: at,
+      createdAt: at,
+      lastEntry: previewOf(expense),
+      local: true,
+    }),
+    ...members.map((m, position) => db.insert(localMembers).values({ id: m.id, groupId: m.groupId, position, data: m })),
+    db.insert(localEntries).values(entryRow(expense)),
+  ] as Batch);
+  return { group };
 }
 
 /** Adds a person typed in by hand at the end of the group's member list. */

@@ -5,10 +5,12 @@ import {
   addLocalEntry,
   addLocalMember,
   createLocalGroup,
+  createLocalQuickBill,
   deleteLocalEntry,
   deleteLocalGroup,
   editLocalEntry,
   type NewLocalGroup,
+  type NewLocalQuickBill,
   readLocalBalances,
   readLocalEntries,
   readLocalGroup,
@@ -490,5 +492,124 @@ describe('local group store: entries in the balances', () => {
       { memberId: ANIA, amount: -2000 - 800 },
       { memberId: BARTEK, amount: 400 - 250 },
     ]);
+  });
+});
+
+describe('local group store: quick bill', () => {
+  const quickBill = (overrides: Partial<NewLocalQuickBill> = {}): NewLocalQuickBill => ({
+    groupId: G1,
+    expenseId: E1,
+    title: 'Pizza u Kasi',
+    amount: 9000,
+    currency: 'PLN',
+    date: '2026-11-25',
+    color: '#E53935',
+    deviceMember: { id: ME, displayName: 'Michał' },
+    people: [
+      { id: ANIA, displayName: 'Ania' },
+      { id: BARTEK, displayName: 'Bartek' },
+    ],
+    ...overrides,
+  });
+
+  it('creates the 🧾 group named after the title, the device member first, then the people', async () => {
+    const db = await nodeLocalDb();
+
+    const { group } = await createLocalQuickBill(db, quickBill(), NOW);
+
+    expect(group.id).toBe(G1);
+    expect(await readLocalGroup(db, G1)).toEqual({
+      id: G1,
+      name: 'Pizza u Kasi',
+      emoji: '🧾',
+      color: '#E53935',
+      baseCurrency: 'PLN',
+      startDate: null,
+      endDate: null,
+      simplifyDebts: true,
+      archivedAt: null,
+      ownerMemberId: ME,
+      deviceMemberId: ME,
+      createdAt: '2026-11-25T10:00:00.000Z',
+      lastActivityAt: '2026-11-25T10:00:00.000Z',
+      local: true,
+      members: [member(ME, 'Michał'), member(ANIA, 'Ania'), member(BARTEK, 'Bartek')],
+    });
+  });
+
+  it('adds the one expense, paid by the device member and split equally among everyone', async () => {
+    const db = await nodeLocalDb();
+
+    await createLocalQuickBill(db, quickBill(), NOW);
+
+    expect(await readLocalEntries(db, G1)).toEqual([
+      {
+        kind: 'expense',
+        id: E1,
+        groupId: G1,
+        date: '2026-11-25',
+        title: 'Pizza u Kasi',
+        amount: 9000,
+        currency: 'PLN',
+        rateToBase: '1',
+        category: 'food',
+        receiptPhotoId: null,
+        payers: [{ memberId: ME, amount: 9000 }],
+        split: { mode: 'equal', memberIds: [ME, ANIA, BARTEK] },
+        version: 1,
+        createdBy: ME,
+        createdByMember: ME,
+        createdAt: '2026-11-25T10:00:00.000Z',
+        updatedAt: '2026-11-25T10:00:00.000Z',
+        deletedAt: null,
+      },
+    ]);
+    expect(await readLocalBalances(db, G1)).toMatchObject({
+      baseCurrency: 'PLN',
+      transfers: [
+        { from: ANIA, to: ME, amount: 3000 },
+        { from: BARTEK, to: ME, amount: 3000 },
+      ],
+    });
+  });
+
+  it('lists the group in the inbox, marked as local, with the expense as its preview', async () => {
+    const db = await nodeLocalDb();
+
+    await createLocalQuickBill(db, quickBill(), NOW);
+
+    expect(await readLocalGroupList(db)).toMatchObject([
+      {
+        id: G1,
+        local: true,
+        lastActivityAt: '2026-11-25T10:00:00.000Z',
+        lastEntry: {
+          id: E1,
+          kind: 'expense',
+          title: 'Pizza u Kasi',
+          amount: 9000,
+          currency: 'PLN',
+          createdAt: '2026-11-25T10:00:00.000Z',
+        },
+      },
+    ]);
+  });
+
+  it('writes nothing when the quick bill is invalid', async () => {
+    const db = await nodeLocalDb();
+
+    await expect(createLocalQuickBill(db, quickBill({ amount: 0 }), NOW)).rejects.toThrow();
+
+    expect(await readLocalGroupList(db)).toEqual([]);
+    expect(await db.select().from(localMembers)).toEqual([]);
+    expect(await db.select().from(localEntries)).toEqual([]);
+  });
+
+  it('never writes to the outbox', async () => {
+    const db = await nodeLocalDb();
+
+    await createLocalQuickBill(db, quickBill(), NOW);
+
+    expect(await db.select().from(localOutbox)).toEqual([]);
   });
 });
