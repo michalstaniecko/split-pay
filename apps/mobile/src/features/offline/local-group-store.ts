@@ -20,7 +20,6 @@ import type { LocalDb } from './local-db';
 import { type CachedGroup, type EntryPreview, localEntries, localGroups, localMembers } from './local-schema';
 import {
   byLastActivity,
-  type CachedGroupDetail,
   type CachedGroupListItem,
   entryRow,
   type Locality,
@@ -215,8 +214,8 @@ export async function deleteLocalGroup(db: LocalDb, groupId: string): Promise<vo
 /** One local group with its members, or `undefined` when there is none with this id. */
 export async function readLocalGroup(db: LocalDb, groupId: string): Promise<LocalGroupDetail | undefined> {
   const group = await readGroupDetail(db, groupId);
-  if (!group?.local) return undefined;
-  return group as CachedGroupDetail & LocalGroupDetail;
+  if (!group?.local || group.deviceMemberId === undefined) return undefined;
+  return { ...group, local: true, deviceMemberId: group.deviceMemberId };
 }
 
 /** The local groups for the inbox, most recent activity first. */

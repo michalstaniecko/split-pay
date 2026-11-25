@@ -39,11 +39,11 @@ export const groupsQuery = () =>
     queryKey: groupKeys.list(),
     queryFn: async (): Promise<GroupListItem[]> => {
       const device = await deviceDbIfAny();
-      if (!hasCacheUser()) return (await readInbox({ user: null, device })) as unknown as GroupListItem[];
+      if (!hasCacheUser()) return readInbox({ user: null, device });
       const syncError = await attemptSync(syncGroupList);
       // The cache holds exactly what GET /groups returned (+ my queued entries); local groups join them.
       const user = await cacheDb();
-      const groups = (await readInbox({ user, device })) as unknown as GroupListItem[];
+      const groups = await readInbox({ user, device });
       if (groups.length === 0 && syncError) throw syncError;
       return groups;
     },
@@ -64,13 +64,13 @@ export const groupQuery = (groupId: string) =>
     queryKey: groupKeys.detail(groupId),
     queryFn: async (): Promise<GroupDetailData> => {
       const local = await findLocalGroup(groupId);
-      if (local) return local as unknown as GroupDetailData;
+      if (local) return local;
       if (!hasCacheUser()) throw new Error('Group not found');
       const syncError = await attemptSync(() => syncGroup(groupId));
       const db = await cacheDb();
       // Only the inbox row (no members yet) doesn't count as cached.
       const group = (await isGroupSynced(db, groupId)) ? await readGroupDetail(db, groupId) : undefined;
-      if (group) return group as GroupDetailData;
+      if (group) return group;
       throw syncError ?? new Error('Group not cached');
     },
     networkMode: 'always',
