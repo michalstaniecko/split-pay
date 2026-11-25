@@ -18,6 +18,10 @@ _Avoid_: Journey, excursion, event
 A group with a single expense, created from one sheet in a single step.
 _Avoid_: Bill, shared bill
 
+**Local group** (PL: Grupa lokalna):
+A group that exists only on the device where it was created and is never shared with anyone. Everyone in it is typed in by hand; others learn what they owe only through a settle-up summary. Created without an account.
+_Avoid_: Offline group, guest group, private group
+
 **User** (PL: Użytkownik):
 A person with an account in the app.
 _Avoid_: Account (meaning a person)
@@ -29,6 +33,10 @@ _Avoid_: Participant, user (in a group context)
 **Member without account** (PL: Członek bez konta):
 A member who has no account or has not yet claimed their profile; others enter their expenses.
 _Avoid_: Ghost, guest, placeholder, virtual person
+
+**Device member** (PL: Ja):
+The member of a local group who stands for the person holding the device — the "me" of a local group, since there is no user behind it.
+_Avoid_: Guest, local user, owner
 
 **Owner** (PL: phrased as „Grupę założono: {name}”):
 The member who created the group; the only one who can permanently delete it. Ownership belongs to the member, not the user: claiming the owner's member makes you the owner. If the owner's member has no account, every member may delete the group.
@@ -114,6 +122,10 @@ _Avoid_: Member's expenses (confused with what they paid)
 **Settle-up** (PL: Rozliczenie):
 The set of suggested settlements that brings all balances to zero.
 _Avoid_: Summary, reconciliation
+
+**Settle-up summary** (PL: Podsumowanie rozliczenia):
+A plain-text message describing a group's current settle-up — who pays whom, how much, and for what — meant to be sent through any messenger or pasted by hand.
+_Avoid_: Report, invoice, reminder
 
 **Base currency** (PL: Waluta bazowa):
 The group's currency, in which balances and the settle-up are computed.
