@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { LocalDb } from './local-db';
 import { type LocalDbFiles, createLocalDatabases } from './local-databases';
+import { createLocalGroup, readInbox } from './local-group-store';
 import { readGroupList, saveGroupList } from './local-store';
 import { nodeLocalDb } from './testing/node-local-db';
 
@@ -125,5 +126,33 @@ describe('local databases', () => {
     await expect(databases.userDb()).rejects.toThrow();
     databases.selectUser(USER);
     expect((await readGroupList(await databases.userDb())).map((g) => g.id)).toEqual([G1]);
+  });
+
+  it("signing out deletes the account's cache; the next account still sees the local groups", async () => {
+    const OTHER = '00000000-0000-4000-8000-0000000000f2';
+    const LOCAL = '00000000-0000-4000-8000-000000000003';
+    const files = deviceFiles();
+    const databases = createLocalDatabases(files);
+    databases.openDevice();
+    databases.selectUser(USER);
+    await saveGroupList(await databases.userDb(), [listed(G1)]);
+    await createLocalGroup(await databases.deviceDb(), {
+      id: LOCAL,
+      name: 'Pizza',
+      emoji: '🍕',
+      color: '#E53935',
+      baseCurrency: 'PLN',
+      deviceMember: { id: '00000000-0000-4000-8000-0000000000e1', displayName: 'Ja' },
+      people: [],
+    });
+
+    await databases.forgetUser(USER);
+    expect((await readInbox({ user: null, device: await databases.deviceDb() })).map((g) => g.id)).toEqual([LOCAL]);
+    databases.selectUser(OTHER);
+
+    const inbox = await readInbox({ user: await databases.userDb(), device: await databases.deviceDb() });
+    expect(inbox.map((g) => [g.id, g.local])).toEqual([[LOCAL, true]]);
+    databases.selectUser(USER);
+    expect(await readGroupList(await databases.userDb())).toEqual([]);
   });
 });

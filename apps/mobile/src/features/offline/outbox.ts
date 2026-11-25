@@ -1,5 +1,5 @@
 import { Entry, type NewEntry } from '@split-pay/shared';
-import { and, asc, eq, inArray } from 'drizzle-orm';
+import { and, asc, count, eq, inArray } from 'drizzle-orm';
 import { DetailedError } from 'hono/client';
 import type { LocalDb } from './local-db';
 import { type Batch, entryRow } from './local-store';
@@ -172,4 +172,13 @@ export async function markConflict(
 /** Clears the conflict mark of an entry once a later change of it was accepted. */
 export async function clearConflict(db: LocalDb, entryId: string): Promise<void> {
   await db.delete(localOutbox).where(and(eq(localOutbox.entryId, entryId), eq(localOutbox.status, 'conflict')));
+}
+
+/**
+ * How many changes made on this device the server doesn't have yet — queued,
+ * refused or in conflict. Signing out deletes the cache, and them with it.
+ */
+export async function countUnsentChanges(db: LocalDb): Promise<number> {
+  const [row] = await db.select({ n: count() }).from(localOutbox);
+  return row?.n ?? 0;
 }
