@@ -71,13 +71,14 @@ export interface PersonDraft {
   name: string;
 }
 
-export type LocalGroupField = Exclude<NewGroupField, 'startDate' | 'endDate'> | 'deviceMember';
+export type LocalGroupField = Exclude<NewGroupField, 'startDate' | 'endDate'> | 'deviceMember' | 'people';
 export type ParsedLocalGroup = { ok: true; value: NewLocalGroup } | { ok: false; errors: LocalGroupField[] };
 
 /**
  * The create-group input of a local group (ADR-0021): the group fields
  * (never trip dates), the device member ("Ja") and the people typed in —
- * rows left empty are skipped. Name inputs cap their length (60, `MemberName`).
+ * rows left empty are skipped. Every name is a `MemberName` (at most 60
+ * characters); a person's that isn't reports `people`.
  */
 export function parseLocalGroupDraft(
   draft: NewGroupDraft,
@@ -87,18 +88,20 @@ export function parseLocalGroupDraft(
 ): ParsedLocalGroup {
   const group = parseNewGroupDraft({ ...draft, hasDates: false }, id);
   const me = MemberName.safeParse(deviceMember.name);
+  const others = people
+    .filter((p) => p.name.trim() !== '')
+    .map((p) => ({ id: p.id, name: MemberName.safeParse(p.name) }));
   const errors: LocalGroupField[] = group.ok ? [] : (group.errors as LocalGroupField[]);
   if (!me.success) errors.push('deviceMember');
-  if (!group.ok || !me.success) return { ok: false, errors };
+  if (others.some((p) => !p.name.success)) errors.push('people');
+  if (!group.ok || !me.success || errors.length > 0) return { ok: false, errors };
   const { startDate: _s, endDate: _e, ...fields } = group.value;
   return {
     ok: true,
     value: {
       ...fields,
       deviceMember: { id: deviceMember.id, displayName: me.data },
-      people: people
-        .map((p) => ({ id: p.id, displayName: p.name.trim() }))
-        .filter((p) => p.displayName !== ''),
+      people: others.flatMap((p) => (p.name.success ? [{ id: p.id, displayName: p.name.data }] : [])),
     },
   };
 }

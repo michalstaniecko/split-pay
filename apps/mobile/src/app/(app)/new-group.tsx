@@ -50,8 +50,10 @@ export default function NewGroupScreen() {
     setDraft((d) => ({ ...d, ...patch }));
     setErrors((current) => current.filter((field) => !(field in patch)));
   };
-  const updatePerson = (personId: string, name: string) =>
+  const updatePerson = (personId: string, name: string) => {
     setPeople((current) => current.map((p) => (p.id === personId ? { ...p, name } : p)));
+    setErrors((current) => current.filter((field) => field !== 'people'));
+  };
 
   const opened = () => {
     closeSheet();
@@ -89,6 +91,7 @@ export default function NewGroupScreen() {
     startDate: t`Podaj datę początku w formacie RRRR-MM-DD.`,
     endDate: t`Podaj datę końca (RRRR-MM-DD), nie wcześniejszą niż początek.`,
     deviceMember: t`Podaj swoje imię.`,
+    people: t`Imię może mieć najwyżej 60 znaków.`,
   };
   const errorFor = (field: NewGroupField | LocalGroupField) =>
     errors.includes(field) ? <Text style={styles.error}>{fieldError[field]}</Text> : null;
@@ -202,6 +205,7 @@ export default function NewGroupScreen() {
                 style={styles.addPerson}>
                 <Text style={styles.addPersonLabel}>{t`+ Dodaj osobę`}</Text>
               </Pressable>
+              {errorFor('people')}
             </View>
             {storedName === null ? <LocalDataNotice /> : null}
           </>

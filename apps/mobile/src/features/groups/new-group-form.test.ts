@@ -113,4 +113,17 @@ describe('new local group form', () => {
       errors: ['name', 'deviceMember'],
     });
   });
+
+  it("reports a person's name longer than a member name may be", () => {
+    const result = parseLocalGroupDraft(draft(), ID, { id: ME, name: 'Michał' }, [
+      { id: ANIA, name: 'Ania' },
+      { id: BARTEK, name: 'B'.repeat(61) },
+    ]);
+    expect(result).toEqual({ ok: false, errors: ['people'] });
+  });
+
+  it('accepts a person named with exactly the member name limit', () => {
+    const result = parseLocalGroupDraft(draft(), ID, { id: ME, name: 'Michał' }, [{ id: ANIA, name: 'A'.repeat(60) }]);
+    expect(result).toMatchObject({ ok: true, value: { people: [{ id: ANIA, displayName: 'A'.repeat(60) }] } });
+  });
 });

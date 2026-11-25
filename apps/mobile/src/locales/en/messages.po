@@ -499,6 +499,10 @@ msgstr "Their version"
 msgid "Imię"
 msgstr "Name"
 
+#: src/app/(app)/new-group.tsx
+msgid "Imię może mieć najwyżej 60 znaków."
+msgstr "A name can have at most 60 characters."
+
 #: src/app/(app)/quick-bill.tsx
 msgid "Imię, potem Enter"
 msgstr "Name, then Enter"
