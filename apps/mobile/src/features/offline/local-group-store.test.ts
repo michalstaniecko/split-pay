@@ -12,7 +12,6 @@ import {
   type NewLocalGroup,
   type NewLocalQuickBill,
   readLocalBalances,
-  readLocalEntries,
   readLocalGroup,
   readInbox,
   readLocalGroupList,
@@ -20,7 +19,7 @@ import {
   restoreLocalEntry,
   updateLocalGroupSettings,
 } from './local-group-store';
-import { saveGroupList } from './local-store';
+import { readEntries, saveGroupList } from './local-store';
 import { nodeLocalDb } from './testing/node-local-db';
 
 const G1 = '00000000-0000-4000-8000-000000000001';
@@ -190,7 +189,7 @@ describe('local group store: device database only', () => {
     const db = await nodeLocalDb();
     await createLocalGroup(db, newGroup(), NOW);
 
-    expect(await readLocalEntries(db, G1)).toEqual([]);
+    expect(await readEntries(db, G1)).toEqual([]);
   });
 
   it('never writes to the outbox or a sync cursor', async () => {
@@ -306,7 +305,7 @@ describe('local group store: entries', () => {
 
     await addLocalEntry(db, G1, pizza(), new Date('2026-11-25T12:00:00.000Z'));
 
-    expect(await readLocalEntries(db, G1)).toEqual([
+    expect(await readEntries(db, G1)).toEqual([
       {
         ...pizza(),
         groupId: G1,
@@ -327,7 +326,7 @@ describe('local group store: entries', () => {
     await expect(
       addLocalEntry(db, G1, pizza({ split: { mode: 'equal', memberIds: [ME, CELINA] } } as Partial<NewEntry>), NOW),
     ).rejects.toThrow(`Unknown member: ${CELINA}`);
-    expect(await readLocalEntries(db, G1)).toEqual([]);
+    expect(await readEntries(db, G1)).toEqual([]);
   });
 
   it('edits an entry: the whole content is replaced, author and creation time stay', async () => {
@@ -352,7 +351,7 @@ describe('local group store: entries', () => {
     } as Partial<NewEntry>);
     await editLocalEntry(db, added, exact, new Date('2026-11-25T13:00:00.000Z'));
 
-    expect(await readLocalEntries(db, G1)).toEqual([
+    expect(await readEntries(db, G1)).toEqual([
       {
         ...exact,
         groupId: G1,
@@ -374,7 +373,7 @@ describe('local group store: entries', () => {
 
     await deleteLocalEntry(db, added, NOW);
 
-    expect((await readLocalEntries(db, G1)).map((e) => e.id)).toEqual([E2]);
+    expect((await readEntries(db, G1)).map((e) => e.id)).toEqual([E2]);
   });
 
   it('"Cofnij" brings a deleted entry back as it was', async () => {
@@ -385,7 +384,7 @@ describe('local group store: entries', () => {
 
     await restoreLocalEntry(db, deleted, NOW);
 
-    expect(await readLocalEntries(db, G1)).toEqual([added]);
+    expect(await readEntries(db, G1)).toEqual([added]);
   });
 });
 
@@ -542,7 +541,7 @@ describe('local group store: quick bill', () => {
 
     await createLocalQuickBill(db, quickBill(), NOW);
 
-    expect(await readLocalEntries(db, G1)).toEqual([
+    expect(await readEntries(db, G1)).toEqual([
       {
         kind: 'expense',
         id: E1,

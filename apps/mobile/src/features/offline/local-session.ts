@@ -13,11 +13,6 @@ export function openDeviceDb(): void {
   databases.openDevice();
 }
 
-/** The device database: local groups, kept across sign-out and account deletion. */
-export function deviceDb(): Promise<LocalDb> {
-  return databases.deviceDb();
-}
-
 /**
  * Points the offline cache at the signed-in user's own database file, so one
  * account never reads another's cache or sends another's outbox. Idempotent;
@@ -57,7 +52,7 @@ export function forgetUserCache(userId: string): Promise<void> {
   return databases.forgetUser(userId);
 }
 
-/** The device database where there is one: native. The web has no local groups. */
+/** The device database (local groups, kept across sign-out and account deletion) where there is one: native. The web has no local groups. */
 export function deviceDbIfAny(): Promise<LocalDb | null> {
   return Platform.OS === 'web' ? Promise.resolve(null) : databases.deviceDb();
 }

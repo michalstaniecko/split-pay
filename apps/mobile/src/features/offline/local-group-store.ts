@@ -241,11 +241,6 @@ export async function readInbox({
   return [...synced, ...local].sort(byLastActivity);
 }
 
-/** A local group's live entries in Conversation order. */
-export function readLocalEntries(db: LocalDb, groupId: string): Promise<Entry[]> {
-  return readEntries(db, groupId);
-}
-
 /** The local group, or an error when there is none with this id. */
 async function requireLocalGroup(db: LocalDb, groupId: string): Promise<LocalGroupDetail> {
   const group = await readLocalGroup(db, groupId);
@@ -350,7 +345,7 @@ export async function readLocalBalances(
   const group = await readLocalGroup(db, groupId);
   if (!group) return undefined;
   const { balances, transfers } = settleUp(
-    await readLocalEntries(db, groupId),
+    await readEntries(db, groupId),
     group,
     group.members.map((m) => m.id),
   );

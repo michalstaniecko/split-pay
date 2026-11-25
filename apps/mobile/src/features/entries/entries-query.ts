@@ -8,7 +8,6 @@ import {
   deleteLocalEntry,
   editLocalEntry,
   type NewLocalQuickBill,
-  readLocalEntries,
   restoreLocalEntry,
 } from '@/features/offline/local-group-store';
 import type { LocalDb } from '@/features/offline/local-db';
@@ -42,7 +41,7 @@ export const entriesQuery = (groupId: string) =>
   queryOptions({
     queryKey: entryKeys.list(groupId),
     queryFn: async (): Promise<Entry[]> => {
-      if (await isLocalGroup(groupId)) return readLocalEntries(await localGroupsDb(), groupId);
+      if (await isLocalGroup(groupId)) return readEntries(await localGroupsDb(), groupId);
       if (!hasCacheUser()) throw new Error('Group not found');
       const syncError = await attemptSync(() => syncGroup(groupId));
       const db = await cacheDb();
