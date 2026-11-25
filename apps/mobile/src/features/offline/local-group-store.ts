@@ -2,7 +2,16 @@ import { type Entry, type Member, type MemberRename, type NewGroup, type NewMemb
 import { and, eq, max } from 'drizzle-orm';
 import type { LocalDb } from './local-db';
 import { type CachedGroup, localGroups, localMembers } from './local-schema';
-import { type Batch, type CachedGroupDetail, type CachedGroupListItem, readEntries, readGroupDetail, readGroupList } from './local-store';
+import {
+  type Batch,
+  byLastActivity,
+  type CachedGroupDetail,
+  type CachedGroupListItem,
+  type Locality,
+  readEntries,
+  readGroupDetail,
+  readGroupList,
+} from './local-store';
 
 /*
  * The local group store (ADR-0021): the whole write and read path of local
@@ -101,6 +110,26 @@ export async function readLocalGroup(db: LocalDb, groupId: string): Promise<Loca
 /** The local groups for the inbox, most recent activity first. */
 export async function readLocalGroupList(db: LocalDb): Promise<LocalGroupListItem[]> {
   return (await readGroupList(db)).filter((g): g is LocalGroupListItem => g.local);
+}
+
+/**
+ * The inbox (ADR-0021): the signed-in user's groups from their cache (`user`,
+ * none when signed out) merged with the local groups on this device
+ * (`device`, none on the web), most recent activity first. Local groups keep
+ * their `local` flag, so the inbox badges them.
+ */
+export async function readInbox({
+  user,
+  device,
+}: {
+  user: LocalDb | null;
+  device: LocalDb | null;
+}): Promise<(CachedGroupListItem & Locality)[]> {
+  const [synced, local] = await Promise.all([
+    user ? readGroupList(user) : [],
+    device ? readLocalGroupList(device) : [],
+  ]);
+  return [...synced, ...local].sort(byLastActivity);
 }
 
 /** A local group's live entries in Conversation order. */
