@@ -8,6 +8,12 @@ export interface LocalDbFiles {
   remove(name: string): Promise<void>;
 }
 
+/*
+ * File names keep the internal `split-pay` prefix, not the app name Kwitz
+ * (ADR-0022): users never see them, and renaming a file orphans the data in
+ * it (a user's unsent outbox, or local groups that exist only on this phone).
+ */
+const DEVICE_FILE_NAME = 'split-pay-device.db';
 const userFileName = (userId: string) => `split-pay-${userId}.db`;
 
 /**
@@ -19,7 +25,7 @@ const userFileName = (userId: string) => `split-pay-${userId}.db`;
  *   not by any user — opened at app start whether or not anyone is signed in,
  *   and never deleted by signing out or deleting an account.
  */
-export function createLocalDatabases(files: LocalDbFiles, deviceFileName = 'split-pay-device.db') {
+export function createLocalDatabases(files: LocalDbFiles, deviceFileName = DEVICE_FILE_NAME) {
   let device: Promise<LocalDb> | null = null;
   let user: { userId: string; db: Promise<LocalDb> } | null = null;
 
