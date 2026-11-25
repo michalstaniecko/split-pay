@@ -1,5 +1,5 @@
 import { useLingui } from '@lingui/react/macro';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Text, TextInput, View } from 'react-native';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
@@ -14,11 +14,13 @@ type Step = { name: 'email' } | { name: 'code'; email: string };
  * Email one-time code sign-in: email → code. A first sign-in creates the
  * account. On success the session changes and the root layout shows the app.
  * On native, "Kontynuuj bez konta" leads to the inbox with local groups
- * instead (ADR-0021).
+ * instead (ADR-0021). Opened by a group link (`reason=join`), it says why;
+ * the join screen follows the sign-in (`usePendingJoin`).
  */
 export default function SignInScreen() {
   const { t } = useLingui();
   const { theme } = useUnistyles();
+  const { reason } = useLocalSearchParams<{ reason?: string }>();
   const [step, setStep] = useState<Step>({ name: 'email' });
   const [emailInput, setEmailInput] = useState('');
   const [otp, setOtp] = useState('');
@@ -81,6 +83,7 @@ export default function SignInScreen() {
         <Text style={styles.title} accessibilityRole="header">
           {t`Zaloguj się`}
         </Text>
+        {reason === 'join' ? <Text style={styles.hint}>{t`Zaloguj się, by dołączyć do grupy.`}</Text> : null}
 
         {step.name === 'email' ? (
           <>

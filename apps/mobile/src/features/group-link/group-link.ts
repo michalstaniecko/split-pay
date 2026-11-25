@@ -50,7 +50,8 @@ let pendingToken: string | undefined;
 
 /**
  * The last group link the app was opened with (`src/app/+native-intent.tsx`).
- * When it arrives while signed out, the guard shows sign-in instead; once
+ * When it arrives while signed out (also after "Kontynuuj bez konta"), the
+ * group link route sends to sign-in and keeps it pending; once
  * signed in, the app takes it and opens the join screen. The join screen also
  * takes it, so a link opened while signed in isn't replayed later. In memory
  * only: lost if the app is killed before signing in.

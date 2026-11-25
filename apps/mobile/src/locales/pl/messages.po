@@ -2038,6 +2038,10 @@ msgstr "Zaloguj"
 msgid "Zaloguj się"
 msgstr "Zaloguj się"
 
+#: src/app/(auth)/sign-in.tsx
+msgid "Zaloguj się, by dołączyć do grupy."
+msgstr "Zaloguj się, by dołączyć do grupy."
+
 #: src/app/(app)/index.tsx
 msgid "Zaloguj się, by zapraszać znajomych"
 msgstr "Zaloguj się, by zapraszać znajomych"

@@ -132,6 +132,7 @@ A fixed, translated list with icons (food, transport, accommodation, alcohol, fu
 - Not available: currencies other than the base currency (chosen freely at creation; no conversion), receipt photos, change history, trip dates and attendance, archiving, reminders and push, payout details, group link and QR, claiming, statistics (computed by the server), leaving the group (deleting it is the only way out).
 - Deleting a local group needs a confirmation, is immediate and cannot be undone (there is no owner).
 - A clear "Dane są tylko na tym telefonie" notice when the first local group is created and in Group info. No backup or export.
+- A group link opened without an account is not lost: the app asks to sign in ("Zaloguj się, by dołączyć do grupy") and opens the join screen right after.
 - Signing in keeps existing local groups next to synced ones; once signed in, new groups are always synced. Signing out deletes the account's cache but keeps local groups (they belong to the device).
 
 ## Web interface
