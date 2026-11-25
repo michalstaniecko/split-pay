@@ -11,7 +11,7 @@ import {
   renameLocalMember,
   requireLocalGroup,
 } from '@/features/offline/local-group-store';
-import { groupWriteNetwork, localGroupsDb, onGroupSource } from '@/features/offline/local-groups';
+import { groupWriteNetwork, localGroupsDb, onGroupSource, syncedWrite } from '@/features/offline/local-groups';
 import { deviceDbIfAny, hasCacheUser, cacheDb } from '@/features/offline/local-session';
 import { isGroupSynced, readGroupDetail } from '@/features/offline/local-store';
 import { attemptSync, syncGroup, syncGroupList } from '@/features/offline/sync';
@@ -112,7 +112,7 @@ export function useCreateGroup() {
     ...groupWriteNetwork,
     mutationFn: async (input: NewGroup | NewLocalGroup): Promise<void> => {
       if ('deviceMember' in input) await createLocalGroup(await localGroupsDb(), input);
-      else await parseResponse(api.groups.$post({ json: input }));
+      else await syncedWrite(() => parseResponse(api.groups.$post({ json: input })));
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: groupKeys.list() });

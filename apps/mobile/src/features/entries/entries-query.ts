@@ -11,7 +11,7 @@ import {
   restoreLocalEntry,
 } from '@/features/offline/local-group-store';
 import type { LocalDb } from '@/features/offline/local-db';
-import { groupWriteNetwork, localGroupsDb, onGroupSource } from '@/features/offline/local-groups';
+import { groupWriteNetwork, localGroupsDb, onGroupSource, syncedWrite } from '@/features/offline/local-groups';
 import { hasCacheUser, cacheDb, cacheUserId } from '@/features/offline/local-session';
 import { enqueueCreate, isGroupSynced, readEntries, readGroupDetail, saveEntry } from '@/features/offline/local-store';
 import {
@@ -310,7 +310,7 @@ export function useCreateQuickBill() {
     ...groupWriteNetwork,
     mutationFn: async (input: NewQuickBill | NewLocalQuickBill): Promise<{ group: { id: string } }> => {
       if ('deviceMember' in input) return createLocalQuickBill(await localGroupsDb(), input);
-      return parseResponse(api['quick-bills'].$post({ json: input }));
+      return syncedWrite(() => parseResponse(api['quick-bills'].$post({ json: input })));
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: groupKeys.list() });
