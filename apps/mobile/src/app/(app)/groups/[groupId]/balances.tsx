@@ -8,6 +8,7 @@ import { GroupNotFound } from '@/components/group-not-found';
 import type { TransferRow } from '@/features/balances/balances';
 import { balancesQuery, type GroupBalances } from '@/features/balances/balances-query';
 import { BalancesView } from '@/features/balances/balances-view';
+import { SettleUpSummaryActions } from '@/features/balances/settle-up-summary-actions';
 import { myMemberId } from '@/features/entries/conversation';
 import { type GroupDetail, useGroup } from '@/features/groups/groups-query';
 import { NudgeButton } from '@/features/notifications/nudge-button';
@@ -19,7 +20,8 @@ import { authClient } from '@/lib/auth-client';
  * (toggled in Group info → settings). "Oddaj" on my own transfer opens the
  * settle sheet with the recipient's payout details and the suggested amount;
  * "Przypomnij" on a transfer owed to me nudges the debtor by push (#24);
- * "Inna spłata" at the bottom opens it with from / to / amount pickers.
+ * "Inna spłata" at the bottom opens it with from / to / amount pickers;
+ * "Udostępnij" / "Kopiuj" send the settle-up summary.
  */
 export default function BalancesSheet() {
   const { theme } = useUnistyles();
@@ -55,6 +57,7 @@ function Drawer({ group, balances }: { group: GroupDetail; balances: GroupBalanc
         payAction={(transfer) => (transfer.direction === 'fromMe' && !archived ? () => pay(transfer) : undefined)}
         nudge={(transfer) => <NudgeButton group={group} transfer={transfer} />}
       />
+      <SettleUpSummaryActions group={group} balances={balances} />
       {archived ? null : (
         <Button
           variant="secondary"
