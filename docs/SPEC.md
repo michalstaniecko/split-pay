@@ -1,6 +1,6 @@
-# split-pay — product specification
+# Kwitz — product specification
 
-> `split-pay` is a working name. The final name and domain are an open task (see [Open tasks](#open-tasks)).
+> The app is called **Kwitz**, domain `kwitz.app` ([ADR-0022](./adr/0022-app-name-kwitz-and-domain-kwitz-app.md)). `split-pay` remains the repo and internal working name.
 > Domain vocabulary: [GLOSSARY.md](../GLOSSARY.md). Key architecture decisions: [docs/adr/](./adr/).
 
 ## Goal
@@ -327,7 +327,7 @@ Expo Router, chat-style layout — no bottom tabs, no group tabs ([ADR-0017](./a
 
 ## Open tasks
 
-- [ ] **App name and domain** — blocks the first public build. The bundle ID cannot change after publishing, and the domain is baked into universal links (changing it breaks already-sent invitations). Planned layout: `app.<domain>` (web + links), `api.<domain>` (API).
+- [x] **App name and domain** — **Kwitz**, `kwitz.app`: `app.kwitz.app` (web + links), `api.kwitz.app` (API), bundle ID `app.kwitz` ([ADR-0022](./adr/0022-app-name-kwitz-and-domain-kwitz-app.md)).
 - [ ] **PhotoDNA application** — at the public store launch.
 - [x] Choose i18next vs Lingui — **Lingui** (#4).
 - [ ] Choose an SMTP provider for OTP emails.

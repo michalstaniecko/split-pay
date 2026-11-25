@@ -1,6 +1,6 @@
-# split-pay
+# Kwitz
 
-> Working name.
+> Repo and internal working name: `split-pay`. See [ADR-0022](docs/adr/0022-app-name-kwitz-and-domain-kwitz-app.md).
 
 A mobile app (iOS + Android) and web preview for splitting expenses between friends — from a single bill to a multi-day trip.
 
