@@ -9,6 +9,7 @@
     "@formatjs/intl-pluralrules": "^7.1.0",
     "@lingui/core": "^6.12.0",
     "@lingui/react": "^6.12.0",
+    "@sentry/react-native": "~8.28.1",
     "@shopify/flash-list": "2.3.2",
     "@split-pay/api": "workspace:*",
     "@split-pay/shared": "workspace:*",

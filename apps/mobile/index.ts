@@ -1,3 +1,5 @@
+// Error reporting first, so failures while loading the app are reported (off without a DSN).
+import './src/lib/start-error-reporting';
 // Intl polyfills must load before Lingui evaluates any message.
 import './src/i18n/polyfills';
 // Unistyles must be configured before any screen is loaded.

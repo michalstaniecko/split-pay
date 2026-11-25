@@ -4,6 +4,7 @@ import { Hono } from 'hono';
 import { logger } from 'hono/logger';
 import type { Auth } from './auth';
 import type { Db } from './db/client';
+import { type ErrorReporter, reportServerErrors } from './error-reporting';
 import { createRequireAdmin, isAdminEmail } from './middleware/require-admin';
 import { type AuthEnv, createRequireUser } from './middleware/require-user';
 import { deleteAccount } from './routes/account';
@@ -31,6 +32,8 @@ export interface AppDeps {
   storage?: ObjectStorage;
   /** Origin of the web app (`WEB_URL`), where link previews send people; unset until the domain exists. */
   webUrl?: string | undefined;
+  /** Error reporting (Sentry, #64): unhandled errors and 5xx are captured; off when omitted. */
+  errorReporter?: ErrorReporter | null;
 }
 
 /**
@@ -39,12 +42,20 @@ export interface AppDeps {
  * Keep routes chained in one expression (or `.route()` chained sub-apps) —
  * the typed client (`hc`) infers its types from this chain.
  */
-export const createApp = ({ auth, db, adminEmails = [], flags = defaultFeatureFlags, storage, webUrl }: AppDeps) => {
+export const createApp = ({
+  auth,
+  db,
+  adminEmails = [],
+  flags = defaultFeatureFlags,
+  storage,
+  webUrl,
+  errorReporter,
+}: AppDeps) => {
   // A blocked session (#48) passes only where `blocked-session.ts` allows.
   const requireUser = createRequireUser(auth, db);
   const requireAdmin = createRequireAdmin(adminEmails);
 
-  return (
+  const app =
     new Hono<AuthEnv>()
       .use(logger())
       .on(['GET', 'POST'], '/api/auth/*', (c) => auth.handler(c.req.raw))
@@ -91,8 +102,9 @@ export const createApp = ({ auth, db, adminEmails = [], flags = defaultFeatureFl
       .route('/reports', reportRoutes({ db, requireUser }))
       .route('/admin', adminRoutes({ db, requireUser, requireAdmin, storage }))
       /** ECB exchange rates for a date (ADR-0014). */
-      .route('/rates', ratesRoutes({ db, requireUser }))
-  );
+      .route('/rates', ratesRoutes({ db, requireUser }));
+  app.onError(reportServerErrors(errorReporter));
+  return app;
 };
 
 export type AppType = ReturnType<typeof createApp>;

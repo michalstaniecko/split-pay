@@ -48,14 +48,17 @@ export function startPhotoRetentionJob(options: {
   storage: ObjectStorage;
   intervalMs?: number;
   log?: (message: string, error?: unknown) => void;
+  /** Called with the error of a failed run (error reporting, #64). */
+  onError?: (error: unknown) => void;
 }): () => void {
-  const { db, storage, intervalMs = 24 * 60 * 60 * 1000, log = console.log } = options;
+  const { db, storage, intervalMs = 24 * 60 * 60 * 1000, log = console.log, onError } = options;
   const run = async () => {
     try {
       const deleted = await runPhotoRetention(db, storage, new Date());
       if (deleted > 0) log(`[photos] retention deleted ${deleted} photo(s)`);
     } catch (error) {
       log('[photos] retention failed', error);
+      onError?.(error);
     }
   };
   const first = setTimeout(() => void run(), 60_000);

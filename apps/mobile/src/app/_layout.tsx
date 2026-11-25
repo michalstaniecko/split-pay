@@ -9,6 +9,7 @@ import { openDeviceDb } from '@/features/offline/local-session';
 import { meQuery } from '@/features/profile/me-query';
 import { LocaleProvider } from '@/i18n/locale-provider';
 import { authClient } from '@/lib/auth-client';
+import { setErrorReportingUser } from '@/lib/error-reporting';
 import { queryClient } from '@/lib/query-client';
 
 void SplashScreen.preventAutoHideAsync();
@@ -36,6 +37,9 @@ export default function RootLayout() {
 function RootNavigator() {
   const { data: session, isPending } = authClient.useSession();
   const signedIn = !!session;
+  const userId = session?.user.id;
+  // Error reports carry only the user id (#64).
+  useEffect(() => setErrorReportingUser(userId), [userId]);
   const me = useQuery({ ...meQuery(), enabled: signedIn });
   // The splash screen covers reading the stored session and, when online,
   // the API's answer whether the account is blocked.
@@ -46,7 +50,7 @@ function RootNavigator() {
 
   // Offline or on an error, the status this device last saw keeps a blocked
   // user out of the inbox (the offline cache would otherwise show it).
-  const area = useSessionArea({ pending: isPending, userId: session?.user.id }, me.data, blockedStatus);
+  const area = useSessionArea({ pending: isPending, userId }, me.data, blockedStatus);
   // Signed out by choice: local groups only, nothing that needs the API.
   const chosenWithoutAccount = useWithoutAccount();
   const local = area === 'auth' && chosenWithoutAccount;
