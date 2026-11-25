@@ -124,7 +124,7 @@ The set of suggested settlements that brings all balances to zero.
 _Avoid_: Summary, reconciliation
 
 **Settle-up summary** (PL: Podsumowanie rozliczenia):
-A plain-text message describing a group's current settle-up — who pays whom, how much, and for what — meant to be sent through any messenger or pasted by hand.
+A plain-text message describing a group's current settle-up — who pays whom, how much, and for what — meant to be sent through any messenger or pasted by hand. Shared or copied from the balance drawer.
 _Avoid_: Report, invoice, reminder
 
 **Base currency** (PL: Waluta bazowa):
