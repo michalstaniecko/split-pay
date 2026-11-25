@@ -127,7 +127,7 @@ A fixed, translated list with icons (food, transport, accommodation, alcohol, fu
 
 - The sign-in screen has "Kontynuuj bez konta" (iOS and Android only — not on the web). It leads to the inbox with local groups and a persistent "Zaloguj się, by zapraszać znajomych" banner.
 - A **local group** ("Grupa lokalna", badge "Tylko na tym telefonie") lives only in a device database, separate from any user's cache; it is never sent to the server. A quick bill can be local too.
-- Everyone in it is typed in by hand (members without an account). The **device member** ("Ja") is the "me" of the group: its name is asked once per device and pre-filled in each new local group; renaming it in one group doesn't change the others.
+- Everyone in it is typed in by hand (members without an account). The **device member** ("Ja") is the "me" of the group: its name is asked once per device (on the first local group) and used in each later one without asking; renaming it in one group doesn't change the others.
 - Available: any number of entries, all split modes, multiple payers, incomes, settlements, balances, settle-up and the settle-up summary.
 - Not available: currencies other than the base currency (chosen freely at creation; no conversion), receipt photos, change history, trip dates and attendance, archiving, reminders and push, payout details, group link and QR, claiming, statistics (computed by the server), leaving the group (deleting it is the only way out).
 - Deleting a local group needs a confirmation, is immediate and cannot be undone (there is no owner).

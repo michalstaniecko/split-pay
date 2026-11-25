@@ -29,8 +29,8 @@ const newPerson = (): PersonDraft => ({ id: randomUUID(), name: '' });
 /**
  * Create-group form: name, emoji/colour, base currency, optional dates (a trip).
  * Signed out it creates a local group (ADR-0021): no dates, but the device
- * member ("Ja", asked once per device, then pre-filled) and the other people
- * typed in by hand.
+ * member ("Ja": asked on the first local group on this device, then reused)
+ * and the other people typed in by hand.
  */
 export default function NewGroupScreen() {
   const { t } = useLingui();
@@ -40,7 +40,7 @@ export default function NewGroupScreen() {
   const [id] = useState(() => randomUUID());
   const [draft, setDraft] = useState<NewGroupDraft>(initialNewGroupDraft);
   const [errors, setErrors] = useState<(NewGroupField | LocalGroupField)[]>([]);
-  // Local group: the first one on this device asks for my name and shows the data notice.
+  // Local group: only the first one on this device asks for my name and shows the data notice.
   const [storedName] = useState(deviceMemberName.get);
   const [me, setMe] = useState<PersonDraft>(() => ({ id: randomUUID(), name: storedName ?? '' }));
   const [people, setPeople] = useState<PersonDraft[]>(() => [newPerson()]);
@@ -169,22 +169,25 @@ export default function NewGroupScreen() {
 
         {local ? (
           <>
-            <View style={styles.field}>
-              <Text style={styles.label}>{t`Twoje imię`}</Text>
-              <TextInput
-                value={me.name}
-                onChangeText={(name) => {
-                  setMe((m) => ({ ...m, name }));
-                  setErrors((current) => current.filter((field) => field !== 'deviceMember'));
-                }}
-                placeholder={t`np. Kasia`}
-                placeholderTextColor={theme.colors.textMuted}
-                maxLength={60}
-                accessibilityLabel={t`Twoje imię`}
-                style={[styles.input, errors.includes('deviceMember') && styles.inputInvalid]}
-              />
-              {errorFor('deviceMember')}
-            </View>
+            {/* My name is asked once per device; later local groups use the stored one. */}
+            {storedName === null ? (
+              <View style={styles.field}>
+                <Text style={styles.label}>{t`Twoje imię`}</Text>
+                <TextInput
+                  value={me.name}
+                  onChangeText={(name) => {
+                    setMe((m) => ({ ...m, name }));
+                    setErrors((current) => current.filter((field) => field !== 'deviceMember'));
+                  }}
+                  placeholder={t`np. Kasia`}
+                  placeholderTextColor={theme.colors.textMuted}
+                  maxLength={60}
+                  accessibilityLabel={t`Twoje imię`}
+                  style={[styles.input, errors.includes('deviceMember') && styles.inputInvalid]}
+                />
+                {errorFor('deviceMember')}
+              </View>
+            ) : null}
             <View style={styles.field}>
               <Text style={styles.label}>{t`Pozostałe osoby`}</Text>
               {people.map((person, index) => (

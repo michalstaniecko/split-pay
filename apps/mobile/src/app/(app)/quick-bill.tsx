@@ -33,8 +33,8 @@ import { closeSheet } from '@/lib/close-sheet';
  * equal-split expense paid by me, dated today (POST /quick-bills). The
  * currency defaults to the device region's (PLN fallback) and becomes the
  * group's base currency and the expense currency (rate 1). Signed out it
- * becomes a local group (ADR-0021) with me as its device member ("Ja": the
- * name stored on this device, pre-filled; asked on the first local group).
+ * becomes a local group (ADR-0021) with me as its device member ("Ja"): my
+ * name is asked on the first local group on this device, then reused as is.
  */
 export default function QuickBillSheet() {
   const { t } = useLingui();
@@ -48,7 +48,7 @@ export default function QuickBillSheet() {
     color: GROUP_COLORS[Math.floor(Math.random() * GROUP_COLORS.length)] ?? GROUP_COLORS[0],
   }));
   const [draft, setDraft] = useState<QuickBillDraft>(initialQuickBillDraft);
-  // Local group: the first one on this device asks for my name and shows the data notice.
+  // Local group: only the first one on this device asks for my name and shows the data notice.
   const [storedName] = useState(deviceMemberName.get);
   const [me, setMe] = useState(() => ({ id: randomUUID(), name: storedName ?? '' }));
   const [currency, setCurrency] = useState<CurrencyCode>(() =>
@@ -174,7 +174,8 @@ export default function QuickBillSheet() {
         <Text style={styles.hint}>{t`Każda osoba trafi do grupy jako osoba bez konta. Płacisz Ty, dzielimy po równo.`}</Text>
       </View>
 
-      {local ? (
+      {/* My name is asked once per device; later local groups use the stored one. */}
+      {local && storedName === null ? (
         <>
           <View style={styles.field}>
             <Text style={styles.label}>{t`Twoje imię`}</Text>
@@ -192,7 +193,7 @@ export default function QuickBillSheet() {
             />
             {errors.includes('deviceMember') ? <Text style={styles.error}>{t`Podaj swoje imię.`}</Text> : null}
           </View>
-          {storedName === null ? <LocalDataNotice /> : null}
+          <LocalDataNotice />
         </>
       ) : null}
 

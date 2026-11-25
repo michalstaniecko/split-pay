@@ -86,7 +86,7 @@ export type ParsedLocalQuickBill = { ok: true; value: NewLocalQuickBill } | { ok
 /**
  * The quick bill of a local group (ADR-0021): the sheet as `parseQuickBillDraft`
  * reads it, plus the device member ("Ja") who pays — the name stored on this
- * device, pre-filled and editable.
+ * device, or typed in on the first local group.
  */
 export function parseLocalQuickBillDraft(
   draft: QuickBillDraft,
