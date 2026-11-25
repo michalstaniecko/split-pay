@@ -1,7 +1,7 @@
 import qrcode from 'qrcode-generator';
 
 /** The app's custom URL scheme (`app.json` → `scheme`). */
-const APP_SCHEME = 'splitpay';
+const APP_SCHEME = 'kwitz';
 
 /**
  * The shareable URL of a group link (ADR-0009). Until the domain is chosen
@@ -24,7 +24,7 @@ export function canShareLinks(group: { archivedAt: string | null }): boolean {
 }
 
 /**
- * The token of an incoming group link (`splitpay://g/<token>`,
+ * The token of an incoming group link (`kwitz://g/<token>`,
  * `https://…/g/<token>` or the bare path `/g/<token>`); `undefined` for other links.
  */
 export function joinTokenFromPath(path: string): string | undefined {

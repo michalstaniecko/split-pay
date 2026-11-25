@@ -210,7 +210,7 @@ describe('public view-only web API (group link, no session)', () => {
       expect(res.headers.get('content-type')).toMatch(/text\/html/);
       const html = await res.text();
       expect(html).toContain('<meta property="og:title" content="⛵ Mazury &lt;2026&gt;">');
-      expect(html).toContain('<meta property="og:description" content="Wydatki grupy w split-pay · 3 osoby">');
+      expect(html).toContain('<meta property="og:description" content="Wydatki grupy w Kwitz · 3 osoby">');
       expect(html).toContain(`<meta property="og:url" content="https://app.example.org/g/${token}">`);
       expect(html).not.toContain('Mazury <2026>');
       expect(html).not.toMatch(/@example\.com/);
@@ -219,7 +219,7 @@ describe('public view-only web API (group link, no session)', () => {
     it('speaks English to English-speaking crawlers', async () => {
       const { token } = await setup();
       const html = await (await app.request(`/og/${token}`, { headers: { 'accept-language': 'en-GB,en;q=0.9' } })).text();
-      expect(html).toContain('<meta property="og:description" content="Group expenses in split-pay · 3 members">');
+      expect(html).toContain('<meta property="og:description" content="Group expenses in Kwitz · 3 members">');
     });
 
     it('shows a generic "link no longer valid" preview for a revoked token', async () => {
@@ -229,7 +229,7 @@ describe('public view-only web API (group link, no session)', () => {
       const res = await app.request(`/og/${token}`);
       expect(res.status).toBe(404);
       const html = await res.text();
-      expect(html).toContain('<meta property="og:title" content="split-pay">');
+      expect(html).toContain('<meta property="og:title" content="Kwitz">');
       expect(html).not.toContain('Mazury');
     });
   });

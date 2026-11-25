@@ -11,8 +11,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
   const { SENTRY_ORG, SENTRY_PROJECT, SENTRY_URL, SENTRY_AUTH_TOKEN } = process.env;
   return {
     ...config,
-    name: config.name ?? 'split-pay',
-    slug: config.slug ?? 'split-pay',
+    name: config.name ?? 'Kwitz',
+    slug: config.slug ?? 'kwitz',
     plugins: [
       ...(config.plugins ?? []),
       [

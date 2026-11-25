@@ -40,7 +40,7 @@ export default function GroupLinkRoute() {
 
 /**
  * Join screen: where a group link or a personal claim link
- * (`splitpay://g/<token>`) leads in the app (ADR-0007, ADR-0009). Group link:
+ * (`kwitz://g/<token>`) leads in the app (ADR-0007, ADR-0009). Group link:
  * "Dołącz jako nowa osoba" adds me as a member, or "Jesteś na tej liście?"
  * claims a member without an account. Personal claim link: claim its member
  * directly. Either opens the group's Conversation; if I'm already in the group

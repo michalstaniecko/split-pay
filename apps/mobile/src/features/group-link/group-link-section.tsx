@@ -31,7 +31,7 @@ export function GroupLinkSection({ groupId, groupName }: { groupId: string; grou
 
   const url = groupLinkUrl(link.data.token, webUrl);
   const share = () =>
-    void Share.share({ message: t`Dołącz do grupy „${groupName}” w split-pay: ${url}` }).catch(() => undefined);
+    void Share.share({ message: t`Dołącz do grupy „${groupName}” w Kwitz: ${url}` }).catch(() => undefined);
   const confirmRevoke = () =>
     revoke.mutate(undefined, {
       onSuccess: () => setConfirming(false),

@@ -18,12 +18,12 @@ const copy = {
     description: (n: number) => {
       const form = new Intl.PluralRules('pl').select(n);
       const people = form === 'one' ? 'osoba' : form === 'few' ? 'osoby' : 'osób';
-      return `Wydatki grupy w split-pay · ${n} ${people}`;
+      return `Wydatki grupy w Kwitz · ${n} ${people}`;
     },
     invalid: 'Ten link grupy jest już nieważny.',
   },
   en: {
-    description: (n: number) => `Group expenses in split-pay · ${n} ${n === 1 ? 'member' : 'members'}`,
+    description: (n: number) => `Group expenses in Kwitz · ${n} ${n === 1 ? 'member' : 'members'}`,
     invalid: 'This group link is no longer valid.',
   },
 } satisfies Record<Language, unknown>;
@@ -33,7 +33,7 @@ function page(tags: { title: string; description: string; url?: string | undefin
     `<meta property="og:title" content="${escapeHtml(tags.title)}">`,
     `<meta property="og:description" content="${escapeHtml(tags.description)}">`,
     '<meta property="og:type" content="website">',
-    '<meta property="og:site_name" content="split-pay">',
+    '<meta property="og:site_name" content="Kwitz">',
     '<meta name="twitter:card" content="summary">',
     ...(tags.url
       ? [
@@ -70,7 +70,7 @@ export const openGraphRoutes = ({ db, webUrl }: { db: Db; webUrl: string | undef
     const lang = languageOf(c.req.header('accept-language'));
     const token = c.req.param('token');
     const link = await resolveLinkToken(db, token);
-    if (!link) return c.html(page({ title: 'split-pay', description: copy[lang].invalid, lang }), 404);
+    if (!link) return c.html(page({ title: 'Kwitz', description: copy[lang].invalid, lang }), 404);
     const { group } = link;
     const [row] = await db.select({ n: count() }).from(members).where(eq(members.groupId, group.id));
     return c.html(

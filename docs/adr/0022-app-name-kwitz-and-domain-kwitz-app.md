@@ -27,4 +27,5 @@ Identifiers derived from the name:
 - Before the public launch: confirm the store listing name is free in the App Store and Google Play, and check trademarks (EUIPO, USPTO) in our class.
 - Repo, package names (`@split-pay/*`), Coolify, R2 and Sentry resources keep the `split-pay` working name — they are internal and never seen by users.
 - The staging domain `splitpay.on.ihumbak.website` stays for staging only; production uses `api.kwitz.app` and `app.kwitz.app`.
-- `apps/mobile/app.json` still uses `split-pay` / `splitpay`; renaming the display name, scheme and bundle ID is a separate change and must land before the first store build.
+- On-device storage keys keep the `split-pay` / `splitpay` prefix (SQLite file names, secure-store and web storage prefixes, the background task name). They are never seen by users, and renaming them would drop existing sessions and local data.
+- The previous bundle ID `com.website.ihumbak.splitpay` and the `splitpay://` scheme were never published; any development build installed under them has to be reinstalled.
