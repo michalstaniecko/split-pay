@@ -45,7 +45,7 @@ const styles = StyleSheet.create((theme) => ({
   badge: {
     alignSelf: 'flex-start',
     paddingHorizontal: theme.space(2),
-    paddingVertical: 2,
+    paddingVertical: theme.space(0.5),
     borderRadius: theme.radius.pill,
     overflow: 'hidden',
     fontSize: theme.font.sizeSm,
