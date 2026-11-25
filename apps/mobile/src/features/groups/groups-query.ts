@@ -11,7 +11,7 @@ import {
   renameLocalMember,
 } from '@/features/offline/local-group-store';
 import { findLocalGroup, isLocalGroup, localGroupsDb } from '@/features/offline/local-groups';
-import { deviceDbIfAny, hasLocalUser, localDb } from '@/features/offline/local-session';
+import { deviceDbIfAny, hasCacheUser, cacheDb } from '@/features/offline/local-session';
 import { isGroupSynced, readGroupDetail } from '@/features/offline/local-store';
 import { attemptSync, syncGroup, syncGroupList } from '@/features/offline/sync';
 import { useLocale } from '@/i18n/locale-provider';
@@ -39,10 +39,10 @@ export const groupsQuery = () =>
     queryKey: groupKeys.list(),
     queryFn: async (): Promise<GroupListItem[]> => {
       const device = await deviceDbIfAny();
-      if (!hasLocalUser()) return (await readInbox({ user: null, device })) as unknown as GroupListItem[];
+      if (!hasCacheUser()) return (await readInbox({ user: null, device })) as unknown as GroupListItem[];
       const syncError = await attemptSync(syncGroupList);
       // The cache holds exactly what GET /groups returned (+ my queued entries); local groups join them.
-      const user = await localDb();
+      const user = await cacheDb();
       const groups = (await readInbox({ user, device })) as unknown as GroupListItem[];
       if (groups.length === 0 && syncError) throw syncError;
       return groups;
@@ -65,9 +65,9 @@ export const groupQuery = (groupId: string) =>
     queryFn: async (): Promise<GroupDetailData> => {
       const local = await findLocalGroup(groupId);
       if (local) return local as unknown as GroupDetailData;
-      if (!hasLocalUser()) throw new Error('Group not found');
+      if (!hasCacheUser()) throw new Error('Group not found');
       const syncError = await attemptSync(() => syncGroup(groupId));
-      const db = await localDb();
+      const db = await cacheDb();
       // Only the inbox row (no members yet) doesn't count as cached.
       const group = (await isGroupSynced(db, groupId)) ? await readGroupDetail(db, groupId) : undefined;
       if (group) return group as GroupDetailData;

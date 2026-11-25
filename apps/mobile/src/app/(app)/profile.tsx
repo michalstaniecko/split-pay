@@ -11,7 +11,7 @@ import { PlaceholderScreen } from '@/components/placeholder-screen';
 import { AvatarSection } from '@/features/photos/avatar-section';
 import { NotificationsSection } from '@/features/notifications/notification-switches';
 import { unregisterFromPush } from '@/features/notifications/push';
-import { forgetLocalUser, localDb } from '@/features/offline/local-session';
+import { forgetUserCache, cacheDb } from '@/features/offline/local-session';
 import { countUnsentChanges } from '@/features/offline/outbox';
 import { mayDeleteCache } from '@/features/offline/sign-out';
 import { flushNow } from '@/features/offline/sync';
@@ -55,7 +55,7 @@ export default function ProfileScreen() {
   const signOut = async () => {
     setSigningOut(true);
     try {
-      const db = await localDb().catch(() => null);
+      const db = await cacheDb().catch(() => null);
       const proceed =
         !db || (await mayDeleteCache({ unsentChanges: () => countUnsentChanges(db), sync: flushNow, confirmDiscard }));
       if (!proceed) return;
@@ -64,7 +64,7 @@ export default function ProfileScreen() {
       await authClient.signOut();
       // Nothing from this account may leak into the next one.
       queryClient.clear();
-      if (userId) await forgetLocalUser(userId).catch(() => undefined);
+      if (userId) await forgetUserCache(userId).catch(() => undefined);
     } finally {
       setSigningOut(false);
     }

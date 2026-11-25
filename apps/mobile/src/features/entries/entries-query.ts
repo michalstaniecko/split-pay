@@ -13,7 +13,7 @@ import {
 } from '@/features/offline/local-group-store';
 import type { LocalDb } from '@/features/offline/local-db';
 import { isLocalGroup, localGroupsDb } from '@/features/offline/local-groups';
-import { hasLocalUser, localDb, localUserId } from '@/features/offline/local-session';
+import { hasCacheUser, cacheDb, cacheUserId } from '@/features/offline/local-session';
 import { enqueueCreate, isGroupSynced, readEntries, readGroupDetail, saveEntry } from '@/features/offline/local-store';
 import {
   enqueueDelete,
@@ -43,9 +43,9 @@ export const entriesQuery = (groupId: string) =>
     queryKey: entryKeys.list(groupId),
     queryFn: async (): Promise<Entry[]> => {
       if (await isLocalGroup(groupId)) return readLocalEntries(await localGroupsDb(), groupId);
-      if (!hasLocalUser()) throw new Error('Group not found');
+      if (!hasCacheUser()) throw new Error('Group not found');
       const syncError = await attemptSync(() => syncGroup(groupId));
-      const db = await localDb();
+      const db = await cacheDb();
       if (syncError && !(await isGroupSynced(db, groupId))) throw syncError;
       return readEntries(db, groupId);
     },
@@ -82,8 +82,8 @@ export function useCreateEntry(groupId: string) {
     mutationFn: async (input: NewEntry): Promise<Entry> => {
       const local = await localChange(groupId, (db) => addLocalEntry(db, groupId, input));
       if (local) return local;
-      const db = await localDb();
-      const createdBy = localUserId();
+      const db = await cacheDb();
+      const createdBy = cacheUserId();
       // "Added by" (ADR-0019): my member in the group; the server sets the same when it gets the entry.
       const members = (await readGroupDetail(db, groupId))?.members ?? [];
       const createdByMember = members.find((m) => m.userId === createdBy)?.id ?? null;
@@ -111,11 +111,11 @@ export function useCreateEntry(groupId: string) {
 /** Results of changes made through the outbox: already stored locally, nothing to confirm. */
 const queuedResults = new WeakSet<Entry>();
 
-async function queuedChange(entry: Entry, change: (db: Awaited<ReturnType<typeof localDb>>, now: string) => Promise<Entry>) {
-  const db = await localDb();
+async function queuedChange(entry: Entry, change: (db: Awaited<ReturnType<typeof cacheDb>>, now: string) => Promise<Entry>) {
+  const db = await cacheDb();
   const online = onlineManager.isOnline();
   if (!(await mustQueueChange(db, entry.id, online))) return null;
-  if (lockedOffline(entry, { offline: !online, userId: localUserId() })) throw new LockedOfflineError();
+  if (lockedOffline(entry, { offline: !online, userId: cacheUserId() })) throw new LockedOfflineError();
   const result = await change(db, new Date().toISOString());
   queuedResults.add(result);
   void flushNow().catch(() => undefined);
@@ -128,14 +128,14 @@ async function recordConflict(
   groupId: string,
   conflict: { entryId: string; change: 'edit' | 'delete' | 'restore'; baseVersion: number; payload: NewEntry | null; current: Entry },
 ) {
-  await markConflict(await localDb(), { groupId, ...conflict });
+  await markConflict(await cacheDb(), { groupId, ...conflict });
   await invalidateOutbox(queryClient, groupId);
 }
 
 /** Stores the server's copy of a changed entry in the cache and clears its conflict mark. */
 async function confirmChange(queryClient: ReturnType<typeof useQueryClient>, groupId: string, entry: Entry) {
   if (queuedResults.has(entry) || localResults.has(entry)) return invalidateOutbox(queryClient, groupId);
-  const db = await localDb();
+  const db = await cacheDb();
   await saveEntry(db, entry);
   await clearConflict(db, entry.id);
   await invalidateOutbox(queryClient, groupId);

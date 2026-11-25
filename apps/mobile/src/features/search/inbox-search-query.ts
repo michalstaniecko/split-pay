@@ -1,6 +1,6 @@
 import { keepPreviousData, queryOptions } from '@tanstack/react-query';
 import { groupKeys } from '@/features/groups/groups-query';
-import { deviceDbIfAny, hasLocalUser, localDb } from '@/features/offline/local-session';
+import { deviceDbIfAny, hasCacheUser, cacheDb } from '@/features/offline/local-session';
 import { type InboxSearchResults, searchInbox } from './inbox-search';
 
 /**
@@ -14,7 +14,7 @@ export const inboxSearchQuery = (query: string) =>
     queryKey: [...groupKeys.all, 'search', query.trim()] as const,
     queryFn: async (): Promise<InboxSearchResults> => {
       const device = await deviceDbIfAny();
-      const user = hasLocalUser() ? await localDb() : null;
+      const user = hasCacheUser() ? await cacheDb() : null;
       return searchInbox([user, device].filter((db) => db !== null), query);
     },
     // Keep the last results on screen while the next keystroke is searched.

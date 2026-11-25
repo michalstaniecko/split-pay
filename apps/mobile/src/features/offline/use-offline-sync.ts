@@ -1,7 +1,7 @@
 import { onlineManager, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useSyncExternalStore } from 'react';
 import { authClient } from '@/lib/auth-client';
-import { deselectLocalUser, selectLocalUser } from './local-session';
+import { deselectUserCache, selectUserCache } from './local-session';
 import { invalidateOutbox } from './outbox-query';
 import { flushNow, onOutboxSent } from './sync';
 
@@ -16,8 +16,8 @@ export function useOfflineSync(): void {
   const userId = authClient.useSession().data?.user.id;
   // During render on purpose: child screens query the cache in their first render.
   // Signed out (local groups only, ADR-0021) no user's cache is in use.
-  if (userId) selectLocalUser(userId);
-  else deselectLocalUser();
+  if (userId) selectUserCache(userId);
+  else deselectUserCache();
   const queryClient = useQueryClient();
 
   // Signing in or out while the app is open (local groups stay on screen,
