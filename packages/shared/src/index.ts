@@ -18,5 +18,6 @@ export * from './photos';
 export * from './rates';
 export * from './reports';
 export * from './settle-up';
+export * from './settle-up-summary';
 export * from './split';
 export * from './stats';
