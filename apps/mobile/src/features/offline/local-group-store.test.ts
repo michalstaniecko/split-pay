@@ -492,3 +492,112 @@ describe('local group store: entries in the balances', () => {
     ]);
   });
 });
+
+describe('local group store: settle-up', () => {
+  /** I paid 3000 for me and Ania; Ania paid 3000 for her and Bartek. */
+  async function chainOfDebts(simplifyDebts: boolean) {
+    const db = await nodeLocalDb();
+    await createLocalGroup(db, newGroup({ simplifyDebts }), NOW);
+    await addLocalEntry(db, G1, pizza({ split: { mode: 'equal', memberIds: [ME, ANIA] } } as Partial<NewEntry>), NOW);
+    await addLocalEntry(
+      db,
+      G1,
+      pizza({
+        id: E2,
+        payers: [{ memberId: ANIA, amount: 3000 }],
+        split: { mode: 'equal', memberIds: [ANIA, BARTEK] },
+      } as Partial<NewEntry>),
+      NOW,
+    );
+    return db;
+  }
+
+  const chainBalances = [
+    { memberId: ME, amount: 1500 },
+    { memberId: ANIA, amount: 0 },
+    { memberId: BARTEK, amount: -1500 },
+  ];
+
+  it('simplifies debts: Bartek pays me directly', async () => {
+    const db = await chainOfDebts(true);
+
+    expect(await readLocalBalances(db, G1)).toEqual({
+      baseCurrency: 'EUR',
+      simplifyDebts: true,
+      balances: chainBalances,
+      transfers: [{ from: BARTEK, to: ME, amount: 1500 }],
+    });
+  });
+
+  it('without simplification, everyone pays back whom they owe', async () => {
+    const db = await chainOfDebts(false);
+
+    const result = await readLocalBalances(db, G1);
+    expect(result?.simplifyDebts).toBe(false);
+    expect(result?.balances).toEqual(chainBalances);
+    expect(result?.transfers).toHaveLength(2);
+    expect(result?.transfers).toEqual(
+      expect.arrayContaining([
+        { from: ANIA, to: ME, amount: 1500 },
+        { from: BARTEK, to: ANIA, amount: 1500 },
+      ]),
+    );
+  });
+
+  const S1 = '00000000-0000-4000-8000-0000000005e1';
+
+  /** "Bartek oddał mi" 1000. */
+  const bartekPaidMeBack = (overrides: Partial<NewEntry> = {}): NewEntry =>
+    ({
+      id: S1,
+      kind: 'settlement',
+      date: '2026-11-25',
+      currency: 'EUR',
+      rateToBase: '1',
+      receiptPhotoId: null,
+      amount: 1000,
+      from: BARTEK,
+      to: ME,
+      ...overrides,
+    }) as NewEntry;
+
+  it('a recorded settlement reduces the balances and what is left to settle', async () => {
+    const db = await chainOfDebts(true);
+
+    await addLocalEntry(db, G1, bartekPaidMeBack(), NOW);
+
+    const result = await readLocalBalances(db, G1);
+    expect(result?.balances).toEqual([
+      { memberId: ME, amount: 500 },
+      { memberId: ANIA, amount: 0 },
+      { memberId: BARTEK, amount: -500 },
+    ]);
+    expect(result?.transfers).toEqual([{ from: BARTEK, to: ME, amount: 500 }]);
+  });
+
+  it('an edited settlement counts with its new amount', async () => {
+    const db = await chainOfDebts(true);
+    const recorded = await addLocalEntry(db, G1, bartekPaidMeBack(), NOW);
+
+    await editLocalEntry(db, recorded, bartekPaidMeBack({ amount: 1500 }), NOW);
+
+    const result = await readLocalBalances(db, G1);
+    expect(result?.balances).toEqual([
+      { memberId: ME, amount: 0 },
+      { memberId: ANIA, amount: 0 },
+      { memberId: BARTEK, amount: 0 },
+    ]);
+    expect(result?.transfers).toEqual([]);
+  });
+
+  it('a deleted settlement no longer counts', async () => {
+    const db = await chainOfDebts(true);
+    const recorded = await addLocalEntry(db, G1, bartekPaidMeBack(), NOW);
+
+    await deleteLocalEntry(db, recorded, NOW);
+
+    const result = await readLocalBalances(db, G1);
+    expect(result?.balances).toEqual(chainBalances);
+    expect(result?.transfers).toEqual([{ from: BARTEK, to: ME, amount: 1500 }]);
+  });
+});
