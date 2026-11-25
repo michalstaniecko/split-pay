@@ -1,8 +1,16 @@
 import { randomUUID } from 'node:crypto';
 import { zValidator } from '@hono/zod-validator';
-import { AvatarUpdate, type Id, PHOTO_LIMITS, PhotoUploadRequest, ReceiptUploadRequest } from '@split-pay/shared';
+import {
+  AvatarUpdate,
+  Id,
+  PHOTO_LIMITS,
+  PhotoUploadRequest,
+  ReceiptUploadRequest,
+  uploadedPhotoProblem,
+} from '@split-pay/shared';
 import { and, count, eq, gt, inArray, isNotNull, isNull, sql } from 'drizzle-orm';
 import { type Context, Hono, type MiddlewareHandler } from 'hono';
+import { z } from 'zod';
 import type { Db } from '../db/client';
 import { entries, members, type PhotoKind, photos } from '../db/schema';
 import type { AuthEnv } from '../middleware/require-user';
@@ -10,13 +18,19 @@ import type { ObjectStorage, PresignedUpload } from '../storage/object-storage';
 import { findMyGroup } from './group-access';
 
 /**
- * Photos (ADR-0006, SPEC "Photos"): receipt photos of entries and user
- * avatars in a private bucket. The API signs uploads (the phone sends the
- * bytes straight to the bucket) and short-lived read URLs, enforces the
- * limits and decides who may see what:
+ * Photos (ADR-0006, ADR-0020, SPEC "Photos"): receipt photos of entries and
+ * user avatars in a private bucket. The API signs uploads (presigned PUT: the
+ * phone sends the bytes straight to the bucket) and short-lived read URLs,
+ * enforces the limits and decides who may see what:
  * - a receipt: members of its group (never the public web view);
  * - an avatar: its user and everyone sharing a group with them.
  * Routes answer 503 `storage_unavailable` when no bucket is configured.
+ *
+ * A PUT URL can't limit the size, so every upload is checked (`checkUpload`:
+ * HEAD on the object) before it can be used — a receipt when the phone
+ * completes the upload, while the expense form is still open; an avatar when
+ * it is set. A bad object is deleted with its row and the phone uploads
+ * again. Only verified receipts can be attached to an entry (`attachReceipt`).
  *
  * For #27 (reporting/admin): a photo is a `photos` row (`kind`, `uploadedBy`,
  * `groupId`/`entryId` for receipts); remove one with `deletePhotos`, which
@@ -35,6 +49,7 @@ type PhotoRow = typeof photos.$inferSelect;
 type Tx = Pick<Db, 'select' | 'insert' | 'update' | 'delete' | 'execute'>;
 
 const storageUnavailable = { error: 'storage_unavailable' as const };
+const PhotoParam = z.object({ photoId: Id });
 
 const objectKey = (kind: PhotoKind, scopeId: Id, photoId: Id) =>
   `${kind === 'receipt' ? 'receipts' : 'avatars'}/${scopeId}/${photoId}.jpg`;
@@ -85,11 +100,7 @@ async function issueUpload(
   });
   if (recorded !== 'ok') return { status: recorded };
 
-  const upload = await storage.presignUpload(key, {
-    contentType: 'image/jpeg',
-    maxBytes: PHOTO_LIMITS.maxBytes,
-    expiresInSeconds: UPLOAD_URL_SECONDS,
-  });
+  const upload = await storage.presignUpload(key, { contentType: 'image/jpeg', expiresInSeconds: UPLOAD_URL_SECONDS });
   return {
     status: 'issued',
     photoId,
@@ -111,20 +122,54 @@ function issueResponse(c: Context<AuthEnv>, result: IssueResult) {
   }
 }
 
+type CheckResult = { status: 'verified'; row: PhotoRow } | { status: 'too_large' | 'invalid' };
+
+/**
+ * Checks an uploaded object once (HEAD): it must exist, be a JPEG and fit the
+ * size limit. A good one is marked verified; a bad one is deleted together
+ * with its row, so the phone uploads the photo again.
+ */
+async function checkUpload(db: Db, storage: ObjectStorage, row: PhotoRow): Promise<CheckResult> {
+  if (row.verifiedAt) return { status: 'verified', row };
+  const problem = uploadedPhotoProblem(await storage.inspectObject(row.objectKey));
+  if (problem) {
+    await deletePhotos(db, storage, [row]);
+    return { status: problem };
+  }
+  const [verified] = await db.update(photos).set({ verifiedAt: new Date() }).where(eq(photos.id, row.id)).returning();
+  // Removed meanwhile (e.g. by a moderator): nothing left to use.
+  return verified ? { status: 'verified', row: verified } : { status: 'invalid' };
+}
+
+/** 422 for an upload `checkUpload` refused. */
+function refusedUpload(c: Context<AuthEnv>, status: 'too_large' | 'invalid') {
+  return status === 'too_large'
+    ? c.json({ error: 'photo_too_large' as const, limit: PHOTO_LIMITS.maxBytes }, 422)
+    : c.json({ error: 'photo_upload_invalid' as const }, 422);
+}
+
 const readExpiry = () => new Date(Date.now() + READ_URL_SECONDS * 1000).toISOString();
 const readUrl = (storage: ObjectStorage, key: string) =>
   storage.signedReadUrl(key, { expiresInSeconds: READ_URL_SECONDS });
 
 /**
  * Marks a receipt photo as used by an entry of `groupId`. False when the id
- * is not a receipt uploaded into this group — the entry is then invalid.
- * Called by `createEntry` / `editEntry` inside their transaction.
+ * is not a verified receipt uploaded into this group (an upload never
+ * completed counts as missing) — the entry is then invalid. Called by
+ * `createEntry` / `editEntry` inside their transaction.
  */
 export async function attachReceipt(tx: Pick<Db, 'update'>, groupId: Id, photoId: Id): Promise<boolean> {
   const rows = await tx
     .update(photos)
     .set({ attachedAt: sql`coalesce(${photos.attachedAt}, now())` })
-    .where(and(eq(photos.id, photoId), eq(photos.groupId, groupId), eq(photos.kind, 'receipt')))
+    .where(
+      and(
+        eq(photos.id, photoId),
+        eq(photos.groupId, groupId),
+        eq(photos.kind, 'receipt'),
+        isNotNull(photos.verifiedAt),
+      ),
+    )
     .returning({ id: photos.id });
   return rows.length > 0;
 }
@@ -168,7 +213,8 @@ export const receiptRoutes = ({ db, storage }: { db: Db; storage: ObjectStorage 
     })
     /**
      * An upload URL for a receipt of entry `entryId` (which may not exist
-     * yet). 201; 413 `photo_too_large`; 429 `too_many_photos_for_entry` /
+     * yet): PUT the file to it, then complete the upload. 201; 413
+     * `photo_too_large`; 429 `too_many_photos_for_entry` /
      * `daily_photo_limit`; 404 non-member; 409 archived group.
      */
     .post('/uploads', zValidator('json', ReceiptUploadRequest), async (c) => {
@@ -178,6 +224,34 @@ export const receiptRoutes = ({ db, storage }: { db: Db; storage: ObjectStorage 
       if (!storage) return c.json(storageUnavailable, 503);
       const { size, entryId } = c.req.valid('json');
       return issueResponse(c, await issueUpload(db, storage, { kind: 'receipt', size, userId, groupId: group.id, entryId }));
+    })
+    /**
+     * Completes my receipt upload once the file is in the bucket: the API
+     * checks the object, and only then can an entry use the photo. 200
+     * (also when already completed); 422 `photo_too_large` /
+     * `photo_upload_invalid` (the object is deleted — upload again); 404 not
+     * my upload into this group.
+     */
+    .post('/uploads/:photoId/complete', zValidator('param', PhotoParam), async (c) => {
+      const userId = c.get('user').id;
+      const group = await findMyGroup(db, c.req.param('groupId'), userId);
+      if (!group) return c.json({ error: 'not_found' as const }, 404);
+      if (!storage) return c.json(storageUnavailable, 503);
+      const [row] = await db
+        .select()
+        .from(photos)
+        .where(
+          and(
+            eq(photos.id, c.req.valid('param').photoId),
+            eq(photos.groupId, group.id),
+            eq(photos.kind, 'receipt'),
+            eq(photos.uploadedBy, userId),
+          ),
+        );
+      if (!row) return c.json({ error: 'not_found' as const }, 404);
+      const checked = await checkUpload(db, storage, row);
+      if (checked.status !== 'verified') return refusedUpload(c, checked.status);
+      return c.json({ photoId: row.id }, 200);
     });
 
 /** Avatars of a group's members (`/groups/:groupId/avatars`), for everyone in the group. */
@@ -236,15 +310,27 @@ export const myAvatarRoutes = ({
         const { size } = c.req.valid('json');
         return issueResponse(c, await issueUpload(db, storage, { kind: 'avatar', size, userId: c.get('user').id }));
       })
-      /** Makes an uploaded photo my avatar; the previous one is deleted. 404 for someone else's photo. */
+      /**
+       * Makes an uploaded photo my avatar once the API has checked the object;
+       * the previous one is deleted. 404 for someone else's photo; 422
+       * `photo_too_large` / `photo_upload_invalid` (the object is deleted —
+       * upload again).
+       */
       .put('/', zValidator('json', AvatarUpdate), async (c) => {
         if (!storage) return c.json(storageUnavailable, 503);
         const userId = c.get('user').id;
         const { photoId } = c.req.valid('json');
+        const [uploaded] = await db
+          .select()
+          .from(photos)
+          .where(and(eq(photos.id, photoId), eq(photos.uploadedBy, userId), eq(photos.kind, 'avatar')));
+        if (!uploaded) return c.json({ error: 'not_found' as const }, 404);
+        const checked = await checkUpload(db, storage, uploaded);
+        if (checked.status !== 'verified') return refusedUpload(c, checked.status);
         const [row] = await db
           .update(photos)
           .set({ attachedAt: new Date() })
-          .where(and(eq(photos.id, photoId), eq(photos.uploadedBy, userId), eq(photos.kind, 'avatar')))
+          .where(eq(photos.id, photoId))
           .returning();
         if (!row) return c.json({ error: 'not_found' as const }, 404);
         const previous = (await currentAvatars(db, userId)).filter((p) => p.id !== row.id);

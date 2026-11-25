@@ -6,7 +6,6 @@ import {
   receiptDraftFromEntry,
   receiptPhotoIdToSave,
   receiptPreviewUri,
-  uploadForm,
   withUploadedReceipt,
 } from './photo-draft';
 
@@ -51,25 +50,14 @@ describe('photoProblem', () => {
     expect(photoProblem(apiError(503, { error: 'storage_unavailable' }))).toBe('storage_unavailable');
   });
 
-  it('treats a refused bucket upload (too big for the policy) as too large', () => {
-    expect(photoProblem(new BucketUploadError(400, '<Code>EntityTooLarge</Code>'))).toBe('photo_too_large');
-    expect(photoProblem(new BucketUploadError(403, '<Code>AccessDenied</Code>'))).toBe('upload_failed');
+  it('reads an uploaded file the API refused after checking it (deleted — upload again)', () => {
+    expect(photoProblem(apiError(422, { error: 'photo_too_large', limit: 3_145_728 }))).toBe('photo_too_large');
+    expect(photoProblem(apiError(422, { error: 'photo_upload_invalid' }))).toBe('photo_upload_invalid');
   });
 
   it('anything else is a failed upload', () => {
+    expect(photoProblem(new BucketUploadError(403))).toBe('upload_failed');
     expect(photoProblem(new TypeError('Network request failed'))).toBe('upload_failed');
     expect(photoProblem(apiError(500, {}))).toBe('upload_failed');
-  });
-});
-
-describe('uploadForm', () => {
-  it('puts the policy fields first and the file last, as S3 POST uploads require', () => {
-    const parts = uploadForm({ key: 'receipts/g/p.jpg', policy: 'abc', 'x-amz-signature': 'sig' }, 'FILE');
-    expect(parts).toEqual([
-      ['key', 'receipts/g/p.jpg'],
-      ['policy', 'abc'],
-      ['x-amz-signature', 'sig'],
-      ['file', 'FILE'],
-    ]);
   });
 });

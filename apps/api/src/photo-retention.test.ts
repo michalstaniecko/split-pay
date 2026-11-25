@@ -30,6 +30,11 @@ describe('photo retention job', () => {
       }),
     );
     storage.put(issued.upload);
+    await parseResponse(
+      client(ania).groups[':groupId'].receipts.uploads[':photoId'].complete.$post({
+        param: { groupId, photoId: issued.photoId },
+      }),
+    );
     const me = group.ownerMemberId;
     const expense: NewEntry = {
       kind: 'expense',
@@ -47,7 +52,7 @@ describe('photo retention job', () => {
     await parseResponse(client(ania).groups[':groupId'].entries.$post({ param: { groupId }, json: expense }));
     const receipts = async () =>
       (await parseResponse(client(ania).groups[':groupId'].receipts.$get({ param: { groupId } }))).receipts;
-    return { groupId, key: issued.upload.fields.key!, receipts };
+    return { groupId, key: storage.keyOf(issued.upload), receipts };
   }
 
   const archive = (session: Session, groupId: string) =>
@@ -106,8 +111,8 @@ describe('photo retention job', () => {
 
     expect(await runPhotoRetention(testDb.db, storage, daysFromNow(0.5))).toBe(0);
     expect(await runPhotoRetention(testDb.db, storage, daysFromNow(1.5))).toBe(2);
-    expect(storage.objects.has(stray.upload.fields.key!)).toBe(false);
-    expect(storage.objects.has(strayAvatar.upload.fields.key!)).toBe(false);
+    expect(storage.objects.has(storage.keyOf(stray.upload))).toBe(false);
+    expect(storage.objects.has(storage.keyOf(strayAvatar.upload))).toBe(false);
     expect(storage.objects.has(trip.key)).toBe(true);
   });
 
@@ -122,6 +127,11 @@ describe('photo retention job', () => {
       }),
     );
     storage.put(replacement.upload);
+    await parseResponse(
+      client(ania).groups[':groupId'].receipts.uploads[':photoId'].complete.$post({
+        param: { groupId: trip.groupId, photoId: replacement.photoId },
+      }),
+    );
     const [entry] = await parseResponse(
       client(ania).groups[':groupId'].entries.$get({ param: { groupId: trip.groupId } }),
     );

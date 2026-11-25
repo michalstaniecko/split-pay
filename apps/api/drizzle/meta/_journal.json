@@ -99,6 +99,13 @@
       "when": 1795506617936,
       "tag": "0013_push_actor_name_nullable",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1795633220946,
+      "tag": "0014_photo_verified_at",
+      "breakpoints": true
     }
   ]
 }

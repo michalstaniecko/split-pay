@@ -1,10 +1,11 @@
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
+import { File, UploadTask, UploadType } from 'expo-file-system';
 import { parseResponse } from 'hono/client';
 import { Platform } from 'react-native';
 import { entryKeys } from '@/features/entries/entries-query';
 import { groupKeys } from '@/features/groups/groups-query';
 import { api } from '@/lib/api';
-import { BucketUploadError, type LocalPhoto, uploadForm } from './photo-draft';
+import { BucketUploadError, type LocalPhoto } from './photo-draft';
 
 /**
  * Photos (ADR-0006): the API signs URLs, the phone uploads to and reads from
@@ -54,32 +55,49 @@ export const myAvatarQuery = () =>
     retry: false,
   });
 
-/** Sends a prepared photo to the bucket with a presigned POST upload. */
-export async function uploadToBucket(upload: { url: string; fields: Record<string, string> }, photo: LocalPhoto) {
-  const file =
-    Platform.OS === 'web'
-      ? await (await fetch(photo.uri)).blob()
-      : // React Native's FormData streams a file given as { uri, name, type }.
-        ({ uri: photo.uri, name: 'photo.jpg', type: 'image/jpeg' } as unknown as Blob);
-  const body = new FormData();
-  for (const [name, value] of uploadForm(upload.fields, file)) body.append(name, value);
-  const res = await fetch(upload.url, { method: 'POST', body });
-  if (!res.ok) throw new BucketUploadError(res.status, await res.text());
+/**
+ * Sends a prepared photo to the bucket with a presigned PUT (ADR-0020): the
+ * file is the body and `headers` (the signed content type) go as given.
+ */
+export async function uploadToBucket(
+  upload: { method: 'PUT'; url: string; headers: Record<string, string> },
+  photo: LocalPhoto,
+) {
+  if (Platform.OS === 'web') {
+    const body = await (await fetch(photo.uri)).blob();
+    const res = await fetch(upload.url, { method: upload.method, headers: upload.headers, body });
+    if (!res.ok) throw new BucketUploadError(res.status);
+    return;
+  }
+  // Streams the file from disk natively, as the raw body with its exact length.
+  const task = new UploadTask(new File(photo.uri), upload.url, {
+    httpMethod: upload.method,
+    uploadType: UploadType.BINARY_CONTENT,
+    headers: upload.headers,
+    sessionType: 'foreground',
+  });
+  try {
+    const res = await task.uploadAsync();
+    if (res.status < 200 || res.status >= 300) throw new BucketUploadError(res.status);
+  } finally {
+    task.release();
+  }
 }
 
 /**
  * Uploads a receipt for entry `entryId` (which may not exist yet) and returns
- * its photo id for the entry's `receiptPhotoId`. Limits are refused with
- * error codes (`photoProblem`).
+ * its photo id for the entry's `receiptPhotoId`. The API checks the uploaded
+ * file before an entry can use it, so a problem shows while the form is still
+ * open. Limits and a bad upload are refused with error codes (`photoProblem`);
+ * a refused upload is gone, so trying again uploads the photo anew.
  */
 export async function uploadReceipt(groupId: string, entryId: string, photo: LocalPhoto): Promise<string> {
+  const receipts = api.groups[':groupId'].receipts.uploads;
   const issued = await parseResponse(
-    api.groups[':groupId'].receipts.uploads.$post({
-      param: { groupId },
-      json: { entryId, contentType: 'image/jpeg', size: photo.size },
-    }),
+    receipts.$post({ param: { groupId }, json: { entryId, contentType: 'image/jpeg', size: photo.size } }),
   );
   await uploadToBucket(issued.upload, photo);
+  await parseResponse(receipts[':photoId'].complete.$post({ param: { groupId, photoId: issued.photoId } }));
   return issued.photoId;
 }
 

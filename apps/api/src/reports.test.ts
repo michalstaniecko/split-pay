@@ -37,6 +37,11 @@ describe('content reporting, admin panel, account blocking (#27)', () => {
       }),
     );
     storage.put(issuedReceipt.upload);
+    await parseResponse(
+      client(ania).groups[':groupId'].receipts.uploads[':photoId'].complete.$post({
+        param: { groupId, photoId: issuedReceipt.photoId },
+      }),
+    );
     const me = group.ownerMemberId;
     const expense: NewEntry = {
       kind: 'expense',
@@ -65,8 +70,8 @@ describe('content reporting, admin panel, account blocking (#27)', () => {
       celina,
       admin,
       groupId,
-      receipt: { photoId: issuedReceipt.photoId, key: issuedReceipt.upload.fields.key! },
-      avatar: { photoId: issuedAvatar.photoId, key: issuedAvatar.upload.fields.key! },
+      receipt: { photoId: issuedReceipt.photoId, key: storage.keyOf(issuedReceipt.upload) },
+      avatar: { photoId: issuedAvatar.photoId, key: storage.keyOf(issuedAvatar.upload) },
     };
   }
 

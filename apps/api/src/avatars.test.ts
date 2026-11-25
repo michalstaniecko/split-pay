@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { PHOTO_LIMITS } from '@split-pay/shared';
 import { parseResponse } from 'hono/client';
 import { describe, expect, it } from 'vitest';
 import { createTestApp } from '../test/app';
@@ -38,12 +39,12 @@ describe('avatars (ADR-0006)', () => {
     const { ania } = await setup();
     expect((await myAvatar(ania)).avatar).toBeNull();
     const issued = await uploadAvatar(ania);
-    expect(issued.upload.fields.key).toBe(`avatars/${ania.userId}/${issued.photoId}.jpg`);
+    expect(storage.keyOf(issued.upload)).toBe(`avatars/${ania.userId}/${issued.photoId}.jpg`);
 
     expect((await setAvatar(ania, issued.photoId)).status).toBe(200);
     expect((await myAvatar(ania)).avatar).toEqual({
       photoId: issued.photoId,
-      url: expect.stringContaining(issued.upload.fields.key!),
+      url: expect.stringContaining(storage.keyOf(issued.upload)),
       expiresAt: expect.any(String),
     });
   });
@@ -75,6 +76,31 @@ describe('avatars (ADR-0006)', () => {
     expect((await myAvatar(ania)).avatar).toBeNull();
   });
 
+  it('refuses an uploaded object that is too large, not a JPEG or missing, and deletes it (ADR-0020)', async () => {
+    const { ania } = await setup();
+    const current = await uploadAvatar(ania);
+    await setAvatar(ania, current.photoId);
+    const cases = [
+      [{ size: PHOTO_LIMITS.maxBytes + 1 }, { error: 'photo_too_large', limit: PHOTO_LIMITS.maxBytes }],
+      [{ contentType: 'image/png' }, { error: 'photo_upload_invalid' }],
+      [null, { error: 'photo_upload_invalid' }],
+    ] as const;
+    for (const [file, error] of cases) {
+      const issued = await parseResponse(
+        client(ania).me.avatar.uploads.$post({ json: { contentType: 'image/jpeg', size: 50_000 } }),
+      );
+      if (file) storage.put(issued.upload, file);
+
+      const res = await setAvatar(ania, issued.photoId);
+      expect(res.status).toBe(422);
+      expect(await res.json()).toEqual(error);
+      expect(storage.objects.has(storage.keyOf(issued.upload))).toBe(false);
+      expect((await setAvatar(ania, issued.photoId)).status).toBe(404);
+    }
+    // The current avatar stays.
+    expect((await myAvatar(ania)).avatar?.photoId).toBe(current.photoId);
+  });
+
   it('a new avatar replaces the old one, which is deleted from storage', async () => {
     const { ania } = await setup();
     const first = await uploadAvatar(ania);
@@ -83,8 +109,8 @@ describe('avatars (ADR-0006)', () => {
     await setAvatar(ania, second.photoId);
 
     expect((await myAvatar(ania)).avatar?.photoId).toBe(second.photoId);
-    expect(storage.objects.has(first.upload.fields.key!)).toBe(false);
-    expect(storage.objects.has(second.upload.fields.key!)).toBe(true);
+    expect(storage.objects.has(storage.keyOf(first.upload))).toBe(false);
+    expect(storage.objects.has(storage.keyOf(second.upload))).toBe(true);
   });
 
   it('removing my avatar deletes it from storage', async () => {
@@ -94,7 +120,7 @@ describe('avatars (ADR-0006)', () => {
 
     expect((await client(ania).me.avatar.$delete()).status).toBe(200);
     expect((await myAvatar(ania)).avatar).toBeNull();
-    expect(storage.objects.has(issued.upload.fields.key!)).toBe(false);
+    expect(storage.objects.has(storage.keyOf(issued.upload))).toBe(false);
   });
 
   it('deleting the account deletes the avatar from storage (ADR-0010)', async () => {
@@ -103,7 +129,7 @@ describe('avatars (ADR-0006)', () => {
     await setAvatar(bartek, issued.photoId);
 
     expect((await client(bartek).me.$delete({ json: {} })).status).toBe(200);
-    expect(storage.objects.has(issued.upload.fields.key!)).toBe(false);
+    expect(storage.objects.has(storage.keyOf(issued.upload))).toBe(false);
     expect((await parseResponse(groupAvatars(ania))).avatars).toEqual([]);
   });
 });
