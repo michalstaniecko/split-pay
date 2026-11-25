@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { parseResponse } from 'hono/client';
 import { deleteLocalGroup } from '@/features/offline/local-group-store';
-import { onGroupSource } from '@/features/offline/local-groups';
+import { groupWriteNetwork, onGroupSource } from '@/features/offline/local-groups';
 import { api } from '@/lib/api';
 import { groupKeys } from './groups-query';
 
@@ -49,8 +49,8 @@ export function useLeaveGroup(groupId: string) {
 export function useDeleteGroup(groupId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    // A local group's goes to the device database, so it must also run offline.
-    networkMode: 'always',
+    // A local group's write runs offline too; a synced one pauses offline (no outbox).
+    ...groupWriteNetwork,
     mutationFn: (): Promise<void> =>
       onGroupSource(groupId, {
         local: (db) => deleteLocalGroup(db, groupId),

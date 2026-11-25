@@ -1,7 +1,8 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { onlineManager } from '@tanstack/react-query';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { LocalDb } from './local-db';
 import { createLocalGroup } from './local-group-store';
-import { onGroupSource } from './local-groups';
+import { groupWriteNetwork, onGroupSource } from './local-groups';
 import { saveGroupList } from './local-store';
 import { nodeLocalDb } from './testing/node-local-db';
 
@@ -68,5 +69,26 @@ describe('local groups: where a group lives', () => {
     device.db = null;
 
     expect(await onGroupSource(LOCAL, source)).toBe('synced');
+  });
+});
+
+describe('local groups: network of a group write', () => {
+  afterEach(() => onlineManager.setOnline(true));
+
+  it('runs at once, offline too, so a local group is written without a network', () => {
+    expect(groupWriteNetwork.networkMode).toBe('offlineFirst');
+  });
+
+  it('pauses a write that failed offline and tries it once more when back online', () => {
+    onlineManager.setOnline(false);
+
+    expect(groupWriteNetwork.retry(0)).toBe(true);
+    expect(groupWriteNetwork.retry(1)).toBe(false);
+  });
+
+  it('does not retry a write that failed online', () => {
+    onlineManager.setOnline(true);
+
+    expect(groupWriteNetwork.retry(0)).toBe(false);
   });
 });

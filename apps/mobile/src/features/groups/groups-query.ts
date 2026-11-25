@@ -11,7 +11,7 @@ import {
   renameLocalMember,
   requireLocalGroup,
 } from '@/features/offline/local-group-store';
-import { localGroupsDb, onGroupSource } from '@/features/offline/local-groups';
+import { groupWriteNetwork, localGroupsDb, onGroupSource } from '@/features/offline/local-groups';
 import { deviceDbIfAny, hasCacheUser, cacheDb } from '@/features/offline/local-session';
 import { isGroupSynced, readGroupDetail } from '@/features/offline/local-store';
 import { attemptSync, syncGroup, syncGroupList } from '@/features/offline/sync';
@@ -108,8 +108,8 @@ export function useGroup(groupId: string) {
 export function useCreateGroup() {
   const queryClient = useQueryClient();
   return useMutation({
-    // A local group's goes to the device database, so it must also run offline.
-    networkMode: 'always',
+    // A local group's write runs offline too; a synced one pauses offline (no outbox).
+    ...groupWriteNetwork,
     mutationFn: async (input: NewGroup | NewLocalGroup): Promise<void> => {
       if ('deviceMember' in input) await createLocalGroup(await localGroupsDb(), input);
       else await parseResponse(api.groups.$post({ json: input }));
@@ -124,8 +124,8 @@ export function useCreateGroup() {
 export function useAddMember(groupId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    // A local group's goes to the device database, so it must also run offline.
-    networkMode: 'always',
+    // A local group's write runs offline too; a synced one pauses offline (no outbox).
+    ...groupWriteNetwork,
     mutationFn: (input: NewMember): Promise<void> =>
       onGroupSource(groupId, {
         local: (db) => addLocalMember(db, groupId, input),
@@ -143,8 +143,8 @@ export function useAddMember(groupId: string) {
 export function useRenameMember(groupId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    // A local group's goes to the device database, so it must also run offline.
-    networkMode: 'always',
+    // A local group's write runs offline too; a synced one pauses offline (no outbox).
+    ...groupWriteNetwork,
     mutationFn: ({ memberId, ...input }: MemberRename & { memberId: string }): Promise<void> =>
       onGroupSource(groupId, {
         local: (db) => renameLocalMember(db, groupId, memberId, input),

@@ -1,3 +1,4 @@
+import { onlineManager } from '@tanstack/react-query';
 import type { LocalDb } from './local-db';
 import { hasLocalGroup } from './local-group-store';
 import { deviceDbIfAny } from './local-session';
@@ -25,6 +26,19 @@ export async function onGroupSource<Local, Synced>(
   const db = await deviceDbIfAny();
   return db && (await hasLocalGroup(db, groupId)) ? source.local(db) : source.synced();
 }
+
+/**
+ * The network options of a mutation that writes a local group or, for a
+ * synced group, calls the API directly (no outbox). It runs at once, offline
+ * too (`offlineFirst`), so a local write needs no network; a synced write that
+ * failed offline pauses until the device is online and is tried once more —
+ * as it paused under the default `online` mode (mutations don't retry by
+ * default, so `offlineFirst` alone would fail it at once).
+ */
+export const groupWriteNetwork = {
+  networkMode: 'offlineFirst',
+  retry: (failureCount: number): boolean => failureCount < 1 && !onlineManager.isOnline(),
+} as const;
 
 /** The device database, for creating local groups (native only — the web has no local groups). */
 export async function localGroupsDb(): Promise<LocalDb> {

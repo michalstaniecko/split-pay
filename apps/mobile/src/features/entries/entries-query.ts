@@ -11,7 +11,7 @@ import {
   restoreLocalEntry,
 } from '@/features/offline/local-group-store';
 import type { LocalDb } from '@/features/offline/local-db';
-import { localGroupsDb, onGroupSource } from '@/features/offline/local-groups';
+import { groupWriteNetwork, localGroupsDb, onGroupSource } from '@/features/offline/local-groups';
 import { hasCacheUser, cacheDb, cacheUserId } from '@/features/offline/local-session';
 import { enqueueCreate, isGroupSynced, readEntries, readGroupDetail, saveEntry } from '@/features/offline/local-store';
 import {
@@ -306,8 +306,8 @@ export function useRestoreEntry(groupId: string) {
 export function useCreateQuickBill() {
   const queryClient = useQueryClient();
   return useMutation({
-    // A local quick bill goes to the device database, so it must also run offline.
-    networkMode: 'always',
+    // A local group's write runs offline too; a synced one pauses offline (no outbox).
+    ...groupWriteNetwork,
     mutationFn: async (input: NewQuickBill | NewLocalQuickBill): Promise<{ group: { id: string } }> => {
       if ('deviceMember' in input) return createLocalQuickBill(await localGroupsDb(), input);
       return parseResponse(api['quick-bills'].$post({ json: input }));

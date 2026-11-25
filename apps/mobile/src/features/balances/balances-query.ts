@@ -4,7 +4,7 @@ import { type InferResponseType, parseResponse } from 'hono/client';
 import { entryKeys } from '@/features/entries/entries-query';
 import { groupKeys } from '@/features/groups/groups-query';
 import { readLocalBalances, updateLocalGroupSettings } from '@/features/offline/local-group-store';
-import { onGroupSource } from '@/features/offline/local-groups';
+import { groupWriteNetwork, onGroupSource } from '@/features/offline/local-groups';
 import { api } from '@/lib/api';
 
 export const balanceKeys = {
@@ -43,8 +43,8 @@ export type GroupBalances = InferResponseType<(typeof api.groups)[':groupId']['b
 export function useUpdateGroupSettings(groupId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    // A local group's goes to the device database, so it must also run offline.
-    networkMode: 'always',
+    // A local group's write runs offline too; a synced one pauses offline (no outbox).
+    ...groupWriteNetwork,
     mutationFn: (input: GroupSettingsUpdate): Promise<void> =>
       onGroupSource(groupId, {
         local: (db) => updateLocalGroupSettings(db, groupId, input),
