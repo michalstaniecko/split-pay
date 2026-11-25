@@ -17,9 +17,8 @@ import {
 } from '@split-pay/shared';
 import { and, desc, eq, isNull, max } from 'drizzle-orm';
 import type { LocalDb } from './local-db';
-import { type CachedGroup, localEntries, localGroups, localMembers } from './local-schema';
+import { type CachedGroup, type EntryPreview, localEntries, localGroups, localMembers } from './local-schema';
 import {
-  type Batch,
   byLastActivity,
   type CachedGroupDetail,
   type CachedGroupListItem,
@@ -46,6 +45,9 @@ export type LocalGroupListItem = CachedGroupListItem & LocalGroup & { local: tru
 /** A local group with its members, device member first. */
 export type LocalGroupDetail = LocalGroup & { local: true; members: Member[] };
 
+/** A person typed in by hand: becomes a member without an account (no user, no attendance). */
+export type TypedInMember = Pick<NewMember, 'id' | 'displayName'>;
+
 /**
  * Creating a local group: the group fields (no trip dates in a local group),
  * its device member ("Ja") and the other people typed in by hand. Every id is
@@ -53,11 +55,11 @@ export type LocalGroupDetail = LocalGroup & { local: true; members: Member[] };
  */
 export type NewLocalGroup = Pick<NewGroup, 'id' | 'name' | 'emoji' | 'color' | 'baseCurrency'> & {
   simplifyDebts?: boolean;
-  deviceMember: Pick<NewMember, 'id' | 'displayName'>;
-  people: readonly Pick<NewMember, 'id' | 'displayName'>[];
+  deviceMember: TypedInMember;
+  people: readonly TypedInMember[];
 };
 
-const memberOf = (groupId: string, m: Pick<NewMember, 'id' | 'displayName'>): Member => ({
+const memberOf = (groupId: string, m: TypedInMember): Member => ({
   id: m.id,
   groupId,
   displayName: m.displayName,
@@ -65,9 +67,14 @@ const memberOf = (groupId: string, m: Pick<NewMember, 'id' | 'displayName'>): Me
   attendance: null,
 });
 
-/** Creates a local group with its device member and the other people, in one write. */
-export async function createLocalGroup(db: LocalDb, input: NewLocalGroup, now = new Date()): Promise<void> {
-  const at = now.toISOString();
+/** A new local group as stored, with its members: the device member first, then the people. */
+interface CreatedLocalGroup {
+  group: LocalGroup;
+  members: Member[];
+}
+
+/** A new local group created `at` (an ISO timestamp), not yet written. */
+function newLocalGroup(input: NewLocalGroup, at: string): CreatedLocalGroup {
   const group: LocalGroup = {
     id: input.id,
     name: input.name,
@@ -85,14 +92,25 @@ export async function createLocalGroup(db: LocalDb, input: NewLocalGroup, now = 
     lastActivityAt: at,
   };
   const members = [input.deviceMember, ...input.people].map((m) => memberOf(input.id, m));
-  await db.batch([
-    db.insert(localGroups).values({ id: group.id, data: group, lastActivityAt: at, createdAt: at, local: true }),
+  return { group, members };
+}
+
+/** The writes storing a new local group and its members in order; `lastEntry` is its inbox preview. */
+function insertLocalGroup(db: LocalDb, { group, members }: CreatedLocalGroup, lastEntry: EntryPreview | null = null) {
+  const at = group.createdAt;
+  return [
+    db.insert(localGroups).values({ id: group.id, data: group, lastActivityAt: at, createdAt: at, lastEntry, local: true }),
     ...members.map((m, position) => db.insert(localMembers).values({ id: m.id, groupId: m.groupId, position, data: m })),
-  ] as Batch);
+  ] as const;
+}
+
+/** Creates a local group with its device member and the other people, in one write. */
+export async function createLocalGroup(db: LocalDb, input: NewLocalGroup, now = new Date()): Promise<void> {
+  await db.batch(insertLocalGroup(db, newLocalGroup(input, now.toISOString())));
 }
 
 /** A quick bill without an account: the `NewQuickBill` sheet plus the device member ("Ja") who pays. */
-export type NewLocalQuickBill = NewQuickBill & { deviceMember: Pick<NewMember, 'id' | 'displayName'> };
+export type NewLocalQuickBill = NewQuickBill & { deviceMember: TypedInMember };
 
 /**
  * Creates a quick bill as a local group in one write (GLOSSARY *Quick bill*,
@@ -109,22 +127,19 @@ export async function createLocalQuickBill(
   const bill = NewQuickBill.parse(input);
   const at = now.toISOString();
   const deviceMemberId = input.deviceMember.id;
-  const members = [input.deviceMember, ...bill.people].map((m) => memberOf(bill.groupId, m));
-  const group: LocalGroup = {
-    id: bill.groupId,
-    name: bill.title,
-    emoji: QUICK_BILL_EMOJI,
-    color: bill.color,
-    baseCurrency: bill.currency,
-    startDate: null,
-    endDate: null,
-    simplifyDebts: true,
-    archivedAt: null,
-    ownerMemberId: deviceMemberId,
-    deviceMemberId,
-    createdAt: at,
-    lastActivityAt: at,
-  };
+  const created = newLocalGroup(
+    {
+      id: bill.groupId,
+      name: bill.title,
+      emoji: QUICK_BILL_EMOJI,
+      color: bill.color,
+      baseCurrency: bill.currency,
+      deviceMember: input.deviceMember,
+      people: bill.people,
+    },
+    at,
+  );
+  const { group, members } = created;
   const parsed = entryFromNew(
     equalExpenseDefaults({
       id: bill.expenseId,
@@ -142,26 +157,14 @@ export async function createLocalQuickBill(
   const issues = validateEntryInGroup(expense, group, members);
   if (issues.length > 0) throw new Error(issues.join('; '));
   await db.batch([
-    db.insert(localGroups).values({
-      id: group.id,
-      data: group,
-      lastActivityAt: at,
-      createdAt: at,
-      lastEntry: previewOf(expense),
-      local: true,
-    }),
-    ...members.map((m, position) => db.insert(localMembers).values({ id: m.id, groupId: m.groupId, position, data: m })),
+    ...insertLocalGroup(db, created, previewOf(expense)),
     db.insert(localEntries).values(entryRow(expense)),
-  ] as Batch);
+  ]);
   return { group };
 }
 
 /** Adds a person typed in by hand at the end of the group's member list. */
-export async function addLocalMember(
-  db: LocalDb,
-  groupId: string,
-  input: Pick<NewMember, 'id' | 'displayName'>,
-): Promise<void> {
+export async function addLocalMember(db: LocalDb, groupId: string, input: TypedInMember): Promise<void> {
   const [last] = await db
     .select({ position: max(localMembers.position) })
     .from(localMembers)
