@@ -1,8 +1,11 @@
+import type { Entry } from '@split-pay/shared';
 import { describe, expect, it } from 'vitest';
-import { localGroups, localOutbox } from './local-schema';
+import { localEntries, localGroups, localMembers, localOutbox } from './local-schema';
+import { entryRow } from './local-store';
 import {
   addLocalMember,
   createLocalGroup,
+  deleteLocalGroup,
   type NewLocalGroup,
   readLocalBalances,
   readLocalEntries,
@@ -19,6 +22,8 @@ const ME2 = '00000000-0000-4000-8000-0000000000e2';
 const ANIA = '00000000-0000-4000-8000-0000000000a1';
 const BARTEK = '00000000-0000-4000-8000-0000000000b1';
 const CELINA = '00000000-0000-4000-8000-0000000000c1';
+const E1 = '00000000-0000-4000-8000-0000000001e1';
+const E2 = '00000000-0000-4000-8000-0000000001e2';
 
 const NOW = new Date('2026-11-25T10:00:00.000Z');
 
@@ -145,6 +150,58 @@ describe('local group store: device database only', () => {
 
     expect(await readLocalGroup(db, G1)).toBeUndefined();
     expect(await readLocalGroupList(db)).toEqual([]);
+  });
+});
+
+describe('local group store: deleting a group', () => {
+  const expense = (id: string, groupId: string, payer: string): Entry => ({
+    kind: 'expense',
+    id,
+    groupId,
+    version: 1,
+    createdBy: payer,
+    createdByMember: payer,
+    createdAt: '2026-11-25T10:00:00.000Z',
+    updatedAt: '2026-11-25T10:00:00.000Z',
+    deletedAt: null,
+    date: '2026-11-25',
+    title: 'Pizza',
+    amount: 3_000,
+    currency: 'EUR',
+    rateToBase: '1',
+    category: 'food',
+    receiptPhotoId: null,
+    payers: [{ memberId: payer, amount: 3_000 }],
+    split: { mode: 'equal', memberIds: [payer] },
+  }) as Entry;
+
+  it('removes the group with its members and entries, and leaves other groups alone', async () => {
+    const db = await nodeLocalDb();
+    await createLocalGroup(db, newGroup(), NOW);
+    await createLocalGroup(db, newGroup({ id: G2, deviceMember: { id: ME2, displayName: 'Michał' }, people: [] }), NOW);
+    // Entries come from the entry slice (#70); written as rows here.
+    await db.insert(localEntries).values([
+      entryRow(expense(E1, G1, ME)),
+      entryRow(expense(E2, G2, ME2)),
+    ]);
+
+    await deleteLocalGroup(db, G1);
+
+    expect(await readLocalGroup(db, G1)).toBeUndefined();
+    expect(await db.select({ id: localMembers.id }).from(localMembers)).toEqual([{ id: ME2 }]);
+    expect(await db.select({ id: localEntries.id }).from(localEntries)).toEqual([{ id: E2 }]);
+    expect((await readLocalGroupList(db)).map((g) => g.id)).toEqual([G2]);
+  });
+
+  it('never deletes a synced group', async () => {
+    const db = await nodeLocalDb();
+    await createLocalGroup(db, newGroup(), NOW);
+    await db.update(localGroups).set({ local: false });
+
+    await deleteLocalGroup(db, G1);
+
+    expect(await db.select({ id: localGroups.id }).from(localGroups)).toEqual([{ id: G1 }]);
+    expect(await db.select({ id: localMembers.id }).from(localMembers)).toHaveLength(3);
   });
 });
 

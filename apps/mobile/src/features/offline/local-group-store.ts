@@ -1,7 +1,7 @@
 import { type Entry, type Member, type MemberRename, type NewGroup, type NewMember, type SettleUp, settleUp } from '@split-pay/shared';
 import { and, eq, max } from 'drizzle-orm';
 import type { LocalDb } from './local-db';
-import { type CachedGroup, localGroups, localMembers } from './local-schema';
+import { type CachedGroup, localEntries, localGroups, localMembers } from './local-schema';
 import { type Batch, type CachedGroupDetail, type CachedGroupListItem, readEntries, readGroupDetail, readGroupList } from './local-store';
 
 /*
@@ -89,6 +89,23 @@ export async function renameLocalMember(
   const [row] = await db.select({ data: localMembers.data }).from(localMembers).where(where);
   if (!row) throw new Error('Member not found');
   await db.update(localMembers).set({ data: { ...row.data, displayName } }).where(where);
+}
+
+/**
+ * Deletes a local group with its members and entries, at once and for good —
+ * there is no owner to ask and no undo (ADR-0021). A synced group is left alone.
+ */
+export async function deleteLocalGroup(db: LocalDb, groupId: string): Promise<void> {
+  const [row] = await db
+    .select({ id: localGroups.id })
+    .from(localGroups)
+    .where(and(eq(localGroups.id, groupId), eq(localGroups.local, true)));
+  if (!row) return;
+  await db.batch([
+    db.delete(localEntries).where(eq(localEntries.groupId, groupId)),
+    db.delete(localMembers).where(eq(localMembers.groupId, groupId)),
+    db.delete(localGroups).where(eq(localGroups.id, groupId)),
+  ]);
 }
 
 /** One local group with its members, or `undefined` when there is none with this id. */

@@ -1,5 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { parseResponse } from 'hono/client';
+import { deleteLocalGroup } from '@/features/offline/local-group-store';
+import { isLocalGroup, localGroupsDb } from '@/features/offline/local-groups';
 import { api } from '@/lib/api';
 import { groupKeys } from './groups-query';
 
@@ -40,11 +42,17 @@ export function useLeaveGroup(groupId: string) {
   });
 }
 
-/** Permanently deletes the group (DELETE /groups/:groupId) — owner only. */
+/**
+ * Permanently deletes the group (DELETE /groups/:groupId) — owner only. A
+ * local group is deleted from the device database at once (ADR-0021).
+ */
 export function useDeleteGroup(groupId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: () => parseResponse(api.groups[':groupId'].$delete({ param: { groupId } })),
+    mutationFn: async (): Promise<void> => {
+      if (await isLocalGroup(groupId)) await deleteLocalGroup(await localGroupsDb(), groupId);
+      else await parseResponse(api.groups[':groupId'].$delete({ param: { groupId } }));
+    },
     onSuccess: () => forgetGroup(queryClient, groupId),
   });
 }
