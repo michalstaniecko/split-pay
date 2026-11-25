@@ -3,7 +3,7 @@ import { parseResponse } from 'hono/client';
 import { Platform } from 'react-native';
 import { entryKeys } from '@/features/entries/entries-query';
 import { groupKeys } from '@/features/groups/groups-query';
-import { isLocalGroup } from '@/features/offline/local-groups';
+import { onGroupSource } from '@/features/offline/local-groups';
 import { api } from '@/lib/api';
 import { BucketUploadError, type LocalPhoto, uploadForm } from './photo-draft';
 
@@ -27,10 +27,11 @@ export const photoKeys = {
 export const receiptsQuery = (groupId: string) =>
   queryOptions({
     queryKey: photoKeys.receipts(groupId),
-    queryFn: async () =>
-      (await isLocalGroup(groupId))
-        ? { receipts: [] }
-        : parseResponse(api.groups[':groupId'].receipts.$get({ param: { groupId } })),
+    queryFn: () =>
+      onGroupSource(groupId, {
+        local: async () => ({ receipts: [] }),
+        synced: () => parseResponse(api.groups[':groupId'].receipts.$get({ param: { groupId } })),
+      }),
     select: (data) => new Map(data.receipts.map((r) => [r.entryId, { photoId: r.photoId, url: r.url }])),
     staleTime: URL_STALE_MS,
     refetchInterval: URL_REFRESH_MS,
@@ -41,10 +42,11 @@ export const receiptsQuery = (groupId: string) =>
 export const groupAvatarsQuery = (groupId: string) =>
   queryOptions({
     queryKey: photoKeys.groupAvatars(groupId),
-    queryFn: async () =>
-      (await isLocalGroup(groupId))
-        ? { avatars: [] }
-        : parseResponse(api.groups[':groupId'].avatars.$get({ param: { groupId } })),
+    queryFn: () =>
+      onGroupSource(groupId, {
+        local: async () => ({ avatars: [] }),
+        synced: () => parseResponse(api.groups[':groupId'].avatars.$get({ param: { groupId } })),
+      }),
     select: (data) => new Map(data.avatars.map((a) => [a.memberId, a.url])),
     staleTime: URL_STALE_MS,
     refetchInterval: URL_REFRESH_MS,

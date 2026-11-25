@@ -4,8 +4,7 @@ import { type InferResponseType, parseResponse } from 'hono/client';
 import { entryKeys } from '@/features/entries/entries-query';
 import { groupKeys } from '@/features/groups/groups-query';
 import { readLocalBalances, updateLocalGroupSettings } from '@/features/offline/local-group-store';
-import { isLocalGroup, localGroupsDb } from '@/features/offline/local-groups';
-import { deviceDbIfAny } from '@/features/offline/local-session';
+import { onGroupSource } from '@/features/offline/local-groups';
 import { api } from '@/lib/api';
 
 export const balanceKeys = {
@@ -25,12 +24,11 @@ export const balanceKeys = {
 export const balancesQuery = (groupId: string) =>
   queryOptions({
     queryKey: balanceKeys.summary(groupId),
-    queryFn: async (): Promise<GroupBalances> => {
-      const device = await deviceDbIfAny();
-      const local = device ? await readLocalBalances(device, groupId) : undefined;
-      if (local) return local;
-      return parseResponse(api.groups[':groupId'].balances.$get({ param: { groupId } }));
-    },
+    queryFn: (): Promise<GroupBalances> =>
+      onGroupSource(groupId, {
+        local: (db) => readLocalBalances(db, groupId),
+        synced: () => parseResponse(api.groups[':groupId'].balances.$get({ param: { groupId } })),
+      }),
     // A local group's are computed from the device database, so they must not
     // wait for a network; a synced group's still pause offline after the first
     // failed try instead of erroring out (the default `online` never tries).
@@ -47,10 +45,13 @@ export function useUpdateGroupSettings(groupId: string) {
   return useMutation({
     // A local group's goes to the device database, so it must also run offline.
     networkMode: 'always',
-    mutationFn: async (input: GroupSettingsUpdate): Promise<void> => {
-      if (await isLocalGroup(groupId)) await updateLocalGroupSettings(await localGroupsDb(), groupId, input);
-      else await parseResponse(api.groups[':groupId'].settings.$patch({ param: { groupId }, json: input }));
-    },
+    mutationFn: (input: GroupSettingsUpdate): Promise<void> =>
+      onGroupSource(groupId, {
+        local: (db) => updateLocalGroupSettings(db, groupId, input),
+        synced: async () => {
+          await parseResponse(api.groups[':groupId'].settings.$patch({ param: { groupId }, json: input }));
+        },
+      }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: groupKeys.detail(groupId) });
     },

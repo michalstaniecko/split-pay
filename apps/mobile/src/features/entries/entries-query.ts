@@ -11,7 +11,7 @@ import {
   restoreLocalEntry,
 } from '@/features/offline/local-group-store';
 import type { LocalDb } from '@/features/offline/local-db';
-import { isLocalGroup, localGroupsDb } from '@/features/offline/local-groups';
+import { localGroupsDb, onGroupSource } from '@/features/offline/local-groups';
 import { hasCacheUser, cacheDb, cacheUserId } from '@/features/offline/local-session';
 import { enqueueCreate, isGroupSynced, readEntries, readGroupDetail, saveEntry } from '@/features/offline/local-store';
 import {
@@ -40,14 +40,17 @@ export const entryKeys = {
 export const entriesQuery = (groupId: string) =>
   queryOptions({
     queryKey: entryKeys.list(groupId),
-    queryFn: async (): Promise<Entry[]> => {
-      if (await isLocalGroup(groupId)) return readEntries(await localGroupsDb(), groupId);
-      if (!hasCacheUser()) throw new Error('Group not found');
-      const syncError = await attemptSync(() => syncGroup(groupId));
-      const db = await cacheDb();
-      if (syncError && !(await isGroupSynced(db, groupId))) throw syncError;
-      return readEntries(db, groupId);
-    },
+    queryFn: () =>
+      onGroupSource(groupId, {
+        local: (db) => readEntries(db, groupId),
+        synced: async () => {
+          if (!hasCacheUser()) throw new Error('Group not found');
+          const syncError = await attemptSync(() => syncGroup(groupId));
+          const db = await cacheDb();
+          if (syncError && !(await isGroupSynced(db, groupId))) throw syncError;
+          return readEntries(db, groupId);
+        },
+      }),
     networkMode: 'always',
   });
 
@@ -57,13 +60,14 @@ export const entriesQuery = (groupId: string) =>
  */
 const localResults = new WeakSet<Entry>();
 
-/** Runs `write` on the device database when the group is a local group; `null` = a synced group. */
-async function localChange(groupId: string, write: (db: LocalDb) => Promise<Entry>) {
-  if (!(await isLocalGroup(groupId))) return null;
-  const result = await write(await localGroupsDb());
-  localResults.add(result);
-  return result;
-}
+/** A local group's write of an entry (`onGroupSource`'s `local`), its result marked as stored for good. */
+const storedLocally =
+  (write: (db: LocalDb) => Promise<Entry>) =>
+  async (db: LocalDb): Promise<Entry> => {
+    const result = await write(db);
+    localResults.add(result);
+    return result;
+  };
 
 /**
  * Adds an entry through the outbox (ADR-0005): it is stored on the device and
@@ -78,19 +82,21 @@ export function useCreateEntry(groupId: string) {
   return useMutation({
     // Writes the device database (outbox or local group), so it must also run offline.
     networkMode: 'always',
-    mutationFn: async (input: NewEntry): Promise<Entry> => {
-      const local = await localChange(groupId, (db) => addLocalEntry(db, groupId, input));
-      if (local) return local;
-      const db = await cacheDb();
-      const createdBy = cacheUserId();
-      // "Added by" (ADR-0019): my member in the group; the server sets the same when it gets the entry.
-      const members = (await readGroupDetail(db, groupId))?.members ?? [];
-      const createdByMember = members.find((m) => m.userId === createdBy)?.id ?? null;
-      const parsed = entryFromNew(input, { groupId, createdBy, createdByMember, now: new Date().toISOString() });
-      if (!parsed.success) throw parsed.error;
-      await enqueueCreate(db, parsed.data);
-      return parsed.data;
-    },
+    mutationFn: (input: NewEntry): Promise<Entry> =>
+      onGroupSource(groupId, {
+        local: storedLocally((db) => addLocalEntry(db, groupId, input)),
+        synced: async () => {
+          const db = await cacheDb();
+          const createdBy = cacheUserId();
+          // "Added by" (ADR-0019): my member in the group; the server sets the same when it gets the entry.
+          const members = (await readGroupDetail(db, groupId))?.members ?? [];
+          const createdByMember = members.find((m) => m.userId === createdBy)?.id ?? null;
+          const parsed = entryFromNew(input, { groupId, createdBy, createdByMember, now: new Date().toISOString() });
+          if (!parsed.success) throw parsed.error;
+          await enqueueCreate(db, parsed.data);
+          return parsed.data;
+        },
+      }),
     onSuccess: async (entry) => {
       queryClient.setQueryData(entryKeys.list(groupId), (old: Entry[] | undefined) =>
         old && !old.some((e) => e.id === entry.id) ? [...old, entry] : old,
@@ -163,15 +169,18 @@ export function useEditEntry(groupId: string) {
   return useMutation({
     // Writes the device database (outbox or local group), so it must also run offline.
     networkMode: 'always',
-    mutationFn: async ({ base, input }: { base: Entry; input: NewEntry }): Promise<Entry> =>
-      (await localChange(groupId, (db) => editLocalEntry(db, base, input))) ??
-      (await queuedChange(base, (db, now) => enqueueEdit(db, base, input, now))) ??
-      parseResponse(
-        api.groups[':groupId'].entries[':entryId'].$put({
-          param: { groupId, entryId: base.id },
-          json: { baseVersion: base.version, entry: input },
-        }),
-      ),
+    mutationFn: ({ base, input }: { base: Entry; input: NewEntry }): Promise<Entry> =>
+      onGroupSource(groupId, {
+        local: storedLocally((db) => editLocalEntry(db, base, input)),
+        synced: async () =>
+          (await queuedChange(base, (db, now) => enqueueEdit(db, base, input, now))) ??
+          parseResponse(
+            api.groups[':groupId'].entries[':entryId'].$put({
+              param: { groupId, entryId: base.id },
+              json: { baseVersion: base.version, entry: input },
+            }),
+          ),
+      }),
     onSuccess: async (entry) => {
       cacheEntry(queryClient, groupId, entry);
       await confirmChange(queryClient, groupId, entry);
@@ -206,15 +215,18 @@ export function useDeleteEntry(groupId: string) {
   return useMutation({
     // Writes the device database (outbox or local group), so it must also run offline.
     networkMode: 'always',
-    mutationFn: async (entry: Entry): Promise<Entry> =>
-      (await localChange(groupId, (db) => deleteLocalEntry(db, entry))) ??
-      (await queuedChange(entry, (db, now) => enqueueDelete(db, entry, now))) ??
-      parseResponse(
-        api.groups[':groupId'].entries[':entryId'].$delete({
-          param: { groupId, entryId: entry.id },
-          query: { baseVersion: String(entry.version) },
-        }),
-      ),
+    mutationFn: (entry: Entry): Promise<Entry> =>
+      onGroupSource(groupId, {
+        local: storedLocally((db) => deleteLocalEntry(db, entry)),
+        synced: async () =>
+          (await queuedChange(entry, (db, now) => enqueueDelete(db, entry, now))) ??
+          parseResponse(
+            api.groups[':groupId'].entries[':entryId'].$delete({
+              param: { groupId, entryId: entry.id },
+              query: { baseVersion: String(entry.version) },
+            }),
+          ),
+      }),
     onMutate: async (entry) => {
       await queryClient.cancelQueries({ queryKey: entryKeys.list(groupId) });
       queryClient.setQueryData(entryKeys.list(groupId), (old: Entry[] | undefined) =>
@@ -249,15 +261,18 @@ export function useRestoreEntry(groupId: string) {
   return useMutation({
     // Writes the device database (outbox or local group), so it must also run offline.
     networkMode: 'always',
-    mutationFn: async (deleted: Entry): Promise<Entry> =>
-      (await localChange(groupId, (db) => restoreLocalEntry(db, deleted))) ??
-      (await queuedChange(deleted, (db, now) => enqueueRestore(db, deleted, now))) ??
-      parseResponse(
-        api.groups[':groupId'].entries[':entryId'].restore.$post({
-          param: { groupId, entryId: deleted.id },
-          json: { baseVersion: deleted.version },
-        }),
-      ),
+    mutationFn: (deleted: Entry): Promise<Entry> =>
+      onGroupSource(groupId, {
+        local: storedLocally((db) => restoreLocalEntry(db, deleted)),
+        synced: async () =>
+          (await queuedChange(deleted, (db, now) => enqueueRestore(db, deleted, now))) ??
+          parseResponse(
+            api.groups[':groupId'].entries[':entryId'].restore.$post({
+              param: { groupId, entryId: deleted.id },
+              json: { baseVersion: deleted.version },
+            }),
+          ),
+      }),
     onSuccess: async (entry) => {
       cacheEntry(queryClient, groupId, entry);
       await confirmChange(queryClient, groupId, entry);

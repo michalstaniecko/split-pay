@@ -9,8 +9,9 @@ import {
   type NewLocalGroup,
   readInbox,
   renameLocalMember,
+  requireLocalGroup,
 } from '@/features/offline/local-group-store';
-import { findLocalGroup, isLocalGroup, localGroupsDb } from '@/features/offline/local-groups';
+import { localGroupsDb, onGroupSource } from '@/features/offline/local-groups';
 import { deviceDbIfAny, hasCacheUser, cacheDb } from '@/features/offline/local-session';
 import { isGroupSynced, readGroupDetail } from '@/features/offline/local-store';
 import { attemptSync, syncGroup, syncGroupList } from '@/features/offline/sync';
@@ -62,17 +63,19 @@ export type GroupListItem = InferResponseType<typeof api.groups.$get, 200>[numbe
 export const groupQuery = (groupId: string) =>
   queryOptions({
     queryKey: groupKeys.detail(groupId),
-    queryFn: async (): Promise<GroupDetailData> => {
-      const local = await findLocalGroup(groupId);
-      if (local) return local;
-      if (!hasCacheUser()) throw new Error('Group not found');
-      const syncError = await attemptSync(() => syncGroup(groupId));
-      const db = await cacheDb();
-      // Only the inbox row (no members yet) doesn't count as cached.
-      const group = (await isGroupSynced(db, groupId)) ? await readGroupDetail(db, groupId) : undefined;
-      if (group) return group;
-      throw syncError ?? new Error('Group not cached');
-    },
+    queryFn: (): Promise<GroupDetailData> =>
+      onGroupSource(groupId, {
+        local: (db) => requireLocalGroup(db, groupId),
+        synced: async () => {
+          if (!hasCacheUser()) throw new Error('Group not found');
+          const syncError = await attemptSync(() => syncGroup(groupId));
+          const db = await cacheDb();
+          // Only the inbox row (no members yet) doesn't count as cached.
+          const group = (await isGroupSynced(db, groupId)) ? await readGroupDetail(db, groupId) : undefined;
+          if (group) return group;
+          throw syncError ?? new Error('Group not cached');
+        },
+      }),
     networkMode: 'always',
   });
 /**
@@ -123,10 +126,13 @@ export function useAddMember(groupId: string) {
   return useMutation({
     // A local group's goes to the device database, so it must also run offline.
     networkMode: 'always',
-    mutationFn: async (input: NewMember): Promise<void> => {
-      if (await isLocalGroup(groupId)) await addLocalMember(await localGroupsDb(), groupId, input);
-      else await parseResponse(api.groups[':groupId'].members.$post({ param: { groupId }, json: input }));
-    },
+    mutationFn: (input: NewMember): Promise<void> =>
+      onGroupSource(groupId, {
+        local: (db) => addLocalMember(db, groupId, input),
+        synced: async () => {
+          await parseResponse(api.groups[':groupId'].members.$post({ param: { groupId }, json: input }));
+        },
+      }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: groupKeys.detail(groupId) });
     },
@@ -139,13 +145,15 @@ export function useRenameMember(groupId: string) {
   return useMutation({
     // A local group's goes to the device database, so it must also run offline.
     networkMode: 'always',
-    mutationFn: async ({ memberId, ...input }: MemberRename & { memberId: string }): Promise<void> => {
-      if (await isLocalGroup(groupId)) await renameLocalMember(await localGroupsDb(), groupId, memberId, input);
-      else
-        await parseResponse(
-          api.groups[':groupId'].members[':memberId'].$patch({ param: { groupId, memberId }, json: input }),
-        );
-    },
+    mutationFn: ({ memberId, ...input }: MemberRename & { memberId: string }): Promise<void> =>
+      onGroupSource(groupId, {
+        local: (db) => renameLocalMember(db, groupId, memberId, input),
+        synced: async () => {
+          await parseResponse(
+            api.groups[':groupId'].members[':memberId'].$patch({ param: { groupId, memberId }, json: input }),
+          );
+        },
+      }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: groupKeys.detail(groupId) });
     },

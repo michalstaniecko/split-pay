@@ -199,16 +199,22 @@ export async function updateLocalGroupSettings(db: LocalDb, groupId: string, upd
  * there is no owner to ask and no undo (ADR-0021). A synced group is left alone.
  */
 export async function deleteLocalGroup(db: LocalDb, groupId: string): Promise<void> {
-  const [row] = await db
-    .select({ id: localGroups.id })
-    .from(localGroups)
-    .where(and(eq(localGroups.id, groupId), eq(localGroups.local, true)));
-  if (!row) return;
+  if (!(await hasLocalGroup(db, groupId))) return;
   await db.batch([
     db.delete(localEntries).where(eq(localEntries.groupId, groupId)),
     db.delete(localMembers).where(eq(localMembers.groupId, groupId)),
     db.delete(localGroups).where(eq(localGroups.id, groupId)),
   ]);
+}
+
+/** Whether there is a local group with this id — its flag only, nothing else is read. */
+export async function hasLocalGroup(db: LocalDb, groupId: string): Promise<boolean> {
+  const [row] = await db
+    .select({ id: localGroups.id })
+    .from(localGroups)
+    .where(and(eq(localGroups.id, groupId), eq(localGroups.local, true)))
+    .limit(1);
+  return row !== undefined;
 }
 
 /** One local group with its members, or `undefined` when there is none with this id. */
@@ -244,7 +250,7 @@ export async function readInbox({
 }
 
 /** The local group, or an error when there is none with this id. */
-async function requireLocalGroup(db: LocalDb, groupId: string): Promise<LocalGroupDetail> {
+export async function requireLocalGroup(db: LocalDb, groupId: string): Promise<LocalGroupDetail> {
   const group = await readLocalGroup(db, groupId);
   if (!group) throw new Error('Local group not found');
   return group;
@@ -339,13 +345,12 @@ async function refreshInboxRow(db: LocalDb, groupId: string, activityAt?: Date):
     .where(eq(localGroups.id, groupId));
 }
 
-/** A local group's balances and suggested transfers (the balances endpoint's shape), or `undefined` when there is no such group. */
+/** A local group's balances and suggested transfers (the balances endpoint's shape); an error when there is no such group. */
 export async function readLocalBalances(
   db: LocalDb,
   groupId: string,
-): Promise<(SettleUp & { baseCurrency: string; simplifyDebts: boolean }) | undefined> {
-  const group = await readLocalGroup(db, groupId);
-  if (!group) return undefined;
+): Promise<SettleUp & { baseCurrency: string; simplifyDebts: boolean }> {
+  const group = await requireLocalGroup(db, groupId);
   const { balances, transfers } = settleUp(
     await readEntries(db, groupId),
     group,

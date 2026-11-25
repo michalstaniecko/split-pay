@@ -1,6 +1,6 @@
 import { queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { groupKeys } from '@/features/groups/groups-query';
-import { isLocalGroup } from './local-groups';
+import { onGroupSource } from './local-groups';
 import { cacheDb } from './local-session';
 import { discardOutbox, type OutboxEntryState, readOutboxState, retryOutbox } from './outbox';
 import { flushNow } from './sync';
@@ -18,8 +18,11 @@ const EMPTY: ReadonlyMap<string, OutboxEntryState> = new Map();
 export const outboxQuery = (groupId: string) =>
   queryOptions({
     queryKey: outboxKeys.group(groupId),
-    queryFn: async (): Promise<ReadonlyMap<string, OutboxEntryState>> =>
-      (await isLocalGroup(groupId)) ? EMPTY : readOutboxState(await cacheDb(), groupId),
+    queryFn: () =>
+      onGroupSource(groupId, {
+        local: async () => EMPTY,
+        synced: async () => readOutboxState(await cacheDb(), groupId),
+      }),
     networkMode: 'always',
   });
 

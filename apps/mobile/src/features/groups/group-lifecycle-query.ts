@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { parseResponse } from 'hono/client';
 import { deleteLocalGroup } from '@/features/offline/local-group-store';
-import { isLocalGroup, localGroupsDb } from '@/features/offline/local-groups';
+import { onGroupSource } from '@/features/offline/local-groups';
 import { api } from '@/lib/api';
 import { groupKeys } from './groups-query';
 
@@ -51,10 +51,13 @@ export function useDeleteGroup(groupId: string) {
   return useMutation({
     // A local group's goes to the device database, so it must also run offline.
     networkMode: 'always',
-    mutationFn: async (): Promise<void> => {
-      if (await isLocalGroup(groupId)) await deleteLocalGroup(await localGroupsDb(), groupId);
-      else await parseResponse(api.groups[':groupId'].$delete({ param: { groupId } }));
-    },
+    mutationFn: (): Promise<void> =>
+      onGroupSource(groupId, {
+        local: (db) => deleteLocalGroup(db, groupId),
+        synced: async () => {
+          await parseResponse(api.groups[':groupId'].$delete({ param: { groupId } }));
+        },
+      }),
     onSuccess: () => forgetGroup(queryClient, groupId),
   });
 }
