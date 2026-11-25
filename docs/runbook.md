@@ -233,8 +233,11 @@ GitHub Actions needs none of them: CI tests run against a Postgres service and M
 ## Before production
 
 - [x] App name and domain chosen: Kwitz, `kwitz.app` (ADR-0022).
-- [ ] Register `kwitz.app`, then set up `api.kwitz.app`, `app.kwitz.app` (#53) and `WEB_URL`.
+- [x] `kwitz.app` registered (DNS at OVH).
+- [ ] Set up `api.kwitz.app`, `app.kwitz.app` (#53) and `WEB_URL`.
 - [x] Display name, URL scheme and bundle ID in `apps/mobile/app.json` set to Kwitz / `kwitz` / `app.kwitz`.
+- [x] No app named Kwitz in the App Store or Google Play (2026-11-25).
+- [ ] Trademark check for Kwitz (EUIPO, USPTO).
 - [ ] `production` environment in Coolify: database `splitpay_production`, the API app with production secrets, `S3_BUCKET=split-pay-prod`, `SENTRY_ENVIRONMENT=production`.
 - [ ] `splitpay_production` added to the backup schedule, and a restore test done.
 - [ ] SMTP for sign-in codes (#32), push credentials (`PUSH_SENDER=expo`).
