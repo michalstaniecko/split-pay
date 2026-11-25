@@ -75,6 +75,8 @@ async function localChange(groupId: string, write: (db: LocalDb) => Promise<Entr
 export function useCreateEntry(groupId: string) {
   const queryClient = useQueryClient();
   return useMutation({
+    // Writes the device database (outbox or local group), so it must also run offline.
+    networkMode: 'always',
     mutationFn: async (input: NewEntry): Promise<Entry> => {
       const local = await localChange(groupId, (db) => addLocalEntry(db, groupId, input));
       if (local) return local;
@@ -158,6 +160,8 @@ function cacheEntry(queryClient: ReturnType<typeof useQueryClient>, groupId: str
 export function useEditEntry(groupId: string) {
   const queryClient = useQueryClient();
   return useMutation({
+    // Writes the device database (outbox or local group), so it must also run offline.
+    networkMode: 'always',
     mutationFn: async ({ base, input }: { base: Entry; input: NewEntry }): Promise<Entry> =>
       (await localChange(groupId, (db) => editLocalEntry(db, base, input))) ??
       (await queuedChange(base, (db, now) => enqueueEdit(db, base, input, now))) ??
@@ -199,6 +203,8 @@ export function useEditEntry(groupId: string) {
 export function useDeleteEntry(groupId: string) {
   const queryClient = useQueryClient();
   return useMutation({
+    // Writes the device database (outbox or local group), so it must also run offline.
+    networkMode: 'always',
     mutationFn: async (entry: Entry): Promise<Entry> =>
       (await localChange(groupId, (db) => deleteLocalEntry(db, entry))) ??
       (await queuedChange(entry, (db, now) => enqueueDelete(db, entry, now))) ??
@@ -240,6 +246,8 @@ export function useDeleteEntry(groupId: string) {
 export function useRestoreEntry(groupId: string) {
   const queryClient = useQueryClient();
   return useMutation({
+    // Writes the device database (outbox or local group), so it must also run offline.
+    networkMode: 'always',
     mutationFn: async (deleted: Entry): Promise<Entry> =>
       (await localChange(groupId, (db) => restoreLocalEntry(db, deleted))) ??
       (await queuedChange(deleted, (db, now) => enqueueRestore(db, deleted, now))) ??
