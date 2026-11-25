@@ -24,8 +24,8 @@ Identifiers derived from the name:
 ## Consequences
 
 - `kwitz.com` belongs to someone else; we don't depend on it and don't promise it anywhere.
-- Before the public launch: confirm the store listing name is free in the App Store and Google Play, and check trademarks (EUIPO, USPTO) in our class.
+- No app is listed under "Kwitz" in the App Store or Google Play (checked 2026-11-25). Before the public launch, still check trademarks (EUIPO, USPTO) in our class.
 - Repo, package names (`@split-pay/*`), Coolify, R2 and Sentry resources keep the `split-pay` working name — they are internal and never seen by users.
 - The staging domain `splitpay.on.ihumbak.website` stays for staging only; production uses `api.kwitz.app` and `app.kwitz.app`.
 - On-device storage keys keep the `split-pay` / `splitpay` prefix (SQLite file names, secure-store and web storage prefixes, the background task name). They are never seen by users, and renaming them would drop existing sessions and local data.
-- The previous bundle ID `com.website.ihumbak.splitpay` and the `splitpay://` scheme were never published; any development build installed under them has to be reinstalled.
+- The previous bundle ID `com.website.ihumbak.splitpay` and the `splitpay://` scheme were never registered in App Store Connect or Google Play Console; any development build installed under them has to be reinstalled.
