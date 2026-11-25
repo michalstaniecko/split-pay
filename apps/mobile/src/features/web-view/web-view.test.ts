@@ -89,8 +89,8 @@ describe('downloadAppUrl', () => {
 
 describe('openInAppUrl', () => {
   it('opens the link in the app through its deep link, landing on the same token', () => {
-    expect(openInAppUrl('abc123')).toBe('splitpay://g/abc123');
-    expect(openInAppUrl('a/b c')).toBe('splitpay://g/a%2Fb%20c');
+    expect(openInAppUrl('abc123')).toBe('kwitz://g/abc123');
+    expect(openInAppUrl('a/b c')).toBe('kwitz://g/a%2Fb%20c');
   });
 });
 

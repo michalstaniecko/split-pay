@@ -28,7 +28,7 @@ export default function AppLayout() {
         headerShadowVisible: false,
         contentStyle: { backgroundColor: theme.colors.background },
       }}>
-      <Stack.Screen name="index" options={{ title: 'split-pay', headerRight: () => <InboxHeaderButtons /> }} />
+      <Stack.Screen name="index" options={{ title: 'Kwitz', headerRight: () => <InboxHeaderButtons /> }} />
       <Stack.Screen name="activity" options={{ title: t`Aktywność` }} />
       <Stack.Screen name="profile" options={{ title: t`Profil` }} />
       <Stack.Screen

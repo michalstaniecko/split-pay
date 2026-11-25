@@ -26,7 +26,7 @@ describe('errorReportingOptions', () => {
       type: undefined,
       message: 'failed for ania@example.com',
       user: { id: 'user-1', email: 'ania@example.com' },
-      request: { url: 'splitpay://g/secret-token?x=1', cookies: { session: 'secret-cookie' } },
+      request: { url: 'kwitz://g/secret-token?x=1', cookies: { session: 'secret-cookie' } },
     };
 
     const sent = options?.beforeSend?.(event, {});

@@ -17,7 +17,7 @@ export function AboutSection() {
   return (
     <View style={styles.container}>
       <Text style={styles.heading} accessibilityRole="header">{t`O aplikacji`}</Text>
-      <Text style={styles.text}>{t`split-pay, wersja ${version}`}</Text>
+      <Text style={styles.text}>{t`Kwitz, wersja ${version}`}</Text>
       <Text style={styles.text}>{t`Licencja: GNU AGPL v3`}</Text>
       <Text style={styles.link} accessibilityRole="link" onPress={() => void openURL(sourceRepositoryUrl)}>
         {t`Kod źródłowy na GitHubie`}

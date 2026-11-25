@@ -7,12 +7,12 @@ import { apiUrl } from './api-url';
 /**
  * Better Auth client. On native, `expoClient` keeps the session cookie and a
  * session cache in SecureStore, so the user stays signed in across restarts.
- * It also sends `expo-origin: splitpay://`, which the API trusts.
+ * It also sends `expo-origin: kwitz://`, which the API trusts.
  */
 export const authClient = createAuthClient({
   baseURL: apiUrl,
   plugins: [
-    expoClient({ scheme: 'splitpay', storagePrefix: 'splitpay', storage: SecureStore }),
+    expoClient({ scheme: 'kwitz', storagePrefix: 'splitpay', storage: SecureStore }),
     emailOTPClient(),
   ],
 });

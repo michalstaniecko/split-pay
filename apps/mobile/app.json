@@ -1,25 +1,25 @@
 {
   "expo": {
-    "name": "split-pay",
-    "slug": "split-pay",
+    "name": "Kwitz",
+    "slug": "kwitz",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "splitpay",
+    "scheme": "kwitz",
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/expo.icon",
       "infoPlist": {
         "CFBundleAllowMixedLocalizations": true
       },
-      "bundleIdentifier": "com.website.ihumbak.splitpay"
+      "bundleIdentifier": "app.kwitz"
     },
     "locales": {
       "pl": "./app-locales/pl.json",
       "en": "./app-locales/en.json"
     },
     "android": {
-      "package": "com.website.ihumbak.splitpay",
+      "package": "app.kwitz",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -60,8 +60,8 @@
       [
         "expo-image-picker",
         {
-          "cameraPermission": "split-pay uses the camera to photograph receipts and your profile picture.",
-          "photosPermission": "split-pay lets you pick a receipt photo or a profile picture from your library.",
+          "cameraPermission": "Kwitz uses the camera to photograph receipts and your profile picture.",
+          "photosPermission": "Kwitz lets you pick a receipt photo or a profile picture from your library.",
           "microphonePermission": false
         }
       ]

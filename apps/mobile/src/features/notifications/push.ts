@@ -45,7 +45,7 @@ export async function registerForPush(locale: string): Promise<void> {
   }
   if (Platform.OS === 'android') {
     await Notifications.setNotificationChannelAsync('default', {
-      name: 'split-pay',
+      name: 'Kwitz',
       importance: Notifications.AndroidImportance.DEFAULT,
     });
   }
