@@ -1,9 +1,11 @@
 import { useLingui } from '@lingui/react/macro';
-import { useState } from 'react';
+import { router } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Text, TextInput, View } from 'react-native';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { Button } from '@/components/button';
 import { cleanOtp, isOtpComplete, OTP_LENGTH, parseEmail } from '@/features/auth/sign-in-input';
+import { useWithoutAccount, withoutAccount } from '@/features/auth/without-account';
 import { authClient } from '@/lib/auth-client';
 
 type Step = { name: 'email' } | { name: 'code'; email: string };
@@ -11,6 +13,8 @@ type Step = { name: 'email' } | { name: 'code'; email: string };
 /**
  * Email one-time code sign-in: email → code. A first sign-in creates the
  * account. On success the session changes and the root layout shows the app.
+ * On native, "Kontynuuj bez konta" leads to the inbox with local groups
+ * instead (ADR-0021).
  */
 export default function SignInScreen() {
   const { t } = useLingui();
@@ -20,6 +24,16 @@ export default function SignInScreen() {
   const [otp, setOtp] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const chosenWithoutAccount = useWithoutAccount();
+  const [leaving, setLeaving] = useState(false);
+  // Once the root layout lets a signed-out person into the app, go to the inbox.
+  useEffect(() => {
+    if (leaving && chosenWithoutAccount) router.replace('/');
+  }, [leaving, chosenWithoutAccount]);
+  const continueWithoutAccount = () => {
+    withoutAccount.choose();
+    setLeaving(true);
+  };
 
   const sendCode = async (email: string) => {
     setBusy(true);
@@ -89,6 +103,14 @@ export default function SignInScreen() {
             />
             {error ? <Text style={styles.error}>{error}</Text> : null}
             <Button label={t`Wyślij kod`} onPress={submitEmail} loading={busy} />
+            {Platform.OS !== 'web' ? (
+              <Button
+                variant="secondary"
+                label={t`Kontynuuj bez konta`}
+                onPress={continueWithoutAccount}
+                disabled={busy}
+              />
+            ) : null}
           </>
         ) : (
           <>

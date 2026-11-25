@@ -12,12 +12,16 @@ import { useRefreshOnFocus } from '@/lib/use-refresh-on-focus';
 /**
  * Inbox header: bell → Activity (with a dot when others changed something
  * since Activity was last opened on this device), the user's avatar →
- * Profile (ADR-0017).
+ * Profile (ADR-0017). Nothing while signed out: both need an account.
  */
 export function InboxHeaderButtons() {
-  const { t } = useLingui();
   const { data: session } = authClient.useSession();
-  const name = session?.user.name.trim() || session?.user.email || '?';
+  return session ? <AccountButtons session={session} /> : null;
+}
+
+function AccountButtons({ session }: { session: { user: { name: string; email: string } } }) {
+  const { t } = useLingui();
+  const name = session.user.name.trim() || session.user.email || '?';
   const avatar = useQuery(myAvatarQuery());
   const latest = useQuery(activityLatestQuery());
   useRefreshOnFocus(latest.refetch);

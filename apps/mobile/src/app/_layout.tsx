@@ -2,6 +2,7 @@ import { QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { SplashScreen, Stack } from 'expo-router';
 import { useEffect } from 'react';
 import { Platform } from 'react-native';
+import { useWithoutAccount } from '@/features/auth/without-account';
 import { blockedStatus } from '@/features/moderation/blocked-status-store';
 import { useSessionArea } from '@/features/moderation/use-session-area';
 import { openDeviceDb } from '@/features/offline/local-session';
@@ -25,7 +26,9 @@ export default function RootLayout() {
 }
 
 /**
- * Signed-in users see the app, everyone else the sign-in flow. A blocked
+ * Signed-in users see the app, everyone else the sign-in flow — or, after
+ * "Kontynuuj bez konta" (native only), the app with local groups only, with
+ * sign-in still reachable (ADR-0021). A blocked
  * account (#48) sees only "Konto zablokowane" — no inbox, no group links.
  * Signing in or out, or the API reporting the block, flips the guards; Expo
  * Router then swaps the stacks (no manual redirect).
@@ -44,11 +47,14 @@ function RootNavigator() {
   // Offline or on an error, the status this device last saw keeps a blocked
   // user out of the inbox (the offline cache would otherwise show it).
   const area = useSessionArea({ pending: isPending, userId: session?.user.id }, me.data, blockedStatus);
+  // Signed out by choice: local groups only, nothing that needs the API.
+  const chosenWithoutAccount = useWithoutAccount();
+  const local = area === 'auth' && chosenWithoutAccount;
   // Where a guarded route sends the user instead (e.g. the app's start URL "/" while signed out).
-  const home = area === 'auth' ? '/sign-in' : area === 'blocked' ? '/blocked' : '/';
+  const home = area === 'auth' && !local ? '/sign-in' : area === 'blocked' ? '/blocked' : '/';
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Protected guard={area === 'app'} redirectTo={home}>
+      <Stack.Protected guard={area === 'app' || local} redirectTo={home}>
         <Stack.Screen name="(app)" />
       </Stack.Protected>
       <Stack.Protected guard={area === 'auth'} redirectTo={home}>
