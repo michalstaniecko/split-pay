@@ -1,7 +1,4 @@
-import type { OtpType } from '../auth';
-
-/** Languages the OTP email is written in. Anything else gets English. */
-export type OtpLocale = 'pl' | 'en';
+import type { OtpLocale, OtpMessage, OtpType } from './message';
 
 export interface OtpEmailContent {
   subject: string;
@@ -62,12 +59,9 @@ const escapeHtml = (value: string): string =>
  * The OTP email: subject with the code (visible in the notification), a minimal
  * inline-styled HTML body and a plain-text alternative.
  */
-export function otpEmail(input: {
-  type: OtpType;
-  otp: string;
-  locale: OtpLocale;
-  validForMinutes: number;
-}): OtpEmailContent {
+export function otpEmail(
+  input: Pick<OtpMessage, 'type' | 'otp' | 'locale'> & { validForMinutes: number },
+): OtpEmailContent {
   const c = copy[input.locale];
   const subject = c.subject[input.type](input.otp);
   const validity = c.validity(input.validForMinutes);

@@ -1,4 +1,4 @@
-import type { OtpLocale } from './templates';
+import type { OtpLocale } from './message';
 
 /**
  * The OTP email language from the request's `Accept-Language` (the app sends its

@@ -1,4 +1,4 @@
-import { OTP_EXPIRES_IN_SECONDS, type OtpSender } from '../auth';
+import { OTP_EXPIRES_IN_SECONDS, type OtpSender } from './message';
 import { otpEmail } from './templates';
 
 /**
@@ -6,12 +6,12 @@ import { otpEmail } from './templates';
  * Plain `fetch`, no SDK; the `OtpSender` port keeps the provider swappable.
  */
 
-export const DEFAULT_ZEPTOMAIL_API_URL = 'https://api.zeptomail.eu';
-export const DEFAULT_EMAIL_FROM = 'Kwitz <no-reply@kwitz.app>';
+const DEFAULT_ZEPTOMAIL_API_URL = 'https://api.zeptomail.eu';
+const DEFAULT_EMAIL_FROM = 'Kwitz <no-reply@kwitz.app>';
 
 const TOKEN_SCHEME = 'Zoho-enczapikey';
 
-export interface EmailAddress {
+interface EmailAddress {
   address: string;
   name?: string;
 }
@@ -26,6 +26,13 @@ export function parseEmailFrom(value: string): EmailAddress {
   }
   if (/^[^<>\s]+@[^<>\s]+$/.test(trimmed)) return { address: trimmed };
   throw new Error('EMAIL_FROM must be "Name <address>" or an address');
+}
+
+/** `fetch` failures wrap the socket error in `cause`; its `code` says enough. */
+function networkErrorCode(error: unknown): string {
+  const cause = error instanceof Error ? error.cause : undefined;
+  const code = cause && typeof cause === 'object' && 'code' in cause ? cause.code : undefined;
+  return typeof code === 'string' ? code : error instanceof Error ? error.name : 'unknown';
 }
 
 export function zeptoMailOtpSender(options: {
@@ -63,8 +70,9 @@ export function zeptoMailOtpSender(options: {
             textbody: content.text,
           }),
         });
-      } catch (cause) {
-        throw new Error('ZeptoMail request failed', { cause });
+      } catch (error) {
+        // Only an error code (e.g. ENOTFOUND), not the original error: it goes to Sentry.
+        throw new Error(`ZeptoMail request failed (${networkErrorCode(error)})`);
       }
       // Only the status: error bodies can echo the recipient back.
       if (!res.ok) {

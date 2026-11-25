@@ -5,29 +5,13 @@ import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { APIError, createAuthMiddleware, getSessionFromCtx } from 'better-auth/api';
 import { emailOTP } from 'better-auth/plugins';
 import { otpLocaleFromHeader } from './otp-email/locale';
-import type { OtpLocale } from './otp-email/templates';
+import { OTP_EXPIRES_IN_SECONDS, type OtpSender } from './otp-email/message';
 import type { Db } from './db/client';
 import * as authSchema from './db/auth-schema';
 import { blockedSessionMayUseAuth } from './blocked-session';
 import { isAccountBlocked } from './routes/moderation';
 
-export type OtpType = 'sign-in' | 'email-verification' | 'forget-password' | 'change-email';
-
-/** How long a one-time code is valid. The email states it, so it is derived from here. */
-export const OTP_EXPIRES_IN_SECONDS = 300;
-
-export interface OtpMessage {
-  email: string;
-  otp: string;
-  type: OtpType;
-  /** Email language, from the request's `Accept-Language` (the app's UI language). */
-  locale: OtpLocale;
-}
-
-/** Delivers one-time sign-in codes: ZeptoMail in production (ADR-0023), the log in development. */
-export interface OtpSender {
-  send(message: OtpMessage): Promise<void>;
-}
+export type { OtpMessage, OtpSender, OtpType } from './otp-email/message';
 
 /** Development sender: writes the code to the API log. */
 export const devOtpSender: OtpSender = {

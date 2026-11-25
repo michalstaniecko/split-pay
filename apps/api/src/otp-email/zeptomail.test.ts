@@ -76,13 +76,20 @@ describe('zeptoMailOtpSender', () => {
     for (const secret of ['ania@example.com', '123456', 'secret-token']) expect(text).not.toContain(secret);
   });
 
-  it('rejects when the request fails', async () => {
+  it('rejects when the request fails, keeping only the error code', async () => {
+    const socketError = Object.assign(new Error('getaddrinfo ENOTFOUND api.zeptomail.eu'), { code: 'ENOTFOUND' });
     const fetch = (async () => {
-      throw new TypeError('fetch failed');
+      throw new TypeError('fetch failed', { cause: socketError });
     }) as typeof globalThis.fetch;
     const sender = zeptoMailOtpSender({ token: 'secret-token', fetch });
 
-    await expect(sender.send(message)).rejects.toThrow('ZeptoMail request failed');
+    const error = await sender.send(message).then(
+      () => null,
+      (e: unknown) => e as Error,
+    );
+
+    expect(error?.message).toBe('ZeptoMail request failed (ENOTFOUND)');
+    expect(error?.cause).toBeUndefined();
   });
 });
 
