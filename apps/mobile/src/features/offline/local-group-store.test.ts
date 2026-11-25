@@ -11,10 +11,12 @@ import {
   readLocalBalances,
   readLocalEntries,
   readLocalGroup,
+  readInbox,
   readLocalGroupList,
   renameLocalMember,
   restoreLocalEntry,
 } from './local-group-store';
+import { saveGroupList } from './local-store';
 import { nodeLocalDb } from './testing/node-local-db';
 
 const G1 = '00000000-0000-4000-8000-000000000001';
@@ -120,6 +122,60 @@ describe('local group store: inbox', () => {
       ['Nowsza', true, '2026-11-20T10:00:00.000Z', null, null],
       ['Starsza', true, '2026-11-01T10:00:00.000Z', null, null],
     ]);
+  });
+});
+
+const synced = (id: string, name: string, lastActivityAt: string) => ({
+  id,
+  name,
+  emoji: '⛵',
+  color: '#1E88E5',
+  baseCurrency: 'PLN',
+  startDate: null,
+  endDate: null,
+  simplifyDebts: true,
+  archivedAt: null,
+  ownerMemberId: ANIA,
+  createdAt: '2026-10-01T10:00:00.000Z',
+  lastActivityAt,
+  lastEntry: null,
+  lastEntryByOthersAt: null,
+});
+
+describe('local group store: the signed-in inbox', () => {
+  const S1 = '00000000-0000-4000-8000-000000000011';
+  const S2 = '00000000-0000-4000-8000-000000000012';
+
+  it("merges local groups with the account's groups by last activity, local ones marked", async () => {
+    const device = await nodeLocalDb();
+    const user = await nodeLocalDb();
+    await createLocalGroup(device, newGroup({ name: 'Pizza' }), new Date('2026-11-10T10:00:00.000Z'));
+    await saveGroupList(user, [
+      synced(S1, 'Mazury', '2026-11-20T10:00:00.000Z'),
+      synced(S2, 'Mieszkanie', '2026-11-01T10:00:00.000Z'),
+    ]);
+
+    const inbox = await readInbox({ user, device });
+
+    expect(inbox.map((g) => [g.name, g.local])).toEqual([
+      ['Mazury', false],
+      ['Pizza', true],
+      ['Mieszkanie', false],
+    ]);
+  });
+
+  it('signed out, lists only the local groups', async () => {
+    const device = await nodeLocalDb();
+    await createLocalGroup(device, newGroup({ name: 'Pizza' }), NOW);
+
+    expect((await readInbox({ user: null, device })).map((g) => [g.name, g.local])).toEqual([['Pizza', true]]);
+  });
+
+  it('without a device database (web), lists only the account\'s groups', async () => {
+    const user = await nodeLocalDb();
+    await saveGroupList(user, [synced(S1, 'Mazury', '2026-11-20T10:00:00.000Z')]);
+
+    expect((await readInbox({ user, device: null })).map((g) => [g.name, g.local])).toEqual([['Mazury', false]]);
   });
 });
 

@@ -16,8 +16,10 @@ import type { LocalDb } from './local-db';
 import { type CachedGroup, localEntries, localGroups, localMembers } from './local-schema';
 import {
   type Batch,
+  byLastActivity,
   type CachedGroupDetail,
   type CachedGroupListItem,
+  type Locality,
   previewOf,
   readEntries,
   readGroupDetail,
@@ -122,6 +124,26 @@ export async function readLocalGroup(db: LocalDb, groupId: string): Promise<Loca
 /** The local groups for the inbox, most recent activity first. */
 export async function readLocalGroupList(db: LocalDb): Promise<LocalGroupListItem[]> {
   return (await readGroupList(db)).filter((g): g is LocalGroupListItem => g.local);
+}
+
+/**
+ * The inbox (ADR-0021): the signed-in user's groups from their cache (`user`,
+ * none when signed out) merged with the local groups on this device
+ * (`device`, none on the web), most recent activity first. Local groups keep
+ * their `local` flag, so the inbox badges them.
+ */
+export async function readInbox({
+  user,
+  device,
+}: {
+  user: LocalDb | null;
+  device: LocalDb | null;
+}): Promise<(CachedGroupListItem & Locality)[]> {
+  const [synced, local] = await Promise.all([
+    user ? readGroupList(user) : [],
+    device ? readLocalGroupList(device) : [],
+  ]);
+  return [...synced, ...local].sort(byLastActivity);
 }
 
 /** A local group's live entries in Conversation order. */

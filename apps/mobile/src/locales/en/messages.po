@@ -51,6 +51,10 @@ msgstr "{0}: reminded today"
 msgid "{count, plural, one {# osoba} few {# osoby} many {# osób} other {# osoby}}"
 msgstr "{count, plural, one {# person} other {# people}}"
 
+#: src/app/(app)/profile.tsx
+msgid "{count, plural, one {# zmiana z tego telefonu nie została jeszcze wysłana i po wylogowaniu przepadnie.} few {# zmiany z tego telefonu nie zostały jeszcze wysłane i po wylogowaniu przepadną.} many {# zmian z tego telefonu nie zostało jeszcze wysłanych i po wylogowaniu przepadną.} other {# zmiany z tego telefonu nie zostały jeszcze wysłane i po wylogowaniu przepadną.}}"
+msgstr "{count, plural, one {# change from this phone hasn't been sent yet and will be lost when you sign out.} other {# changes from this phone haven't been sent yet and will be lost when you sign out.}}"
+
 #: src/features/balances/balances-view.tsx
 msgid "{from} → {to}: {amount}"
 msgstr "{from} → {to}: {amount}"
@@ -152,6 +156,7 @@ msgstr "Alcohol"
 #: src/app/(app)/groups/[groupId]/member.tsx
 #: src/app/(app)/new-group.tsx
 #: src/app/(app)/new.tsx
+#: src/app/(app)/profile.tsx
 #: src/app/(app)/quick-bill.tsx
 #: src/app/(app)/report-photo.tsx
 #: src/features/claims/claim-messages.tsx
@@ -1914,6 +1919,10 @@ msgstr "Off: the group still refreshes in the background, without notifications.
 #: src/features/history/describe-change.ts
 msgid "Wyłączono upraszczanie długów"
 msgstr "Debt simplification turned off"
+
+#: src/app/(app)/profile.tsx
+msgid "Wylogować się?"
+msgstr "Sign out?"
 
 #: src/app/(app)/profile.tsx
 #: src/app/blocked.tsx

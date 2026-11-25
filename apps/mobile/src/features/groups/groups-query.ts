@@ -7,12 +7,12 @@ import {
   addLocalMember,
   createLocalGroup,
   type NewLocalGroup,
-  readLocalGroupList,
+  readInbox,
   renameLocalMember,
 } from '@/features/offline/local-group-store';
 import { findLocalGroup, isLocalGroup, localGroupsDb } from '@/features/offline/local-groups';
 import { deviceDbIfAny, hasLocalUser, localDb } from '@/features/offline/local-session';
-import { isGroupSynced, readGroupDetail, readGroupList } from '@/features/offline/local-store';
+import { isGroupSynced, readGroupDetail } from '@/features/offline/local-store';
 import { attemptSync, syncGroup, syncGroupList } from '@/features/offline/sync';
 import { useLocale } from '@/i18n/locale-provider';
 import { api } from '@/lib/api';
@@ -30,20 +30,20 @@ export const groupKeys = {
 
 /**
  * The inbox: my groups, most recent activity first (GET /groups), read from
- * the offline cache after a sync attempt (ADR-0005) — works offline. Signed
- * out, the local groups on this device (ADR-0021), and nothing calls the API.
+ * the offline cache after a sync attempt (ADR-0005) — works offline — merged
+ * with the local groups on this device (ADR-0021). Signed out, only the local
+ * groups, and nothing calls the API.
  */
 export const groupsQuery = () =>
   queryOptions({
     queryKey: groupKeys.list(),
     queryFn: async (): Promise<GroupListItem[]> => {
-      if (!hasLocalUser()) {
-        const device = await deviceDbIfAny();
-        return device ? ((await readLocalGroupList(device)) as unknown as GroupListItem[]) : [];
-      }
+      const device = await deviceDbIfAny();
+      if (!hasLocalUser()) return (await readInbox({ user: null, device })) as unknown as GroupListItem[];
       const syncError = await attemptSync(syncGroupList);
-      // The cache holds exactly what GET /groups returned (+ my queued entries).
-      const groups = (await readGroupList(await localDb())) as GroupListItem[];
+      // The cache holds exactly what GET /groups returned (+ my queued entries); local groups join them.
+      const user = await localDb();
+      const groups = (await readInbox({ user, device })) as unknown as GroupListItem[];
       if (groups.length === 0 && syncError) throw syncError;
       return groups;
     },
