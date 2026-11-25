@@ -13,7 +13,7 @@ export interface ErrorContext {
 /** Sends server errors somewhere (Sentry). */
 export interface ErrorReporter {
   capture(error: unknown, context: ErrorContext): void;
-  /** A failed run of a background job (`rates`, `push`, `photo-retention`). */
+  /** A failed run of a background job (`rates`, `push`, `photo-retention`) or OTP email delivery (`otp-email`). */
   captureJob(error: unknown, job: string): void;
 }
 

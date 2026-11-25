@@ -2,7 +2,7 @@
 
 How the hosted environments are set up, where the secrets live, and how to do the recurring operations: deploy, rotate a token, restore a backup, check error reporting.
 
-Decisions behind this setup: [ADR-0012](adr/0012-self-hosting-on-coolify.md) (Coolify on a VPS), [ADR-0020](adr/0020-object-storage-on-cloudflare-r2-behind-s3-port.md) (Cloudflare R2 behind an S3 port).
+Decisions behind this setup: [ADR-0012](adr/0012-self-hosting-on-coolify.md) (Coolify on a VPS), [ADR-0020](adr/0020-object-storage-on-cloudflare-r2-behind-s3-port.md) (Cloudflare R2 behind an S3 port), [ADR-0023](adr/0023-otp-emails-via-zeptomail-http-api.md) (OTP emails via ZeptoMail).
 
 **No secrets in this file or anywhere in the repo.** They live in Coolify and in the owner's password manager (see [Secrets](#secrets)).
 
@@ -15,6 +15,7 @@ Decisions behind this setup: [ADR-0012](adr/0012-self-hosting-on-coolify.md) (Co
 | PostgreSQL 18 | Coolify resource `split-pay-postgres` (one instance) | One database per environment: `splitpay_staging`, later `splitpay_production` |
 | Photo buckets | Cloudflare R2, EU jurisdiction | `split-pay-stage`, `split-pay-prod` |
 | Database backups | Cloudflare R2, EU jurisdiction | `split-pay-backups`, written by Coolify's scheduled backups |
+| Sign-in code emails | Zoho ZeptoMail, EU data centre | Domain `kwitz.app`, sender `no-reply@kwitz.app` |
 | Error reporting | Sentry, EU region (`de.sentry.io`), org `ihumbakwebsite` | Projects `split-pay-api`, `split-pay-mobile` |
 
 The working domain `splitpay.on.ihumbak.website` is for staging only. Don't send real invitations from it: group links contain the domain, so they break when it changes (ADR-0009).
@@ -117,9 +118,10 @@ ADMIN_EMAILS=<admin emails, comma-separated>
 S3_*                                            # see Cloudflare R2
 SENTRY_DSN=<DSN of split-pay-api>
 SENTRY_ENVIRONMENT=staging
+ZEPTOMAIL_TOKEN=<Send Mail token>                # see ZeptoMail; unset = codes go to the log
 ```
 
-Not set yet: `PUSH_SENDER`/`EXPO_ACCESS_TOKEN` (needs the Expo project), `WEB_URL` (needs the web app hosting, #53), and SMTP (#32). Until SMTP is set up, sign-in codes appear in the app's **Logs** in Coolify.
+Not set yet: `PUSH_SENDER`/`EXPO_ACCESS_TOKEN` (needs the Expo project) and `WEB_URL` (needs the web app hosting, #53). Without `ZEPTOMAIL_TOKEN`, sign-in codes appear in the app's **Logs** in Coolify.
 
 ### Deploys
 
@@ -196,6 +198,39 @@ To recover a real environment, restore into an **empty** database created as in 
 
 Repeat the test after big schema changes and at least before the public launch. Add a row to this table each time.
 
+## ZeptoMail
+
+Sign-in codes are emailed through Zoho ZeptoMail's HTTP API (ADR-0023), EU data centre. Zoho is a processor of the recipients' email addresses (privacy policy).
+
+### Setup
+
+1. ZeptoMail console (EU account, `zeptomail.zoho.eu`) → **Domains** → add `kwitz.app`. Add the SPF and DKIM records it shows at the DNS provider (OVH) and wait until both are verified.
+2. **Mail Agents** → the agent for Kwitz → set a **bounce address** (a subdomain of `kwitz.app`, with the CNAME record ZeptoMail shows).
+3. Same agent → **SMTP/API** → **API** → copy the **Send Mail token**, and check the API host shown there. Save the token in the password manager.
+
+### API environment variables
+
+| Variable | Value |
+|---|---|
+| `ZEPTOMAIL_TOKEN` | Send Mail token (with or without the `Zoho-enczapikey ` prefix). Unset = codes go to the log |
+| `ZEPTOMAIL_API_URL` | Optional. Base URL, default `https://api.zeptomail.eu`. Set it only if the console shows another host |
+| `EMAIL_FROM` | Optional. Default `Kwitz <no-reply@kwitz.app>`. Must be on a verified domain |
+
+### Check that codes arrive
+
+Request a sign-in code in the app for a mailbox you can read. The email arrives within a minute in the app's language (Polish or English). If it doesn't: the API log shows `[otp] delivery failed`, and Sentry has an issue tagged `job: otp-email` with the HTTP status (401 = wrong token or host, 4xx with a verified domain = check `EMAIL_FROM`). ZeptoMail → **Reports / Logs** shows bounces.
+
+To check a token or a newly verified domain without the app, run the live test from `apps/api` with the variables in `.env`. It sends one Polish and one English email:
+
+```
+ZEPTOMAIL_LIVE_TEST=1 ZEPTOMAIL_LIVE_TO=<your mailbox> \
+node --env-file=.env ../../node_modules/vitest/vitest.mjs run src/otp-email/zeptomail.live.test.ts
+```
+
+### Rotate the token
+
+Mail Agent → **SMTP/API** → generate a new Send Mail token, update `ZEPTOMAIL_TOKEN` in Coolify, **Restart**, check that codes arrive, then delete the old token.
+
 ## Sentry
 
 - Organization `ihumbakwebsite`, **EU data storage** (`de.sentry.io`). It can't be moved.
@@ -206,7 +241,7 @@ Repeat the test after big schema changes and at least before the public launch. 
   - Native mobile crashes skip the JS scrubber, which is why the server-side settings matter.
 - DSNs: **Project settings → Client Keys (DSN)**. They must contain `.de.`. The API uses `SENTRY_DSN` and `SENTRY_ENVIRONMENT`. The app uses `EXPO_PUBLIC_SENTRY_DSN` and `EXPO_PUBLIC_SENTRY_ENVIRONMENT`, set at build time.
 - Mobile source maps need `SENTRY_AUTH_TOKEN` (plus `SENTRY_ORG` and `SENTRY_PROJECT`) at build time. They're not set up yet: that comes with the first EAS builds. The API's stack traces are readable without them.
-- Failed background-job runs are reported with a `job` tag (`rates`, `push`, `photo-retention`). The release is set automatically to the deployed commit.
+- Failed background-job runs are reported with a `job` tag (`rates`, `push`, `photo-retention`), and failed sign-in code emails with `job: otp-email`. The release is set automatically to the deployed commit.
 
 ### Check that errors arrive
 
@@ -225,6 +260,7 @@ Last checked: 2026-11-25 on staging.
 | R2 token secrets (stage, prod, backups) | Password manager. Coolify (API env for photo tokens, *Storages* for the backup token) |
 | `BETTER_AUTH_SECRET` (per environment) | Password manager, Coolify |
 | Database passwords (per environment) | Password manager, Coolify (`DATABASE_URL`) |
+| ZeptoMail Send Mail token (per environment) | Password manager, Coolify (`ZEPTOMAIL_TOKEN`) |
 | Sentry DSNs | Coolify (API), build environment (app). Not secret, but kept out of the repo |
 | Sentry auth token (source maps) | Build environment only, when it exists |
 
@@ -240,5 +276,6 @@ GitHub Actions needs none of them: CI tests run against a Postgres service and a
 - [ ] Trademark check for Kwitz (EUIPO, USPTO).
 - [ ] `production` environment in Coolify: database `splitpay_production`, the API app with production secrets, `S3_BUCKET=split-pay-prod`, `SENTRY_ENVIRONMENT=production`.
 - [ ] `splitpay_production` added to the backup schedule, and a restore test done.
-- [ ] SMTP for sign-in codes (#32), push credentials (`PUSH_SENDER=expo`).
+- [ ] `kwitz.app` verified in ZeptoMail (SPF, DKIM), bounce address set, `ZEPTOMAIL_TOKEN` set and codes checked (#32).
+- [ ] Push credentials (`PUSH_SENDER=expo`).
 - [ ] Photo uploads work on R2 (#63).
