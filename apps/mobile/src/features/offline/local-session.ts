@@ -27,7 +27,7 @@ export function selectLocalUser(userId: string): void {
   databases.selectUser(userId);
 }
 
-/** Signed out: stops using the user's cache (it stays on the device). Idempotent. */
+/** Signed out: stops using the user's cache (Profile's sign-out then deletes it, `forgetLocalUser`). Idempotent. */
 export function deselectLocalUser(): void {
   databases.deselectUser();
 }
@@ -48,10 +48,10 @@ export function localUserId(): string {
 }
 
 /**
- * Deletes the user's local database file (cache + outbox) — after the account
- * was deleted (#28), nothing of it may stay on the device. The device
- * database (local groups) stays. Call after signing out, so the signed-in
- * layout doesn't select it again.
+ * Deletes the user's local database file (cache + outbox) — on sign-out (the
+ * account's cache is cleared, SPEC "Local groups") and after the account was
+ * deleted (#28). The device database (local groups) stays. Call after signing
+ * out, so the signed-in layout doesn't select it again.
  */
 export function forgetLocalUser(userId: string): Promise<void> {
   return databases.forgetUser(userId);

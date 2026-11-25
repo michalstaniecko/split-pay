@@ -2,7 +2,8 @@ import type { Entry } from '@split-pay/shared';
 import { describe, expect, it } from 'vitest';
 import type { LocalDb } from '../offline/local-db';
 import type { CachedGroup } from '../offline/local-schema';
-import { applyGroupDelta, saveGroupList } from '../offline/local-store';
+import { createLocalGroup } from '../offline/local-group-store';
+import { applyGroupDelta, saveEntry, saveGroupList } from '../offline/local-store';
 import { enqueueDelete } from '../offline/offline-changes';
 import { nodeLocalDb } from '../offline/testing/node-local-db';
 import { searchInbox } from './inbox-search';
@@ -139,5 +140,27 @@ describe('inbox search', () => {
     expect((await searchInbox(db, 'lodz')).groups.map((g) => g.id)).toEqual([G1]);
     expect((await searchInbox(db, 'zabka')).entries.map((e) => e.entryId)).toEqual([zabka.id]);
     expect((await searchInbox(db, 'ŻAB')).entries.map((e) => e.entryId)).toEqual([zabka.id]);
+  });
+
+  it("signed in, also finds local groups and their entries, merged with the account's", async () => {
+    const user = await nodeLocalDb();
+    const device = await nodeLocalDb();
+    const synced = entry(G1, 'Pizza', { date: '2026-07-02' });
+    await cache(user, [[group(G1, 'Pizzeria Mazury', { lastActivityAt: '2026-07-01T10:00:00.000Z' }), [synced]]]);
+    await createLocalGroup(
+      device,
+      { id: G2, name: 'Pizza u Ani', emoji: '🍕', color: '#E53935', baseCurrency: 'PLN', deviceMember: { id: ANIA, displayName: 'Ja' }, people: [] },
+      new Date('2026-07-05T10:00:00.000Z'),
+    );
+    const local = entry(G2, 'Pizza hawajska', { date: '2026-07-04' });
+    await saveEntry(device, local);
+
+    const results = await searchInbox([user, device], 'pizz');
+
+    expect(results.groups.map((g) => g.id)).toEqual([G2, G1]);
+    expect(results.entries.map((e) => [e.entryId, e.groupId, e.group.name])).toEqual([
+      [local.id, G2, 'Pizza u Ani'],
+      [synced.id, G1, 'Pizzeria Mazury'],
+    ]);
   });
 });

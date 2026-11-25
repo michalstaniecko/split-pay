@@ -51,6 +51,10 @@ msgstr "{0}: przypomniano dziś"
 msgid "{count, plural, one {# osoba} few {# osoby} many {# osób} other {# osoby}}"
 msgstr "{count, plural, one {# osoba} few {# osoby} many {# osób} other {# osoby}}"
 
+#: src/app/(app)/profile.tsx
+msgid "{count, plural, one {# zmiana z tego telefonu nie została jeszcze wysłana i po wylogowaniu przepadnie.} few {# zmiany z tego telefonu nie zostały jeszcze wysłane i po wylogowaniu przepadną.} many {# zmian z tego telefonu nie zostało jeszcze wysłanych i po wylogowaniu przepadną.} other {# zmiany z tego telefonu nie zostały jeszcze wysłane i po wylogowaniu przepadną.}}"
+msgstr "{count, plural, one {# zmiana z tego telefonu nie została jeszcze wysłana i po wylogowaniu przepadnie.} few {# zmiany z tego telefonu nie zostały jeszcze wysłane i po wylogowaniu przepadną.} many {# zmian z tego telefonu nie zostało jeszcze wysłanych i po wylogowaniu przepadną.} other {# zmiany z tego telefonu nie zostały jeszcze wysłane i po wylogowaniu przepadną.}}"
+
 #: src/features/balances/balances-view.tsx
 msgid "{from} → {to}: {amount}"
 msgstr "{from} → {to}: {amount}"
@@ -152,6 +156,7 @@ msgstr "Alkohol"
 #: src/app/(app)/groups/[groupId]/member.tsx
 #: src/app/(app)/new-group.tsx
 #: src/app/(app)/new.tsx
+#: src/app/(app)/profile.tsx
 #: src/app/(app)/quick-bill.tsx
 #: src/app/(app)/report-photo.tsx
 #: src/features/claims/claim-messages.tsx
@@ -1926,6 +1931,10 @@ msgstr "Wyłączone: grupa odświeża się w tle, ale bez powiadomień."
 #: src/features/history/describe-change.ts
 msgid "Wyłączono upraszczanie długów"
 msgstr "Wyłączono upraszczanie długów"
+
+#: src/app/(app)/profile.tsx
+msgid "Wylogować się?"
+msgstr "Wylogować się?"
 
 #: src/app/(app)/profile.tsx
 #: src/app/blocked.tsx

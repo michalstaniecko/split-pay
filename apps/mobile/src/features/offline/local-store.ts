@@ -161,13 +161,15 @@ export async function readGroupList(db: LocalDb): Promise<(CachedGroupListItem &
       if (!mine || mine.createdAt <= g.lastActivityAt) return { ...row, lastActivityAt: g.lastActivityAt, lastEntry: g.lastEntry ?? null };
       return { ...row, lastActivityAt: mine.createdAt, lastEntry: previewOf(mine) };
     })
-    .sort(
-      (a, b) =>
-        b.lastActivityAt.localeCompare(a.lastActivityAt) ||
-        b.createdAt.localeCompare(a.createdAt) ||
-        a.id.localeCompare(b.id),
-    );
+    .sort(byLastActivity);
 }
+
+/** Inbox order: most recent activity first, then newest group, then id (stable across devices). */
+export const byLastActivity = (
+  a: Pick<CachedGroup, 'id' | 'createdAt' | 'lastActivityAt'>,
+  b: Pick<CachedGroup, 'id' | 'createdAt' | 'lastActivityAt'>,
+): number =>
+  b.lastActivityAt.localeCompare(a.lastActivityAt) || b.createdAt.localeCompare(a.createdAt) || a.id.localeCompare(b.id);
 
 /**
  * Of the groups in `GET /groups`, those whose entries should be pulled for
