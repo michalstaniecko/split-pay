@@ -8,7 +8,7 @@ The API reaches storage only through a small object-storage port (issue an uploa
 
 - The database stores object keys (e.g. `receipts/<groupId>/<uuid>.jpg`), never URLs or provider hostnames. The mobile app never knows the provider: it only receives presigned URLs from the API, so a provider switch does not break app versions already in the stores.
 - Only features common to S3-compatible stores are used: presigned **PUT** (R2 does not support presigned POST policies), a signed `Content-Type`, and a server-side check of the uploaded object's size and type before it is attached (the size limit cannot be enforced by a POST policy). No Workers bindings, public R2 domains, Cloudflare image transformations or provider lifecycle rules — retention runs in our own job.
-- Development and tests use a local S3-compatible store (MinIO), which also keeps the adapter honest about provider independence.
+- Development uses a local S3-compatible store (RustFS in `compose.yaml`), which also keeps the adapter honest about provider independence. API tests use an in-memory bucket behind the same port.
 - Database backups go to R2, which also puts them with a different provider than the VPS.
 - Cloudflare is a US company: the privacy policy lists it as a processor (Cloudflare's DPA, EU-US Data Privacy Framework / SCCs) and states that buckets use the EU jurisdiction. Hetzner would not need the transfer clause.
 - The free tier is per account, shared by staging and production. When usage outgrows it and Hetzner's flat price becomes cheaper (roughly a few hundred GB), we migrate using the port.

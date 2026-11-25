@@ -17,7 +17,7 @@ const newGroup = () => ({
 type Session = { cookie: string; userId: string };
 
 describe('receipt photos (ADR-0006)', () => {
-  const { app, signIn, client, storage } = createTestApp();
+  const { app, signIn, client, storage, uploadReceipt } = createTestApp();
 
   /** Ania's trip which Bartek joined; Celina is signed in but not a member. */
   async function setup() {
@@ -51,12 +51,7 @@ describe('receipt photos (ADR-0006)', () => {
     const complete = (session: Session, photoId: string, gid = groupId) =>
       receipts(session).uploads[':photoId'].complete.$post({ param: { groupId: gid, photoId } });
     /** Upload URL + the phone's upload to the bucket + completing it. */
-    async function upload(session: Session, entryId: string) {
-      const issued = await parseResponse(requestUpload(session, { entryId }));
-      storage.put(issued.upload);
-      await parseResponse(complete(session, issued.photoId));
-      return issued.photoId;
-    }
+    const upload = async (session: Session, entryId: string) => (await uploadReceipt(session, groupId, entryId)).photoId;
     const createEntry = (session: Session, input: NewEntry) =>
       client(session).groups[':groupId'].entries.$post({ param: { groupId }, json: input });
     const list = (session: Session) => receipts(session).$get({ param: { groupId } });

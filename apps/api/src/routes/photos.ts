@@ -6,6 +6,7 @@ import {
   PHOTO_LIMITS,
   PhotoUploadRequest,
   ReceiptUploadRequest,
+  type UploadedPhotoProblem,
   uploadedPhotoProblem,
 } from '@split-pay/shared';
 import { and, count, eq, gt, inArray, isNotNull, isNull, sql } from 'drizzle-orm';
@@ -122,7 +123,7 @@ function issueResponse(c: Context<AuthEnv>, result: IssueResult) {
   }
 }
 
-type CheckResult = { status: 'verified'; row: PhotoRow } | { status: 'too_large' | 'invalid' };
+type CheckResult = { status: 'verified'; row: PhotoRow } | { status: UploadedPhotoProblem };
 
 /**
  * Checks an uploaded object once (HEAD): it must exist, be a JPEG and fit the
@@ -141,11 +142,41 @@ async function checkUpload(db: Db, storage: ObjectStorage, row: PhotoRow): Promi
   return verified ? { status: 'verified', row: verified } : { status: 'invalid' };
 }
 
-/** 422 for an upload `checkUpload` refused. */
-function refusedUpload(c: Context<AuthEnv>, status: 'too_large' | 'invalid') {
-  return status === 'too_large'
-    ? c.json({ error: 'photo_too_large' as const, limit: PHOTO_LIMITS.maxBytes }, 422)
-    : c.json({ error: 'photo_upload_invalid' as const }, 422);
+/**
+ * Finds my upload (`photoId` of `kind`, uploaded by `userId`; a receipt also
+ * into `groupId`) and checks it (`checkUpload`). `not_found` when there is no
+ * such upload of mine.
+ */
+async function findAndCheckUpload(
+  db: Db,
+  storage: ObjectStorage,
+  upload: { photoId: Id; userId: Id } & ({ kind: 'avatar' } | { kind: 'receipt'; groupId: Id }),
+): Promise<CheckResult | { status: 'not_found' }> {
+  const [row] = await db
+    .select()
+    .from(photos)
+    .where(
+      and(
+        eq(photos.id, upload.photoId),
+        eq(photos.uploadedBy, upload.userId),
+        eq(photos.kind, upload.kind),
+        upload.kind === 'receipt' ? eq(photos.groupId, upload.groupId) : undefined,
+      ),
+    );
+  if (!row) return { status: 'not_found' };
+  return checkUpload(db, storage, row);
+}
+
+/** 404 for an upload `findAndCheckUpload` didn't find, 422 for one it refused. */
+function refusedUpload(c: Context<AuthEnv>, status: 'not_found' | UploadedPhotoProblem) {
+  switch (status) {
+    case 'not_found':
+      return c.json({ error: 'not_found' as const }, 404);
+    case 'too_large':
+      return c.json({ error: 'photo_too_large' as const, limit: PHOTO_LIMITS.maxBytes }, 422);
+    case 'invalid':
+      return c.json({ error: 'photo_upload_invalid' as const }, 422);
+  }
 }
 
 const readExpiry = () => new Date(Date.now() + READ_URL_SECONDS * 1000).toISOString();
@@ -237,21 +268,14 @@ export const receiptRoutes = ({ db, storage }: { db: Db; storage: ObjectStorage 
       const group = await findMyGroup(db, c.req.param('groupId'), userId);
       if (!group) return c.json({ error: 'not_found' as const }, 404);
       if (!storage) return c.json(storageUnavailable, 503);
-      const [row] = await db
-        .select()
-        .from(photos)
-        .where(
-          and(
-            eq(photos.id, c.req.valid('param').photoId),
-            eq(photos.groupId, group.id),
-            eq(photos.kind, 'receipt'),
-            eq(photos.uploadedBy, userId),
-          ),
-        );
-      if (!row) return c.json({ error: 'not_found' as const }, 404);
-      const checked = await checkUpload(db, storage, row);
+      const checked = await findAndCheckUpload(db, storage, {
+        kind: 'receipt',
+        photoId: c.req.valid('param').photoId,
+        userId,
+        groupId: group.id,
+      });
       if (checked.status !== 'verified') return refusedUpload(c, checked.status);
-      return c.json({ photoId: row.id }, 200);
+      return c.json({ photoId: checked.row.id }, 200);
     });
 
 /** Avatars of a group's members (`/groups/:groupId/avatars`), for everyone in the group. */
@@ -320,17 +344,12 @@ export const myAvatarRoutes = ({
         if (!storage) return c.json(storageUnavailable, 503);
         const userId = c.get('user').id;
         const { photoId } = c.req.valid('json');
-        const [uploaded] = await db
-          .select()
-          .from(photos)
-          .where(and(eq(photos.id, photoId), eq(photos.uploadedBy, userId), eq(photos.kind, 'avatar')));
-        if (!uploaded) return c.json({ error: 'not_found' as const }, 404);
-        const checked = await checkUpload(db, storage, uploaded);
+        const checked = await findAndCheckUpload(db, storage, { kind: 'avatar', photoId, userId });
         if (checked.status !== 'verified') return refusedUpload(c, checked.status);
         const [row] = await db
           .update(photos)
           .set({ attachedAt: new Date() })
-          .where(eq(photos.id, photoId))
+          .where(and(eq(photos.id, photoId), eq(photos.uploadedBy, userId), eq(photos.kind, 'avatar')))
           .returning();
         if (!row) return c.json({ error: 'not_found' as const }, 404);
         const previous = (await currentAvatars(db, userId)).filter((p) => p.id !== row.id);

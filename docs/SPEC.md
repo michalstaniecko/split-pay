@@ -257,7 +257,7 @@ Expo Router, chat-style layout — no bottom tabs, no group tabs ([ADR-0017](./a
 | OTP emails | transactional SMTP with a free plan (Resend / Brevo / SES) |
 | App data | TanStack Query + expo-sqlite/Drizzle (cache + outbox) |
 | Styling | Unistyles 3 |
-| File storage | Cloudflare R2 (S3-compatible, EU jurisdiction); MinIO locally |
+| File storage | Cloudflare R2 (S3-compatible, EU jurisdiction); RustFS locally (`compose.yaml`) |
 | Push | Expo Push |
 | Errors | Sentry (free plan), no personal data |
 | Analytics | none in the MVP |

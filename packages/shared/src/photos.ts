@@ -68,12 +68,17 @@ export type PhotoError =
   | 'daily_photo_limit'
   | 'storage_unavailable';
 
-/** Whether an uploaded object may be used as a photo; `too_large` / `invalid` otherwise. */
-export function uploadedPhotoProblem(object: { size: number; contentType: string | null } | null) {
-  if (!object || object.size <= 0) return 'invalid' as const;
-  if (object.size > PHOTO_LIMITS.maxBytes) return 'too_large' as const;
+/** Why an uploaded object can't be used as a photo: over the size limit, or missing / empty / not a JPEG. */
+export type UploadedPhotoProblem = 'too_large' | 'invalid';
+
+/** Whether an uploaded object may be used as a photo: null if so, the problem otherwise. */
+export function uploadedPhotoProblem(
+  object: { size: number; contentType: string | null } | null,
+): UploadedPhotoProblem | null {
+  if (!object || object.size <= 0) return 'invalid';
+  if (object.size > PHOTO_LIMITS.maxBytes) return 'too_large';
   const type = object.contentType?.split(';')[0]?.trim().toLowerCase();
-  return type === 'image/jpeg' ? null : ('invalid' as const);
+  return type === 'image/jpeg' ? null : 'invalid';
 }
 
 /** Downscales `size` so its longer side is at most `max`, keeping the aspect ratio. */
