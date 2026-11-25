@@ -1,0 +1,239 @@
+# Operations runbook
+
+How the hosted environments are set up, where the secrets live, and how to do the recurring operations: deploy, rotate a token, restore a backup, check error reporting.
+
+Decisions behind this setup: [ADR-0012](adr/0012-self-hosting-on-coolify.md) (Coolify on a VPS), [ADR-0020](adr/0020-object-storage-on-cloudflare-r2-behind-s3-port.md) (Cloudflare R2 behind an S3 port).
+
+**No secrets in this file or anywhere in the repo.** They live in Coolify and in the owner's password manager (see [Secrets](#secrets)).
+
+## Overview
+
+| What | Where | Notes |
+|---|---|---|
+| API (staging) | Coolify on the Hetzner VPS, project `split-pay`, environment `staging` | `https://api-stage.splitpay.on.ihumbak.website`, built from `main` |
+| API (production) | Same Coolify project, environment `production` | Not set up yet: waits for the final app name and domain (SPEC, open tasks) |
+| PostgreSQL 18 | Coolify resource `split-pay-postgres` (one instance) | One database per environment: `splitpay_staging`, later `splitpay_production` |
+| Photo buckets | Cloudflare R2, EU jurisdiction | `split-pay-stage`, `split-pay-prod` |
+| Database backups | Cloudflare R2, EU jurisdiction | `split-pay-backups`, written by Coolify's scheduled backups |
+| Error reporting | Sentry, EU region (`de.sentry.io`), org `ihumbakwebsite` | Projects `split-pay-api`, `split-pay-mobile` |
+
+The working domain `splitpay.on.ihumbak.website` is for staging only. Don't send real invitations from it: group links contain the domain, so they break when it changes (ADR-0009).
+
+## Cloudflare R2
+
+### Buckets
+
+| Bucket | Used by | Token |
+|---|---|---|
+| `split-pay-stage` | Staging API (photos) | `split-pay-stage-api` |
+| `split-pay-prod` | Production API (photos) | `split-pay-prod-api` |
+| `split-pay-backups` | Coolify database backups | `split-pay-backups` |
+
+- Every bucket was created with **jurisdiction: European Union (EU)**. This can't be changed later. A new bucket must be created with *Specify jurisdiction → EU*, not with a location hint. You can check it from the S3 endpoint, which must contain `.eu.`: `https://<account-id>.eu.r2.cloudflarestorage.com`.
+- **No public access** on any bucket: the `r2.dev` URL is disabled, there are no custom domains and no CORS rules. The phone only uses presigned URLs issued by the API (ADR-0020), and native apps don't need CORS.
+- No lifecycle rules except Cloudflare's default that aborts unfinished multipart uploads. Our own jobs handle retention: photo retention in the API, backup retention in Coolify.
+- The account has 2FA and a billing (usage) notification.
+
+### Tokens
+
+One **Account API token** per bucket. Each has **Object Read & Write** on that bucket only, a TTL of *Forever* and **no IP filter**. Phones upload through presigned URLs signed with the photo tokens, so an IP filter would block them. The backup token could later be limited to the VPS IP.
+
+Because each token works on its own bucket only, the staging token gets `403 AccessDenied` on any other bucket.
+
+### API environment variables
+
+```
+S3_ENDPOINT=https://<account-id>.eu.r2.cloudflarestorage.com
+S3_REGION=auto
+S3_BUCKET=split-pay-stage            # or split-pay-prod
+S3_ACCESS_KEY_ID=<token access key id>
+S3_SECRET_ACCESS_KEY=<token secret>
+S3_FORCE_PATH_STYLE=true
+```
+
+Without these variables, the photo routes answer 503.
+
+> Known gap: photo uploads still use presigned POST, which R2 rejects (#63). Reads and deletes work.
+
+### Rotate a token
+
+1. Cloudflare → **R2 → Manage API tokens** → the token → **Roll**. Cloudflare shows the new secret once. Save it in the password manager.
+2. Update the secret where it's used:
+   - photo tokens: in the API app's environment variables in Coolify, then **Restart**;
+   - backup token: in Coolify **Storages → `r2-backups`**, then **Validate Connection**.
+3. Check: the next deploy or backup succeeds. For the backup token, also run the listing from [Restore a backup](#restore-a-backup).
+
+### Move to another S3-compatible store
+
+The API only talks to storage through the S3 port, so moving is a copy plus an env change (ADR-0020):
+
+1. Create the buckets and tokens at the new provider.
+2. Copy the objects with `rclone sync r2:<bucket> <new>:<bucket>`.
+3. Point `S3_*` (and Coolify's backup storage) at the new provider and restart.
+4. Run `rclone sync` once more for anything written during the switch, then delete the R2 buckets.
+
+## Coolify
+
+### Project layout
+
+- Project `split-pay`, environments `staging` and `production`.
+- Source: the GitHub App `split-pay-github`, installed on `michalstaniecko/split-pay` only.
+- **Preview deployments are off.** The repo is public: a preview deployment would build and run a stranger's pull request on the VPS, with the environment's secrets.
+
+### PostgreSQL
+
+- Resource `split-pay-postgres`, PostgreSQL 18 (the same version CI uses), **not publicly available**. Apps reach it over Coolify's internal Docker network through its internal hostname, shown in *Postgres URL (internal)*.
+- One database and owner per environment. To create the production one, run this in the resource's **Terminal**:
+
+  ```sql
+  psql -U postgres   -- or the "Postgres User" shown in the resource
+  CREATE USER splitpay_production WITH PASSWORD '<openssl rand -hex 24>';
+  CREATE DATABASE splitpay_production OWNER splitpay_production;
+  ```
+
+  Use `-hex` passwords: base64 can contain `/`, `+` and `=`, which break `DATABASE_URL`.
+
+### API application
+
+| Setting | Value |
+|---|---|
+| Source | `split-pay-github` → `split-pay`, branch `main` |
+| Build pack | Dockerfile |
+| Base directory | `/` (the image is built from the repo root) |
+| Dockerfile location | `/apps/api/Dockerfile` |
+| Ports exposes | `3000` |
+| Domain | `https://api-stage.splitpay.on.ihumbak.website` (DNS `A` record to the VPS, *DNS only* if proxied by Cloudflare) |
+| Health check | `GET /health` on port 3000 (the image also has its own `HEALTHCHECK`) |
+| Auto deploy | On |
+
+Environment variables. All of them are runtime only, so leave **Build Variable** unchecked:
+
+```
+PORT=3000
+DATABASE_URL=postgres://splitpay_staging:<password>@<internal-host>:5432/splitpay_staging
+BETTER_AUTH_URL=https://api-stage.splitpay.on.ihumbak.website
+BETTER_AUTH_SECRET=<openssl rand -hex 32>       # changing it signs everyone out
+ADMIN_EMAILS=<admin emails, comma-separated>
+S3_*                                            # see Cloudflare R2
+SENTRY_DSN=<DSN of split-pay-api>
+SENTRY_ENVIRONMENT=staging
+```
+
+Not set yet: `PUSH_SENDER`/`EXPO_ACCESS_TOKEN` (needs the Expo project), `WEB_URL` (needs the web app hosting, #53), and SMTP (#32). Until SMTP is set up, sign-in codes appear in the app's **Logs** in Coolify.
+
+### Deploys
+
+- A merge to `main` triggers a deploy through the GitHub App webhook. **Deploy** in Coolify does the same by hand.
+- On startup the API applies pending migrations under a Postgres advisory lock, then starts serving (#64).
+- If startup fails (for example a broken `DATABASE_URL` or a failing migration), the new container never becomes healthy. Coolify then **keeps the old container running** and logs `New container is not healthy, rolling back`. Read the *Container logs* part of the deployment log.
+- Environment variables are read at startup only, so after changing one, use **Restart** (or **Redeploy**).
+
+### Troubleshooting
+
+| Symptom | Cause |
+|---|---|
+| `[db] migration failed, not starting … getaddrinfo EAI_AGAIN ' <host>'` (note the space) | A stray space or newline in `DATABASE_URL` |
+| `getaddrinfo EAI_AGAIN <host>` without a space | The app and the database are on different Docker networks: check the database's *Destination*, or enable *Connect to Predefined Network* in the app |
+| `wget: can't connect to remote host (127.0.0.1)` in the health check | The API didn't start: read the container logs above it |
+| Photo routes answer 503 | `S3_*` not set |
+
+## Backups
+
+### Setup
+
+- Coolify **Storages → `r2-backups`**: the `split-pay-backups` bucket with the backup token. The endpoint is the `.eu.` one and the region is `auto`.
+- `split-pay-postgres` → **Backups**: daily at `0 3 * * *` (server time), saved to S3 storage `r2-backups`. When production exists, add `splitpay_production` to the backed-up databases. Retention is set in the same screen, locally and in S3.
+- Backups are `pg_dump` custom-format files (`.dmp`) stored at:
+
+  ```
+  split-pay-backups/data/coolify/backups/databases/<team>/split-pay-postgres-<resource-id>/pg-dump-<database>-<timestamp>-<id>.dmp
+  ```
+
+  `<resource-id>` is the Coolify resource ID of the database. If the database resource is ever re-created, new backups go to a new folder, but older backups stay in the old one.
+
+### Restore a backup
+
+This restores from R2 on any machine with Docker, with no access to the VPS. It covers the case where the VPS is lost. Credentials come from a local env file with the backup token, the same format as the [API variables](#api-environment-variables) with `S3_BUCKET=split-pay-backups`. Keep the file `chmod 600` and outside the repo, e.g. `~/.config/split-pay/r2-backups.env`.
+
+```bash
+mkdir -p /tmp/split-pay-restore && cd /tmp/split-pay-restore
+
+# rclone in Docker, configured from the env file (credentials are never printed)
+r2() (
+  set -a; . "$HOME/.config/split-pay/r2-backups.env"; set +a
+  docker run --rm -v "$PWD:/data" \
+    -e RCLONE_CONFIG_R2_TYPE=s3 -e RCLONE_CONFIG_R2_PROVIDER=Cloudflare \
+    -e RCLONE_CONFIG_R2_ACCESS_KEY_ID="$S3_ACCESS_KEY_ID" \
+    -e RCLONE_CONFIG_R2_SECRET_ACCESS_KEY="$S3_SECRET_ACCESS_KEY" \
+    -e RCLONE_CONFIG_R2_ENDPOINT="$S3_ENDPOINT" -e RCLONE_CONFIG_R2_NO_CHECK_BUCKET=true \
+    rclone/rclone:latest "$@"
+)
+
+r2 lsl r2:split-pay-backups                                   # 1. find the newest .dmp
+r2 copyto r2:split-pay-backups/<path-to-dump>.dmp /data/backup.dmp   # 2. download it
+
+# 3. restore into a throwaway PostgreSQL 18
+docker run -d --name splitpay-restore -e POSTGRES_PASSWORD=restore -e POSTGRES_DB=restore \
+  -v "$PWD/backup.dmp:/backup.dmp:ro" postgres:18-alpine
+until docker exec splitpay-restore pg_isready -U postgres -d restore -q; do sleep 1; done
+docker exec splitpay-restore pg_restore -U postgres -d restore --no-owner --no-acl --exit-on-error /backup.dmp
+
+# 4. check it
+docker exec splitpay-restore psql -U postgres -d restore -c 'select count(*) from drizzle.__drizzle_migrations'
+docker exec splitpay-restore psql -U postgres -d restore -c '\dt'
+
+# 5. clean up
+docker rm -f splitpay-restore && rm backup.dmp
+```
+
+To recover a real environment, restore into an **empty** database created as in [PostgreSQL](#postgresql) (as its owner: `pg_restore -U <owner> -d <database> --no-owner --no-acl --exit-on-error <file>`). Then point the app's `DATABASE_URL` at it. Never restore over a live database.
+
+### Last restore test
+
+| Date | Backup | Result |
+|---|---|---|
+| 2026-11-25 | `splitpay_staging` | `pg_restore` exit 0; 14/14 migrations, 21 tables, 7449 `ecb_rates` rows (2025-11-25 to 2026-11-25) |
+
+Repeat the test after big schema changes and at least before the public launch. Add a row to this table each time.
+
+## Sentry
+
+- Organization `ihumbakwebsite`, **EU data storage** (`de.sentry.io`). It can't be moved.
+- Projects: `split-pay-api` (platform `node-hono`) and `split-pay-mobile` (`react-native`).
+- Privacy:
+  - The organization *and* both projects have **Require Data Scrubber**, **Require Using Default Scrubbers** and **Prevent Storing of IP Addresses** on.
+  - On top of that, the SDKs collect no personal data and every event goes through the shared scrubber (`packages/shared`, #64).
+  - Native mobile crashes skip the JS scrubber, which is why the server-side settings matter.
+- DSNs: **Project settings → Client Keys (DSN)**. They must contain `.de.`. The API uses `SENTRY_DSN` and `SENTRY_ENVIRONMENT`. The app uses `EXPO_PUBLIC_SENTRY_DSN` and `EXPO_PUBLIC_SENTRY_ENVIRONMENT`, set at build time.
+- Mobile source maps need `SENTRY_AUTH_TOKEN` (plus `SENTRY_ORG` and `SENTRY_PROJECT`) at build time. They're not set up yet: that comes with the first EAS builds. The API's stack traces are readable without them.
+- Failed background-job runs are reported with a `job` tag (`rates`, `push`, `photo-retention`). The release is set automatically to the deployed commit.
+
+### Check that errors arrive
+
+You can check this without changing code:
+
+1. Set `FRANKFURTER_URL=https://invalid.example` on the API in Coolify and **Restart**.
+2. The rate job runs on startup and fails. Within a minute, `split-pay-api` has a `TypeError: fetch failed` issue tagged `job: rates`. With the [Sentry CLI](https://cli.sentry.dev): `sentry issue list ihumbakwebsite/split-pay-api --period 1h`.
+3. Remove `FRANKFURTER_URL`, **Restart**, and resolve the test issue.
+
+Last checked: 2026-11-25 on staging.
+
+## Secrets
+
+| Secret | Lives in |
+|---|---|
+| R2 token secrets (stage, prod, backups) | Password manager. Coolify (API env for photo tokens, *Storages* for the backup token) |
+| `BETTER_AUTH_SECRET` (per environment) | Password manager, Coolify |
+| Database passwords (per environment) | Password manager, Coolify (`DATABASE_URL`) |
+| Sentry DSNs | Coolify (API), build environment (app). Not secret, but kept out of the repo |
+| Sentry auth token (source maps) | Build environment only, when it exists |
+
+GitHub Actions needs none of them: CI tests run against a Postgres service and MinIO.
+
+## Before production
+
+- [ ] App name and domain chosen (SPEC, open tasks). Then set up `api.<domain>`, `app.<domain>` (#53) and `WEB_URL`.
+- [ ] `production` environment in Coolify: database `splitpay_production`, the API app with production secrets, `S3_BUCKET=split-pay-prod`, `SENTRY_ENVIRONMENT=production`.
+- [ ] `splitpay_production` added to the backup schedule, and a restore test done.
+- [ ] SMTP for sign-in codes (#32), push credentials (`PUSH_SENDER=expo`).
+- [ ] Photo uploads work on R2 (#63).

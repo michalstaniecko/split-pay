@@ -42,5 +42,6 @@ pnpm-debug.*
 .DS_Store
 .idea/
 
-# Claude Code — lokalne ustawienia
+# Claude Code: local settings and agent worktrees
 .claude/settings.local.json
+.claude/worktrees/
