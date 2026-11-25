@@ -2,7 +2,7 @@ import { onlineManager } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { LocalDb } from './local-db';
 import { createLocalGroup } from './local-group-store';
-import { groupWriteNetwork, onGroupSource } from './local-groups';
+import { groupWriteNetwork, onGroupSource, syncedWrite } from './local-groups';
 import { saveGroupList } from './local-store';
 import { nodeLocalDb } from './testing/node-local-db';
 
@@ -73,22 +73,72 @@ describe('local groups: where a group lives', () => {
 });
 
 describe('local groups: network of a group write', () => {
+  beforeEach(async () => {
+    device.db = await nodeLocalDb();
+    await createLocalGroup(device.db, {
+      id: LOCAL,
+      name: 'Pizza',
+      emoji: '🍕',
+      color: '#E53935',
+      baseCurrency: 'EUR',
+      deviceMember: { id: ME, displayName: 'Michał' },
+      people: [],
+    });
+  });
   afterEach(() => onlineManager.setOnline(true));
+
+  /** The error a group write rejects with when the given implementation throws. */
+  const failure = (groupId: string, failing: 'local' | 'synced') =>
+    onGroupSource(groupId, {
+      local: async () => {
+        if (failing === 'local') throw new Error('local write failed');
+      },
+      synced: async () => {
+        if (failing === 'synced') throw new Error('synced write failed');
+      },
+    }).then(
+      () => expect.fail('the write should have failed'),
+      (error: unknown) => error,
+    );
 
   it('runs at once, offline too, so a local group is written without a network', () => {
     expect(groupWriteNetwork.networkMode).toBe('offlineFirst');
   });
 
-  it('pauses a write that failed offline and tries it once more when back online', () => {
+  it('pauses a synced write that failed offline and tries it once more when back online', async () => {
+    const error = await failure(SYNCED, 'synced');
     onlineManager.setOnline(false);
 
-    expect(groupWriteNetwork.retry(0)).toBe(true);
-    expect(groupWriteNetwork.retry(1)).toBe(false);
+    expect(groupWriteNetwork.retry(0, error)).toBe(true);
+    expect(groupWriteNetwork.retry(1, error)).toBe(false);
   });
 
-  it('does not retry a write that failed online', () => {
+  it('pauses a synced create that failed offline', async () => {
+    const error = await syncedWrite(async () => {
+      throw new Error('synced create failed');
+    }).catch((e: unknown) => e);
+    onlineManager.setOnline(false);
+
+    expect(groupWriteNetwork.retry(0, error)).toBe(true);
+  });
+
+  it('does not retry a synced write that failed online', async () => {
+    const error = await failure(SYNCED, 'synced');
     onlineManager.setOnline(true);
 
-    expect(groupWriteNetwork.retry(0)).toBe(false);
+    expect(groupWriteNetwork.retry(0, error)).toBe(false);
+  });
+
+  it('fails a local write at once offline, so its error shows without waiting for a network', async () => {
+    const error = await failure(LOCAL, 'local');
+    onlineManager.setOnline(false);
+
+    expect(groupWriteNetwork.retry(0, error)).toBe(false);
+  });
+
+  it('fails a local create at once offline', async () => {
+    onlineManager.setOnline(false);
+
+    expect(groupWriteNetwork.retry(0, new Error('local create failed'))).toBe(false);
   });
 });

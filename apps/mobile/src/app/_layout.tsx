@@ -5,7 +5,7 @@ import { Platform } from 'react-native';
 import { useWithoutAccount } from '@/features/auth/without-account';
 import { blockedStatus } from '@/features/moderation/blocked-status-store';
 import { useSessionArea } from '@/features/moderation/use-session-area';
-import { openDeviceDb } from '@/features/offline/local-session';
+import { localDatabases } from '@/features/offline/local-session';
 import { meQuery } from '@/features/profile/me-query';
 import { LocaleProvider } from '@/i18n/locale-provider';
 import { authClient } from '@/lib/auth-client';
@@ -14,7 +14,7 @@ import { queryClient } from '@/lib/query-client';
 
 void SplashScreen.preventAutoHideAsync();
 // Local groups live in the device database, signed in or not (ADR-0021); web has none.
-if (Platform.OS !== 'web') openDeviceDb();
+if (Platform.OS !== 'web') localDatabases.openDevice();
 
 export default function RootLayout() {
   return (

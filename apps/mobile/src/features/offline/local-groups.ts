@@ -24,20 +24,43 @@ export async function onGroupSource<Local, Synced>(
   source: GroupSource<Local, Synced>,
 ): Promise<Local | Synced> {
   const db = await deviceDbIfAny();
-  return db && (await hasLocalGroup(db, groupId)) ? source.local(db) : source.synced();
+  return db && (await hasLocalGroup(db, groupId)) ? source.local(db) : syncedWrite(source.synced);
+}
+
+/** Errors thrown by a synced group's implementation — the only failures a group write retries. */
+const syncedFailures = new WeakSet<object>();
+
+/**
+ * Runs a synced group's write (the API), marking its failure as one that
+ * `groupWriteNetwork` may retry once back online. `onGroupSource` does it for
+ * the synced implementation; a create that branches on its input calls it itself.
+ */
+export async function syncedWrite<T>(write: () => Promise<T>): Promise<T> {
+  try {
+    return await write();
+  } catch (error) {
+    if (typeof error === 'object' && error !== null) syncedFailures.add(error);
+    throw error;
+  }
 }
 
 /**
  * The network options of a mutation that writes a local group or, for a
  * synced group, calls the API directly (no outbox). It runs at once, offline
- * too (`offlineFirst`), so a local write needs no network; a synced write that
- * failed offline pauses until the device is online and is tried once more —
- * as it paused under the default `online` mode (mutations don't retry by
- * default, so `offlineFirst` alone would fail it at once).
+ * too (`offlineFirst`), so a local write needs no network and its error shows
+ * at once; a synced write (`syncedWrite`) that failed offline pauses until the
+ * device is online and is tried once more — as it paused under the default
+ * `online` mode (mutations don't retry by default, so `offlineFirst` alone
+ * would fail it at once).
  */
 export const groupWriteNetwork = {
   networkMode: 'offlineFirst',
-  retry: (failureCount: number): boolean => failureCount < 1 && !onlineManager.isOnline(),
+  retry: (failureCount: number, error: unknown): boolean =>
+    failureCount < 1 &&
+    !onlineManager.isOnline() &&
+    typeof error === 'object' &&
+    error !== null &&
+    syncedFailures.has(error),
 } as const;
 
 /** The device database, for creating local groups (native only — the web has no local groups). */
