@@ -39,7 +39,7 @@ export default function BalancesSheet() {
 function Drawer({ group, balances }: { group: GroupDetail; balances: GroupBalances }) {
   const { t } = useLingui();
   const { data: session } = authClient.useSession();
-  const me = myMemberId(group.members, session?.user.id);
+  const me = myMemberId(group, session?.user.id);
   const archived = group.archivedAt !== null;
 
   const pay = (transfer: TransferRow) =>

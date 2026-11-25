@@ -59,7 +59,7 @@ export function ChangeRow({ group, change }: { group: GroupDetail; change: Chang
   const runUndo = () =>
     undo.mutate(change.id, {
       onSuccess: () => {
-        if (undoLosesAccess(change, myMemberId(group.members, session?.user.id))) router.replace('/');
+        if (undoLosesAccess(change, myMemberId(group, session?.user.id))) router.replace('/');
       },
       onError: (error) => Alert.alert(failureMessage(undoFailure(error))),
     });

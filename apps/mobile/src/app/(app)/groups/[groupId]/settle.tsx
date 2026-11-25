@@ -70,7 +70,7 @@ export default function SettleSheet() {
   if (!group.data || (entryId !== undefined && entries.isPending)) {
     return <ActivityIndicator style={styles.loading} color={theme.colors.primary} />;
   }
-  const me = myMemberId(group.data.members, session?.user.id);
+  const me = myMemberId(group.data, session?.user.id);
   if (entryId !== undefined) {
     const entry = entries.data?.find((e) => e.id === entryId);
     if (entry?.kind !== 'settlement') {

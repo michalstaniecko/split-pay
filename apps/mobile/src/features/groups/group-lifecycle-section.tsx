@@ -30,7 +30,7 @@ export function GroupLifecycleSection({ group }: { group: GroupDetail }) {
   const format = useFormatters();
   const { data: session } = authClient.useSession();
   const userId = session?.user.id;
-  const me = myMemberId(group.members, userId);
+  const me = myMemberId(group, userId);
   const balances = useQuery(balancesQuery(group.id));
   const { canLeave, balance } = leaveState(balances.data, me);
   const leave = useLeaveGroup(group.id);

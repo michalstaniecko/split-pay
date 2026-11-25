@@ -73,7 +73,7 @@ export default function ConversationScreen() {
   useMarkGroupSeen(groupId, entries.data);
   const insets = useSafeAreaInsets();
   const session = authClient.useSession();
-  const me = group.data ? findMyMemberId(group.data.members, session.data?.user.id) : null;
+  const me = group.data ? findMyMemberId(group.data, session.data?.user.id) : null;
 
   const openInfo = () => router.push({ pathname: '/groups/[groupId]/info', params: { groupId } });
 

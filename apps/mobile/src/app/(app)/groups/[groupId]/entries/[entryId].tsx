@@ -56,8 +56,8 @@ function EntryDetail({ group, entry }: { group: GroupDetail; entry: Entry }) {
   const addedBy = addedByName(entry, group.members) ?? t`nieznana osoba`;
   const online = useIsOnline();
   const userId = authClient.useSession().data?.user.id;
-  // Offline, only entries I added can be edited (ADR-0005).
-  const locked = lockedOffline(entry, { offline: !online, userId });
+  // Offline, only entries I added can be edited (ADR-0005); a local group's always can.
+  const locked = lockedOffline(entry, { offline: !online, userId }, group);
   const actions = availableGroupActions(group);
   const edited = t`edytowano ${format.dateTime(entry.updatedAt)}`;
 

@@ -95,7 +95,7 @@ function ExpenseFormView({ group, editing }: { group: GroupDetail; editing?: For
   const { theme } = useUnistyles();
   const labels = useEntryLabels();
   const session = authClient.useSession();
-  const me = myMemberId(group.members, session.data?.user.id);
+  const me = myMemberId(group, session.data?.user.id);
   // A local group (ADR-0021) has no foreign currencies (no rates) and no receipt photos.
   const actions = availableGroupActions(group);
   // One id per form: a retry after a lost response can't add the expense twice.

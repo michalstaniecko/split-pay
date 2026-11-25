@@ -1,5 +1,18 @@
-import { type Entry, type GroupSettingsUpdate, type Member, type MemberRename, type NewGroup, type NewMember, type SettleUp, settleUp } from '@split-pay/shared';
-import { and, eq, max } from 'drizzle-orm';
+import {
+  type Entry,
+  entryFromEdit,
+  entryFromNew,
+  type GroupSettingsUpdate,
+  type Member,
+  type MemberRename,
+  type NewEntry,
+  type NewGroup,
+  type NewMember,
+  type SettleUp,
+  settleUp,
+  validateEntryInGroup,
+} from '@split-pay/shared';
+import { and, desc, eq, isNull, max } from 'drizzle-orm';
 import type { LocalDb } from './local-db';
 import { type CachedGroup, localEntries, localGroups, localMembers } from './local-schema';
 import {
@@ -8,9 +21,11 @@ import {
   type CachedGroupDetail,
   type CachedGroupListItem,
   type Locality,
+  previewOf,
   readEntries,
   readGroupDetail,
   readGroupList,
+  saveEntry,
 } from './local-store';
 
 /*
@@ -160,6 +175,102 @@ export async function readInbox({
 /** A local group's live entries in Conversation order. */
 export function readLocalEntries(db: LocalDb, groupId: string): Promise<Entry[]> {
   return readEntries(db, groupId);
+}
+
+/** The local group, or an error when there is none with this id. */
+async function requireLocalGroup(db: LocalDb, groupId: string): Promise<LocalGroupDetail> {
+  const group = await readLocalGroup(db, groupId);
+  if (!group) throw new Error('Local group not found');
+  return group;
+}
+
+/**
+ * Adds an entry to a local group, written straight to the device database (no
+ * outbox, no conflicts): version 1, added by the device member. Fails when
+ * the input breaks the `Entry` rules. Returns the stored entry.
+ */
+export async function addLocalEntry(db: LocalDb, groupId: string, input: NewEntry, now = new Date()): Promise<Entry> {
+  const group = await requireLocalGroup(db, groupId);
+  const parsed = entryFromNew(input, {
+    groupId,
+    // No account: the device member stands in as the author.
+    createdBy: group.deviceMemberId,
+    createdByMember: group.deviceMemberId,
+    now: now.toISOString(),
+  });
+  if (!parsed.success) throw parsed.error;
+  return storeEntry(db, group, parsed.data, now);
+}
+
+/**
+ * Edits an entry of a local group: the content from `input` replaces the
+ * stored one (version bumped). With a single author there are no conflicts,
+ * so any entry may be edited, whatever version `base` is.
+ */
+export async function editLocalEntry(db: LocalDb, base: Entry, input: NewEntry, now = new Date()): Promise<Entry> {
+  const group = await requireLocalGroup(db, base.groupId);
+  const parsed = entryFromEdit(base, input, now.toISOString());
+  if (!parsed.success) throw parsed.error;
+  return storeEntry(db, group, parsed.data, now);
+}
+
+/**
+ * Deletes an entry of a local group. Soft, like in a synced group, so "Cofnij"
+ * (`restoreLocalEntry`) can bring it back. Returns the deleted entry.
+ */
+export async function deleteLocalEntry(db: LocalDb, entry: Entry, now = new Date()): Promise<Entry> {
+  const at = now.toISOString();
+  const deleted: Entry = { ...entry, deletedAt: at, updatedAt: at };
+  await saveEntry(db, deleted);
+  await refreshInboxRow(db, entry.groupId);
+  return deleted;
+}
+
+/** "Cofnij" after deleting an entry of a local group: it is listed again. Returns the restored entry. */
+export async function restoreLocalEntry(db: LocalDb, deleted: Entry, now = new Date()): Promise<Entry> {
+  const restored: Entry = { ...deleted, deletedAt: null, updatedAt: now.toISOString() };
+  await saveEntry(db, restored);
+  await refreshInboxRow(db, deleted.groupId);
+  return restored;
+}
+
+/**
+ * Checks a new or edited entry against its local group (members, base
+ * currency) and stores it; the group's activity moves to `now`, like the
+ * server's `lastActivityAt` on a create or an edit.
+ */
+async function storeEntry(db: LocalDb, group: LocalGroupDetail, entry: Entry, now: Date): Promise<Entry> {
+  const issues = validateEntryInGroup(entry, group, group.members);
+  if (issues.length > 0) throw new Error(issues.join('; '));
+  await saveEntry(db, entry);
+  await refreshInboxRow(db, group.id, now);
+  return entry;
+}
+
+/**
+ * Keeps the group's inbox row in step with its entries: the preview is the
+ * most recently added live entry (the server's rule) and, when given,
+ * `activityAt` becomes the group's last activity.
+ */
+async function refreshInboxRow(db: LocalDb, groupId: string, activityAt?: Date): Promise<void> {
+  const [latest] = await db
+    .select({ data: localEntries.data })
+    .from(localEntries)
+    .where(and(eq(localEntries.groupId, groupId), isNull(localEntries.deletedAt)))
+    .orderBy(desc(localEntries.createdAt), desc(localEntries.id))
+    .limit(1);
+  const lastEntry = latest ? previewOf(latest.data) : null;
+  if (!activityAt) {
+    await db.update(localGroups).set({ lastEntry }).where(eq(localGroups.id, groupId));
+    return;
+  }
+  const [row] = await db.select({ data: localGroups.data }).from(localGroups).where(eq(localGroups.id, groupId));
+  if (!row) return;
+  const at = activityAt.toISOString();
+  await db
+    .update(localGroups)
+    .set({ lastEntry, lastActivityAt: at, data: { ...row.data, lastActivityAt: at } })
+    .where(eq(localGroups.id, groupId));
 }
 
 /** A local group's balances and suggested transfers (the balances endpoint's shape), or `undefined` when there is no such group. */

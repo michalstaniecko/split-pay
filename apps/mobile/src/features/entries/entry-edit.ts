@@ -126,12 +126,14 @@ export type EntryAction = 'edit' | 'delete' | 'history' | 'copyAmount';
  * Kopiuj kwotę) — bubbles and settlement system messages alike ("Edytuj" on
  * a settlement opens the settle sheet). An archived group is read-only: only
  * Historia and Kopiuj kwotę. Offline, the same holds for entries I didn't add (`lockedOffline`).
+ * A local group (ADR-0021) has no change history.
  */
 export function entryActions(
   entry: Entry,
-  group: { archivedAt: string | null },
+  group: { archivedAt: string | null; local?: boolean },
   device?: { offline: boolean; userId: string | undefined },
 ): EntryAction[] {
+  if (group.local) return ['edit', 'delete', 'copyAmount'];
   if (group.archivedAt !== null || (device && lockedOffline(entry, device))) return ['history', 'copyAmount'];
   return ['edit', 'delete', 'history', 'copyAmount'];
 }
@@ -139,10 +141,14 @@ export function entryActions(
 /**
  * Offline, only entries I added can be edited or deleted; others' are
  * read-only until the connection is back (ADR-0005, #23) — that keeps
- * conflicts to my own entries.
+ * conflicts to my own entries. A local group has a single author: never locked.
  */
-export function lockedOffline(entry: Pick<Entry, 'createdBy'>, device: { offline: boolean; userId: string | undefined }): boolean {
-  return device.offline && entry.createdBy !== device.userId;
+export function lockedOffline(
+  entry: Pick<Entry, 'createdBy'>,
+  device: { offline: boolean; userId: string | undefined },
+  group?: { local?: boolean },
+): boolean {
+  return !group?.local && device.offline && entry.createdBy !== device.userId;
 }
 
 /** Where "Edytuj" opens with `?entryId=`: the settle sheet for a settlement, else the full form. */
