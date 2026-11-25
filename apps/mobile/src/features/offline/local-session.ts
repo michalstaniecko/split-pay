@@ -1,9 +1,21 @@
 import type { LocalDb } from './local-db';
+import { createLocalDatabases } from './local-databases';
 import { deleteLocalDbFile, openLocalDb } from './open-local-db';
 
-const fileName = (userId: string) => `split-pay-${userId}.db`;
+const databases = createLocalDatabases({ open: openLocalDb, remove: deleteLocalDbFile });
 
-let current: { userId: string; db: Promise<LocalDb> } | null = null;
+/**
+ * Opens the device database (local groups, ADR-0021) — at app start, whether
+ * or not anyone is signed in. Native only: on web it fails, like the cache.
+ */
+export function openDeviceDb(): void {
+  databases.openDevice();
+}
+
+/** The device database: local groups, kept across sign-out and account deletion. */
+export function deviceDb(): Promise<LocalDb> {
+  return databases.deviceDb();
+}
 
 /**
  * Points the offline cache at the signed-in user's own database file, so one
@@ -11,38 +23,25 @@ let current: { userId: string; db: Promise<LocalDb> } | null = null;
  * the signed-in layout calls it on every render, before any screen queries.
  */
 export function selectLocalUser(userId: string): void {
-  if (current?.userId === userId) return;
-  const db = openLocalDb(fileName(userId));
-  // A failed open is retried on the next call instead of being cached.
-  db.catch(() => {
-    if (current?.db === db) current = null;
-  });
-  current = { userId, db };
+  databases.selectUser(userId);
 }
 
 /** The signed-in user's local database. */
 export function localDb(): Promise<LocalDb> {
-  if (!current) return Promise.reject(new Error('No signed-in user selected for the offline cache'));
-  return current.db;
+  return databases.userDb();
 }
 
 /** The signed-in user's id (author of entries added on this device). */
 export function localUserId(): string {
-  if (!current) throw new Error('No signed-in user selected for the offline cache');
-  return current.userId;
+  return databases.userId();
 }
 
 /**
  * Deletes the user's local database file (cache + outbox) — after the account
- * was deleted (#28), nothing of it may stay on the device. Call after
- * signing out, so the signed-in layout doesn't select it again.
+ * was deleted (#28), nothing of it may stay on the device. The device
+ * database (local groups) stays. Call after signing out, so the signed-in
+ * layout doesn't select it again.
  */
-export async function forgetLocalUser(userId: string): Promise<void> {
-  if (current?.userId === userId) {
-    const { db } = current;
-    current = null;
-    // Let a pending open finish before closing its file.
-    await db.catch(() => undefined);
-  }
-  await deleteLocalDbFile(fileName(userId));
+export function forgetLocalUser(userId: string): Promise<void> {
+  return databases.forgetUser(userId);
 }
