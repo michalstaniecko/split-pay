@@ -31,6 +31,10 @@ export const balancesQuery = (groupId: string) =>
       if (local) return local;
       return parseResponse(api.groups[':groupId'].balances.$get({ param: { groupId } }));
     },
+    // A local group's are computed from the device database, so they must not
+    // wait for a network; a synced group's still pause offline after the first
+    // failed try instead of erroring out (the default `online` never tries).
+    networkMode: 'offlineFirst',
   });
 export type GroupBalances = InferResponseType<(typeof api.groups)[':groupId']['balances']['$get'], 200>;
 
