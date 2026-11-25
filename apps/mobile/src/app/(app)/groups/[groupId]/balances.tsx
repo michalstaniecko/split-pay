@@ -1,4 +1,5 @@
 import { useLingui } from '@lingui/react/macro';
+import { availableGroupActions } from '@split-pay/shared';
 import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ActivityIndicator, ScrollView } from 'react-native';
@@ -55,7 +56,11 @@ function Drawer({ group, balances }: { group: GroupDetail; balances: GroupBalanc
         me={me}
         // Archived group: no "Oddaj" (SPEC).
         payAction={(transfer) => (transfer.direction === 'fromMe' && !archived ? () => pay(transfer) : undefined)}
-        nudge={(transfer) => <NudgeButton group={group} transfer={transfer} />}
+        nudge={
+          availableGroupActions(group).reminders
+            ? (transfer) => <NudgeButton group={group} transfer={transfer} />
+            : undefined
+        }
       />
       <SettleUpSummaryActions group={group} balances={balances} />
       {archived ? null : (

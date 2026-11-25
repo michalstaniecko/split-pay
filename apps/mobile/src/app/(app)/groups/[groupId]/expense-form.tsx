@@ -1,5 +1,5 @@
 import { useLingui } from '@lingui/react/macro';
-import { Category, LocalDate, minorUnitDigits } from '@split-pay/shared';
+import { availableGroupActions, Category, LocalDate, minorUnitDigits } from '@split-pay/shared';
 import { onlineManager, useQuery } from '@tanstack/react-query';
 import { randomUUID } from 'expo-crypto';
 import { useLocalSearchParams } from 'expo-router';
@@ -96,6 +96,8 @@ function ExpenseFormView({ group, editing }: { group: GroupDetail; editing?: For
   const labels = useEntryLabels();
   const session = authClient.useSession();
   const me = myMemberId(group.members, session.data?.user.id);
+  // A local group (ADR-0021) has no foreign currencies (no rates) and no receipt photos.
+  const actions = availableGroupActions(group);
   // One id per form: a retry after a lost response can't add the expense twice.
   const [id] = useState(() => randomUUID());
   const [form, setForm] = useState<ExpenseForm>(() =>
@@ -283,21 +285,23 @@ function ExpenseFormView({ group, editing }: { group: GroupDetail; editing?: For
         {errorFor('amount')}
       </View>
 
-      <View style={styles.field}>
-        <Text style={styles.label}>{t`Waluta`}</Text>
-        <View style={styles.chips} accessibilityRole="radiogroup">
-          {entryCurrencies(group.baseCurrency).map((currency) => (
-            <Pressable
-              key={currency}
-              accessibilityRole="radio"
-              accessibilityState={{ checked: form.currency === currency }}
-              onPress={() => update(withCurrency(form, currency, group.baseCurrency), ['amount', 'rate'])}
-              style={[styles.chip, form.currency === currency && styles.chipSelected]}>
-              <Text style={styles.chipLabel}>{currency}</Text>
-            </Pressable>
-          ))}
+      {actions.foreignCurrencies ? (
+        <View style={styles.field}>
+          <Text style={styles.label}>{t`Waluta`}</Text>
+          <View style={styles.chips} accessibilityRole="radiogroup">
+            {entryCurrencies(group.baseCurrency).map((currency) => (
+              <Pressable
+                key={currency}
+                accessibilityRole="radio"
+                accessibilityState={{ checked: form.currency === currency }}
+                onPress={() => update(withCurrency(form, currency, group.baseCurrency), ['amount', 'rate'])}
+                style={[styles.chip, form.currency === currency && styles.chipSelected]}>
+                <Text style={styles.chipLabel}>{currency}</Text>
+              </Pressable>
+            ))}
+          </View>
         </View>
-      </View>
+      ) : null}
 
       {foreign ? (
         <View style={styles.field}>
@@ -394,15 +398,17 @@ function ExpenseFormView({ group, editing }: { group: GroupDetail; editing?: For
         onChangeParticipants={(participantIds) => update({ ...form, participantIds }, ['split'])}
       />
 
-      <ReceiptField
-        draft={receipt}
-        storedUrl={receipt.kind === 'stored' ? storedReceipts.data?.get(editing?.id ?? '')?.url : undefined}
-        problem={receiptProblem}
-        onChange={(next) => {
-          setReceipt(next);
-          setReceiptProblem(null);
-        }}
-      />
+      {actions.receiptPhotos ? (
+        <ReceiptField
+          draft={receipt}
+          storedUrl={receipt.kind === 'stored' ? storedReceipts.data?.get(editing?.id ?? '')?.url : undefined}
+          problem={receiptProblem}
+          onChange={(next) => {
+            setReceipt(next);
+            setReceiptProblem(null);
+          }}
+        />
+      ) : null}
 
       {deletedMeanwhile ? (
         <Text style={styles.error}>{t`Ten wpis został w międzyczasie usunięty. Twoje zmiany nie zostały zapisane.`}</Text>

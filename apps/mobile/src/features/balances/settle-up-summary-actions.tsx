@@ -1,5 +1,5 @@
 import { useLingui } from '@lingui/react/macro';
-import { type PayoutDetails, settleUpSummary } from '@split-pay/shared';
+import { availableGroupActions, type PayoutDetails, settleUpSummary } from '@split-pay/shared';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import * as Clipboard from 'expo-clipboard';
 import { useEffect, useState } from 'react';
@@ -23,7 +23,10 @@ export function SettleUpSummaryActions({ group, balances }: { group: GroupDetail
   const { t } = useLingui();
   const { locale } = useLocale();
   const entries = useQuery(entriesQuery(group.id));
-  const recipients = [...new Set(balances.transfers.map((transfer) => transfer.to))];
+  // A local group has no payout details (ADR-0021): nothing to look up.
+  const recipients = availableGroupActions(group).payoutDetails
+    ? [...new Set(balances.transfers.map((transfer) => transfer.to))]
+    : [];
   const payouts = useQueries({
     queries: recipients.map((memberId) => memberPayoutDetailsQuery(group.id, memberId)),
   });
