@@ -70,6 +70,16 @@ export function createLocalDatabases(files: LocalDbFiles, deviceFileName = 'spli
       user = { userId, db };
     },
 
+    /** Signed out: no user's cache is in use any more; their file stays (see `forgetUser`). */
+    deselectUser(): void {
+      user = null;
+    },
+
+    /** Whether a signed-in user's cache is selected. */
+    hasUser(): boolean {
+      return user !== null;
+    },
+
     /** The signed-in user's cache. */
     userDb(): Promise<LocalDb> {
       if (!user) return Promise.reject(new Error('No signed-in user selected for the offline cache'));

@@ -111,4 +111,19 @@ describe('local databases', () => {
 
     expect(await readGroupList(await databases.deviceDb())).toEqual([]);
   });
+
+  it('signed out, no user is selected but their cache stays on the device', async () => {
+    const files = deviceFiles();
+    const databases = createLocalDatabases(files);
+    databases.selectUser(USER);
+    await saveGroupList(await databases.userDb(), [listed(G1)]);
+    expect(databases.hasUser()).toBe(true);
+
+    databases.deselectUser();
+
+    expect(databases.hasUser()).toBe(false);
+    await expect(databases.userDb()).rejects.toThrow();
+    databases.selectUser(USER);
+    expect((await readGroupList(await databases.userDb())).map((g) => g.id)).toEqual([G1]);
+  });
 });

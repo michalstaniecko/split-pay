@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import type { LocalDb } from './local-db';
 import { createLocalDatabases } from './local-databases';
 import { deleteLocalDbFile, openLocalDb } from './open-local-db';
@@ -26,6 +27,16 @@ export function selectLocalUser(userId: string): void {
   databases.selectUser(userId);
 }
 
+/** Signed out: stops using the user's cache (it stays on the device). Idempotent. */
+export function deselectLocalUser(): void {
+  databases.deselectUser();
+}
+
+/** Whether someone is signed in on this device (their cache is selected); signed out, only local groups exist. */
+export function hasLocalUser(): boolean {
+  return databases.hasUser();
+}
+
 /** The signed-in user's local database. */
 export function localDb(): Promise<LocalDb> {
   return databases.userDb();
@@ -44,4 +55,9 @@ export function localUserId(): string {
  */
 export function forgetLocalUser(userId: string): Promise<void> {
   return databases.forgetUser(userId);
+}
+
+/** The device database where there is one: native. The web has no local groups. */
+export function deviceDbIfAny(): Promise<LocalDb | null> {
+  return Platform.OS === 'web' ? Promise.resolve(null) : databases.deviceDb();
 }

@@ -2,7 +2,9 @@ import { type Category, type Entry, entryFromNew, type NewEntry, type NewQuickBi
 import { onlineManager, queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import { parseResponse } from 'hono/client';
 import { groupKeys } from '@/features/groups/groups-query';
-import { localDb, localUserId } from '@/features/offline/local-session';
+import { readLocalEntries } from '@/features/offline/local-group-store';
+import { isLocalGroup, localGroupsDb } from '@/features/offline/local-groups';
+import { hasLocalUser, localDb, localUserId } from '@/features/offline/local-session';
 import { enqueueCreate, isGroupSynced, readEntries, readGroupDetail, saveEntry } from '@/features/offline/local-store';
 import {
   enqueueDelete,
@@ -24,12 +26,15 @@ export const entryKeys = {
 
 /**
  * The group's live entries in Conversation order, queued ones included —
- * read from the offline cache after a delta sync attempt (ADR-0005).
+ * read from the offline cache after a delta sync attempt (ADR-0005); a local
+ * group's from the device database (ADR-0021).
  */
 export const entriesQuery = (groupId: string) =>
   queryOptions({
     queryKey: entryKeys.list(groupId),
     queryFn: async (): Promise<Entry[]> => {
+      if (await isLocalGroup(groupId)) return readLocalEntries(await localGroupsDb(), groupId);
+      if (!hasLocalUser()) throw new Error('Group not found');
       const syncError = await attemptSync(() => syncGroup(groupId));
       const db = await localDb();
       if (syncError && !(await isGroupSynced(db, groupId))) throw syncError;

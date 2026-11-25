@@ -1,5 +1,6 @@
 import { queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { groupKeys } from '@/features/groups/groups-query';
+import { isLocalGroup } from './local-groups';
 import { localDb } from './local-session';
 import { discardOutbox, type OutboxEntryState, readOutboxState, retryOutbox } from './outbox';
 import { flushNow } from './sync';
@@ -10,11 +11,15 @@ export const outboxKeys = {
 
 const EMPTY: ReadonlyMap<string, OutboxEntryState> = new Map();
 
-/** The group's entries with an outbox state (🕓 queued, red "!" failed / conflict), from the local database. */
+/**
+ * The group's entries with an outbox state (🕓 queued, red "!" failed / conflict),
+ * from the local database. A local group has no outbox (ADR-0021).
+ */
 export const outboxQuery = (groupId: string) =>
   queryOptions({
     queryKey: outboxKeys.group(groupId),
-    queryFn: async (): Promise<ReadonlyMap<string, OutboxEntryState>> => readOutboxState(await localDb(), groupId),
+    queryFn: async (): Promise<ReadonlyMap<string, OutboxEntryState>> =>
+      (await isLocalGroup(groupId)) ? EMPTY : readOutboxState(await localDb(), groupId),
     networkMode: 'always',
   });
 

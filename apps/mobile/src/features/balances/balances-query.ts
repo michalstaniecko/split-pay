@@ -3,6 +3,8 @@ import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query
 import { type InferResponseType, parseResponse } from 'hono/client';
 import { entryKeys } from '@/features/entries/entries-query';
 import { groupKeys } from '@/features/groups/groups-query';
+import { readLocalBalances } from '@/features/offline/local-group-store';
+import { deviceDbIfAny } from '@/features/offline/local-session';
 import { api } from '@/lib/api';
 
 export const balanceKeys = {
@@ -15,11 +17,19 @@ export const balanceKeys = {
     [...groupKeys.detail(groupId), 'payout-details', memberId] as const,
 };
 
-/** Balances and suggested transfers, computed by the API (GET /groups/:groupId/balances). */
+/**
+ * Balances and suggested transfers, computed by the API (GET /groups/:groupId/balances);
+ * a local group's on the device, in the same shape (ADR-0021).
+ */
 export const balancesQuery = (groupId: string) =>
   queryOptions({
     queryKey: balanceKeys.summary(groupId),
-    queryFn: () => parseResponse(api.groups[':groupId'].balances.$get({ param: { groupId } })),
+    queryFn: async (): Promise<GroupBalances> => {
+      const device = await deviceDbIfAny();
+      const local = device ? await readLocalBalances(device, groupId) : undefined;
+      if (local) return local;
+      return parseResponse(api.groups[':groupId'].balances.$get({ param: { groupId } }));
+    },
   });
 export type GroupBalances = InferResponseType<(typeof api.groups)[':groupId']['balances']['$get'], 200>;
 

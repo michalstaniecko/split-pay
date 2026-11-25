@@ -1,13 +1,15 @@
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import { type InferResponseType, parseResponse } from 'hono/client';
 import { groupKeys } from '@/features/groups/groups-query';
+import { isLocalGroup } from '@/features/offline/local-groups';
 import { api } from '@/lib/api';
 
-/** Claims of a group, undone ones included (GET /groups/:groupId/claims). */
+/** Claims of a group, undone ones included (GET /groups/:groupId/claims); none in a local group (ADR-0021). */
 export const claimsQuery = (groupId: string) =>
   queryOptions({
     queryKey: [...groupKeys.detail(groupId), 'claims'] as const,
-    queryFn: () => parseResponse(api.groups[':groupId'].claims.$get({ param: { groupId } })),
+    queryFn: async () =>
+      (await isLocalGroup(groupId)) ? [] : parseResponse(api.groups[':groupId'].claims.$get({ param: { groupId } })),
   });
 export type Claim = InferResponseType<(typeof api.groups)[':groupId']['claims']['$get'], 200>[number];
 
