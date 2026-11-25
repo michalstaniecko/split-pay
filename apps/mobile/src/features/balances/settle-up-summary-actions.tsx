@@ -55,7 +55,9 @@ export function SettleUpSummaryActions({ group, balances }: { group: GroupDetail
       labels: { bankAccount: t`Nr konta`, blikPhone: t`BLIK` },
     });
 
-  const disabled = balances.transfers.length === 0 || !entries.data;
+  // Inactive with nothing to settle, and while the expenses load; if they
+  // fail to load, the summary goes out without the expense list.
+  const disabled = balances.transfers.length === 0 || entries.isPending;
   const share = () => void Share.share({ message: message() }).catch(() => undefined);
   const copy = async () => {
     await Clipboard.setStringAsync(message());
