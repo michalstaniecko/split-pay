@@ -17,7 +17,7 @@ const newGroup = () => ({
 type Session = { cookie: string; userId: string };
 
 describe('receipt photos (ADR-0006)', () => {
-  const { app, signIn, client, storage } = createTestApp();
+  const { app, signIn, client, storage, uploadReceipt } = createTestApp();
 
   /** Ania's trip which Bartek joined; Celina is signed in but not a member. */
   async function setup() {
@@ -48,34 +48,33 @@ describe('receipt photos (ADR-0006)', () => {
         param: { groupId: gid },
         json: { entryId: body.entryId, contentType: 'image/jpeg', size: body.size ?? 400_000 },
       });
-    /** Upload URL + the phone's upload to the bucket. */
-    async function upload(session: Session, entryId: string) {
-      const issued = await parseResponse(requestUpload(session, { entryId }));
-      storage.put(issued.upload);
-      return issued.photoId;
-    }
+    const complete = (session: Session, photoId: string, gid = groupId) =>
+      receipts(session).uploads[':photoId'].complete.$post({ param: { groupId: gid, photoId } });
+    /** Upload URL + the phone's upload to the bucket + completing it. */
+    const upload = async (session: Session, entryId: string) => (await uploadReceipt(session, groupId, entryId)).photoId;
     const createEntry = (session: Session, input: NewEntry) =>
       client(session).groups[':groupId'].entries.$post({ param: { groupId }, json: input });
     const list = (session: Session) => receipts(session).$get({ param: { groupId } });
-    return { ania, bartek, celina, groupId, expense, requestUpload, upload, createEntry, list };
+    return { ania, bartek, celina, groupId, expense, requestUpload, complete, upload, createEntry, list };
   }
 
   it('issues a private upload into the group and shows the attached receipt to members via a short-lived URL', async () => {
-    const { ania, bartek, expense, requestUpload, createEntry, list } = await setup();
+    const { ania, bartek, expense, requestUpload, complete, createEntry, list } = await setup();
     const entryId = randomUUID();
 
     const res = await requestUpload(ania, { entryId });
     if (res.status !== 201) throw new Error(`upload URL → ${res.status}`);
     const issued = await res.json();
-    expect(issued.upload.fields).toMatchObject({ 'Content-Type': 'image/jpeg', maxBytes: String(PHOTO_LIMITS.maxBytes) });
-    expect(issued.upload.fields.key).toMatch(new RegExp(`^receipts/.+/${issued.photoId}\\.jpg$`));
+    expect(issued.upload).toMatchObject({ method: 'PUT', headers: { 'Content-Type': 'image/jpeg' } });
+    expect(storage.keyOf(issued.upload)).toMatch(new RegExp(`^receipts/.+/${issued.photoId}\\.jpg$`));
     storage.put(issued.upload);
+    expect(await parseResponse(complete(ania, issued.photoId))).toEqual({ photoId: issued.photoId });
 
     expect((await createEntry(ania, expense(issued.photoId, entryId))).status).toBe(201);
 
     const seen = await parseResponse(list(bartek));
     expect(seen.receipts).toEqual([
-      { photoId: issued.photoId, entryId, url: expect.stringContaining(issued.upload.fields.key!) },
+      { photoId: issued.photoId, entryId, url: expect.stringContaining(storage.keyOf(issued.upload)) },
     ]);
     const expiresIn = new Date(seen.expiresAt).getTime() - Date.now();
     expect(expiresIn).toBeGreaterThan(0);
@@ -134,6 +133,67 @@ describe('receipt photos (ADR-0006)', () => {
     });
     expect(res.status).toBe(200);
     expect((await parseResponse(list(ania))).receipts.map((r) => r.photoId)).toEqual([replacement]);
+  });
+
+  describe('checking the uploaded object (a PUT URL cannot limit it, ADR-0020)', () => {
+    async function issued(session: Session, setupResult: Awaited<ReturnType<typeof setup>>) {
+      return parseResponse(setupResult.requestUpload(session, { entryId: randomUUID() }));
+    }
+
+    it.each([
+      ['larger than the limit', { size: PHOTO_LIMITS.maxBytes + 1 }, 'photo_too_large'],
+      ['not a JPEG', { contentType: 'image/png' }, 'photo_upload_invalid'],
+      ['empty', { size: 0 }, 'photo_upload_invalid'],
+    ] as const)('refuses an object %s, deletes it and its row', async (_, file, error) => {
+      const s = await setup();
+      const upload = await issued(s.ania, s);
+      storage.put(upload.upload, file);
+
+      const res = await s.complete(s.ania, upload.photoId);
+      expect(res.status).toBe(422);
+      expect(await res.json()).toMatchObject({ error });
+      expect(storage.objects.has(storage.keyOf(upload.upload))).toBe(false);
+      // The photo is gone: completing again or attaching it fails.
+      expect((await s.complete(s.ania, upload.photoId)).status).toBe(404);
+      expect((await s.createEntry(s.ania, s.expense(upload.photoId))).status).toBe(400);
+    });
+
+    it('refuses completing an upload that never reached the bucket', async () => {
+      const s = await setup();
+      const upload = await issued(s.ania, s);
+      const res = await s.complete(s.ania, upload.photoId);
+      expect(res.status).toBe(422);
+      expect(await res.json()).toEqual({ error: 'photo_upload_invalid' });
+    });
+
+    it('an entry cannot use an upload that was not completed', async () => {
+      const s = await setup();
+      const upload = await issued(s.ania, s);
+      storage.put(upload.upload);
+      const res = await s.createEntry(s.ania, s.expense(upload.photoId));
+      expect(res.status).toBe(400);
+      expect(await res.json()).toMatchObject({ error: 'invalid_entry' });
+    });
+
+    it('checks an object once: completing again is fine and does not look at the bucket', async () => {
+      const s = await setup();
+      const upload = await issued(s.ania, s);
+      storage.put(upload.upload);
+      expect((await s.complete(s.ania, upload.photoId)).status).toBe(200);
+      // Even if the object changed afterwards, the recorded check stands.
+      storage.put(upload.upload, { size: PHOTO_LIMITS.maxBytes + 1 });
+      expect((await s.complete(s.ania, upload.photoId)).status).toBe(200);
+    });
+
+    it("only the uploader completes an upload, and only in the photo's group", async () => {
+      const s = await setup();
+      const upload = await issued(s.ania, s);
+      storage.put(upload.upload);
+      expect((await s.complete(s.bartek, upload.photoId)).status).toBe(404);
+      expect((await s.complete(s.celina, upload.photoId)).status).toBe(404);
+      expect((await s.complete(s.ania, randomUUID())).status).toBe(404);
+      expect(storage.objects.has(storage.keyOf(upload.upload))).toBe(true);
+    });
   });
 
   describe('limits (answered with error codes the app translates)', () => {

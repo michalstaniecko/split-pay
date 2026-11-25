@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { downscaledSize, PHOTO_LIMITS, ReceiptUploadRequest, receiptRetentionCutoff, PhotoUploadRequest } from './photos';
+import {
+  downscaledSize,
+  PHOTO_LIMITS,
+  PhotoUploadRequest,
+  ReceiptUploadRequest,
+  receiptRetentionCutoff,
+  uploadedPhotoProblem,
+} from './photos';
 
 describe('downscaledSize', () => {
   it('shrinks the longer side of a landscape photo to the maximum, keeping the aspect ratio', () => {
@@ -57,5 +64,23 @@ describe('receiptRetentionCutoff', () => {
     expect(receiptRetentionCutoff(new Date('2027-08-01T03:00:00.000Z')).toISOString()).toBe(
       '2026-08-01T03:00:00.000Z',
     );
+  });
+});
+
+describe('uploadedPhotoProblem', () => {
+  it('accepts a JPEG within the size limit', () => {
+    expect(uploadedPhotoProblem({ size: 400_000, contentType: 'image/jpeg' })).toBeNull();
+    expect(uploadedPhotoProblem({ size: PHOTO_LIMITS.maxBytes, contentType: 'Image/JPEG; charset=binary' })).toBeNull();
+  });
+
+  it('refuses a file over the size limit', () => {
+    expect(uploadedPhotoProblem({ size: PHOTO_LIMITS.maxBytes + 1, contentType: 'image/jpeg' })).toBe('too_large');
+  });
+
+  it('refuses a missing or empty object and anything but a JPEG', () => {
+    expect(uploadedPhotoProblem(null)).toBe('invalid');
+    expect(uploadedPhotoProblem({ size: 0, contentType: 'image/jpeg' })).toBe('invalid');
+    expect(uploadedPhotoProblem({ size: 1000, contentType: 'image/png' })).toBe('invalid');
+    expect(uploadedPhotoProblem({ size: 1000, contentType: null })).toBe('invalid');
   });
 });

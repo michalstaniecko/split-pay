@@ -228,7 +228,7 @@ Last checked: 2026-11-25 on staging.
 | Sentry DSNs | Coolify (API), build environment (app). Not secret, but kept out of the repo |
 | Sentry auth token (source maps) | Build environment only, when it exists |
 
-GitHub Actions needs none of them: CI tests run against a Postgres service and MinIO.
+GitHub Actions needs none of them: CI tests run against a Postgres service and an in-memory bucket. The S3 adapter's test against a real store (`apps/api/src/storage/s3.live.test.ts`) runs by hand, against the local store from `compose.yaml` or a staging R2 bucket (instructions in the file).
 
 ## Before production
 

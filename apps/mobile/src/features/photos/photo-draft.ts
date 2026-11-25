@@ -59,12 +59,9 @@ export function receiptPreviewUri(draft: ReceiptDraft, storedUrl: string | undef
   }
 }
 
-/** The bucket refused the upload itself (e.g. larger than the policy allows). */
+/** The bucket refused the upload itself (e.g. an expired URL). */
 export class BucketUploadError extends Error {
-  constructor(
-    readonly status: number,
-    readonly body: string,
-  ) {
+  constructor(readonly status: number) {
     super(`photo upload failed: ${status}`);
   }
 }
@@ -74,26 +71,16 @@ export type PhotoProblem = PhotoError | 'upload_failed';
 
 const apiProblems: readonly PhotoError[] = [
   'photo_too_large',
+  'photo_upload_invalid',
   'too_many_photos_for_entry',
   'daily_photo_limit',
   'storage_unavailable',
 ];
 
 export function photoProblem(error: unknown): PhotoProblem {
-  if (error instanceof BucketUploadError) {
-    return error.body.includes('EntityTooLarge') ? 'photo_too_large' : 'upload_failed';
-  }
   if (error instanceof DetailedError) {
     const code = ((error.detail as { data?: unknown } | undefined)?.data as { error?: unknown } | undefined)?.error;
     if (apiProblems.includes(code as PhotoError)) return code as PhotoError;
   }
   return 'upload_failed';
-}
-
-/**
- * The multipart parts of a presigned S3 POST upload, in order: the signed
- * fields first, the file last (S3 ignores fields after the file).
- */
-export function uploadForm<F>(fields: Record<string, string>, file: F): [string, string | F][] {
-  return [...Object.entries(fields), ['file', file]];
 }

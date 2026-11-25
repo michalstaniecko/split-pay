@@ -2,10 +2,11 @@ import { z } from 'zod';
 import { Id } from './model';
 
 /**
- * Photos (SPEC "Photos", ADR-0006): only a receipt photo on an expense or
- * income and a user avatar. The phone downscales, re-encodes to JPEG (which
- * drops EXIF, GPS included) and uploads straight to the private bucket; the
- * API only issues upload and short-lived read URLs and enforces these limits.
+ * Photos (SPEC "Photos", ADR-0006, ADR-0020): only a receipt photo on an
+ * expense or income and a user avatar. The phone downscales, re-encodes to
+ * JPEG (which drops EXIF, GPS included) and uploads straight to the private
+ * bucket with a presigned PUT; the API issues upload and short-lived read
+ * URLs, checks each uploaded object and enforces these limits.
  */
 export const PHOTO_LIMITS = {
   /** Largest accepted file, bytes. A 1600 px JPEG is usually well under 1 MB. */
@@ -37,8 +38,9 @@ export type PhotoContentType = z.infer<typeof PhotoContentType>;
 
 /**
  * Asking for an upload URL. `size` is the file the phone is about to send;
- * the API answers `photo_too_large` above `PHOTO_LIMITS.maxBytes` and the
- * bucket's upload policy enforces the same limit on the bytes themselves.
+ * the API answers `photo_too_large` above `PHOTO_LIMITS.maxBytes`. A PUT URL
+ * can't limit the bytes, so the API checks the uploaded object again before
+ * it is used (receipt: "complete upload"; avatar: setting it).
  */
 export const PhotoUploadRequest = z.object({
   contentType: PhotoContentType,
@@ -54,8 +56,30 @@ export type ReceiptUploadRequest = z.infer<typeof ReceiptUploadRequest>;
 export const AvatarUpdate = z.object({ photoId: Id });
 export type AvatarUpdate = z.infer<typeof AvatarUpdate>;
 
-/** Error codes of the photo routes; the app shows them translated. */
-export type PhotoError = 'photo_too_large' | 'too_many_photos_for_entry' | 'daily_photo_limit' | 'storage_unavailable';
+/**
+ * Error codes of the photo routes; the app shows them translated.
+ * `photo_upload_invalid`: the uploaded object is missing or not a JPEG — the
+ * API deleted it, so the phone uploads the photo again.
+ */
+export type PhotoError =
+  | 'photo_too_large'
+  | 'photo_upload_invalid'
+  | 'too_many_photos_for_entry'
+  | 'daily_photo_limit'
+  | 'storage_unavailable';
+
+/** Why an uploaded object can't be used as a photo: over the size limit, or missing / empty / not a JPEG. */
+export type UploadedPhotoProblem = 'too_large' | 'invalid';
+
+/** Whether an uploaded object may be used as a photo: null if so, the problem otherwise. */
+export function uploadedPhotoProblem(
+  object: { size: number; contentType: string | null } | null,
+): UploadedPhotoProblem | null {
+  if (!object || object.size <= 0) return 'invalid';
+  if (object.size > PHOTO_LIMITS.maxBytes) return 'too_large';
+  const type = object.contentType?.split(';')[0]?.trim().toLowerCase();
+  return type === 'image/jpeg' ? null : 'invalid';
+}
 
 /** Downscales `size` so its longer side is at most `max`, keeping the aspect ratio. */
 export function downscaledSize(size: { width: number; height: number }, max: number): { width: number; height: number } {

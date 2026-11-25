@@ -9,7 +9,7 @@ type Session = { cookie: string; userId: string };
 const ADMIN = 'moderator@example.com';
 
 describe('content reporting, admin panel, account blocking (#27)', () => {
-  const { app, signIn, client, storage, json } = createTestApp({ adminEmails: [ADMIN] });
+  const { app, signIn, client, storage, json, uploadReceipt } = createTestApp({ adminEmails: [ADMIN] });
 
   /**
    * Ania's group which Bartek joined, with Ania's receipt on an expense and
@@ -30,13 +30,7 @@ describe('content reporting, admin panel, account blocking (#27)', () => {
     await parseResponse(client(bartek).links[':token'].join.$post({ param: { token } }));
 
     const entryId = randomUUID();
-    const issuedReceipt = await parseResponse(
-      client(ania).groups[':groupId'].receipts.uploads.$post({
-        param: { groupId },
-        json: { entryId, contentType: 'image/jpeg', size: 1000 },
-      }),
-    );
-    storage.put(issuedReceipt.upload);
+    const receipt = await uploadReceipt(ania, groupId, entryId);
     const me = group.ownerMemberId;
     const expense: NewEntry = {
       kind: 'expense',
@@ -47,7 +41,7 @@ describe('content reporting, admin panel, account blocking (#27)', () => {
       currency: 'PLN',
       rateToBase: '1',
       category: 'groceries',
-      receiptPhotoId: issuedReceipt.photoId,
+      receiptPhotoId: receipt.photoId,
       payers: [{ memberId: me, amount: 12_000 }],
       split: { mode: 'equal', memberIds: [me] },
     };
@@ -65,8 +59,8 @@ describe('content reporting, admin panel, account blocking (#27)', () => {
       celina,
       admin,
       groupId,
-      receipt: { photoId: issuedReceipt.photoId, key: issuedReceipt.upload.fields.key! },
-      avatar: { photoId: issuedAvatar.photoId, key: issuedAvatar.upload.fields.key! },
+      receipt,
+      avatar: { photoId: issuedAvatar.photoId, key: storage.keyOf(issuedAvatar.upload) },
     };
   }
 

@@ -40,32 +40,55 @@ describe('s3Storage', () => {
     expect(url.origin + url.pathname).toBe('http://localhost:9000/examplebucket/receipts/a/b.jpg');
   });
 
-  it('issues a POST upload whose policy pins the key, the content type and the size range', async () => {
+  it('issues a presigned PUT upload that signs the content type (R2 has no POST policies, ADR-0020)', async () => {
     const storage = s3Storage({ ...awsExample, now: () => new Date('2026-11-24T10:00:00Z') });
-    const upload = await storage.presignUpload('receipts/g/p.jpg', {
-      contentType: 'image/jpeg',
-      maxBytes: 1000,
-      expiresInSeconds: 600,
+    const upload = await storage.presignUpload('receipts/g/p.jpg', { contentType: 'image/jpeg', expiresInSeconds: 600 });
+    expect(upload.method).toBe('PUT');
+    expect(upload.headers).toEqual({ 'Content-Type': 'image/jpeg' });
+    const url = new URL(upload.url);
+    expect(url.origin + url.pathname).toBe('https://examplebucket.s3.amazonaws.com/receipts/g/p.jpg');
+    expect(Object.fromEntries(url.searchParams)).toEqual({
+      'X-Amz-Algorithm': 'AWS4-HMAC-SHA256',
+      'X-Amz-Credential': 'AKIAIOSFODNN7EXAMPLE/20261124/us-east-1/s3/aws4_request',
+      'X-Amz-Date': '20261124T100000Z',
+      'X-Amz-Expires': '600',
+      'X-Amz-SignedHeaders': 'content-type;host',
+      'X-Amz-Signature': expect.stringMatching(/^[0-9a-f]{64}$/),
     });
-    expect(upload.url).toBe('https://examplebucket.s3.amazonaws.com/');
-    expect(upload.fields).toMatchObject({
-      key: 'receipts/g/p.jpg',
-      'Content-Type': 'image/jpeg',
-      'x-amz-algorithm': 'AWS4-HMAC-SHA256',
-      'x-amz-credential': 'AKIAIOSFODNN7EXAMPLE/20261124/us-east-1/s3/aws4_request',
-      'x-amz-date': '20261124T100000Z',
+    // The content type is part of the signature.
+    const png = await storage.presignUpload('receipts/g/p.jpg', { contentType: 'image/png', expiresInSeconds: 600 });
+    expect(new URL(png.url).searchParams.get('X-Amz-Signature')).not.toBe(url.searchParams.get('X-Amz-Signature'));
+  });
+
+  it('inspects an object with a signed HEAD request', async () => {
+    const calls: { url: string; init: RequestInit | undefined }[] = [];
+    const storage = s3Storage({
+      ...awsExample,
+      endpoint: 'https://account.eu.r2.cloudflarestorage.com',
+      region: 'auto',
+      forcePathStyle: true,
+      fetch: async (url, init) => {
+        calls.push({ url: String(url), init });
+        return new Response(null, { status: 200, headers: { 'content-length': '4321', 'content-type': 'image/jpeg' } });
+      },
     });
-    expect(upload.fields['x-amz-signature']).toMatch(/^[0-9a-f]{64}$/);
-    const policy = JSON.parse(Buffer.from(upload.fields.policy!, 'base64').toString('utf8'));
-    expect(policy.expiration).toBe('2026-11-24T10:10:00.000Z');
-    expect(policy.conditions).toEqual(
-      expect.arrayContaining([
-        { bucket: 'examplebucket' },
-        { key: 'receipts/g/p.jpg' },
-        { 'Content-Type': 'image/jpeg' },
-        ['content-length-range', 1, 1000],
-      ]),
+    expect(await storage.inspectObject('receipts/g/p.jpg')).toEqual({ size: 4321, contentType: 'image/jpeg' });
+    expect(calls.map((c) => [c.init?.method, c.url])).toEqual([
+      ['HEAD', 'https://account.eu.r2.cloudflarestorage.com/examplebucket/receipts/g/p.jpg'],
+    ]);
+    expect(new Headers(calls[0]!.init?.headers).get('authorization')).toMatch(
+      /^AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE\/\d{8}\/auto\/s3\/aws4_request, SignedHeaders=host;x-amz-content-sha256;x-amz-date, Signature=[0-9a-f]{64}$/,
     );
+  });
+
+  it('inspecting a missing object gives null; a refusal throws without the store body', async () => {
+    const missing = s3Storage({ ...awsExample, fetch: async () => new Response(null, { status: 404 }) });
+    expect(await missing.inspectObject('a.jpg')).toBeNull();
+    const refused = s3Storage({
+      ...awsExample,
+      fetch: async () => new Response('<Code>AccessDenied</Code>', { status: 403 }),
+    });
+    await expect(refused.inspectObject('a.jpg')).rejects.toThrow(/^object storage refused to inspect a\.jpg: 403$/);
   });
 
   it('deletes each object with a signed DELETE request', async () => {

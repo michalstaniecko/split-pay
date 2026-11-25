@@ -1,4 +1,5 @@
 import type { FeatureFlags } from '@split-pay/shared';
+import { parseResponse } from 'hono/client';
 import { createApp } from '../src/app';
 import { createAuth, type OtpSender, type OtpType } from '../src/auth';
 import { createApiClient } from '../src/client';
@@ -69,7 +70,22 @@ export function createTestApp(
     });
   }
 
-  return { app, auth, storage: storage as MemoryStorage, sentOtps, json, requestOtp, signIn, client };
+  /**
+   * A receipt photo the way the app uploads it (ADR-0020): an upload URL, a valid
+   * JPEG put into the in-memory bucket, then completing the upload. For bad
+   * objects or skipped completion, spell the steps out in the test instead.
+   */
+  async function uploadReceipt(session: { cookie: string }, groupId: string, entryId: string) {
+    const receipts = client(session).groups[':groupId'].receipts;
+    const issued = await parseResponse(
+      receipts.uploads.$post({ param: { groupId }, json: { entryId, contentType: 'image/jpeg', size: 1000 } }),
+    );
+    storage!.put(issued.upload);
+    await parseResponse(receipts.uploads[':photoId'].complete.$post({ param: { groupId, photoId: issued.photoId } }));
+    return { photoId: issued.photoId, key: storage!.keyOf(issued.upload) };
+  }
+
+  return { app, auth, storage: storage as MemoryStorage, sentOtps, json, requestOtp, signIn, client, uploadReceipt };
 }
 
 /** `name=value` pairs from a response's Set-Cookie headers, ready for a `cookie` request header. */

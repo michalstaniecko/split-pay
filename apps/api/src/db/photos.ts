@@ -6,9 +6,12 @@ import { groups } from './groups';
 export type PhotoKind = 'receipt' | 'avatar';
 
 /**
- * Photos in object storage (ADR-0006): one row per issued upload, created
- * when the API signs the upload URL. The bytes live in the bucket under
- * `objectKey`; rows and objects are removed together (`deletePhotos`).
+ * Photos in object storage (ADR-0006, ADR-0020): one row per issued upload,
+ * created when the API signs the upload URL. The bytes live in the bucket
+ * under `objectKey`; rows and objects are removed together (`deletePhotos`).
+ * `verifiedAt` is set once the API has checked the uploaded object (it
+ * exists, is a JPEG, within the size limit); only verified photos can be
+ * attached.
  *
  * - receipt: `groupId` + `entryId` (the client-generated entry id it was
  *   uploaded for). `attachedAt` is set when an entry first references it
@@ -32,6 +35,7 @@ export const photos = pgTable(
     entryId: uuid(),
     createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
     attachedAt: timestamp({ withTimezone: true }),
+    verifiedAt: timestamp({ withTimezone: true }),
   },
   (t) => [
     index('photos_group_id_idx').on(t.groupId),
