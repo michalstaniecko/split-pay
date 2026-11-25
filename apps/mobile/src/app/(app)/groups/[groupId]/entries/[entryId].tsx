@@ -24,6 +24,7 @@ import { closeSheet } from '@/lib/close-sheet';
  * settlement).
  * "edytowano" opens the entry's change history (#20).
  * The receipt photo (#26) opens a full-screen viewer.
+ * A local group's entry (ADR-0021) has no history and no receipt photo.
  */
 export default function EntryDetailSheet() {
   const { t } = useLingui();
@@ -55,8 +56,9 @@ function EntryDetail({ group, entry }: { group: GroupDetail; entry: Entry }) {
   const addedBy = addedByName(entry, group.members) ?? t`nieznana osoba`;
   const online = useIsOnline();
   const userId = authClient.useSession().data?.user.id;
-  // Offline, only entries I added can be edited (ADR-0005).
-  const locked = lockedOffline(entry, { offline: !online, userId });
+  // Offline, only entries I added can be edited (ADR-0005); a local group's always can.
+  const locked = lockedOffline(entry, { offline: !online, userId }, group);
+  const edited = t`edytowano ${format.dateTime(entry.updatedAt)}`;
 
   return (
     <ScrollView contentContainerStyle={styles.content}>
@@ -65,13 +67,14 @@ function EntryDetail({ group, entry }: { group: GroupDetail; entry: Entry }) {
         baseCurrency={group.baseCurrency}
         memberName={name}
         receiptPhoto={
-          entry.kind !== 'settlement' && entry.receiptPhotoId !== null ? (
+          !group.local && entry.kind !== 'settlement' && entry.receiptPhotoId !== null ? (
             <ReceiptPhoto groupId={group.id} entryId={entry.id} />
           ) : null
         }
       />
       <Text style={styles.meta}>{t`Dodano: ${addedBy}, ${format.dateTime(entry.createdAt)}`}</Text>
-      {isEdited(entry) ? (
+      {isEdited(entry) && group.local ? <Text style={styles.meta}>{edited}</Text> : null}
+      {isEdited(entry) && !group.local ? (
         <Pressable
           accessibilityRole="link"
           accessibilityHint={t`Otwiera historię wpisu`}
@@ -79,7 +82,7 @@ function EntryDetail({ group, entry }: { group: GroupDetail; entry: Entry }) {
             router.replace({ pathname: '/groups/[groupId]/history', params: { groupId: group.id, entryId: entry.id } })
           }
           style={({ pressed }) => pressed && styles.pressed}>
-          <Text style={[styles.meta, styles.link]}>{t`edytowano ${format.dateTime(entry.updatedAt)}`}</Text>
+          <Text style={[styles.meta, styles.link]}>{edited}</Text>
         </Pressable>
       ) : null}
       {group.archivedAt === null && locked ? (
