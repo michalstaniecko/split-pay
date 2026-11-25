@@ -32,8 +32,6 @@ export default function AppLayout() {
           contentStyle: { backgroundColor: theme.colors.background },
         }}>
         <Stack.Screen name="index" options={{ title: 'split-pay', headerRight: () => <InboxHeaderButtons /> }} />
-        <Stack.Screen name="activity" options={{ title: t`Aktywność` }} />
-        <Stack.Screen name="profile" options={{ title: t`Profil` }} />
         <Stack.Screen
           name="new"
           options={{
@@ -77,26 +75,6 @@ export default function AppLayout() {
           }}
         />
         <Stack.Screen
-          name="groups/[groupId]/entry-conflict"
-          options={{
-            title: t`Konflikt zmian`,
-            presentation: 'formSheet',
-            sheetAllowedDetents: 'fitToContents',
-            sheetGrabberVisible: true,
-            headerShown: false,
-          }}
-        />
-        <Stack.Screen
-          name="groups/[groupId]/unsent-entry"
-          options={{
-            title: t`Nie wysłano`,
-            presentation: 'formSheet',
-            sheetAllowedDetents: 'fitToContents',
-            sheetGrabberVisible: true,
-            headerShown: false,
-          }}
-        />
-        <Stack.Screen
           name="groups/[groupId]/balances"
           options={{
             title: t`Salda`,
@@ -117,25 +95,53 @@ export default function AppLayout() {
           }}
         />
         <Stack.Screen name="groups/[groupId]/info" options={{ title: t`Informacje o grupie` }} />
-        <Stack.Screen name="groups/[groupId]/stats" options={{ title: t`Statystyki` }} />
-        {/* Receipt photo viewer (#26), black full screen with its own close button. */}
-        <Stack.Screen
-          name="groups/[groupId]/receipt"
-          options={{ presentation: 'fullScreenModal', headerShown: false, animation: 'fade' }}
-        />
-        <Stack.Screen name="groups/[groupId]/history" options={{ title: t`Historia zmian` }} />
-        {/* Content reporting + admin panel (#27). */}
-        <Stack.Screen
-          name="report-photo"
-          options={{
-            title: t`Zgłoś zdjęcie`,
-            presentation: 'formSheet',
-            sheetAllowedDetents: [0.75, 1],
-            sheetGrabberVisible: true,
-            headerShown: false,
-          }}
-        />
-        <Stack.Screen name="admin" options={{ title: t`Panel administratora` }} />
+        {/*
+          What needs an account (the API, the user's cache or its outbox): signed
+          out (ADR-0021), not even a deep link reaches it.
+        */}
+        <Stack.Protected guard={signedIn} redirectTo="/">
+          <Stack.Screen
+            name="groups/[groupId]/entry-conflict"
+            options={{
+              title: t`Konflikt zmian`,
+              presentation: 'formSheet',
+              sheetAllowedDetents: 'fitToContents',
+              sheetGrabberVisible: true,
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="groups/[groupId]/unsent-entry"
+            options={{
+              title: t`Nie wysłano`,
+              presentation: 'formSheet',
+              sheetAllowedDetents: 'fitToContents',
+              sheetGrabberVisible: true,
+              headerShown: false,
+            }}
+          />
+          {/* Receipt photo viewer (#26), black full screen with its own close button. */}
+          <Stack.Screen
+            name="groups/[groupId]/receipt"
+            options={{ presentation: 'fullScreenModal', headerShown: false, animation: 'fade' }}
+          />
+          <Stack.Screen name="activity" options={{ title: t`Aktywność` }} />
+          <Stack.Screen name="profile" options={{ title: t`Profil` }} />
+          <Stack.Screen name="groups/[groupId]/stats" options={{ title: t`Statystyki` }} />
+          <Stack.Screen name="groups/[groupId]/history" options={{ title: t`Historia zmian` }} />
+          {/* Content reporting + admin panel (#27). */}
+          <Stack.Screen
+            name="report-photo"
+            options={{
+              title: t`Zgłoś zdjęcie`,
+              presentation: 'formSheet',
+              sheetAllowedDetents: [0.75, 1],
+              sheetGrabberVisible: true,
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen name="admin" options={{ title: t`Panel administratora` }} />
+        </Stack.Protected>
         <Stack.Screen
           name="groups/[groupId]/member"
           options={{
