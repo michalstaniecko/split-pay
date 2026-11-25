@@ -1,4 +1,4 @@
-import type { Entry, Member, MemberRename, NewGroup, NewMember } from '@split-pay/shared';
+import { type Entry, type Member, type MemberRename, type NewGroup, type NewMember, type SettleUp, settleUp } from '@split-pay/shared';
 import { and, eq, max } from 'drizzle-orm';
 import type { LocalDb } from './local-db';
 import { type CachedGroup, localGroups, localMembers } from './local-schema';
@@ -106,4 +106,19 @@ export async function readLocalGroupList(db: LocalDb): Promise<LocalGroupListIte
 /** A local group's live entries in Conversation order. */
 export function readLocalEntries(db: LocalDb, groupId: string): Promise<Entry[]> {
   return readEntries(db, groupId);
+}
+
+/** A local group's balances and suggested transfers (the balances endpoint's shape), or `undefined` when there is no such group. */
+export async function readLocalBalances(
+  db: LocalDb,
+  groupId: string,
+): Promise<(SettleUp & { baseCurrency: string; simplifyDebts: boolean }) | undefined> {
+  const group = await readLocalGroup(db, groupId);
+  if (!group) return undefined;
+  const { balances, transfers } = settleUp(
+    await readLocalEntries(db, groupId),
+    group,
+    group.members.map((m) => m.id),
+  );
+  return { baseCurrency: group.baseCurrency, simplifyDebts: group.simplifyDebts, balances, transfers };
 }

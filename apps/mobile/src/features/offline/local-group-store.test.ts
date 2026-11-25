@@ -4,6 +4,7 @@ import {
   addLocalMember,
   createLocalGroup,
   type NewLocalGroup,
+  readLocalBalances,
   readLocalEntries,
   readLocalGroup,
   readLocalGroupList,
@@ -144,5 +145,23 @@ describe('local group store: device database only', () => {
 
     expect(await readLocalGroup(db, G1)).toBeUndefined();
     expect(await readLocalGroupList(db)).toEqual([]);
+  });
+});
+
+describe('local group store: balances', () => {
+  it('a new local group has every member at zero and nothing to settle', async () => {
+    const db = await nodeLocalDb();
+    await createLocalGroup(db, newGroup(), NOW);
+
+    expect(await readLocalBalances(db, G1)).toEqual({
+      baseCurrency: 'EUR',
+      simplifyDebts: true,
+      balances: [
+        { memberId: ME, amount: 0 },
+        { memberId: ANIA, amount: 0 },
+        { memberId: BARTEK, amount: 0 },
+      ],
+      transfers: [],
+    });
   });
 });
