@@ -12,6 +12,7 @@ import {
   readLocalGroup,
   readLocalGroupList,
   renameLocalMember,
+  updateLocalGroupSettings,
 } from './local-group-store';
 import { nodeLocalDb } from './testing/node-local-db';
 
@@ -150,6 +151,18 @@ describe('local group store: device database only', () => {
 
     expect(await readLocalGroup(db, G1)).toBeUndefined();
     expect(await readLocalGroupList(db)).toEqual([]);
+  });
+});
+
+describe('local group store: settings', () => {
+  it('turns debt simplification off, which the balances honor', async () => {
+    const db = await nodeLocalDb();
+    await createLocalGroup(db, newGroup(), NOW);
+
+    await updateLocalGroupSettings(db, G1, { simplifyDebts: false });
+
+    expect((await readLocalGroup(db, G1))?.simplifyDebts).toBe(false);
+    expect((await readLocalBalances(db, G1))?.simplifyDebts).toBe(false);
   });
 });
 

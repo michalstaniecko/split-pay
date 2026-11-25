@@ -3,7 +3,8 @@ import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query
 import { type InferResponseType, parseResponse } from 'hono/client';
 import { entryKeys } from '@/features/entries/entries-query';
 import { groupKeys } from '@/features/groups/groups-query';
-import { readLocalBalances } from '@/features/offline/local-group-store';
+import { readLocalBalances, updateLocalGroupSettings } from '@/features/offline/local-group-store';
+import { isLocalGroup, localGroupsDb } from '@/features/offline/local-groups';
 import { deviceDbIfAny } from '@/features/offline/local-session';
 import { api } from '@/lib/api';
 
@@ -33,12 +34,17 @@ export const balancesQuery = (groupId: string) =>
   });
 export type GroupBalances = InferResponseType<(typeof api.groups)[':groupId']['balances']['$get'], 200>;
 
-/** Changes group settings (PATCH /groups/:groupId/settings); refreshes the group and its balances. */
+/**
+ * Changes group settings (PATCH /groups/:groupId/settings; a local group's in
+ * the device database); refreshes the group and its balances.
+ */
 export function useUpdateGroupSettings(groupId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (input: GroupSettingsUpdate) =>
-      parseResponse(api.groups[':groupId'].settings.$patch({ param: { groupId }, json: input })),
+    mutationFn: async (input: GroupSettingsUpdate): Promise<void> => {
+      if (await isLocalGroup(groupId)) await updateLocalGroupSettings(await localGroupsDb(), groupId, input);
+      else await parseResponse(api.groups[':groupId'].settings.$patch({ param: { groupId }, json: input }));
+    },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: groupKeys.detail(groupId) });
     },

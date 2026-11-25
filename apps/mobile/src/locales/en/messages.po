@@ -459,6 +459,10 @@ msgstr "The group will disappear from your list. Your entries stay in the group.
 msgid "Grupa została zarchiwizowana — nie można już w niej nic zmieniać."
 msgstr "The group was archived, so nothing in it can be changed any more."
 
+#: src/features/groups/group-lifecycle-section.tsx
+msgid "Grupa, jej członkowie i wszystkie wpisy znikną z tego telefonu. Tego nie da się cofnąć."
+msgstr "The group, its members and all entries will be removed from this phone. This can't be undone."
+
 #: src/app/(app)/groups/[groupId]/info.tsx
 msgid "Grupę założono: {owner}"
 msgstr "Group created by: {owner}"
@@ -1630,6 +1634,10 @@ msgid "Usuń {0}"
 msgstr "Remove {0}"
 
 #: src/features/groups/group-lifecycle-section.tsx
+msgid "Usuń grupę"
+msgstr "Delete group"
+
+#: src/features/groups/group-lifecycle-section.tsx
 msgid "Usuń grupę na zawsze"
 msgstr "Delete group permanently"
 
@@ -1658,6 +1666,10 @@ msgstr "Remove photo"
 #: src/features/groups/group-lifecycle-section.tsx
 msgid "Usunąć grupę „{name}” na zawsze?"
 msgstr "Delete “{name}” permanently?"
+
+#: src/features/groups/group-lifecycle-section.tsx
+msgid "Usunąć grupę „{name}”?"
+msgstr "Delete “{name}”?"
 
 #: src/features/profile/delete-account-section.tsx
 msgid "Usunąć konto?"

@@ -1,5 +1,5 @@
 import { useLingui } from '@lingui/react/macro';
-import { canDeleteGroup } from '@split-pay/shared';
+import { availableGroupActions, canDeleteGroup } from '@split-pay/shared';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { Alert, Pressable, Text, View } from 'react-native';
@@ -22,6 +22,8 @@ function goToInbox() {
  * The bottom of Group info (SPEC "Group and account lifecycle"): "Opuść
  * grupę" (blocked with a warning while my balance isn't zero), then archive /
  * unarchive (any member) and permanent deletion (owner only, with confirmation).
+ * A local group (ADR-0021) can only be deleted — by anyone holding the phone,
+ * at once and without undo.
  */
 export function GroupLifecycleSection({ group }: { group: GroupDetail }) {
   const { t } = useLingui();
@@ -35,7 +37,9 @@ export function GroupLifecycleSection({ group }: { group: GroupDetail }) {
   const archive = useSetGroupArchived(group.id);
   const remove = useDeleteGroup(group.id);
   const archived = group.archivedAt !== null;
-  const mayDelete = userId !== undefined && canDeleteGroup(group, group.members, userId);
+  const actions = availableGroupActions(group);
+  // A local group has no owner: whoever holds the phone may delete it.
+  const mayDelete = group.local || (userId !== undefined && canDeleteGroup(group, group.members, userId));
   const { name } = group;
 
   const confirmLeave = () =>
@@ -53,12 +57,14 @@ export function GroupLifecycleSection({ group }: { group: GroupDetail }) {
     ]);
   const confirmDelete = () =>
     Alert.alert(
-      t`Usunąć grupę „${name}” na zawsze?`,
-      t`Wszystkie wpisy i salda znikną dla wszystkich członków. Tego nie da się cofnąć.`,
+      group.local ? t`Usunąć grupę „${name}”?` : t`Usunąć grupę „${name}” na zawsze?`,
+      group.local
+        ? t`Grupa, jej członkowie i wszystkie wpisy znikną z tego telefonu. Tego nie da się cofnąć.`
+        : t`Wszystkie wpisy i salda znikną dla wszystkich członków. Tego nie da się cofnąć.`,
       [
         { text: t`Anuluj`, style: 'cancel' },
         {
-          text: t`Usuń na zawsze`,
+          text: group.local ? t`Usuń grupę` : t`Usuń na zawsze`,
           style: 'destructive',
           onPress: () =>
             remove.mutate(undefined, {
@@ -75,31 +81,35 @@ export function GroupLifecycleSection({ group }: { group: GroupDetail }) {
 
   return (
     <View style={styles.container}>
-      <View style={styles.block}>
-        <Action
-          label={t`Opuść grupę`}
-          destructive
-          disabled={!canLeave || leave.isPending}
-          onPress={confirmLeave}
-        />
-        {leaveWarning ? <Text style={styles.warning}>{leaveWarning}</Text> : null}
-      </View>
-      <View style={styles.block}>
-        <Action
-          label={archived ? t`Przywróć z archiwum` : t`Archiwizuj grupę`}
-          disabled={archive.isPending}
-          onPress={() => archive.mutate(!archived)}
-        />
-        <Text style={styles.hint}>
-          {archived
-            ? t`Grupa jest tylko do odczytu. Przywróć ją, żeby coś zmienić.`
-            : t`Grupa stanie się tylko do odczytu: nikt nie doda, nie zmieni ani nie usunie wpisów.`}
-        </Text>
-        {archive.isError ? <Text style={styles.warning}>{t`Nie udało się zapisać. Spróbuj ponownie.`}</Text> : null}
-      </View>
+      {actions.leaving ? (
+        <View style={styles.block}>
+          <Action
+            label={t`Opuść grupę`}
+            destructive
+            disabled={!canLeave || leave.isPending}
+            onPress={confirmLeave}
+          />
+          {leaveWarning ? <Text style={styles.warning}>{leaveWarning}</Text> : null}
+        </View>
+      ) : null}
+      {actions.archiving ? (
+        <View style={styles.block}>
+          <Action
+            label={archived ? t`Przywróć z archiwum` : t`Archiwizuj grupę`}
+            disabled={archive.isPending}
+            onPress={() => archive.mutate(!archived)}
+          />
+          <Text style={styles.hint}>
+            {archived
+              ? t`Grupa jest tylko do odczytu. Przywróć ją, żeby coś zmienić.`
+              : t`Grupa stanie się tylko do odczytu: nikt nie doda, nie zmieni ani nie usunie wpisów.`}
+          </Text>
+          {archive.isError ? <Text style={styles.warning}>{t`Nie udało się zapisać. Spróbuj ponownie.`}</Text> : null}
+        </View>
+      ) : null}
       {mayDelete ? (
         <View style={styles.block}>
-          <Action label={t`Usuń grupę na zawsze`} destructive disabled={remove.isPending} onPress={confirmDelete} />
+          <Action label={group.local ? t`Usuń grupę` : t`Usuń grupę na zawsze`} destructive disabled={remove.isPending} onPress={confirmDelete} />
         </View>
       ) : null}
     </View>

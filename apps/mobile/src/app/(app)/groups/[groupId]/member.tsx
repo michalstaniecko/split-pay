@@ -1,4 +1,5 @@
 import { useLingui } from '@lingui/react/macro';
+import { availableGroupActions } from '@split-pay/shared';
 import { useQuery } from '@tanstack/react-query';
 import { randomUUID } from 'expo-crypto';
 import { useLocalSearchParams } from 'expo-router';
@@ -58,13 +59,15 @@ function MemberForm({ group, memberId }: { group: GroupDetailData; memberId: str
     else addMember.mutate({ id, displayName: parsed.displayName }, { onSuccess });
   };
 
+  const { claiming } = availableGroupActions(group);
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>
-        {existing ? t`Zmień imię` : group.local ? t`Dodaj osobę` : t`Dodaj osobę bez konta`}
+        {existing ? t`Zmień imię` : claiming ? t`Dodaj osobę bez konta` : t`Dodaj osobę`}
       </Text>
       {/* Nobody can claim a member of a local group (ADR-0021). */}
-      {existing || group.local ? null : (
+      {existing || !claiming ? null : (
         <Text style={styles.hint}>{t`Wpisujesz za nią wydatki. Później może przejąć swój profil.`}</Text>
       )}
       <TextInput

@@ -1,4 +1,4 @@
-import { type Entry, type Member, type MemberRename, type NewGroup, type NewMember, type SettleUp, settleUp } from '@split-pay/shared';
+import { type Entry, type GroupSettingsUpdate, type Member, type MemberRename, type NewGroup, type NewMember, type SettleUp, settleUp } from '@split-pay/shared';
 import { and, eq, max } from 'drizzle-orm';
 import type { LocalDb } from './local-db';
 import { type CachedGroup, localEntries, localGroups, localMembers } from './local-schema';
@@ -89,6 +89,14 @@ export async function renameLocalMember(
   const [row] = await db.select({ data: localMembers.data }).from(localMembers).where(where);
   if (!row) throw new Error('Member not found');
   await db.update(localMembers).set({ data: { ...row.data, displayName } }).where(where);
+}
+
+/** Changes a local group's settings (Group info → settings); only the given ones change. */
+export async function updateLocalGroupSettings(db: LocalDb, groupId: string, update: GroupSettingsUpdate): Promise<void> {
+  const where = and(eq(localGroups.id, groupId), eq(localGroups.local, true));
+  const [row] = await db.select({ data: localGroups.data }).from(localGroups).where(where);
+  if (!row) throw new Error('Group not found');
+  await db.update(localGroups).set({ data: { ...row.data, ...update } }).where(where);
 }
 
 /**
