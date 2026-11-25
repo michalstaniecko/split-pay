@@ -129,7 +129,7 @@ A fixed, translated list with icons (food, transport, accommodation, alcohol, fu
 - A **local group** ("Grupa lokalna", badge "Tylko na tym telefonie") lives only in a device database, separate from any user's cache; it is never sent to the server. A quick bill can be local too.
 - Everyone in it is typed in by hand (members without an account). The **device member** ("Ja") is the "me" of the group: its name is asked once per device and pre-filled in each new local group; renaming it in one group doesn't change the others.
 - Available: any number of entries, all split modes, multiple payers, incomes, settlements, balances, settle-up and the settle-up summary.
-- Not available: currencies other than the base currency (chosen freely at creation; no conversion), receipt photos, change history, trip dates and attendance, archiving, reminders and push, payout details, group link and QR, claiming.
+- Not available: currencies other than the base currency (chosen freely at creation; no conversion), receipt photos, change history, trip dates and attendance, archiving, reminders and push, payout details, group link and QR, claiming, statistics (computed by the server), leaving the group (deleting it is the only way out).
 - Deleting a local group needs a confirmation, is immediate and cannot be undone (there is no owner).
 - A clear "Dane są tylko na tym telefonie" notice when the first local group is created and in Group info. No backup or export.
 - Signing in keeps existing local groups next to synced ones; once signed in, new groups are always synced. Signing out deletes the account's cache but keeps local groups (they belong to the device).

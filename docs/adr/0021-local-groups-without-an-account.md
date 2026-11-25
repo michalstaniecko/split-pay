@@ -10,7 +10,7 @@ The app can be used without signing in, but only through **local groups**: group
 
 ## Consequences
 
-- Local groups drop everything that needs the server or other people: foreign currencies (rates come from our server, ADR-0014), receipt photos, change history, trip dates and attendance, archiving, reminders and push, payout details, group link and QR, claiming. Deleting a local group is immediate and cannot be undone.
+- Local groups drop everything that needs the server or other people: foreign currencies (rates come from our server, ADR-0014), receipt photos, change history, trip dates and attendance, archiving, reminders and push, payout details, group link and QR, claiming, statistics (computed by the server) and leaving the group. Deleting a local group is immediate and cannot be undone.
 - The data is lost with the app or the phone; the app says so plainly. No backup or export in the MVP.
 - After signing in, existing local groups stay next to synced ones; new groups are always synced. Moving a local group to an account is v2 — client-generated UUIDs keep that a plain upload.
 - Without an account the app is available on iOS and Android only; the web has no local database and stays the read-only group view.
