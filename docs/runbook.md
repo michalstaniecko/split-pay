@@ -220,6 +220,13 @@ Sign-in codes are emailed through Zoho ZeptoMail's HTTP API (ADR-0023), EU data 
 
 Request a sign-in code in the app for a mailbox you can read. The email arrives within a minute in the app's language (Polish or English). If it doesn't: the API log shows `[otp] delivery failed`, and Sentry has an issue tagged `job: otp-email` with the HTTP status (401 = wrong token or host, 4xx with a verified domain = check `EMAIL_FROM`). ZeptoMail → **Reports / Logs** shows bounces.
 
+To check a token or a newly verified domain without the app, run the live test from `apps/api` with the variables in `.env`. It sends one Polish and one English email:
+
+```
+ZEPTOMAIL_LIVE_TEST=1 ZEPTOMAIL_LIVE_TO=<your mailbox> \
+node --env-file=.env ../../node_modules/vitest/vitest.mjs run src/otp-email/zeptomail.live.test.ts
+```
+
 ### Rotate the token
 
 Mail Agent → **SMTP/API** → generate a new Send Mail token, update `ZEPTOMAIL_TOKEN` in Coolify, **Restart**, check that codes arrive, then delete the old token.
