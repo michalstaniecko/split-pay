@@ -23,7 +23,46 @@ describe('email OTP sign-in', () => {
     const otp = await requestOtp('bartek@example.com');
 
     expect(otp).toMatch(/^\d{6}$/);
-    expect(sentOtps).toEqual([{ email: 'bartek@example.com', otp, type: 'sign-in' }]);
+    expect(sentOtps).toEqual([{ email: 'bartek@example.com', otp, type: 'sign-in', locale: 'en' }]);
+  });
+
+  it('writes the email in the language the app asks for', async () => {
+    const { app, json, sentOtps } = createTestApp();
+
+    await app.request(
+      '/api/auth/email-otp/send-verification-otp',
+      json({ email: 'ania@example.com', type: 'sign-in' }, { 'accept-language': 'pl' }),
+    );
+    await app.request(
+      '/api/auth/email-otp/send-verification-otp',
+      json({ email: 'bartek@example.com', type: 'sign-in' }, { 'accept-language': 'de' }),
+    );
+    await new Promise((resolve) => setImmediate(resolve));
+
+    expect(sentOtps.map((m) => [m.email, m.locale])).toEqual([
+      ['ania@example.com', 'pl'],
+      ['bartek@example.com', 'en'],
+    ]);
+  });
+
+  it('answers 200 when delivery fails and reports the failure', async () => {
+    const failure = new Error('ZeptoMail responded 500');
+    const reported: unknown[] = [];
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { app, json } = createTestApp({
+      otpSender: { send: () => Promise.reject(failure) },
+      onOtpError: (error) => reported.push(error),
+    });
+
+    const res = await app.request(
+      '/api/auth/email-otp/send-verification-otp',
+      json({ email: 'ania@example.com', type: 'sign-in' }),
+    );
+    await new Promise((resolve) => setImmediate(resolve));
+
+    expect(res.status).toBe(200);
+    expect(reported).toEqual([failure]);
+    consoleError.mockRestore();
   });
 
   it('rejects a wrong code', async () => {
@@ -123,7 +162,7 @@ describe('devOtpSender', () => {
   it('writes the code to the log', async () => {
     const log = vi.spyOn(console, 'log').mockImplementation(() => {});
 
-    await devOtpSender.send({ email: 'ania@example.com', otp: '123456', type: 'sign-in' });
+    await devOtpSender.send({ email: 'ania@example.com', otp: '123456', type: 'sign-in', locale: 'en' });
 
     expect(log).toHaveBeenCalledWith(expect.stringContaining('ania@example.com'));
     expect(log).toHaveBeenCalledWith(expect.stringContaining('123456'));

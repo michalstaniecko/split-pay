@@ -1,29 +1,32 @@
 import type { FeatureFlags } from '@split-pay/shared';
 import { parseResponse } from 'hono/client';
 import { createApp } from '../src/app';
-import { createAuth, type OtpSender, type OtpType } from '../src/auth';
+import { createAuth, type OtpMessage, type OtpSender } from '../src/auth';
 import { createApiClient } from '../src/client';
 import { memoryStorage, type MemoryStorage } from '../src/storage/object-storage';
 import { testDb } from './db';
 
-export interface SentOtp {
-  email: string;
-  otp: string;
-  type: OtpType;
-}
+export type SentOtp = OtpMessage;
 
 /**
  * The real app wired to the test database. OTP codes are captured in `sentOtps`
- * instead of being logged.
+ * instead of being logged; pass `otpSender` to replace that (e.g. a failing one).
  */
 export function createTestApp(
-  options: { flags?: FeatureFlags; webUrl?: string; storage?: MemoryStorage | null; adminEmails?: string[] } = {},
+  options: {
+    flags?: FeatureFlags;
+    webUrl?: string;
+    storage?: MemoryStorage | null;
+    adminEmails?: string[];
+    otpSender?: OtpSender;
+    onOtpError?: (error: unknown) => void;
+  } = {},
 ) {
   // Photos go to an in-memory bucket (ADR-0006); `storage.objects` shows what is stored.
   // `storage: null` = photos not configured.
-  const { storage = memoryStorage(), ...appOptions } = options;
+  const { storage = memoryStorage(), otpSender: customOtpSender, onOtpError, ...appOptions } = options;
   const sentOtps: SentOtp[] = [];
-  const otpSender: OtpSender = {
+  const otpSender: OtpSender = customOtpSender ?? {
     async send(message) {
       sentOtps.push(message);
     },
@@ -31,6 +34,7 @@ export function createTestApp(
   const auth = createAuth({
     db: testDb.db,
     otpSender,
+    ...(onOtpError ? { onOtpError } : {}),
     baseURL: 'http://localhost:3000',
     secret: 'test-secret-test-secret-test-secret!!',
   });

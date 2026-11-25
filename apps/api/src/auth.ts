@@ -4,6 +4,8 @@ import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { APIError, createAuthMiddleware, getSessionFromCtx } from 'better-auth/api';
 import { emailOTP } from 'better-auth/plugins';
+import { otpLocaleFromHeader } from './otp-email/locale';
+import type { OtpLocale } from './otp-email/templates';
 import type { Db } from './db/client';
 import * as authSchema from './db/auth-schema';
 import { blockedSessionMayUseAuth } from './blocked-session';
@@ -11,21 +13,37 @@ import { isAccountBlocked } from './routes/moderation';
 
 export type OtpType = 'sign-in' | 'email-verification' | 'forget-password' | 'change-email';
 
-/** Delivers one-time sign-in codes. Production SMTP delivery comes with #32. */
+/** How long a one-time code is valid. The email states it, so it is derived from here. */
+export const OTP_EXPIRES_IN_SECONDS = 300;
+
+export interface OtpMessage {
+  email: string;
+  otp: string;
+  type: OtpType;
+  /** Email language, from the request's `Accept-Language` (the app's UI language). */
+  locale: OtpLocale;
+}
+
+/** Delivers one-time sign-in codes: ZeptoMail in production (ADR-0023), the log in development. */
 export interface OtpSender {
-  send(message: { email: string; otp: string; type: OtpType }): Promise<void>;
+  send(message: OtpMessage): Promise<void>;
 }
 
 /** Development sender: writes the code to the API log. */
 export const devOtpSender: OtpSender = {
-  async send({ email, otp, type }) {
-    console.log(`[otp] ${type} code for ${email}: ${otp}`);
+  async send({ email, otp, type, locale }) {
+    console.log(`[otp] ${type} code (${locale}) for ${email}: ${otp}`);
   },
 };
 
 export interface AuthDeps {
   db: Db;
   otpSender: OtpSender;
+  /**
+   * Called when a code could not be delivered (reported to Sentry). The error must not
+   * carry the email, the code or the provider token.
+   */
+  onOtpError?: (error: unknown) => void;
   /** Public origin of the API (BETTER_AUTH_URL). */
   baseURL: string;
   /** BETTER_AUTH_SECRET, 32+ characters. */
@@ -64,12 +82,14 @@ export const createAuth = (deps: AuthDeps) =>
     plugins: [
       emailOTP({
         otpLength: 6,
-        expiresIn: 300,
+        expiresIn: OTP_EXPIRES_IN_SECONDS,
         allowedAttempts: 3,
-        async sendVerificationOTP({ email, otp, type }) {
+        async sendVerificationOTP({ email, otp, type }, ctx) {
+          const locale = otpLocaleFromHeader((ctx?.headers ?? ctx?.request?.headers)?.get('accept-language'));
           // Not awaited on purpose: response time must not reveal delivery (Better Auth docs).
-          void deps.otpSender.send({ email, otp, type }).catch((error: unknown) => {
+          void deps.otpSender.send({ email, otp, type, locale }).catch((error: unknown) => {
             console.error('[otp] delivery failed', error);
+            deps.onOtpError?.(error);
           });
         },
       }),

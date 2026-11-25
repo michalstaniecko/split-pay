@@ -18,7 +18,7 @@ type Step = { name: 'email' } | { name: 'code'; email: string };
  * the join screen follows the sign-in (`usePendingJoin`).
  */
 export default function SignInScreen() {
-  const { t } = useLingui();
+  const { t, i18n } = useLingui();
   const { theme } = useUnistyles();
   const { reason } = useLocalSearchParams<{ reason?: string }>();
   const [step, setStep] = useState<Step>({ name: 'email' });
@@ -40,7 +40,12 @@ export default function SignInScreen() {
   const sendCode = async (email: string) => {
     setBusy(true);
     setError(null);
-    const { error: sendError } = await authClient.emailOtp.sendVerificationOtp({ email, type: 'sign-in' });
+    // The API writes the email in the app's language (pl/en, anything else → English).
+    const { error: sendError } = await authClient.emailOtp.sendVerificationOtp({
+      email,
+      type: 'sign-in',
+      fetchOptions: { headers: { 'accept-language': i18n.locale } },
+    });
     setBusy(false);
     if (sendError) {
       setError(t`Nie udało się wysłać kodu. Spróbuj ponownie.`);

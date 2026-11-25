@@ -12,7 +12,7 @@ Not every participant will install the app — hence **members without an accoun
 ## Product character
 
 - A public product in the App Store and Google Play, but the MVP is designed for "friends" scale — no building scalability up front.
-- From the start we meet store and EU law requirements: privacy policy, terms of service (DSA — reporting procedure), in-app account deletion, content reporting. The privacy policy lists our processors, including Cloudflare (US; DPA, Data Privacy Framework, EU-jurisdiction buckets).
+- From the start we meet store and EU law requirements: privacy policy, terms of service (DSA — reporting procedure), in-app account deletion, content reporting. The privacy policy lists our processors, including Cloudflare (US; DPA, Data Privacy Framework, EU-jurisdiction buckets) and Zoho (ZeptoMail, sign-in code emails; EU data centre).
 - Free, no ads. Support via GitHub Sponsors — link **only on the web and in the README**, not in the mobile app (review rejection risk, [ADR-0011](./adr/0011-github-sponsors-outside-the-app.md)). In the app, an "About" section without a clickable payment link. AdMob possibly in the future, behind a feature flag.
 - A simple feature flags mechanism in the code from the start, so paid features/ads can be added without a rebuild.
 
@@ -255,7 +255,7 @@ Expo Router, chat-style layout — no bottom tabs, no group tabs ([ADR-0017](./a
 | `packages/ui` | design tokens, 4 themes |
 | Database | PostgreSQL + Drizzle |
 | Auth | Better Auth: Sign in with Apple, Google, email OTP (no passwords); token in SecureStore |
-| OTP emails | transactional SMTP with a free plan (Resend / Brevo / SES) |
+| OTP emails | Zoho ZeptoMail (EU data centre), HTTP Send Mail API behind the `OtpSender` port ([ADR-0023](./adr/0023-otp-emails-via-zeptomail-http-api.md)) |
 | App data | TanStack Query + expo-sqlite/Drizzle (cache + outbox) |
 | Styling | Unistyles 3 |
 | File storage | Cloudflare R2 (S3-compatible, EU jurisdiction); RustFS locally (`compose.yaml`) |
@@ -331,4 +331,4 @@ Expo Router, chat-style layout — no bottom tabs, no group tabs ([ADR-0017](./a
 - [x] **App name and domain** — **Kwitz**, `kwitz.app`: `app.kwitz.app` (web + links), `api.kwitz.app` (API), bundle ID `app.kwitz` ([ADR-0022](./adr/0022-app-name-kwitz-and-domain-kwitz-app.md)).
 - [ ] **PhotoDNA application** — at the public store launch.
 - [x] Choose i18next vs Lingui — **Lingui** (#4).
-- [ ] Choose an SMTP provider for OTP emails.
+- [x] Choose a provider for OTP emails — **Zoho ZeptoMail** (EU), HTTP API ([ADR-0023](./adr/0023-otp-emails-via-zeptomail-http-api.md), #32).
