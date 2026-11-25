@@ -17,13 +17,15 @@ import { type GroupDetail, useGroup } from '@/features/groups/groups-query';
 import { type MemberRow, memberRows } from '@/features/groups/member-form';
 import { HistorySection } from '@/features/history/history-section';
 import { ReportableMemberAvatar } from '@/features/moderation/reportable-member-avatar';
+import { LocalDataNotice } from '@/features/offline/local-data-notice';
 import { groupAvatarsQuery } from '@/features/photos/photos-query';
 import { useFormatters } from '@/i18n/use-formatters';
 import { authClient } from '@/lib/auth-client';
 
 /**
  * Group info (GLOSSARY): members, group link (not when archived), Stats, change history,
- * settings, then leave / archive / delete at the bottom.
+ * settings, then leave / archive / delete at the bottom. A local group (ADR-0021)
+ * shows its members and the "Dane są tylko na tym telefonie" notice.
  */
 export default function GroupInfoScreen() {
   const { theme } = useUnistyles();
@@ -41,6 +43,7 @@ function GroupInfo({ group }: { group: GroupDetail }) {
   const { data: session } = authClient.useSession();
   // An archived group is read-only and closed to joining: no links, no adding or renaming members.
   const archived = !canShareLinks(group);
+  const { local } = group;
   const rows = memberRows(group, session?.user.id).map((row) => (archived ? { ...row, canRename: false } : row));
   const openMemberSheet = (memberId?: string) =>
     router.push({
@@ -61,6 +64,7 @@ function GroupInfo({ group }: { group: GroupDetail }) {
         <Text style={styles.name}>{group.name}</Text>
         <Text style={styles.muted}>{dates ? `${dates} · ${group.baseCurrency}` : group.baseCurrency}</Text>
       </View>
+      {local ? <LocalDataNotice /> : null}
 
       <Section
         title={t`Członkowie`}
@@ -68,8 +72,8 @@ function GroupInfo({ group }: { group: GroupDetail }) {
         {rows.map((row) => (
           <View key={row.id} style={styles.memberLine}>
             <ReportableMemberAvatar groupId={group.id} member={row} url={avatars?.get(row.id)} size={32} />
-            <MemberItem row={row} onPress={() => openMemberSheet(row.id)} />
-            {!archived && row.withoutAccount ? <PersonalClaimLinkButton groupId={group.id} groupName={group.name} member={row} /> : null}
+            <MemberItem row={row} accountBadge={!local} onPress={() => openMemberSheet(row.id)} />
+            {!archived && !local && row.withoutAccount ? <PersonalClaimLinkButton groupId={group.id} groupName={group.name} member={row} /> : null}
           </View>
         ))}
         {owner ? <Text style={styles.muted}>{t`Grupę założono: ${owner}`}</Text> : null}
@@ -78,11 +82,21 @@ function GroupInfo({ group }: { group: GroupDetail }) {
             accessibilityRole="button"
             onPress={() => openMemberSheet()}
             style={({ pressed }) => [styles.addRow, pressed && styles.pressed]}>
-            <Text style={styles.addLabel}>{t`+ Dodaj osobę bez konta`}</Text>
+            <Text style={styles.addLabel}>{local ? t`+ Dodaj osobę` : t`+ Dodaj osobę bez konta`}</Text>
           </Pressable>
         ) : null}
-        <AttendanceGridView group={group} />
+        {local ? null : <AttendanceGridView group={group} />}
       </Section>
+      {local ? null : <SyncedGroupSections group={group} archived={archived} />}
+    </ScrollView>
+  );
+}
+
+/** What only a synced group has: group link, Stats, change history, settings, leave / archive / delete. */
+function SyncedGroupSections({ group, archived }: { group: GroupDetail; archived: boolean }) {
+  const { t } = useLingui();
+  return (
+    <>
       {!archived ? (
         <Section title={t`Link grupy`}>
           <GroupLinkSection groupId={group.id} groupName={group.name} />
@@ -103,16 +117,16 @@ function GroupInfo({ group }: { group: GroupDetail }) {
         <GroupSettingsSection group={group} />
       </Section>
       <GroupLifecycleSection group={group} />
-    </ScrollView>
+    </>
   );
 }
 
 /** A member: name, badges (me, without account); tappable when I may rename them. */
-function MemberItem({ row, onPress }: { row: MemberRow; onPress: () => void }) {
+function MemberItem({ row, accountBadge, onPress }: { row: MemberRow; accountBadge: boolean; onPress: () => void }) {
   const { t } = useLingui();
   const badges = [
     row.isMe ? t`Ty` : null,
-    row.withoutAccount ? t`bez konta` : null,
+    accountBadge && row.withoutAccount ? t`bez konta` : null,
   ].filter((badge): badge is string => badge !== null);
   const content = (
     <>

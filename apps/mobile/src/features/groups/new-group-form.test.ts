@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { GROUP_COLORS, GROUP_EMOJIS, initialNewGroupDraft, type NewGroupDraft, parseNewGroupDraft } from './new-group-form';
+import {
+  GROUP_COLORS,
+  GROUP_EMOJIS,
+  initialNewGroupDraft,
+  type NewGroupDraft,
+  parseLocalGroupDraft,
+  parseNewGroupDraft,
+} from './new-group-form';
 
 const ID = '7f0c4f53-2a7e-4c55-9a5c-0b8f3a3f1b11';
 
@@ -68,5 +75,42 @@ describe('new group form', () => {
   it('reports several fields at once', () => {
     const result = parseNewGroupDraft(draft({ name: '', hasDates: true, startDate: '', endDate: '' }), ID);
     expect(result).toEqual({ ok: false, errors: ['name', 'startDate', 'endDate'] });
+  });
+});
+
+describe('new local group form', () => {
+  const ME = '7f0c4f53-2a7e-4c55-9a5c-0b8f3a3f1b12';
+  const ANIA = '7f0c4f53-2a7e-4c55-9a5c-0b8f3a3f1b13';
+  const BARTEK = '7f0c4f53-2a7e-4c55-9a5c-0b8f3a3f1b14';
+
+  it('builds the local group with the device member and the people typed in, skipping empty rows', () => {
+    const result = parseLocalGroupDraft(
+      draft({ name: 'Pizza', baseCurrency: 'CZK', hasDates: true, startDate: '2026-07-10', endDate: '2026-07-14' }),
+      ID,
+      { id: ME, name: ' Michał ' },
+      [
+        { id: ANIA, name: 'Ania ' },
+        { id: BARTEK, name: '  ' },
+      ],
+    );
+    expect(result).toEqual({
+      ok: true,
+      value: {
+        id: ID,
+        name: 'Pizza',
+        emoji: GROUP_EMOJIS[0],
+        color: GROUP_COLORS[0],
+        baseCurrency: 'CZK',
+        deviceMember: { id: ME, displayName: 'Michał' },
+        people: [{ id: ANIA, displayName: 'Ania' }],
+      },
+    });
+  });
+
+  it("reports a missing group name and the device member's name", () => {
+    expect(parseLocalGroupDraft(draft({ name: '' }), ID, { id: ME, name: ' ' }, [])).toEqual({
+      ok: false,
+      errors: ['name', 'deviceMember'],
+    });
   });
 });

@@ -60,8 +60,11 @@ function MemberForm({ group, memberId }: { group: GroupDetailData; memberId: str
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>{existing ? t`Zmień imię` : t`Dodaj osobę bez konta`}</Text>
-      {existing ? null : (
+      <Text style={styles.title}>
+        {existing ? t`Zmień imię` : group.local ? t`Dodaj osobę` : t`Dodaj osobę bez konta`}
+      </Text>
+      {/* Nobody can claim a member of a local group (ADR-0021). */}
+      {existing || group.local ? null : (
         <Text style={styles.hint}>{t`Wpisujesz za nią wydatki. Później może przejąć swój profil.`}</Text>
       )}
       <TextInput

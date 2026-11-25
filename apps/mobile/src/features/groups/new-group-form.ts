@@ -1,4 +1,5 @@
-import { type CurrencyCode, NewGroup } from '@split-pay/shared';
+import { type CurrencyCode, MemberName, NewGroup } from '@split-pay/shared';
+import type { NewLocalGroup } from '@/features/offline/local-group-store';
 
 /** Emoji offered in the create-group form (no free emoji input in the MVP). */
 export const GROUP_EMOJIS = ['👥', '⛵', '🏔️', '🏖️', '🏠', '🍕', '🎉', '🚗', '✈️', '⛺', '🎿', '🧾'] as const;
@@ -62,4 +63,42 @@ export function parseNewGroupDraft(draft: NewGroupDraft, id: string): ParsedNewG
   if (result.success) return { ok: true, value: result.data };
   const invalid = new Set(result.error.issues.map((issue) => issue.path[0]));
   return { ok: false, errors: FIELDS.filter((field) => invalid.has(field)) };
+}
+
+/** A person typed into the local group form; `name` as typed. */
+export interface PersonDraft {
+  id: string;
+  name: string;
+}
+
+export type LocalGroupField = Exclude<NewGroupField, 'startDate' | 'endDate'> | 'deviceMember';
+export type ParsedLocalGroup = { ok: true; value: NewLocalGroup } | { ok: false; errors: LocalGroupField[] };
+
+/**
+ * The create-group input of a local group (ADR-0021): the group fields
+ * (never trip dates), the device member ("Ja") and the people typed in —
+ * rows left empty are skipped. Name inputs cap their length (60, `MemberName`).
+ */
+export function parseLocalGroupDraft(
+  draft: NewGroupDraft,
+  id: string,
+  deviceMember: PersonDraft,
+  people: readonly PersonDraft[],
+): ParsedLocalGroup {
+  const group = parseNewGroupDraft({ ...draft, hasDates: false }, id);
+  const me = MemberName.safeParse(deviceMember.name);
+  const errors: LocalGroupField[] = group.ok ? [] : (group.errors as LocalGroupField[]);
+  if (!me.success) errors.push('deviceMember');
+  if (!group.ok || !me.success) return { ok: false, errors };
+  const { startDate: _s, endDate: _e, ...fields } = group.value;
+  return {
+    ok: true,
+    value: {
+      ...fields,
+      deviceMember: { id: deviceMember.id, displayName: me.data },
+      people: people
+        .map((p) => ({ id: p.id, displayName: p.name.trim() }))
+        .filter((p) => p.displayName !== ''),
+    },
+  };
 }

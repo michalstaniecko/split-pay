@@ -44,4 +44,17 @@ describe('memberRows', () => {
   it('lets nobody be renamed by a user who is still signing in', () => {
     expect(memberRows(group, undefined).map((r) => r.canRename)).toEqual([false, false, true]);
   });
+
+  it('in a local group, the device member is me, there is no owner and everyone can be renamed', () => {
+    const local = {
+      ownerMemberId: ANIA,
+      deviceMemberId: ANIA,
+      local: true,
+      members: [member(ANIA, 'Ania', null), member(TOMEK, 'Tomek', null)],
+    };
+    expect(memberRows(local, undefined)).toEqual([
+      { id: ANIA, displayName: 'Ania', isOwner: false, isMe: true, withoutAccount: true, canRename: true },
+      { id: TOMEK, displayName: 'Tomek', isOwner: false, isMe: false, withoutAccount: true, canRename: true },
+    ]);
+  });
 });

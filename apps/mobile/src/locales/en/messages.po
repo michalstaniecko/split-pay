@@ -110,6 +110,11 @@ msgid "↓ Wpływ"
 msgstr "↓ Income"
 
 #: src/app/(app)/groups/[groupId]/info.tsx
+#: src/app/(app)/new-group.tsx
+msgid "+ Dodaj osobę"
+msgstr "+ Add person"
+
+#: src/app/(app)/groups/[groupId]/info.tsx
 msgid "+ Dodaj osobę bez konta"
 msgstr "+ Add a person without an account"
 
@@ -271,6 +276,10 @@ msgstr "Members"
 msgid "Dane do spłaty"
 msgstr "Payout details"
 
+#: src/features/offline/local-data-notice.tsx
+msgid "Dane są tylko na tym telefonie"
+msgstr "Data is only on this phone"
+
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
 #: src/features/entries/entry-detail-body.tsx
 msgid "Data"
@@ -319,6 +328,7 @@ msgstr "Add"
 msgid "Dodaj co najmniej jedną osobę."
 msgstr "Add at least one person."
 
+#: src/app/(app)/groups/[groupId]/member.tsx
 #: src/app/(app)/quick-bill.tsx
 msgid "Dodaj osobę"
 msgstr "Add a person"
@@ -421,6 +431,10 @@ msgstr "The group or the entry no longer exists, or you no longer have access to
 msgid "Grupa jest tylko do odczytu. Przywróć ją, żeby coś zmienić."
 msgstr "The group is read-only. Unarchive it to change anything."
 
+#: src/features/offline/local-data-notice.tsx
+msgid "Grupa lokalna nie trafia na serwer. Odinstalowanie aplikacji albo zmiana telefonu usuwa jej dane."
+msgstr "A local group is never sent to the server. Uninstalling the app or switching phones deletes its data."
+
 #: src/features/web-view/public-error.tsx
 msgid "Grupa ma już nowy link. Poproś kogoś z grupy o aktualny."
 msgstr "The group has a new link. Ask someone in the group for the current one."
@@ -468,6 +482,7 @@ msgid "Ich wersja"
 msgstr "Their version"
 
 #: src/app/(app)/groups/[groupId]/member.tsx
+#: src/app/(app)/new-group.tsx
 msgid "Imię"
 msgstr "Name"
 
@@ -610,6 +625,10 @@ msgstr "blocked"
 #: src/app/blocked.tsx
 msgid "Konto zablokowane"
 msgstr "Account blocked"
+
+#: src/app/(auth)/sign-in.tsx
+msgid "Kontynuuj bez konta"
+msgstr "Continue without an account"
 
 #: src/app/(app)/groups/[groupId]/settle.tsx
 msgid "Kopiuj"
@@ -967,6 +986,10 @@ msgid "Nowy wydatek"
 msgstr "New expense"
 
 #: src/app/(app)/new-group.tsx
+msgid "np. Kasia"
+msgstr "e.g. Kate"
+
+#: src/app/(app)/new-group.tsx
 msgid "np. Mazury 2026"
 msgstr "e.g. Lake trip 2026"
 
@@ -1034,6 +1057,11 @@ msgstr "Left the group: {name}"
 #: src/app/(app)/_layout.tsx
 msgid "Osoba"
 msgstr "Person"
+
+#. placeholder {0}: index + 1
+#: src/app/(app)/new-group.tsx
+msgid "Osoba {0}"
+msgstr "Person {0}"
 
 #: src/app/(app)/admin.tsx
 msgid "Otwarte zgłoszenia"
@@ -1121,6 +1149,10 @@ msgstr "Enter a group name."
 msgid "Podaj poprawny adres e-mail."
 msgstr "Enter a valid email address."
 
+#: src/app/(app)/new-group.tsx
+msgid "Podaj swoje imię."
+msgstr "Enter your name."
+
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
 #: src/app/(app)/quick-bill.tsx
 msgid "Podaj tytuł."
@@ -1170,6 +1202,10 @@ msgstr "Reason for the report"
 #: src/features/stats/stats-view.tsx
 msgid "Poza grupą"
 msgstr "Former members"
+
+#: src/app/(app)/new-group.tsx
+msgid "Pozostałe osoby"
+msgstr "Other people"
 
 #: src/features/moderation/reportable-member-avatar.tsx
 msgid "Pozwala zgłosić zdjęcie"
@@ -1498,6 +1534,10 @@ msgstr "Your share {share}."
 msgid "Twoja wersja"
 msgstr "Your version"
 
+#: src/app/(app)/new-group.tsx
+msgid "Twoje imię"
+msgstr "Your name"
+
 #: src/app/(app)/groups/[groupId]/entry-conflict.tsx
 msgid "Twoje zmiany nie zostały zapisane."
 msgstr "Your changes were not saved."
@@ -1510,6 +1550,10 @@ msgstr "Your changes were not saved."
 #: src/features/settlements/settlement-message.ts
 msgid "Ty"
 msgstr "You"
+
+#: src/features/offline/local-data-notice.tsx
+msgid "Tylko na tym telefonie"
+msgstr "Only on this phone"
 
 #: src/features/history/change-row.tsx
 msgid "Tylko ta osoba może zmienić swoje imię."
@@ -1951,6 +1995,10 @@ msgstr "Sign in"
 #: src/app/(auth)/sign-in.tsx
 msgid "Zaloguj się"
 msgstr "Sign in"
+
+#: src/app/(app)/index.tsx
+msgid "Zaloguj się, by zapraszać znajomych"
+msgstr "Sign in to invite friends"
 
 #: src/app/(app)/groups/[groupId]/entries/[entryId].tsx
 #: src/app/(app)/groups/[groupId]/entry-conflict.tsx

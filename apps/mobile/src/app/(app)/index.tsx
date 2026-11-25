@@ -10,26 +10,42 @@ import { GroupAvatar } from '@/components/group-avatar';
 import { inboxSections } from '@/features/groups/group-lifecycle';
 import { useGroupUnread } from '@/features/groups/group-unread-store';
 import { type GroupListItem, groupsQuery } from '@/features/groups/groups-query';
+import { LocalGroupBadge } from '@/features/offline/local-data-notice';
 import { OfflineBanner } from '@/features/offline/offline-banner';
 import { InboxSearchField } from '@/features/search/inbox-search-field';
 import { InboxSearchResults } from '@/features/search/inbox-search-results';
 import { useFormatters } from '@/i18n/use-formatters';
+import { authClient } from '@/lib/auth-client';
 import { useRefreshOnFocus } from '@/lib/use-refresh-on-focus';
 
-/** Inbox (home): my groups, most recent activity first (ADR-0017). */
+/**
+ * Inbox (home): my groups, most recent activity first (ADR-0017). Signed out,
+ * the local groups on this device under a sign-in banner (ADR-0021).
+ */
 export default function InboxScreen() {
   const { t } = useLingui();
   const { theme } = useUnistyles();
   const insets = useSafeAreaInsets();
+  const signedIn = !!authClient.useSession().data;
   const groups = useQuery(groupsQuery());
   useRefreshOnFocus(groups.refetch);
   const [query, setQuery] = useState('');
 
-  const openNew = () => router.push('/new');
+  // Signed out there is only one thing to create: a local group.
+  const openNew = () => router.push(signedIn ? '/new' : '/new-group');
 
   return (
     <View style={styles.container}>
-      <OfflineBanner />
+      {signedIn ? (
+        <OfflineBanner />
+      ) : (
+        <Pressable
+          accessibilityRole="link"
+          onPress={() => router.push('/sign-in')}
+          style={({ pressed }) => [styles.signInBanner, pressed && styles.pressed]}>
+          <Text style={styles.signInLabel}>{t`Zaloguj się, by zapraszać znajomych`}</Text>
+        </Pressable>
+      )}
       <InboxSearchField value={query} onChange={setQuery} />
       {query.trim() !== '' ? (
         <InboxSearchResults query={query} />
@@ -123,6 +139,7 @@ function InboxRow({ group }: { group: GroupListItem }) {
           <Text style={[styles.preview, unread && styles.unreadPreview]} numberOfLines={1}>
             {preview}
           </Text>
+          {group.local ? <LocalGroupBadge /> : null}
         </View>
         {unread ? <View style={styles.unreadDot} /> : null}
       </Pressable>
@@ -215,6 +232,19 @@ const styles = StyleSheet.create((theme) => ({
     fontSize: theme.font.sizeSm,
     fontWeight: theme.font.weightBold,
     color: theme.colors.textMuted,
+  },
+  signInBanner: {
+    minHeight: 44,
+    justifyContent: 'center',
+    paddingVertical: theme.space(2),
+    paddingHorizontal: theme.space(4),
+    backgroundColor: theme.colors.surface,
+  },
+  signInLabel: {
+    fontSize: theme.font.sizeSm,
+    fontWeight: theme.font.weightBold,
+    color: theme.colors.primary,
+    textAlign: 'center',
   },
   newButton: {
     position: 'absolute',
