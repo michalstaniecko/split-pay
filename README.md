@@ -11,7 +11,7 @@ apps/mobile      Expo (React Native) — iOS, Android, web
 apps/api         Hono API
 packages/shared  types, Zod schemas, split and settlement logic
 packages/ui      design tokens and themes
-docs/            specification and ADRs
+docs/            specification, ADRs and the operations runbook (docs/runbook.md)
 ```
 
 ## Getting started
