@@ -80,8 +80,21 @@ export async function dispatchPushes(
   return { sent: messages.length };
 }
 
-/** Runs `dispatchPushes` every `intervalMs` (started by `index.ts` only, never in tests). */
-export function startPushJob({ db, sender, intervalMs = 10_000 }: { db: Db; sender: PushSender; intervalMs?: number }) {
+/**
+ * Runs `dispatchPushes` every `intervalMs` (started by `index.ts` only). `onError` gets
+ * the error of a failed run (error reporting, #64).
+ */
+export function startPushJob({
+  db,
+  sender,
+  intervalMs = 10_000,
+  onError,
+}: {
+  db: Db;
+  sender: PushSender;
+  intervalMs?: number;
+  onError?: (error: unknown) => void;
+}) {
   let running = false;
   const run = async () => {
     if (running) return;
@@ -90,6 +103,7 @@ export function startPushJob({ db, sender, intervalMs = 10_000 }: { db: Db; send
       await dispatchPushes(db, sender);
     } catch (error) {
       console.error('[push] dispatch failed', error);
+      onError?.(error);
     } finally {
       running = false;
     }

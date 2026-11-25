@@ -7,6 +7,8 @@ nodeLinker: hoisted
 
 allowBuilds:
   esbuild: true
+  # Its postinstall only re-downloads the binary that @sentry/cli-<platform> already ships.
+  '@sentry/cli': false
 
 permissions:
   tsdown:

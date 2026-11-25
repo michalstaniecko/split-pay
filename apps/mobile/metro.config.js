@@ -1,6 +1,8 @@
-const { getDefaultConfig } = require('expo/metro-config');
+const { getSentryExpoConfig } = require('@sentry/react-native/metro');
 
-const config = getDefaultConfig(__dirname);
+// Expo's default config plus Sentry debug ids (source maps). No web replay or feedback
+// widget: they would record what people see and type.
+const config = getSentryExpoConfig(__dirname, { includeWebReplay: false, includeWebFeedback: false });
 const { transformer, resolver } = config;
 
 // Lingui: compile `.po` catalogs on import (src/i18n/i18n.ts).

@@ -48,14 +48,17 @@ export function startRateJob(options: {
   source: RateSource;
   intervalMs?: number;
   log?: (message: string, error?: unknown) => void;
+  /** Called with the error of a failed run (error reporting, #64). */
+  onError?: (error: unknown) => void;
 }): () => void {
-  const { db, source, intervalMs = 6 * 60 * 60 * 1000, log = console.log } = options;
+  const { db, source, intervalMs = 6 * 60 * 60 * 1000, log = console.log, onError } = options;
   const run = async () => {
     try {
       const days = await syncRates(db, source, utcToday());
       if (days > 0) log(`[rates] stored ${days} ECB day(s)`);
     } catch (error) {
       log('[rates] sync failed', error);
+      onError?.(error);
     }
   };
   void run();
