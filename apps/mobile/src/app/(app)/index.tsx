@@ -31,8 +31,8 @@ export default function InboxScreen() {
   useRefreshOnFocus(groups.refetch);
   const [query, setQuery] = useState('');
 
-  // Signed out there is only one thing to create: a local group.
-  const openNew = () => router.push(signedIn ? '/new' : '/new-group');
+  // Both options in "Nowy" work signed out too: each creates a local group (ADR-0021).
+  const openNew = () => router.push('/new');
 
   return (
     <View style={styles.container}>

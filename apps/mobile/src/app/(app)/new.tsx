@@ -6,7 +6,10 @@ import { StyleSheet } from 'react-native-unistyles';
 import { Button } from '@/components/button';
 import { closeSheet } from '@/lib/close-sheet';
 
-/** "Nowy" sheet from the inbox: a quick bill or a new group (SPEC "Navigation and screens"). */
+/**
+ * "Nowy" sheet from the inbox: a quick bill or a new group (SPEC "Navigation and screens").
+ * Signed out both forms create a local group (ADR-0021), so the sheet is the same.
+ */
 export default function NewSheet() {
   const { t } = useLingui();
   // The sheet gives way to the chosen form instead of stacking under it.
