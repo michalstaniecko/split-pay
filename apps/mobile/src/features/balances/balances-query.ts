@@ -41,6 +41,8 @@ export type GroupBalances = InferResponseType<(typeof api.groups)[':groupId']['b
 export function useUpdateGroupSettings(groupId: string) {
   const queryClient = useQueryClient();
   return useMutation({
+    // A local group's goes to the device database, so it must also run offline.
+    networkMode: 'always',
     mutationFn: async (input: GroupSettingsUpdate): Promise<void> => {
       if (await isLocalGroup(groupId)) await updateLocalGroupSettings(await localGroupsDb(), groupId, input);
       else await parseResponse(api.groups[':groupId'].settings.$patch({ param: { groupId }, json: input }));

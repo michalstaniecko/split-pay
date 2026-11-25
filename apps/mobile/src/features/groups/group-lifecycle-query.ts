@@ -49,6 +49,8 @@ export function useLeaveGroup(groupId: string) {
 export function useDeleteGroup(groupId: string) {
   const queryClient = useQueryClient();
   return useMutation({
+    // A local group's goes to the device database, so it must also run offline.
+    networkMode: 'always',
     mutationFn: async (): Promise<void> => {
       if (await isLocalGroup(groupId)) await deleteLocalGroup(await localGroupsDb(), groupId);
       else await parseResponse(api.groups[':groupId'].$delete({ param: { groupId } }));

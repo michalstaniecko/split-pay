@@ -105,6 +105,8 @@ export function useGroup(groupId: string) {
 export function useCreateGroup() {
   const queryClient = useQueryClient();
   return useMutation({
+    // A local group's goes to the device database, so it must also run offline.
+    networkMode: 'always',
     mutationFn: async (input: NewGroup | NewLocalGroup): Promise<void> => {
       if ('deviceMember' in input) await createLocalGroup(await localGroupsDb(), input);
       else await parseResponse(api.groups.$post({ json: input }));
@@ -119,6 +121,8 @@ export function useCreateGroup() {
 export function useAddMember(groupId: string) {
   const queryClient = useQueryClient();
   return useMutation({
+    // A local group's goes to the device database, so it must also run offline.
+    networkMode: 'always',
     mutationFn: async (input: NewMember): Promise<void> => {
       if (await isLocalGroup(groupId)) await addLocalMember(await localGroupsDb(), groupId, input);
       else await parseResponse(api.groups[':groupId'].members.$post({ param: { groupId }, json: input }));
@@ -133,6 +137,8 @@ export function useAddMember(groupId: string) {
 export function useRenameMember(groupId: string) {
   const queryClient = useQueryClient();
   return useMutation({
+    // A local group's goes to the device database, so it must also run offline.
+    networkMode: 'always',
     mutationFn: async ({ memberId, ...input }: MemberRename & { memberId: string }): Promise<void> => {
       if (await isLocalGroup(groupId)) await renameLocalMember(await localGroupsDb(), groupId, memberId, input);
       else
