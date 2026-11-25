@@ -2,7 +2,14 @@ import { type Category, type Entry, entryFromNew, type NewEntry, type NewQuickBi
 import { onlineManager, queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import { parseResponse } from 'hono/client';
 import { groupKeys } from '@/features/groups/groups-query';
-import { readLocalEntries } from '@/features/offline/local-group-store';
+import {
+  addLocalEntry,
+  deleteLocalEntry,
+  editLocalEntry,
+  readLocalEntries,
+  restoreLocalEntry,
+} from '@/features/offline/local-group-store';
+import type { LocalDb } from '@/features/offline/local-db';
 import { isLocalGroup, localGroupsDb } from '@/features/offline/local-groups';
 import { hasLocalUser, localDb, localUserId } from '@/features/offline/local-session';
 import { enqueueCreate, isGroupSynced, readEntries, readGroupDetail, saveEntry } from '@/features/offline/local-store';
@@ -44,16 +51,33 @@ export const entriesQuery = (groupId: string) =>
   });
 
 /**
+ * Entries written to the local group store (ADR-0021): stored for good — no
+ * outbox to send, nothing for the server to confirm.
+ */
+const localResults = new WeakSet<Entry>();
+
+/** Runs `write` on the device database when the group is a local group; `null` = a synced group. */
+async function localChange(groupId: string, write: (db: LocalDb) => Promise<Entry>) {
+  if (!(await isLocalGroup(groupId))) return null;
+  const result = await write(await localGroupsDb());
+  localResults.add(result);
+  return result;
+}
+
+/**
  * Adds an entry through the outbox (ADR-0005): it is stored on the device and
  * listed at once (🕓 until the server has it), then sent when online. The
  * caller generates the id once per draft, so resending can't duplicate it.
  * Fails only when the input breaks the `Entry` rules; a refusal by the server
- * shows later as a red "!" on the bubble.
+ * shows later as a red "!" on the bubble. In a local group the entry is
+ * written straight to the device database, added by the device member.
  */
 export function useCreateEntry(groupId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (input: NewEntry): Promise<Entry> => {
+      const local = await localChange(groupId, (db) => addLocalEntry(db, groupId, input));
+      if (local) return local;
       const db = await localDb();
       const createdBy = localUserId();
       // "Added by" (ADR-0019): my member in the group; the server sets the same when it gets the entry.
@@ -68,7 +92,7 @@ export function useCreateEntry(groupId: string) {
       queryClient.setQueryData(entryKeys.list(groupId), (old: Entry[] | undefined) =>
         old && !old.some((e) => e.id === entry.id) ? [...old, entry] : old,
       );
-      void flushNow().catch(() => undefined);
+      if (!localResults.has(entry)) void flushNow().catch(() => undefined);
       await invalidateOutbox(queryClient, groupId);
     },
   });
@@ -106,7 +130,7 @@ async function recordConflict(
 
 /** Stores the server's copy of a changed entry in the cache and clears its conflict mark. */
 async function confirmChange(queryClient: ReturnType<typeof useQueryClient>, groupId: string, entry: Entry) {
-  if (queuedResults.has(entry)) return invalidateOutbox(queryClient, groupId);
+  if (queuedResults.has(entry) || localResults.has(entry)) return invalidateOutbox(queryClient, groupId);
   const db = await localDb();
   await saveEntry(db, entry);
   await clearConflict(db, entry.id);
@@ -128,12 +152,14 @@ function cacheEntry(queryClient: ReturnType<typeof useQueryClient>, groupId: str
  * (red "!" on the bubble, persisted in the outbox) and leaves the cache alone; the error is still
  * thrown to the caller (use `versionConflictEntry(error)`).
  * Offline (or behind queued changes of the entry) the edit is queued instead
- * and resolves to my local version (🕓 on the bubble).
+ * and resolves to my local version (🕓 on the bubble). In a local group any
+ * entry is edited straight in the device database — no versions, no conflicts.
  */
 export function useEditEntry(groupId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ base, input }: { base: Entry; input: NewEntry }): Promise<Entry> =>
+      (await localChange(groupId, (db) => editLocalEntry(db, base, input))) ??
       (await queuedChange(base, (db, now) => enqueueEdit(db, base, input, now))) ??
       parseResponse(
         api.groups[':groupId'].entries[':entryId'].$put({
@@ -168,12 +194,13 @@ export function useEditEntry(groupId: string) {
  * Soft-deletes an entry (DELETE …/entries/:entryId?baseVersion=). Optimistic:
  * the bubble leaves the list at once and comes back on failure (a version
  * conflict also marks it). Resolves to the deleted entry — what "Cofnij"
- * (`useRestoreEntry`) needs.
+ * (`useRestoreEntry`) needs. In a local group, straight in the device database.
  */
 export function useDeleteEntry(groupId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (entry: Entry): Promise<Entry> =>
+      (await localChange(groupId, (db) => deleteLocalEntry(db, entry))) ??
       (await queuedChange(entry, (db, now) => enqueueDelete(db, entry, now))) ??
       parseResponse(
         api.groups[':groupId'].entries[':entryId'].$delete({
@@ -214,6 +241,7 @@ export function useRestoreEntry(groupId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (deleted: Entry): Promise<Entry> =>
+      (await localChange(groupId, (db) => restoreLocalEntry(db, deleted))) ??
       (await queuedChange(deleted, (db, now) => enqueueRestore(db, deleted, now))) ??
       parseResponse(
         api.groups[':groupId'].entries[':entryId'].restore.$post({

@@ -23,7 +23,8 @@ export interface GroupDelta {
 /** A non-empty `db.batch` argument. */
 export type Batch = [BatchItem<'sqlite'>, ...BatchItem<'sqlite'>[]];
 
-const previewOf = (e: Entry): EntryPreview => ({
+/** An entry as its inbox preview. */
+export const previewOf = (e: Entry): EntryPreview => ({
   id: e.id,
   kind: e.kind,
   title: e.kind === 'settlement' ? null : e.title,
