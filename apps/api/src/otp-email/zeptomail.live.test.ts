@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { OtpLocale } from './message';
-import { zeptoMailOtpSender } from './zeptomail';
+import { zeptoMailOtpSenderFromEnv } from './zeptomail';
 
 /**
  * The ZeptoMail sender against the real API (ADR-0023): sends one Polish and one
@@ -16,14 +16,11 @@ import { zeptoMailOtpSender } from './zeptomail';
  * the subject in the notification and the spam folder.
  */
 const env = process.env;
-const live = env.ZEPTOMAIL_LIVE_TEST === '1' && !!env.ZEPTOMAIL_TOKEN && !!env.ZEPTOMAIL_LIVE_TO;
+const liveSender =
+  env.ZEPTOMAIL_LIVE_TEST === '1' && env.ZEPTOMAIL_LIVE_TO ? zeptoMailOtpSenderFromEnv(env) : undefined;
 
-describe.skipIf(!live)('zeptoMailOtpSender against ZeptoMail', () => {
-  const sender = zeptoMailOtpSender({
-    token: env.ZEPTOMAIL_TOKEN ?? '',
-    apiUrl: env.ZEPTOMAIL_API_URL || undefined,
-    from: env.EMAIL_FROM || undefined,
-  });
+describe.skipIf(!liveSender)('zeptoMailOtpSender against ZeptoMail', () => {
+  const sender = liveSender!;
 
   it.each<OtpLocale>(['pl', 'en'])('sends a %s sign-in code', async (locale) => {
     const otp = String(Math.floor(100000 + Math.random() * 900000));

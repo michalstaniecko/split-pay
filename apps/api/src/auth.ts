@@ -11,8 +11,6 @@ import * as authSchema from './db/auth-schema';
 import { blockedSessionMayUseAuth } from './blocked-session';
 import { isAccountBlocked } from './routes/moderation';
 
-export type { OtpMessage, OtpSender, OtpType } from './otp-email/message';
-
 /** Development sender: writes the code to the API log. */
 export const devOtpSender: OtpSender = {
   async send({ email, otp, type, locale }) {

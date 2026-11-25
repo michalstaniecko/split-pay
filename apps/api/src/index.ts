@@ -7,7 +7,7 @@ import { createDb } from './db/client';
 import { migrateDatabase } from './db/migrate';
 import { startSentry } from './error-reporting';
 import { parseAdminEmails } from './middleware/require-admin';
-import { zeptoMailOtpSender } from './otp-email/zeptomail';
+import { zeptoMailOtpSenderFromEnv } from './otp-email/zeptomail';
 import { startPushJob } from './push/dispatch';
 import { expoPushSender, logPushSender } from './push/sender';
 import { frankfurterRateSource } from './rates/source';
@@ -36,16 +36,9 @@ try {
 }
 // OTP emails (#32, ADR-0023): ZEPTOMAIL_TOKEN sends through ZeptoMail (EU); unset = codes go
 // to the log. ZEPTOMAIL_API_URL (default https://api.zeptomail.eu) and EMAIL_FROM are optional.
-const zeptoMailToken = process.env.ZEPTOMAIL_TOKEN;
 const auth = createAuth({
   db,
-  otpSender: zeptoMailToken
-    ? zeptoMailOtpSender({
-        token: zeptoMailToken,
-        apiUrl: process.env.ZEPTOMAIL_API_URL || undefined,
-        from: process.env.EMAIL_FROM || undefined,
-      })
-    : devOtpSender,
+  otpSender: zeptoMailOtpSenderFromEnv(process.env) ?? devOtpSender,
   // Failed deliveries go to Sentry tagged `job: otp-email`; the error carries no email, code or token.
   onOtpError: (error) => errorReporter?.captureJob(error, 'otp-email'),
   baseURL: requireEnv('BETTER_AUTH_URL'),

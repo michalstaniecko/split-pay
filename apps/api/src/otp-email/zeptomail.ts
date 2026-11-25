@@ -82,3 +82,16 @@ export function zeptoMailOtpSender(options: {
     },
   };
 }
+
+/**
+ * `zeptoMailOtpSender` from `ZEPTOMAIL_*` / `EMAIL_FROM` environment variables, or
+ * `undefined` without `ZEPTOMAIL_TOKEN` (the API then writes codes to the log).
+ */
+export function zeptoMailOtpSenderFromEnv(env: Record<string, string | undefined>): OtpSender | undefined {
+  if (!env.ZEPTOMAIL_TOKEN) return undefined;
+  return zeptoMailOtpSender({
+    token: env.ZEPTOMAIL_TOKEN,
+    apiUrl: env.ZEPTOMAIL_API_URL || undefined,
+    from: env.EMAIL_FROM || undefined,
+  });
+}

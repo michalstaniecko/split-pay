@@ -1,6 +1,6 @@
 import type { AccountDeletion } from '@split-pay/shared';
 import { and, eq, inArray, sql } from 'drizzle-orm';
-import type { OtpType } from '../auth';
+import type { OtpType } from '../otp-email/message';
 import type { Db } from '../db/client';
 import { changes, claims, members, user, verification } from '../db/schema';
 import type { ObjectStorage } from '../storage/object-storage';

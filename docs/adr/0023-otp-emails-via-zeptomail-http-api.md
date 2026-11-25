@@ -1,6 +1,6 @@
 # OTP emails via Zoho ZeptoMail's HTTP API
 
-Sign-in codes (email OTP, no passwords) are delivered by **Zoho ZeptoMail**, EU data centre, through its **HTTP Send Mail API** (`POST /v1.1/email`, `Authorization: Zoho-enczapikey <token>`) called with plain `fetch`. The sender (`zeptoMailOtpSender`) sits behind the existing `OtpSender` port in `apps/api/src/auth.ts`. Without `ZEPTOMAIL_TOKEN` the API keeps the development sender, which writes codes to the log.
+Sign-in codes (email OTP, no passwords) are delivered by **Zoho ZeptoMail**, EU data centre, through its **HTTP Send Mail API** (`POST /v1.1/email`, `Authorization: Zoho-enczapikey <token>`) called with plain `fetch`. The sender (`zeptoMailOtpSender`) implements the `OtpSender` port (`apps/api/src/otp-email/message.ts`), which `apps/api/src/auth.ts` uses. Without `ZEPTOMAIL_TOKEN` the API keeps the development sender, which writes codes to the log.
 
 The SPEC originally asked for "transactional SMTP with a free plan". The product owner already has a ZeptoMail account with purchased credits, so the free-plan criterion no longer applies. ZeptoMail is built for transactional mail only, has an EU data centre, and is billed per email with no monthly fee, which suits the low volume of sign-in codes.
 

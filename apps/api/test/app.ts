@@ -1,8 +1,9 @@
 import type { FeatureFlags } from '@split-pay/shared';
 import { parseResponse } from 'hono/client';
 import { createApp } from '../src/app';
-import { createAuth, type OtpMessage, type OtpSender } from '../src/auth';
+import { createAuth } from '../src/auth';
 import { createApiClient } from '../src/client';
+import type { OtpMessage, OtpSender } from '../src/otp-email/message';
 import { memoryStorage, type MemoryStorage } from '../src/storage/object-storage';
 import { testDb } from './db';
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseEmailFrom, zeptoMailOtpSender } from './zeptomail';
+import { parseEmailFrom, zeptoMailOtpSender, zeptoMailOtpSenderFromEnv } from './zeptomail';
 
 interface Call {
   url: string;
@@ -90,6 +90,21 @@ describe('zeptoMailOtpSender', () => {
 
     expect(error?.message).toBe('ZeptoMail request failed (ENOTFOUND)');
     expect(error?.cause).toBeUndefined();
+  });
+});
+
+describe('zeptoMailOtpSenderFromEnv', () => {
+  it('is undefined without ZEPTOMAIL_TOKEN, so codes go to the log', () => {
+    expect(zeptoMailOtpSenderFromEnv({})).toBeUndefined();
+    expect(zeptoMailOtpSenderFromEnv({ ZEPTOMAIL_TOKEN: '', EMAIL_FROM: 'Kwitz <no-reply@kwitz.app>' })).toBeUndefined();
+  });
+
+  it('builds a sender from the token, treating empty optional variables as unset', () => {
+    expect(zeptoMailOtpSenderFromEnv({ ZEPTOMAIL_TOKEN: 'secret-token', ZEPTOMAIL_API_URL: '', EMAIL_FROM: '' })).toBeDefined();
+  });
+
+  it('rejects an invalid EMAIL_FROM at startup', () => {
+    expect(() => zeptoMailOtpSenderFromEnv({ ZEPTOMAIL_TOKEN: 'secret-token', EMAIL_FROM: 'not an address' })).toThrow();
   });
 });
 
