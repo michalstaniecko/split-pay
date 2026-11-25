@@ -77,8 +77,8 @@ msgid "{name} (Ty)"
 msgstr "{name} (Ty)"
 
 #: src/features/claims/personal-claim-link-button.tsx
-msgid "{name}, to Twój link do grupy „{groupName}” w split-pay: {url}"
-msgstr "{name}, to Twój link do grupy „{groupName}” w split-pay: {url}"
+msgid "{name}, to Twój link do grupy „{groupName}” w Kwitz: {url}"
+msgstr "{name}, to Twój link do grupy „{groupName}” w Kwitz: {url}"
 
 #: src/features/balances/balance-label.ts
 msgid "{name}: do oddania {amount}"
@@ -373,8 +373,8 @@ msgid "Dołącz do grupy"
 msgstr "Dołącz do grupy"
 
 #: src/features/group-link/group-link-section.tsx
-msgid "Dołącz do grupy „{groupName}” w split-pay: {url}"
-msgstr "Dołącz do grupy „{groupName}” w split-pay: {url}"
+msgid "Dołącz do grupy „{groupName}” w Kwitz: {url}"
+msgstr "Dołącz do grupy „{groupName}” w Kwitz: {url}"
 
 #: src/app/g/[token]/index.tsx
 msgid "Dołącz jako nowa osoba"
@@ -704,6 +704,10 @@ msgstr "Kurs: {value}"
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
 msgid "Kurs: 1 {0} = ? {1}"
 msgstr "Kurs: 1 {0} = ? {1}"
+
+#: src/features/profile/about-section.tsx
+msgid "Kwitz, wersja {version}"
+msgstr "Kwitz, wersja {version}"
 
 #: src/app/(app)/groups/[groupId]/expense-form.tsx
 #: src/app/(app)/groups/[groupId]/settle.tsx
@@ -1388,10 +1392,6 @@ msgstr "Spłata: {from} → {to} · {amount}"
 msgid "spłatę {from} → {to}"
 msgstr "spłatę {from} → {to}"
 
-#: src/features/profile/about-section.tsx
-msgid "split-pay, wersja {version}"
-msgstr "split-pay, wersja {version}"
-
 #: src/app/(app)/activity.tsx
 #: src/app/(app)/admin.tsx
 #: src/app/(app)/groups/[groupId]/index.tsx
@@ -1754,8 +1754,8 @@ msgid "Waluta bazowa"
 msgstr "Waluta bazowa"
 
 #: src/features/web-view/sponsor-link.web.tsx
-msgid "Wesprzyj split-pay na GitHub Sponsors"
-msgstr "Wesprzyj split-pay na GitHub Sponsors"
+msgid "Wesprzyj Kwitz na GitHub Sponsors"
+msgstr "Wesprzyj Kwitz na GitHub Sponsors"
 
 #: src/features/profile/payout-details-section.tsx
 msgid "Widzą je tylko osoby z Twoich grup, gdy mają Ci oddać pieniądze."

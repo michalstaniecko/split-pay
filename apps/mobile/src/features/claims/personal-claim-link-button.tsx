@@ -27,7 +27,7 @@ export function PersonalClaimLinkButton({
     mutationFn: () => fetchClaimLink(groupId, member.id),
     onSuccess: ({ token }) => {
       const url = groupLinkUrl(token, webUrl);
-      void Share.share({ message: t`${name}, to Twój link do grupy „${groupName}” w split-pay: ${url}` }).catch(
+      void Share.share({ message: t`${name}, to Twój link do grupy „${groupName}” w Kwitz: ${url}` }).catch(
         () => undefined,
       );
     },

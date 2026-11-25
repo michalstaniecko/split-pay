@@ -59,8 +59,8 @@ export const createAuth = (deps: AuthDeps) =>
         }
       }),
     },
-    // `splitpay://` is the app scheme (app.json); expo() adds exp:// in development.
-    trustedOrigins: ['splitpay://', ...(deps.trustedOrigins ?? [])],
+    // `kwitz://` is the app scheme (app.json); expo() adds exp:// in development.
+    trustedOrigins: ['kwitz://', ...(deps.trustedOrigins ?? [])],
     plugins: [
       emailOTP({
         otpLength: 6,

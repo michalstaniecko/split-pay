@@ -59,7 +59,7 @@ describe('blocked accounts can sign in only to delete the account (#48)', () => 
 
   it('a blocked session cannot change the account through the auth endpoints, but can sign out', async () => {
     const { ania } = await blockedAnia();
-    const headers = { cookie: ania.cookie, origin: 'splitpay://' };
+    const headers = { cookie: ania.cookie, origin: 'kwitz://' };
     const rename = await app.request('/api/auth/update-user', json({ name: 'Ania 2' }, headers));
     expect(rename.status).toBe(403);
     const session = await app.request('/api/auth/get-session', { headers });

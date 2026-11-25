@@ -5,8 +5,8 @@ const TOKEN = 'q3Jx0_Vb-8yT2kLmNoPqRsTuVwXyZ012';
 
 describe('groupLinkUrl', () => {
   it("uses the app's custom scheme until a web base URL is configured", () => {
-    expect(groupLinkUrl(TOKEN, undefined)).toBe(`splitpay://g/${TOKEN}`);
-    expect(groupLinkUrl(TOKEN, '')).toBe(`splitpay://g/${TOKEN}`);
+    expect(groupLinkUrl(TOKEN, undefined)).toBe(`kwitz://g/${TOKEN}`);
+    expect(groupLinkUrl(TOKEN, '')).toBe(`kwitz://g/${TOKEN}`);
   });
 
   it('uses the web base URL when configured', () => {
@@ -17,7 +17,7 @@ describe('groupLinkUrl', () => {
 
 describe('joinTokenFromPath', () => {
   it('finds the token in an incoming group link, whatever its origin', () => {
-    expect(joinTokenFromPath(`splitpay://g/${TOKEN}`)).toBe(TOKEN);
+    expect(joinTokenFromPath(`kwitz://g/${TOKEN}`)).toBe(TOKEN);
     expect(joinTokenFromPath(`https://app.example.com/g/${TOKEN}`)).toBe(TOKEN);
     expect(joinTokenFromPath(`https://example.com/split/g/${TOKEN}/?utm=x`)).toBe(TOKEN);
     expect(joinTokenFromPath(`/g/${TOKEN}`)).toBe(TOKEN);
@@ -25,7 +25,7 @@ describe('joinTokenFromPath', () => {
   });
 
   it('ignores other links', () => {
-    expect(joinTokenFromPath('splitpay://groups/123')).toBeUndefined();
+    expect(joinTokenFromPath('kwitz://groups/123')).toBeUndefined();
     expect(joinTokenFromPath('/g/')).toBeUndefined();
     expect(joinTokenFromPath('/')).toBeUndefined();
     expect(joinTokenFromPath('https://example.com/dog/abc')).toBeUndefined();
@@ -34,7 +34,7 @@ describe('joinTokenFromPath', () => {
 
 describe('qrModules', () => {
   it('encodes the text as a square matrix with the three finder patterns', () => {
-    const modules = qrModules(`splitpay://g/${TOKEN}`);
+    const modules = qrModules(`kwitz://g/${TOKEN}`);
     const size = modules.length;
     expect(size).toBeGreaterThanOrEqual(21);
     expect((size - 17) % 4).toBe(0); // QR versions are 21, 25, 29, … modules wide

@@ -277,7 +277,7 @@ describe('push notifications', () => {
     const { ania, bartek, aniaId, bartekId, kasiaId, expense, add } = await setup();
     const signOut = await app.request('/api/auth/sign-out', {
       method: 'POST',
-      headers: { cookie: bartek.cookie, origin: 'splitpay://' },
+      headers: { cookie: bartek.cookie, origin: 'kwitz://' },
     });
     expect(signOut.status).toBe(200);
 

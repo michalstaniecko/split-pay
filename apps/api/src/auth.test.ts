@@ -91,7 +91,7 @@ describe('protected routes', () => {
     const { app, json, signIn } = createTestApp();
     const { cookie } = await signIn('ania@example.com');
 
-    const out = await app.request('/api/auth/sign-out', json({}, { cookie, 'expo-origin': 'splitpay://' }));
+    const out = await app.request('/api/auth/sign-out', json({}, { cookie, 'expo-origin': 'kwitz://' }));
     expect(out.status).toBe(200);
 
     const res = await app.request('/me', { headers: { cookie } });
@@ -104,7 +104,7 @@ describe('requests from the mobile app', () => {
     const { app, json, signIn } = createTestApp();
     const { cookie } = await signIn('ania@example.com');
 
-    const res = await app.request('/api/auth/sign-out', json({}, { cookie, 'expo-origin': 'splitpay://' }));
+    const res = await app.request('/api/auth/sign-out', json({}, { cookie, 'expo-origin': 'kwitz://' }));
 
     expect(res.status).toBe(200);
   });

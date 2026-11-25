@@ -11,7 +11,7 @@ export function SponsorLink() {
   const { t } = useLingui();
   return (
     <Text style={styles.link} accessibilityRole="link" onPress={() => void openURL(sponsorsUrl)}>
-      {t`Wesprzyj split-pay na GitHub Sponsors`}
+      {t`Wesprzyj Kwitz na GitHub Sponsors`}
     </Text>
   );
 }

@@ -1,6 +1,6 @@
 {
   "ios": {
-    "NSCameraUsageDescription": "split-pay uses the camera to photograph receipts and your profile picture.",
-    "NSPhotoLibraryUsageDescription": "split-pay lets you pick a receipt photo or a profile picture from your library."
+    "NSCameraUsageDescription": "Kwitz uses the camera to photograph receipts and your profile picture.",
+    "NSPhotoLibraryUsageDescription": "Kwitz lets you pick a receipt photo or a profile picture from your library."
   }
 }
