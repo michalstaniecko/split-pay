@@ -1000,6 +1000,7 @@ msgid "Nowy wydatek"
 msgstr "New expense"
 
 #: src/app/(app)/new-group.tsx
+#: src/app/(app)/quick-bill.tsx
 msgid "np. Kasia"
 msgstr "e.g. Kate"
 
@@ -1168,6 +1169,7 @@ msgid "Podaj poprawny adres e-mail."
 msgstr "Enter a valid email address."
 
 #: src/app/(app)/new-group.tsx
+#: src/app/(app)/quick-bill.tsx
 msgid "Podaj swoje imię."
 msgstr "Enter your name."
 
@@ -1554,6 +1556,7 @@ msgid "Twoja wersja"
 msgstr "Your version"
 
 #: src/app/(app)/new-group.tsx
+#: src/app/(app)/quick-bill.tsx
 msgid "Twoje imię"
 msgstr "Your name"
 

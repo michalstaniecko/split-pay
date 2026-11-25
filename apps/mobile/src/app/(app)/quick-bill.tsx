@@ -14,6 +14,7 @@ import {
   addPerson,
   defaultQuickBillCurrency,
   initialQuickBillDraft,
+  parseLocalQuickBillDraft,
   parseQuickBillDraft,
   type QuickBillDraft,
   type QuickBillField,
@@ -21,6 +22,9 @@ import {
   withQuickBillCurrency,
 } from '@/features/entries/quick-bill-form';
 import { BASE_CURRENCIES, GROUP_COLORS } from '@/features/groups/new-group-form';
+import { deviceMemberName } from '@/features/offline/device-member-name';
+import { LocalDataNotice } from '@/features/offline/local-data-notice';
+import { authClient } from '@/lib/auth-client';
 import { closeSheet } from '@/lib/close-sheet';
 
 /**
@@ -28,12 +32,15 @@ import { closeSheet } from '@/lib/close-sheet';
  * named after the title (🧾), a member without an account per chip and one
  * equal-split expense paid by me, dated today (POST /quick-bills). The
  * currency defaults to the device region's (PLN fallback) and becomes the
- * group's base currency and the expense currency (rate 1).
+ * group's base currency and the expense currency (rate 1). Signed out it
+ * becomes a local group (ADR-0021) with me as its device member ("Ja": the
+ * name stored on this device, pre-filled; asked on the first local group).
  */
 export default function QuickBillSheet() {
   const { t } = useLingui();
   const { theme } = useUnistyles();
   // Ids generated once per sheet: a retry after a lost response can't create a second group.
+  const local = !authClient.useSession().data;
   const [ids] = useState(() => ({
     groupId: randomUUID(),
     expenseId: randomUUID(),
@@ -41,6 +48,9 @@ export default function QuickBillSheet() {
     color: GROUP_COLORS[Math.floor(Math.random() * GROUP_COLORS.length)] ?? GROUP_COLORS[0],
   }));
   const [draft, setDraft] = useState<QuickBillDraft>(initialQuickBillDraft);
+  // Local group: the first one on this device asks for my name and shows the data notice.
+  const [storedName] = useState(deviceMemberName.get);
+  const [me, setMe] = useState(() => ({ id: randomUUID(), name: storedName ?? '' }));
   const [currency, setCurrency] = useState<CurrencyCode>(() =>
     defaultQuickBillCurrency(getLocales()[0]?.currencyCode),
   );
@@ -59,17 +69,17 @@ export default function QuickBillSheet() {
   };
 
   const submit = () => {
-    const parsed = parseQuickBillDraft(draft, {
-      ...ids,
-      currency,
-      today: todayLocalDate(),
-    });
+    const context = { ...ids, currency, today: todayLocalDate() };
+    const parsed = local
+      ? parseLocalQuickBillDraft(draft, { ...context, deviceMember: me })
+      : parseQuickBillDraft(draft, context);
     if (!parsed.ok) {
       setErrors(parsed.errors);
       return;
     }
     createQuickBill.mutate(parsed.value, {
       onSuccess: ({ group }) => {
+        if (local && storedName === null) deviceMemberName.remember(me.name);
         closeSheet();
         router.push({ pathname: '/groups/[groupId]', params: { groupId: group.id } });
       },
@@ -163,6 +173,28 @@ export default function QuickBillSheet() {
         {errors.includes('people') ? <Text style={styles.error}>{t`Dodaj co najmniej jedną osobę.`}</Text> : null}
         <Text style={styles.hint}>{t`Każda osoba trafi do grupy jako osoba bez konta. Płacisz Ty, dzielimy po równo.`}</Text>
       </View>
+
+      {local ? (
+        <>
+          <View style={styles.field}>
+            <Text style={styles.label}>{t`Twoje imię`}</Text>
+            <TextInput
+              value={me.name}
+              onChangeText={(name) => {
+                setMe((m) => ({ ...m, name }));
+                setErrors((current) => current.filter((f) => f !== 'deviceMember'));
+              }}
+              placeholder={t`np. Kasia`}
+              accessibilityLabel={t`Twoje imię`}
+              placeholderTextColor={theme.colors.textMuted}
+              maxLength={60}
+              style={[styles.input, errors.includes('deviceMember') && styles.inputInvalid]}
+            />
+            {errors.includes('deviceMember') ? <Text style={styles.error}>{t`Podaj swoje imię.`}</Text> : null}
+          </View>
+          {storedName === null ? <LocalDataNotice /> : null}
+        </>
+      ) : null}
 
       {createQuickBill.isError ? (
         <Text style={styles.error}>{t`Nie udało się utworzyć rachunku. Spróbuj ponownie.`}</Text>

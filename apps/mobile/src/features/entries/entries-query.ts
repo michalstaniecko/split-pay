@@ -4,8 +4,10 @@ import { parseResponse } from 'hono/client';
 import { groupKeys } from '@/features/groups/groups-query';
 import {
   addLocalEntry,
+  createLocalQuickBill,
   deleteLocalEntry,
   editLocalEntry,
+  type NewLocalQuickBill,
   readLocalEntries,
   restoreLocalEntry,
 } from '@/features/offline/local-group-store';
@@ -282,11 +284,20 @@ export function useRestoreEntry(groupId: string) {
   });
 }
 
-/** Creates a quick bill (POST /quick-bills): group, members without an account and its expense in one step. */
+/**
+ * Creates a quick bill: group, members without an account and its expense in
+ * one step. A `NewLocalQuickBill` (signed out) becomes a local group in the
+ * device database (ADR-0021); signed in, quick bills are always synced (POST /quick-bills).
+ */
 export function useCreateQuickBill() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (input: NewQuickBill) => parseResponse(api['quick-bills'].$post({ json: input })),
+    // A local quick bill goes to the device database, so it must also run offline.
+    networkMode: 'always',
+    mutationFn: async (input: NewQuickBill | NewLocalQuickBill): Promise<{ group: { id: string } }> => {
+      if ('deviceMember' in input) return createLocalQuickBill(await localGroupsDb(), input);
+      return parseResponse(api['quick-bills'].$post({ json: input }));
+    },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: groupKeys.list() });
     },
