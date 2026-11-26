@@ -2,7 +2,7 @@ import { useLingui } from '@lingui/react/macro';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { Alert, Pressable } from 'react-native';
-import { MemberAvatar } from '../photos/member-avatar';
+import { MemberAvatar } from '@/features/photos/member-avatar';
 import { groupAvatarPhotosQuery } from './moderation-query';
 import { reportablePhoto } from './moderation';
 

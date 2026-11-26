@@ -2,9 +2,9 @@ import { useLingui } from '@lingui/react/macro';
 import { availableGroupActions } from '@split-pay/shared';
 import { Text, View } from 'react-native';
 import { StyleSheet } from 'react-native-unistyles';
-import { SettingSwitch } from '../../components/setting-switch';
-import { useUpdateGroupSettings } from '../balances/balances-query';
-import { GroupNotificationsSwitch } from '../notifications/notification-switches';
+import { SettingSwitch } from '@/components/setting-switch';
+import { useUpdateGroupSettings } from '@/features/balances/balances-query';
+import { GroupNotificationsSwitch } from '@/features/notifications/notification-switches';
 import type { GroupDetail } from './groups-query';
 
 /**

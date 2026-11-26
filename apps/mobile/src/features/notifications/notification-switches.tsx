@@ -2,7 +2,7 @@ import { useLingui } from '@lingui/react/macro';
 import { useQuery } from '@tanstack/react-query';
 import { Text, View } from 'react-native';
 import { StyleSheet } from 'react-native-unistyles';
-import { SettingSwitch } from '../../components/setting-switch';
+import { SettingSwitch } from '@/components/setting-switch';
 import {
   groupNotificationSettingQuery,
   notificationSettingQuery,

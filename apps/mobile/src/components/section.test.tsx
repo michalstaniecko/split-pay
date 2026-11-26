@@ -29,6 +29,12 @@ describe('Section', () => {
     );
   });
 
+  it('does not accept a trailing element without a title', () => {
+    // @ts-expect-error — `trailing` lives in the header row, which needs `title`.
+    const html = render(<Section trailing={<span>3 osoby</span>} />);
+    expect(html).not.toContain('3 osoby');
+  });
+
   it('plain: no card, a small muted header title (inside a sheet)', () => {
     const html = render(<Section variant="plain" title="Kto zapłacił" />);
     expect(html).toMatch(/^<div style="gap:8px;padding-top:8px">/);
