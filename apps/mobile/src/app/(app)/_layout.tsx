@@ -79,7 +79,7 @@ export default function AppLayout() {
           options={{
             title: t`Salda`,
             presentation: 'formSheet',
-            sheetAllowedDetents: [0.6, 1],
+            sheetAllowedDetents: [0.75, 1],
             sheetGrabberVisible: true,
             headerShown: false,
           }}

@@ -71,7 +71,7 @@ function BalanceItem({ row, currency }: { row: BalanceRow; currency: string }) {
   const amount = format.amount(Math.abs(row.amount), currency);
   const name = row.isMe ? t`${row.name} (Ty)` : row.name;
   return (
-    <View style={styles.row} accessible accessibilityLabel={balanceRowLabel(row, { baseCurrency: currency, spokenAmount: format.spokenAmount })}>
+    <View style={styles.balanceRow} accessible accessibilityLabel={balanceRowLabel(row, { baseCurrency: currency, spokenAmount: format.spokenAmount })}>
       <Text style={[styles.name, row.isMe && styles.bold]}>{name}</Text>
       <Text style={[styles.amount, row.amount > 0 && styles.positive, row.amount < 0 && styles.negative]}>
         {row.amount > 0 ? `+${amount}` : row.amount < 0 ? `−${amount}` : amount}
@@ -98,7 +98,7 @@ function TransferItem({
   const to = transfer.direction === 'toMe' ? t`Tobie` : transfer.toName;
   const label = t`${from} → ${to}: ${amount}`;
   return (
-    <View style={styles.row}>
+    <View style={styles.transferRow}>
       <View style={styles.transfer} accessible accessibilityLabel={label}>
         <Text style={[styles.name, transfer.direction !== 'others' && styles.bold]}>
           {from} → {to}
@@ -134,7 +134,14 @@ const styles = StyleSheet.create((theme) => ({
     backgroundColor: theme.colors.surface,
     paddingHorizontal: theme.space(4),
   },
-  row: {
+  balanceRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: theme.space(2),
+    minHeight: 48,
+  },
+  transferRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'center',
