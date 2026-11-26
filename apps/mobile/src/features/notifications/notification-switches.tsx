@@ -1,7 +1,8 @@
 import { useLingui } from '@lingui/react/macro';
 import { useQuery } from '@tanstack/react-query';
-import { Switch, Text, View } from 'react-native';
-import { StyleSheet, useUnistyles } from 'react-native-unistyles';
+import { Text, View } from 'react-native';
+import { StyleSheet } from 'react-native-unistyles';
+import { SettingSwitch } from '@/components/setting-switch';
 import {
   groupNotificationSettingQuery,
   notificationSettingQuery,
@@ -17,7 +18,7 @@ export function NotificationsSection() {
   return (
     <View style={styles.section}>
       <Text style={styles.title}>{t`Powiadomienia`}</Text>
-      <SettingSwitch
+      <NotificationSwitch
         label={t`Powiadomienia push`}
         hint={t`Nowe i zmienione wydatki z Twoim udziałem, spłaty dla Ciebie, przypomnienia.`}
         value={update.isPending ? update.variables : setting.data?.enabled}
@@ -34,7 +35,7 @@ export function GroupNotificationsSwitch({ groupId }: { groupId: string }) {
   const setting = useQuery(groupNotificationSettingQuery(groupId));
   const update = useSetGroupNotificationsEnabled(groupId);
   return (
-    <SettingSwitch
+    <NotificationSwitch
       label={t`Powiadomienia z tej grupy`}
       hint={t`Wyłączone: grupa odświeża się w tle, ale bez powiadomień.`}
       value={update.isPending ? update.variables : setting.data?.enabled}
@@ -44,7 +45,8 @@ export function GroupNotificationsSwitch({ groupId }: { groupId: string }) {
   );
 }
 
-function SettingSwitch({
+/** A notifications switch, with the save error under it; disabled while loading. */
+function NotificationSwitch({
   label,
   hint,
   value,
@@ -59,22 +61,9 @@ function SettingSwitch({
   failed: boolean;
 }) {
   const { t } = useLingui();
-  const { theme } = useUnistyles();
   return (
     <View style={styles.container}>
-      <View style={styles.row}>
-        <View style={styles.text}>
-          <Text style={styles.label}>{label}</Text>
-          <Text style={styles.hint}>{hint}</Text>
-        </View>
-        <Switch
-          accessibilityLabel={label}
-          value={value ?? true}
-          disabled={value === undefined}
-          onValueChange={onChange}
-          trackColor={{ true: theme.colors.primary }}
-        />
-      </View>
+      <SettingSwitch label={label} hint={hint} value={value ?? true} disabled={value === undefined} onValueChange={onChange} />
       {failed ? <Text style={styles.error}>{t`Nie udało się zapisać. Spróbuj ponownie.`}</Text> : null}
     </View>
   );
@@ -92,24 +81,6 @@ const styles = StyleSheet.create((theme) => ({
   },
   container: {
     gap: theme.space(1),
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.space(3),
-    minHeight: 44,
-  },
-  text: {
-    flex: 1,
-    gap: theme.space(0.5),
-  },
-  label: {
-    fontSize: theme.font.sizeMd,
-    color: theme.colors.text,
-  },
-  hint: {
-    fontSize: theme.font.sizeSm,
-    color: theme.colors.textMuted,
   },
   error: {
     fontSize: theme.font.sizeSm,

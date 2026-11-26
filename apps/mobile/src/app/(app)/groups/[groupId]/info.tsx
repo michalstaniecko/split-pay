@@ -3,11 +3,11 @@ import { useLingui } from '@lingui/react/macro';
 import { availableGroupActions, type GroupActions } from '@split-pay/shared';
 import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
-import type { ReactNode } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { GroupAvatar } from '@/components/group-avatar';
 import { GroupNotFound } from '@/components/group-not-found';
+import { Section } from '@/components/section';
 import { PersonalClaimLinkButton } from '@/features/claims/personal-claim-link-button';
 import { canShareLinks } from '@/features/group-link/group-link';
 import { GroupLinkSection } from '@/features/group-link/group-link-section';
@@ -70,7 +70,7 @@ function GroupInfo({ group }: { group: GroupDetail }) {
 
       <Section
         title={t`Członkowie`}
-        subtitle={t`${plural(count, { one: '# osoba', few: '# osoby', many: '# osób', other: '# osoby' })}`}>
+        trailing={<Text style={styles.muted}>{t`${plural(count, { one: '# osoba', few: '# osoby', many: '# osób', other: '# osoby' })}`}</Text>}>
         {rows.map((row) => (
           <View key={row.id} style={styles.memberLine}>
             <ReportableMemberAvatar groupId={group.id} member={row} url={avatars?.get(row.id)} size={32} />
@@ -164,18 +164,6 @@ function MemberItem({ row, accountBadge, onPress }: { row: MemberRow; accountBad
       style={({ pressed }) => [styles.memberRow, pressed && styles.pressed]}>
       {content}
     </Pressable>
-  );
-}
-
-function Section({ title, subtitle, children }: { title: string; subtitle?: string; children?: ReactNode }) {
-  return (
-    <View style={styles.section} accessibilityRole="summary">
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>{title}</Text>
-        {subtitle ? <Text style={styles.muted}>{subtitle}</Text> : null}
-      </View>
-      {children}
-    </View>
   );
 }
 
