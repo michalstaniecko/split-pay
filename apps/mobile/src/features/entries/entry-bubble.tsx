@@ -198,9 +198,6 @@ export function DaySeparator({
   );
 }
 
-/** The bubble title's line height; the category icon beside it matches it. */
-const TITLE_LINE_HEIGHT = 22;
-
 const styles = StyleSheet.create((theme) => ({
   row: {
     paddingHorizontal: theme.space(3),
@@ -291,9 +288,8 @@ const styles = StyleSheet.create((theme) => ({
     gap: theme.space(2),
   },
   icon: {
-    // As tall as the title's first line, so the glyph sits level with it.
-    height: TITLE_LINE_HEIGHT,
-    justifyContent: 'center',
+    // Nudges a Lucide glyph level with the title's first line (an emoji sits there already).
+    paddingTop: theme.space(0.5),
   },
   receipt: {
     width: 36,
@@ -304,7 +300,6 @@ const styles = StyleSheet.create((theme) => ({
   title: {
     flexShrink: 1,
     fontSize: theme.font.sizeMd,
-    lineHeight: TITLE_LINE_HEIGHT,
     color: theme.colors.text,
   },
   amount: {
