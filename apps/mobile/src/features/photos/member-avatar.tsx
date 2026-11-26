@@ -12,12 +12,18 @@ export function MemberAvatar({
   url,
   size = 28,
   inverted = false,
+  filled = false,
+  initialSize,
 }: {
   name: string;
   url?: string | null | undefined;
   size?: number;
   /** On a primary-coloured background (my own bubbles, header button). */
   inverted?: boolean;
+  /** Initial in `onPrimary` on `primary` (others' bubble authors, Group info, Profile). */
+  filled?: boolean;
+  /** Font size of the initial; half the avatar size by default. */
+  initialSize?: number;
 }) {
   const round = { width: size, height: size, borderRadius: size / 2 };
   if (url) {
@@ -32,8 +38,8 @@ export function MemberAvatar({
     );
   }
   return (
-    <View style={[styles.initialBox, round, inverted && styles.invertedBox]} importantForAccessibility="no-hide-descendants">
-      <Text style={[styles.initial, { fontSize: Math.round(size * 0.5) }, inverted && styles.invertedText]}>
+    <View style={[styles.initialBox, round, filled && styles.filledBox, inverted && styles.invertedBox]} importantForAccessibility="no-hide-descendants">
+      <Text style={[styles.initial, { fontSize: initialSize ?? Math.round(size * 0.5) }, filled && styles.filledText, inverted && styles.invertedText]}>
         {name.trim().charAt(0).toUpperCase() || '?'}
       </Text>
     </View>
@@ -50,6 +56,12 @@ const styles = StyleSheet.create((theme) => ({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: theme.colors.border,
+  },
+  filledBox: {
+    backgroundColor: theme.colors.primary,
+  },
+  filledText: {
+    color: theme.colors.onPrimary,
   },
   invertedBox: {
     backgroundColor: theme.colors.onPrimary,
