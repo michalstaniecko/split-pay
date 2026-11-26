@@ -142,7 +142,7 @@ The web build of `apps/mobile` (the read-only web Conversation and the landing p
 Build variables. `EXPO_PUBLIC_*` values are inlined into the bundle, so check **Build Variable** for them. A change needs a **Redeploy**, not a restart:
 
 ```
-EXPO_PUBLIC_WEB_URL=https://app-stage.splitpay.on.ihumbak.website   # required: the build fails without it
+EXPO_PUBLIC_WEB_URL=https://app-stage.splitpay.on.ihumbak.website   # required, https: the build fails otherwise
 EXPO_PUBLIC_API_URL=https://api-stage.splitpay.on.ihumbak.website
 EXPO_PUBLIC_APP_STORE_URL=                                         # optional, the "download the app" button
 EXPO_PUBLIC_PLAY_STORE_URL=
@@ -153,7 +153,7 @@ EXPO_PUBLIC_SENTRY_ENVIRONMENT=staging
 Runtime variables (leave **Build Variable** unchecked), read by `apps/mobile/docker/entrypoint.sh` at startup:
 
 ```
-API_URL=https://api-stage.splitpay.on.ihumbak.website   # required: link previews are proxied to <API_URL>/og/<token>
+API_URL=https://api-stage.splitpay.on.ihumbak.website   # required, origin only (no path): previews are proxied to <API_URL>/og/<token>
 APPLE_TEAM_ID=<Apple Developer Team ID>                  # unset = no apple-app-site-association (404)
 ANDROID_SHA256_FINGERPRINTS=<AA:BB:…>[,<…>]              # signing cert SHA-256, comma-separated; unset = no assetlinks.json (404)
 # APPLE_BUNDLE_ID=app.kwitz                              # defaults
@@ -164,7 +164,7 @@ For Android add both the upload key's and Google Play's app signing key's finger
 
 Then set `WEB_URL=<web app origin>` on the API application, so link previews send people to the web view.
 
-**Native and EAS Update builds** need the same `EXPO_PUBLIC_WEB_URL` in the build environment. `app.config.ts` fails every production export (release bundles, `eas update`, the web image) without it, so shared links never fall back to `kwitz://`. Its https host is also what the app is associated with (`ios.associatedDomains`, an auto-verified Android intent filter for `/g/*`), so staging and production builds differ. Local dev uses `EXPO_PUBLIC_WEB_URL=http://localhost:8081` (`apps/mobile/.env.example`): links open the Metro web view and nothing is associated.
+**Native and EAS Update builds** need the same `EXPO_PUBLIC_WEB_URL` in the build environment. `app.config.ts` fails every production export (release bundles, `eas update`, the web image) unless it is an https URL, so shared links never fall back to `kwitz://` or a dev URL. Its https host is also what the app is associated with (`ios.associatedDomains`, an auto-verified Android intent filter for `/g/*`), so staging and production builds differ. Local dev uses `EXPO_PUBLIC_WEB_URL=http://localhost:8081` (`apps/mobile/.env.example`): links open the Metro web view and nothing is associated.
 
 Check a deployment:
 

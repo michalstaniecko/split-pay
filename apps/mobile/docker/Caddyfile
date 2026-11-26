@@ -10,12 +10,8 @@
 
 	# Universal links / App Links (#88), written at startup by entrypoint.sh.
 	# Apple wants application/json, served directly (no redirect).
-	handle /.well-known/apple-app-site-association {
-		root * /srv/assoc
-		header Content-Type application/json
-		file_server
-	}
-	handle /.well-known/assetlinks.json {
+	@association path /.well-known/apple-app-site-association /.well-known/assetlinks.json
+	handle @association {
 		root * /srv/assoc
 		header Content-Type application/json
 		file_server
@@ -25,7 +21,7 @@
 	# Graph page (/og/:token), proxied so the preview keeps the web URL. People get the SPA.
 	@og_crawler {
 		path_regexp group ^/g/([^/]+)/?$
-		header_regexp User-Agent (?i)(facebookexternalhit|facebot|meta-externalagent|twitterbot|slackbot|discordbot|telegrambot|whatsapp|linkedinbot|skypeuripreview|pinterest|redditbot|applebot|googlebot|bingbot|embedly|iframely|viber|snapchat|mastodon|bluesky)
+		header_regexp User-Agent (?i)(facebookexternalhit|facebot|meta-externalagent|twitterbot|slackbot|discordbot|telegrambot|whatsapp|linkedinbot|skypeuripreview|pinterest|redditbot|applebot|embedly|iframely|viber|snapchat|mastodon|bluesky)
 	}
 	handle @og_crawler {
 		rewrite * /og/{re.group.1}

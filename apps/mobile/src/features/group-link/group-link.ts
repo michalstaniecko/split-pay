@@ -6,9 +6,9 @@ const APP_SCHEME = 'kwitz';
 /**
  * The shareable URL of a group link (ADR-0009): `<base>/g/<token>` with the web
  * base URL (`EXPO_PUBLIC_WEB_URL`), which opens the installed app (universal /
- * App Links, `app.config.ts`) or else the web view. Without one (dev only:
- * production builds require it) it uses the app's custom scheme. Both resolve
- * to the `g/[token]` route.
+ * App Links) or else the web view. Without one (dev only, see `webUrlFrom` in
+ * `app.config.ts`) it uses the app's custom scheme. Both resolve to the
+ * `g/[token]` route.
  */
 export function groupLinkUrl(token: string, webBaseUrl: string | undefined): string {
   const path = `g/${encodeURIComponent(token)}`;

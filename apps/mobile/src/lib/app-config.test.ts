@@ -1,5 +1,6 @@
 import type { ExpoConfig } from 'expo/config';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+// Tests the root-level app.config.ts; lives under src/ because vitest only collects src/**.
 import appConfig from '../../app.config';
 
 const base: ExpoConfig = {
@@ -46,8 +47,6 @@ describe('app config: https group links', () => {
 });
 
 describe('app config: no kwitz:// share links outside dev', () => {
-  // `expo export` (web, EAS Update) and release bundles (`export:embed`) run with
-  // NODE_ENV=production; without a web URL their share links would be `kwitz://g/<token>`.
   it('fails a production build without a web URL', () => {
     expect(() => resolve({ NODE_ENV: 'production', EXPO_PUBLIC_WEB_URL: undefined })).toThrow(/EXPO_PUBLIC_WEB_URL/);
     expect(() => resolve({ NODE_ENV: 'production', EXPO_PUBLIC_WEB_URL: '' })).toThrow(/EXPO_PUBLIC_WEB_URL/);
@@ -55,6 +54,12 @@ describe('app config: no kwitz:// share links outside dev', () => {
 
   it('fails a production build with a web URL that is not a URL', () => {
     expect(() => resolve({ NODE_ENV: 'production', EXPO_PUBLIC_WEB_URL: 'app.kwitz.app' })).toThrow(
+      /EXPO_PUBLIC_WEB_URL/,
+    );
+  });
+
+  it('fails a production build with a non-https web URL, such as the dev one from .env.example', () => {
+    expect(() => resolve({ NODE_ENV: 'production', EXPO_PUBLIC_WEB_URL: 'http://localhost:8081' })).toThrow(
       /EXPO_PUBLIC_WEB_URL/,
     );
   });

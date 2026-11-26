@@ -10,7 +10,7 @@ RUN npm install -g pnpm@12.23.0
 WORKDIR /repo
 COPY . .
 RUN pnpm install --frozen-lockfile --filter @split-pay/mobile...
-# Required: app.config.ts fails the export without EXPO_PUBLIC_WEB_URL.
+# Required, https: app.config.ts (webUrlFrom) fails the export otherwise.
 ARG EXPO_PUBLIC_WEB_URL
 ARG EXPO_PUBLIC_API_URL
 ARG EXPO_PUBLIC_APP_STORE_URL

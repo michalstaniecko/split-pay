@@ -4,7 +4,7 @@
 # file whose values are missing is not written and answers 404 (links then open the
 # web view instead of the app).
 #
-#   API_URL                      origin of apps/api, for link previews (/og/:token); required
+#   API_URL                      origin of apps/api (no path), for link previews (/og/:token); required
 #   APPLE_TEAM_ID                Apple Developer Team ID
 #   APPLE_BUNDLE_ID              default app.kwitz
 #   ANDROID_PACKAGE              default app.kwitz
@@ -15,6 +15,9 @@ if [ -z "${API_URL:-}" ]; then
   echo "web: API_URL is required (origin of the API, e.g. https://api.kwitz.app)" >&2
   exit 1
 fi
+# Caddy's reverse_proxy takes an origin only: drop a trailing slash.
+API_URL="${API_URL%/}"
+export API_URL
 
 dir=/srv/assoc/.well-known
 mkdir -p "$dir"
