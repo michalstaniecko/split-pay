@@ -17,6 +17,7 @@ Decisions behind this setup: [ADR-0012](adr/0012-self-hosting-on-coolify.md) (Co
 | Database backups | Cloudflare R2, EU jurisdiction | `split-pay-backups`, written by Coolify's scheduled backups |
 | Sign-in code emails | Zoho ZeptoMail, EU data centre | Domain `kwitz.app`, sender `no-reply@kwitz.app` |
 | Error reporting | Sentry, EU region (`de.sentry.io`), org `ihumbakwebsite` | Projects `split-pay-api`, `split-pay-mobile` |
+| Web app | Coolify, same project and environments | Not set up yet (#53). Production `https://app.kwitz.app` (ADR-0022) |
 
 The working domain `splitpay.on.ihumbak.website` is for staging only. Don't send real invitations from it: group links contain the domain, so they break when it changes (ADR-0009).
 
@@ -121,7 +122,59 @@ SENTRY_ENVIRONMENT=staging
 ZEPTOMAIL_TOKEN=<Send Mail token>                # see ZeptoMail; unset = codes go to the log
 ```
 
-Not set yet: `PUSH_SENDER`/`EXPO_ACCESS_TOKEN` (needs the Expo project) and `WEB_URL` (needs the web app hosting, #53). Without `ZEPTOMAIL_TOKEN`, sign-in codes appear in the app's **Logs** in Coolify.
+Not set yet: `PUSH_SENDER`/`EXPO_ACCESS_TOKEN` (needs the Expo project) and `WEB_URL` (the web app's origin, set once the [web app](#web-app) runs, #53). Without `ZEPTOMAIL_TOKEN`, sign-in codes appear in the app's **Logs** in Coolify.
+
+### Web app
+
+The web build of `apps/mobile` (the read-only web Conversation and the landing page of group links), served by Caddy (`apps/mobile/Dockerfile`, `apps/mobile/docker/`). It serves the SPA for every unknown path (`/g/*` included), proxies link preview crawlers asking for `/g/<token>` to the API's `/og/<token>`, and serves the universal link / App Link files for `/g/*`.
+
+| Setting | Value |
+|---|---|
+| Source | `split-pay-github` → `split-pay`, branch `main` |
+| Build pack | Dockerfile |
+| Base directory | `/` |
+| Dockerfile location | `/apps/mobile/Dockerfile` |
+| Ports exposes | `8080` |
+| Domain | Production `https://app.kwitz.app`. Staging: a host under `splitpay.on.ihumbak.website`, e.g. `https://app-stage.splitpay.on.ihumbak.website` (DNS as for the API) |
+| Health check | `GET /` on port 8080 (the image also has its own `HEALTHCHECK`) |
+| Auto deploy | On |
+
+Build variables. `EXPO_PUBLIC_*` values are inlined into the bundle, so check **Build Variable** for them. A change needs a **Redeploy**, not a restart:
+
+```
+EXPO_PUBLIC_WEB_URL=https://app-stage.splitpay.on.ihumbak.website   # required, https: the build fails otherwise
+EXPO_PUBLIC_API_URL=https://api-stage.splitpay.on.ihumbak.website
+EXPO_PUBLIC_APP_STORE_URL=                                         # optional, the "download the app" button
+EXPO_PUBLIC_PLAY_STORE_URL=
+EXPO_PUBLIC_SENTRY_DSN=<DSN of split-pay-mobile>
+EXPO_PUBLIC_SENTRY_ENVIRONMENT=staging
+```
+
+Runtime variables (leave **Build Variable** unchecked), read by `apps/mobile/docker/entrypoint.sh` at startup:
+
+```
+API_URL=https://api-stage.splitpay.on.ihumbak.website   # required, origin only (no path): previews are proxied to <API_URL>/og/<token>
+APPLE_TEAM_ID=<Apple Developer Team ID>                  # unset = no apple-app-site-association (404)
+ANDROID_SHA256_FINGERPRINTS=<AA:BB:…>[,<…>]              # signing cert SHA-256, comma-separated; unset = no assetlinks.json (404)
+# APPLE_BUNDLE_ID=app.kwitz                              # defaults
+# ANDROID_PACKAGE=app.kwitz
+```
+
+For Android add both the upload key's and Google Play's app signing key's fingerprint (Play Console → *App integrity*). Without the files, `https://<host>/g/<token>` still works: it opens the web view instead of the app.
+
+Then set `WEB_URL=<web app origin>` on the API application, so link previews send people to the web view.
+
+**Native and EAS Update builds** need the same `EXPO_PUBLIC_WEB_URL` in the build environment. `app.config.ts` fails every production export (release bundles, `eas update`, the web image) unless it is an https URL, so shared links never fall back to `kwitz://` or a dev URL. Its https host is also what the app is associated with (`ios.associatedDomains`, an auto-verified Android intent filter for `/g/*`), so staging and production builds differ. Local dev uses `EXPO_PUBLIC_WEB_URL=http://localhost:8081` (`apps/mobile/.env.example`): links open the Metro web view and nothing is associated.
+
+Check a deployment:
+
+```sh
+curl -sI https://<host>/.well-known/apple-app-site-association   # 200, content-type: application/json, no redirect
+curl -s  https://<host>/.well-known/assetlinks.json
+curl -s -A facebookexternalhit/1.1 https://<host>/g/<token>       # the Open Graph page from the API
+```
+
+Verify on devices: Apple's CDN caches the association file (`https://app-site-association.cdn-apple.com/a/v1/<host>`), and on Android `adb shell pm get-app-links app.kwitz` should show the host as `verified`.
 
 ### Deploys
 
@@ -270,7 +323,7 @@ GitHub Actions needs none of them: CI tests run against a Postgres service and a
 
 - [x] App name and domain chosen: Kwitz, `kwitz.app` (ADR-0022).
 - [x] `kwitz.app` registered (DNS at OVH).
-- [ ] Set up `api.kwitz.app`, `app.kwitz.app` (#53) and `WEB_URL`.
+- [ ] Set up `api.kwitz.app` and `app.kwitz.app` (the [web app](#web-app), #53): DNS, Coolify resources, `APPLE_TEAM_ID` / `ANDROID_SHA256_FINGERPRINTS`, `WEB_URL` on the API, `EXPO_PUBLIC_WEB_URL` in the release build environment. Universal links / App Links checked on devices.
 - [x] Display name, URL scheme and bundle ID in `apps/mobile/app.json` set to Kwitz / `kwitz` / `app.kwitz`.
 - [x] No app named Kwitz in the App Store or Google Play (2026-11-25).
 - [ ] Trademark check for Kwitz (EUIPO, USPTO).
