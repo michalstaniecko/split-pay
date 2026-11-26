@@ -2,7 +2,7 @@ import { useLingui } from '@lingui/react/macro';
 import { useQuery } from '@tanstack/react-query';
 import { Text, View } from 'react-native';
 import { StyleSheet } from 'react-native-unistyles';
-import { SettingSwitch } from '@/components/setting-switch';
+import { SettingSwitch } from '../../components/setting-switch';
 import {
   groupNotificationSettingQuery,
   notificationSettingQuery,
@@ -18,13 +18,15 @@ export function NotificationsSection() {
   return (
     <View style={styles.section}>
       <Text style={styles.title}>{t`Powiadomienia`}</Text>
-      <NotificationSwitch
-        label={t`Powiadomienia push`}
-        hint={t`Nowe i zmienione wydatki z Twoim udziałem, spłaty dla Ciebie, przypomnienia.`}
-        value={update.isPending ? update.variables : setting.data?.enabled}
-        onChange={(enabled) => update.mutate(enabled)}
-        failed={update.isError || setting.isError}
-      />
+      <View style={styles.container}>
+        <NotificationSwitch
+          label={t`Powiadomienia push`}
+          hint={t`Nowe i zmienione wydatki z Twoim udziałem, spłaty dla Ciebie, przypomnienia.`}
+          value={update.isPending ? update.variables : setting.data?.enabled}
+          onChange={(enabled) => update.mutate(enabled)}
+          failed={update.isError || setting.isError}
+        />
+      </View>
     </View>
   );
 }
@@ -45,7 +47,10 @@ export function GroupNotificationsSwitch({ groupId }: { groupId: string }) {
   );
 }
 
-/** A notifications switch, with the save error under it; disabled while loading. */
+/**
+ * A notifications switch, with the save error under it; disabled while loading.
+ * No wrapper of its own: it takes the spacing of the section it is in.
+ */
 function NotificationSwitch({
   label,
   hint,
@@ -62,10 +67,10 @@ function NotificationSwitch({
 }) {
   const { t } = useLingui();
   return (
-    <View style={styles.container}>
+    <>
       <SettingSwitch label={label} hint={hint} value={value ?? true} disabled={value === undefined} onValueChange={onChange} />
       {failed ? <Text style={styles.error}>{t`Nie udało się zapisać. Spróbuj ponownie.`}</Text> : null}
-    </View>
+    </>
   );
 }
 
