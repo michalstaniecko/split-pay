@@ -89,3 +89,40 @@ export function downscaledSize(size: { width: number; height: number }, max: num
   const fit = (side: number) => (side === longer ? max : Math.max(1, Math.round(side * scale)));
   return { width: fit(size.width), height: fit(size.height) };
 }
+
+/** Pixel rectangle in the source image (integer origin and size). */
+export type PhotoCrop = { originX: number; originY: number; width: number; height: number };
+
+/**
+ * How the phone edits a picked photo before re-encoding it: crop first (if
+ * `crop`), then resize (if `resize`). Either step is left out when not needed.
+ */
+export type PhotoEditPlan = { crop?: PhotoCrop; resize?: { width: number; height: number } };
+
+/**
+ * Plans the edit of a photo of `size` (as the image manipulator sees it,
+ * orientation-corrected). `square` (avatars): crop to the largest centered
+ * square first. Then downscale so the longer side is at most `maxDimension`
+ * (`downscaledSize`), never upscaling.
+ */
+export function photoEditPlan(
+  size: { width: number; height: number },
+  maxDimension: number,
+  options: { square: boolean },
+): PhotoEditPlan {
+  const plan: PhotoEditPlan = {};
+  let edited = { width: size.width, height: size.height };
+  if (options.square) {
+    const side = Math.min(size.width, size.height);
+    plan.crop = {
+      originX: Math.floor((size.width - side) / 2),
+      originY: Math.floor((size.height - side) / 2),
+      width: side,
+      height: side,
+    };
+    edited = { width: side, height: side };
+  }
+  const target = downscaledSize(edited, maxDimension);
+  if (target.width !== edited.width || target.height !== edited.height) plan.resize = target;
+  return plan;
+}
