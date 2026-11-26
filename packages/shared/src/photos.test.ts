@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   downscaledSize,
+  photoEditPlan,
   PHOTO_LIMITS,
   PhotoUploadRequest,
   ReceiptUploadRequest,
@@ -24,6 +25,74 @@ describe('downscaledSize', () => {
   it('rounds the shorter side to whole pixels and never below one', () => {
     expect(downscaledSize({ width: 3000, height: 1000 }, 1600)).toEqual({ width: 1600, height: 533 });
     expect(downscaledSize({ width: 10000, height: 1 }, 1600)).toEqual({ width: 1600, height: 1 });
+  });
+});
+
+describe('photoEditPlan', () => {
+  it('crops a landscape photo to its largest centered square, then downscales it', () => {
+    expect(photoEditPlan({ width: 4032, height: 3024 }, 512, { square: true })).toEqual({
+      crop: { originX: 504, originY: 0, width: 3024, height: 3024 },
+      resize: { width: 512, height: 512 },
+    });
+  });
+
+  it('keeps the middle of a portrait photo', () => {
+    expect(photoEditPlan({ width: 3024, height: 4032 }, 512, { square: true })).toEqual({
+      crop: { originX: 0, originY: 504, width: 3024, height: 3024 },
+      resize: { width: 512, height: 512 },
+    });
+  });
+
+  it('only downscales a photo that is already square', () => {
+    expect(photoEditPlan({ width: 2000, height: 2000 }, 512, { square: true })).toEqual({
+      crop: { originX: 0, originY: 0, width: 2000, height: 2000 },
+      resize: { width: 512, height: 512 },
+    });
+  });
+
+  it('floors an odd offset so the crop stays whole pixels inside the photo', () => {
+    expect(photoEditPlan({ width: 4033, height: 3024 }, 512, { square: true })).toEqual({
+      crop: { originX: 504, originY: 0, width: 3024, height: 3024 },
+      resize: { width: 512, height: 512 },
+    });
+    expect(photoEditPlan({ width: 3, height: 6 }, 512, { square: true }).crop).toEqual({
+      originX: 0,
+      originY: 1,
+      width: 3,
+      height: 3,
+    });
+  });
+
+  it('handles extreme aspect ratios', () => {
+    expect(photoEditPlan({ width: 10000, height: 1 }, 512, { square: true })).toEqual({
+      crop: { originX: 4999, originY: 0, width: 1, height: 1 },
+    });
+  });
+
+  it('crops a photo smaller than the maximum without upscaling it', () => {
+    expect(photoEditPlan({ width: 400, height: 300 }, 512, { square: true })).toEqual({
+      crop: { originX: 50, originY: 0, width: 300, height: 300 },
+    });
+  });
+
+  it('without square, only downscales like downscaledSize (receipts)', () => {
+    expect(photoEditPlan({ width: 4032, height: 3024 }, 1600, { square: false })).toEqual({
+      resize: { width: 1600, height: 1200 },
+    });
+    expect(photoEditPlan({ width: 800, height: 600 }, 1600, { square: false })).toEqual({});
+  });
+
+  it('always plans a square avatar', () => {
+    for (const size of [
+      { width: 4032, height: 3024 },
+      { width: 1080, height: 1920 },
+      { width: 513, height: 7777 },
+      { width: 99, height: 100 },
+    ]) {
+      const plan = photoEditPlan(size, 512, { square: true });
+      const result = plan.resize ?? plan.crop;
+      expect(result?.width).toBe(result?.height);
+    }
   });
 });
 
