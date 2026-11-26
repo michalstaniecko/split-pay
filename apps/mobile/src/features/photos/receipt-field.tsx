@@ -4,14 +4,16 @@ import { Image } from 'expo-image';
 import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { StyleSheet } from 'react-native-unistyles';
+import { askPhotoSource } from './ask-photo-source';
 import { photoCacheKey } from './member-avatar';
 import { noReceipt, type PhotoProblem, type ReceiptDraft, receiptPreviewUri } from './photo-draft';
 import { usePhotoProblemMessages } from './photo-messages';
 import { type PhotoSource, pickPhoto } from './pick-photo';
 
 /**
- * The receipt field of the full expense form (add and edit): a preview of
- * the photo with "Zrób zdjęcie" / "Z galerii" / "Usuń". The photo is only
+ * The receipt field of the full expense form (add and edit). With no photo,
+ * one "Dodaj zdjęcie" button that asks for the camera or the gallery; with
+ * one, a preview with "Usuń" / "Zrób nowe" / "Z galerii". The photo is only
  * prepared here (downscaled, EXIF dropped); the form uploads it on save.
  */
 export function ReceiptField({
@@ -43,9 +45,19 @@ export function ReceiptField({
     }
   };
 
+  const add = async () => {
+    const source = await askPhotoSource({
+      title: t`Zdjęcie paragonu`,
+      camera: t`Zrób zdjęcie`,
+      library: t`Z galerii`,
+      cancel: t`Anuluj`,
+    });
+    if (source) await pick(source);
+  };
+
   return (
     <View style={styles.field}>
-      <Text style={styles.label}>{t`Paragon`}</Text>
+      <Text style={styles.label}>{t`Zdjęcie paragonu`}</Text>
       {draft.kind !== 'none' ? (
         <View style={styles.previewRow}>
           {preview ? (
@@ -68,20 +80,29 @@ export function ReceiptField({
           </Pressable>
         </View>
       ) : null}
-      <View style={styles.actions}>
+      {draft.kind === 'none' ? (
         <Pressable
           accessibilityRole="button"
-          onPress={() => void pick('camera')}
-          style={({ pressed }) => [styles.action, pressed && styles.pressed]}>
-          <Text style={styles.actionLabel}>{draft.kind === 'none' ? t`📷 Zrób zdjęcie` : t`📷 Zrób nowe`}</Text>
+          onPress={() => void add()}
+          style={({ pressed }) => [styles.add, pressed && styles.pressed]}>
+          <Text style={styles.addLabel}>{t`📷 Dodaj zdjęcie`}</Text>
         </Pressable>
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => void pick('library')}
-          style={({ pressed }) => [styles.action, pressed && styles.pressed]}>
-          <Text style={styles.actionLabel}>{t`Z galerii`}</Text>
-        </Pressable>
-      </View>
+      ) : (
+        <View style={styles.actions}>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => void pick('camera')}
+            style={({ pressed }) => [styles.action, pressed && styles.pressed]}>
+            <Text style={styles.actionLabel}>{t`📷 Zrób nowe`}</Text>
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => void pick('library')}
+            style={({ pressed }) => [styles.action, pressed && styles.pressed]}>
+            <Text style={styles.actionLabel}>{t`Z galerii`}</Text>
+          </Pressable>
+        </View>
+      )}
       {denied ? <Text style={styles.error}>{t`Brak dostępu do aparatu. Wybierz zdjęcie z galerii.`}</Text> : null}
       {problem ? <Text style={styles.error}>{messages[problem]}</Text> : null}
     </View>
@@ -115,6 +136,21 @@ const styles = StyleSheet.create((theme) => ({
   },
   placeholderIcon: {
     fontSize: theme.font.sizeXl,
+  },
+  add: {
+    minHeight: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: theme.space(3),
+    borderRadius: theme.radius.md,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.surface,
+  },
+  addLabel: {
+    fontSize: theme.font.sizeMd,
+    color: theme.colors.primary,
   },
   actions: {
     flexDirection: 'row',
