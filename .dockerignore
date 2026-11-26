@@ -5,3 +5,7 @@
 .git
 apps/mobile/ios
 apps/mobile/android
+# Local env files would leak into the web bundle; images get their values as build args.
+**/.env
+**/.env.*
+!**/.env.example
