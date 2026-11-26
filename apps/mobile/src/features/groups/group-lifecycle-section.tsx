@@ -4,10 +4,10 @@ import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { Alert, Pressable, Text, View } from 'react-native';
 import { StyleSheet } from 'react-native-unistyles';
-import { balancesQuery } from '@/features/balances/balances-query';
-import { myMemberId } from '@/features/entries/conversation';
-import { useFormatters } from '@/i18n/use-formatters';
-import { authClient } from '@/lib/auth-client';
+import { balancesQuery } from '../balances/balances-query';
+import { myMemberId } from '../entries/conversation';
+import { useFormatters } from '../../i18n/use-formatters';
+import { authClient } from '../../lib/auth-client';
 import { leaveState } from './group-lifecycle';
 import { useDeleteGroup, useLeaveGroup, useSetGroupArchived } from './group-lifecycle-query';
 import type { GroupDetail } from './groups-query';
@@ -85,7 +85,6 @@ export function GroupLifecycleSection({ group }: { group: GroupDetail }) {
         <View style={styles.block}>
           <Action
             label={t`Opuść grupę`}
-            destructive
             disabled={!canLeave || leave.isPending}
             onPress={confirmLeave}
           />
