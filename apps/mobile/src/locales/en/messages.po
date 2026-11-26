@@ -123,12 +123,12 @@ msgid "+ Dodaj osobę bez konta"
 msgstr "+ Add a person without an account"
 
 #: src/features/photos/receipt-field.tsx
-msgid "📷 Zrób nowe"
-msgstr "📷 Take a new one"
+msgid "📷 Dodaj zdjęcie"
+msgstr "📷 Add photo"
 
 #: src/features/photos/receipt-field.tsx
-msgid "📷 Zrób zdjęcie"
-msgstr "📷 Take a photo"
+msgid "📷 Zrób nowe"
+msgstr "📷 Take a new one"
 
 #: src/app/(app)/report-photo.tsx
 msgid "Administrator sprawdzi to zdjęcie i w razie potrzeby je usunie."
@@ -165,6 +165,7 @@ msgstr "Alcohol"
 #: src/features/groups/group-lifecycle-section.tsx
 #: src/features/history/change-row.tsx
 #: src/features/moderation/reportable-member-avatar.tsx
+#: src/features/photos/receipt-field.tsx
 #: src/features/profile/delete-account-section.tsx
 msgid "Anuluj"
 msgstr "Cancel"
@@ -1120,7 +1121,6 @@ msgstr "Fuel"
 msgid "Panel administratora"
 msgstr "Admin panel"
 
-#: src/features/photos/receipt-field.tsx
 #: src/features/photos/receipt-photo.tsx
 msgid "Paragon"
 msgstr "Receipt"
@@ -2209,6 +2209,7 @@ msgid "Znowu członek bez konta: {memberName}"
 msgstr "Member without an account again: {memberName}"
 
 #: src/features/photos/avatar-section.tsx
+#: src/features/photos/receipt-field.tsx
 msgid "Zrób zdjęcie"
 msgstr "Take a photo"
 
