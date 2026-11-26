@@ -1,4 +1,4 @@
-import { type Category, type Entry, entryFromNew, type NewEntry, type NewQuickBill } from '@split-pay/shared';
+import { type Entry, entryFromNew, type NewEntry, type NewQuickBill } from '@split-pay/shared';
 import { onlineManager, queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import { parseResponse } from 'hono/client';
 import { groupKeys } from '@/features/groups/groups-query';
@@ -317,15 +317,3 @@ export function useCreateQuickBill() {
     },
   });
 }
-
-/** Category icons (Fresh: emoji). TODO: Classic's monochrome glyphs come with theme tokens (SPEC "Look and feel"). */
-export const CATEGORY_ICONS: Record<Category, string> = {
-  groceries: '🛒',
-  food: '🍕',
-  transport: '🚆',
-  fuel: '⛽',
-  accommodation: '🏠',
-  alcohol: '🍺',
-  entertainment: '🎟️',
-  other: '🧾',
-};

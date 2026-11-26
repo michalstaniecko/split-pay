@@ -1,6 +1,7 @@
 import { useLingui } from '@lingui/react/macro';
-import { Pressable, Text, TextInput, View } from 'react-native';
+import { Pressable, TextInput, View } from 'react-native';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
+import { Icon } from '@/components/icon';
 
 /** The inbox's search field ("Szukaj grup i wydatków", SPEC "Inbox"). */
 export function InboxSearchField({ value, onChange }: { value: string; onChange: (query: string) => void }) {
@@ -26,7 +27,7 @@ export function InboxSearchField({ value, onChange }: { value: string; onChange:
           hitSlop={8}
           onPress={() => onChange('')}
           style={styles.clear}>
-          <Text style={styles.clearText}>✕</Text>
+          <Icon name="X" color={theme.colors.textMuted} />
         </Pressable>
       ) : null}
     </View>
@@ -57,9 +58,5 @@ const styles = StyleSheet.create((theme) => ({
     minHeight: 32,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  clearText: {
-    fontSize: theme.font.sizeMd,
-    color: theme.colors.textMuted,
   },
 }));

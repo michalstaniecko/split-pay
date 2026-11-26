@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { Button } from '@/components/button';
+import { Icon } from '@/components/icon';
 import { cleanAmountInput } from '@/features/entries/amount-input';
 import { useCreateQuickBill } from '@/features/entries/entries-query';
 import { todayLocalDate } from '@/features/entries/expense-draft';
@@ -152,8 +153,9 @@ export default function QuickBillSheet() {
                 accessibilityRole="button"
                 accessibilityLabel={t`Usuń ${person.displayName}`}
                 onPress={() => update(removePerson(draft, person.id), [])}
-                style={styles.chip}>
-                <Text style={styles.chipLabel}>{person.displayName} ✕</Text>
+                style={[styles.chip, styles.personChip]}>
+                <Text style={styles.chipLabel}>{person.displayName}</Text>
+                <Icon name="X" size={theme.font.sizeSm} color={theme.colors.textMuted} />
               </Pressable>
             ))}
           </View>
@@ -285,6 +287,11 @@ const styles = StyleSheet.create((theme) => ({
     backgroundColor: theme.colors.surface,
     borderWidth: 1,
     borderColor: theme.colors.border,
+  },
+  personChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.space(1),
   },
   chipLabel: {
     fontSize: theme.font.sizeSm,

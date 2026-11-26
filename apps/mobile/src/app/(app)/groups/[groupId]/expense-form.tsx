@@ -11,7 +11,8 @@ import { GroupNotFound } from '@/components/group-not-found';
 import { cleanAmountInput, parseAmountInput } from '@/features/entries/amount-input';
 import { composerStore } from '@/features/entries/composer-store';
 import { myMemberId } from '@/features/entries/conversation';
-import { CATEGORY_ICONS, entriesQuery, useCreateEntry, useEditEntry } from '@/features/entries/entries-query';
+import { CategoryIcon } from '@/features/entries/category-icon-view';
+import { entriesQuery, useCreateEntry, useEditEntry } from '@/features/entries/entries-query';
 import {
   editedEntry,
   expenseFormFromEntry,
@@ -344,10 +345,9 @@ function ExpenseFormView({ group, editing }: { group: GroupDetail; editing?: For
               accessibilityRole="radio"
               accessibilityState={{ checked: form.category === category }}
               onPress={() => update({ ...form, category, categoryChosen: true }, [])}
-              style={[styles.chip, form.category === category && styles.chipSelected]}>
-              <Text style={styles.chipLabel}>
-                {CATEGORY_ICONS[category]} {labels.category[category]}
-              </Text>
+              style={[styles.chip, styles.categoryChip, form.category === category && styles.chipSelected]}>
+              <CategoryIcon category={category} size={theme.font.sizeSm} />
+              <Text style={styles.chipLabel}>{labels.category[category]}</Text>
             </Pressable>
           ))}
         </View>
@@ -518,6 +518,11 @@ const styles = StyleSheet.create((theme) => ({
     borderWidth: 2,
     borderColor: theme.colors.border,
     backgroundColor: theme.colors.surface,
+  },
+  categoryChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.space(1),
   },
   chipSelected: {
     borderColor: theme.colors.primary,
