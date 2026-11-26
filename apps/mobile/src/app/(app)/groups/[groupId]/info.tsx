@@ -73,7 +73,7 @@ function GroupInfo({ group }: { group: GroupDetail }) {
         trailing={<Text style={styles.muted}>{t`${plural(count, { one: '# osoba', few: '# osoby', many: '# osób', other: '# osoby' })}`}</Text>}>
         {rows.map((row) => (
           <View key={row.id} style={styles.memberLine}>
-            <ReportableMemberAvatar groupId={group.id} member={row} url={avatars?.get(row.id)} size={32} />
+            <ReportableMemberAvatar groupId={group.id} member={row} url={avatars?.get(row.id)} size={32} filled initialSize={14} />
             <MemberItem row={row} accountBadge={actions.claiming} onPress={() => openMemberSheet(row.id)} />
             {!archived && actions.claiming && row.withoutAccount ? <PersonalClaimLinkButton groupId={group.id} groupName={group.name} member={row} /> : null}
           </View>
@@ -104,16 +104,7 @@ function OtherSections({ group, actions, archived }: { group: GroupDetail; actio
           <GroupLinkSection groupId={group.id} groupName={group.name} />
         </Section>
       ) : null}
-      {actions.stats ? (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityHint={t`Dni × osoby i kategorie`}
-          onPress={() => router.push({ pathname: '/groups/[groupId]/stats', params: { groupId: group.id } })}
-          style={({ pressed }) => [styles.section, styles.sectionHeader, pressed && styles.pressed]}>
-          <Text style={styles.sectionTitle}>{t`Statystyki`}</Text>
-          <Text style={styles.chevron}>{t`Pokaż`}</Text>
-        </Pressable>
-      ) : null}
+      {actions.stats ? <StatsSection groupId={group.id} /> : null}
       {actions.changeHistory ? (
         <Section title={t`Historia zmian`}>
           <HistorySection group={group} />
@@ -124,6 +115,34 @@ function OtherSections({ group, actions, archived }: { group: GroupDetail; actio
       </Section>
       <GroupLifecycleSection group={group} />
     </>
+  );
+}
+
+/**
+ * Stats: a card with the "Statystyki" header (a header for screen readers) and
+ * a "Pokaż" button. Tapping anywhere on the card opens Stats too; for screen
+ * readers that is the button alone.
+ */
+function StatsSection({ groupId }: { groupId: string }) {
+  const { t } = useLingui();
+  const open = () => router.push({ pathname: '/groups/[groupId]/stats', params: { groupId } });
+  return (
+    <Pressable accessible={false} onPress={open} style={({ pressed }) => pressed && styles.pressed}>
+      <Section
+        title={t`Statystyki`}
+        trailing={
+          <Pressable
+            accessibilityRole="button"
+            accessibilityHint={t`Dni × osoby i kategorie`}
+            // ~18 pt of text; 14 above and below make the target 44.
+            hitSlop={14}
+            onPress={open}
+            style={({ pressed }) => pressed && styles.pressed}>
+            <Text style={styles.chevron}>{t`Pokaż`}</Text>
+          </Pressable>
+        }
+      />
+    </Pressable>
   );
 }
 
@@ -191,23 +210,6 @@ const styles = StyleSheet.create((theme) => ({
     fontWeight: theme.font.weightBold,
     color: theme.colors.text,
     textAlign: 'center',
-  },
-  section: {
-    gap: theme.space(2),
-    padding: theme.space(4),
-    borderRadius: theme.radius.lg,
-    backgroundColor: theme.colors.surface,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: theme.space(2),
-  },
-  sectionTitle: {
-    fontSize: theme.font.sizeMd,
-    fontWeight: theme.font.weightBold,
-    color: theme.colors.text,
   },
   memberLine: {
     flexDirection: 'row',
