@@ -3,10 +3,11 @@ import { Id } from './model';
 
 /**
  * Photos (SPEC "Photos", ADR-0006, ADR-0020): only a receipt photo on an
- * expense or income and a user avatar. The phone downscales, re-encodes to
- * JPEG (which drops EXIF, GPS included) and uploads straight to the private
- * bucket with a presigned PUT; the API issues upload and short-lived read
- * URLs, checks each uploaded object and enforces these limits.
+ * expense or income and a user avatar. The phone center-crops avatars to a
+ * square, downscales, re-encodes to JPEG (which drops EXIF, GPS included)
+ * and uploads straight to the private bucket with a presigned PUT; the API
+ * issues upload and short-lived read URLs, checks each uploaded object and
+ * enforces these limits.
  */
 export const PHOTO_LIMITS = {
   /** Largest accepted file, bytes. A 1600 px JPEG is usually well under 1 MB. */
@@ -90,6 +91,9 @@ export function downscaledSize(size: { width: number; height: number }, max: num
   return { width: fit(size.width), height: fit(size.height) };
 }
 
+/** Width and height of an image, px. */
+export type PhotoSize = { width: number; height: number };
+
 /** Pixel rectangle in the source image (integer origin and size). */
 export type PhotoCrop = { originX: number; originY: number; width: number; height: number };
 
@@ -97,7 +101,7 @@ export type PhotoCrop = { originX: number; originY: number; width: number; heigh
  * How the phone edits a picked photo before re-encoding it: crop first (if
  * `crop`), then resize (if `resize`). Either step is left out when not needed.
  */
-export type PhotoEditPlan = { crop?: PhotoCrop; resize?: { width: number; height: number } };
+export type PhotoEditPlan = { crop?: PhotoCrop; resize?: PhotoSize };
 
 /**
  * Plans the edit of a photo of `size` (as the image manipulator sees it,
@@ -106,12 +110,12 @@ export type PhotoEditPlan = { crop?: PhotoCrop; resize?: { width: number; height
  * (`downscaledSize`), never upscaling.
  */
 export function photoEditPlan(
-  size: { width: number; height: number },
+  size: PhotoSize,
   maxDimension: number,
   options: { square: boolean },
 ): PhotoEditPlan {
   const plan: PhotoEditPlan = {};
-  let edited = { width: size.width, height: size.height };
+  let edited: PhotoSize = { width: size.width, height: size.height };
   if (options.square) {
     const side = Math.min(size.width, size.height);
     plan.crop = {
