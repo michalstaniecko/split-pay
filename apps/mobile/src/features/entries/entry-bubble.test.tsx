@@ -70,7 +70,7 @@ function avatar(html: string) {
 
 /** The bubble's own style (the pressable carrying its border). */
 function bubbleStyle(html: string) {
-  const match = html.match(/<div role="button" style="([^"]*)">/);
+  const match = html.match(/<div role="button"[^>]*? style="([^"]*)">/);
   if (!match) throw new Error(`no bubble in ${html}`);
   return match[1];
 }

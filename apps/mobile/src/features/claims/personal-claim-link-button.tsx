@@ -2,8 +2,8 @@ import { useLingui } from '@lingui/react/macro';
 import { useMutation } from '@tanstack/react-query';
 import { ActivityIndicator, Alert, Pressable, Share, Text } from 'react-native';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
-import { groupLinkUrl } from '@/features/group-link/group-link';
-import { webUrl } from '@/lib/web-url';
+import { groupLinkUrl } from '../group-link/group-link';
+import { webUrl } from '../../lib/web-url';
 import { fetchClaimLink } from './claims-query';
 
 /**
@@ -39,7 +39,7 @@ export function PersonalClaimLinkButton({
       accessibilityRole="button"
       accessibilityLabel={t`Wyślij osobisty link: ${name}`}
       disabled={send.isPending}
-      hitSlop={8}
+      hitSlop={4}
       onPress={() => send.mutate()}
       style={({ pressed }) => [styles.button, pressed && styles.pressed]}>
       {send.isPending ? (
@@ -52,10 +52,15 @@ export function PersonalClaimLinkButton({
 }
 
 const styles = StyleSheet.create((theme) => ({
+  // An outlined pill, 36 high; hitSlop 4 makes the target 44.
   button: {
-    minHeight: 44,
+    minHeight: 36,
     justifyContent: 'center',
-    paddingHorizontal: theme.space(2),
+    paddingVertical: 0,
+    paddingHorizontal: theme.space(3),
+    borderWidth: 1,
+    borderColor: theme.colors.primary,
+    borderRadius: theme.radius.pill,
   },
   label: {
     fontSize: theme.font.sizeSm,

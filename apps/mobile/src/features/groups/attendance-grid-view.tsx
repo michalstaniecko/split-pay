@@ -2,9 +2,9 @@ import { useLingui } from '@lingui/react/macro';
 import { useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { StyleSheet } from 'react-native-unistyles';
-import { Button } from '@/components/button';
-import { useLocale } from '@/i18n/locale-provider';
-import { useFormatters } from '@/i18n/use-formatters';
+import { Button } from '../../components/button';
+import { useLocale } from '../../i18n/locale-provider';
+import { useFormatters } from '../../i18n/use-formatters';
 import { attendanceGrid, dayLabel, gridChanges, isTicked, toggleDay } from './attendance-grid';
 import { useSaveAttendance } from './attendance-query';
 import type { GroupDetail } from './groups-query';
@@ -106,15 +106,14 @@ function Grid({ group }: { group: GroupDetail }) {
 }
 
 const CELL = 44;
+const NAME_WIDTH = 96;
 
 const styles = StyleSheet.create((theme) => ({
   container: {
     gap: theme.space(2),
-    paddingTop: theme.space(2),
   },
   title: {
     fontSize: theme.font.sizeSm,
-    fontWeight: theme.font.weightBold,
     color: theme.colors.textMuted,
   },
   table: {
@@ -129,8 +128,8 @@ const styles = StyleSheet.create((theme) => ({
   nameCell: {
     height: CELL,
     justifyContent: 'center',
-    maxWidth: 120,
-    paddingEnd: theme.space(2),
+    // Fixed, so the day columns line up; long names end in an ellipsis.
+    width: NAME_WIDTH,
   },
   name: {
     fontSize: theme.font.sizeMd,
