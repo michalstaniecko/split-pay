@@ -3,8 +3,8 @@ import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { ActivityIndicator, Share, Text, View } from 'react-native';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
-import { Button } from '@/components/button';
-import { webUrl } from '@/lib/web-url';
+import { Button } from '../../components/button';
+import { webUrl } from '../../lib/web-url';
 import { groupLinkUrl, qrModules } from './group-link';
 import { groupLinkQuery, useRevokeGroupLink } from './group-link-query';
 
@@ -102,7 +102,7 @@ function QrCode({ value, label }: { value: string; label: string }) {
 
 const styles = StyleSheet.create((theme) => ({
   container: {
-    gap: theme.space(3),
+    gap: theme.space(2),
   },
   muted: {
     fontSize: theme.font.sizeSm,
