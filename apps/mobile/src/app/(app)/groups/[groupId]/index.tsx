@@ -99,7 +99,6 @@ export default function ConversationScreen() {
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel={t`Informacje o grupie`}
-                hitSlop={8}
                 onPress={openInfo}
                 style={styles.more}>
                 <Text style={styles.moreText}>⋯</Text>
@@ -403,13 +402,15 @@ const styles = StyleSheet.create((theme) => ({
     color: theme.colors.text,
   },
   more: {
-    minWidth: 32,
-    minHeight: 32,
+    width: 44,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
   },
   moreText: {
     fontSize: theme.font.sizeXl,
+    // Line box as tall as the glyph, so the ⋯ sits in the middle of the target.
+    lineHeight: theme.font.sizeXl,
     color: theme.colors.text,
   },
   emptyTitle: {

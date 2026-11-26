@@ -1838,6 +1838,10 @@ msgstr "Back"
 msgid "Wspólne + osobiste"
 msgstr "Common + personal"
 
+#: src/app/(app)/_layout.tsx
+msgid "Wstecz"
+msgstr "Back"
+
 #: src/features/groups/group-lifecycle-section.tsx
 msgid "Wszystkie wpisy i salda znikną dla wszystkich członków. Tego nie da się cofnąć."
 msgstr "All entries and balances will be gone for every member. This can't be undone."
