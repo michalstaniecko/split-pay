@@ -91,7 +91,7 @@ describe('groupPreview', () => {
       { memberId: ANIA, amount: 600 },
     ]);
     const [row] = groupPreview([shared], context).days[0]!.rows;
-    expect(row).toMatchObject({ kind: 'expense', names: ['Ania', 'Kasia'], amount: 900, original: null });
+    expect(row).toMatchObject({ entry: { kind: 'expense' }, names: ['Ania', 'Kasia'], amount: 900, original: null });
   });
 
   it('shows a foreign-currency entry in the base currency at its frozen rate, with the original amount', () => {
@@ -107,13 +107,13 @@ describe('groupPreview', () => {
 
   it('lists an income’s recipients instead of a payer', () => {
     const refund = income('2026-07-10', '2026-07-10T09:00:00.000Z', [{ memberId: BARTEK, amount: 300 }]);
-    expect(groupPreview([refund], context).days[0]!.rows[0]).toMatchObject({ kind: 'income', names: ['Bartek'], amount: 300 });
+    expect(groupPreview([refund], context).days[0]!.rows[0]).toMatchObject({ entry: { kind: 'income' }, names: ['Bartek'], amount: 300 });
   });
 
   it('names a settlement’s sender and receiver; it is not spending, so the day total leaves it out', () => {
     const paid = settlement('2026-07-10', '2026-07-10T09:00:00.000Z', KASIA, ANIA);
     const preview = groupPreview([paid], context);
-    expect(preview.days[0]).toMatchObject({ total: 0, rows: [{ kind: 'settlement', names: ['Kasia', 'Ania'], amount: 500 }] });
+    expect(preview.days[0]).toMatchObject({ total: 0, rows: [{ entry: { kind: 'settlement' }, names: ['Kasia', 'Ania'], amount: 500 }] });
     expect(preview.total).toBe(0);
   });
 

@@ -1320,6 +1320,10 @@ msgstr "Unarchived the group"
 msgid "Razem"
 msgstr "Total"
 
+#: src/features/web-view/group-preview-view.tsx
+msgid "Razem: {totalText}"
+msgstr "Total: {totalText}"
+
 #: src/features/entries/split-fields.tsx
 msgid "Resztę dzielą po równo"
 msgstr "The rest is split equally between"
@@ -1952,10 +1956,6 @@ msgstr "Expense {amount}: {title}. Paid by {names}. {date}."
 #: src/features/entries/bubble-label.ts
 msgid "Wydatek {amount}: {title}. Płaci: {payerName}. {date}."
 msgstr "Expense {amount}: {title}. Paid by {payerName}. {date}."
-
-#: src/features/web-view/group-preview-view.tsx
-msgid "Wydatki razem: {totalText}"
-msgstr "Total spent: {totalText}"
 
 #: src/app/(app)/new-group.tsx
 msgid "Wyjazd z datami"

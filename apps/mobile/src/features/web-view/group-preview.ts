@@ -10,7 +10,6 @@ import { conversationItems } from '../entries/conversation';
  * they have none, negative for an income), `null` without "this is me".
  */
 export interface PreviewRow {
-  kind: Entry['kind'];
   entry: Entry;
   names: string[];
   amount: number;
@@ -51,7 +50,6 @@ export function groupPreview(
     if (item.type !== 'entry') continue;
     const { entry } = item;
     days[days.length - 1]!.rows.push({
-      kind: entry.kind,
       entry,
       names: entry.kind === 'settlement' ? [name(entry.from), name(entry.to)] : item.payerNames,
       amount: item.baseAmount ?? entry.amount,

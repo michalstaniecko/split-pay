@@ -1320,6 +1320,10 @@ msgstr "Przywrócono grupę z archiwum"
 msgid "Razem"
 msgstr "Razem"
 
+#: src/features/web-view/group-preview-view.tsx
+msgid "Razem: {totalText}"
+msgstr "Razem: {totalText}"
+
 #: src/features/entries/split-fields.tsx
 msgid "Resztę dzielą po równo"
 msgstr "Resztę dzielą po równo"
@@ -1952,10 +1956,6 @@ msgstr "Wydatek {amount}: {title}. {count, plural, one {Płaci} few {Płacą} ma
 #: src/features/entries/bubble-label.ts
 msgid "Wydatek {amount}: {title}. Płaci: {payerName}. {date}."
 msgstr "Wydatek {amount}: {title}. Płaci: {payerName}. {date}."
-
-#: src/features/web-view/group-preview-view.tsx
-msgid "Wydatki razem: {totalText}"
-msgstr "Wydatki razem: {totalText}"
 
 #: src/app/(app)/new-group.tsx
 msgid "Wyjazd z datami"

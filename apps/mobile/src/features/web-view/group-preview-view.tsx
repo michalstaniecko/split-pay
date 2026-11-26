@@ -43,7 +43,7 @@ export function PreviewHeader({
           {group.name}
         </Text>
         <Text style={styles.muted}>{[dates, people].filter(Boolean).join(' · ')}</Text>
-        <Text style={styles.headerTotal}>{t`Wydatki razem: ${totalText}`}</Text>
+        <Text style={styles.headerTotal}>{t`Razem: ${totalText}`}</Text>
       </View>
       <Pressable
         accessibilityRole="link"
@@ -195,8 +195,13 @@ export function PreviewEntries({
             ) : null}
           </View>
           {days.map((day) => {
-            // A day with only incomes, or netting to zero, shows just its date (as in the app, #43).
-            const total = day.total > 0 ? format.amount(day.total, baseCurrency) : null;
+            // Net of incomes, so it can be negative; a day with only settlements has no total.
+            const spending = day.rows.some((row) => row.entry.kind !== 'settlement');
+            const total = !spending
+              ? null
+              : day.total < 0
+                ? `−${format.amount(-day.total, baseCurrency)}`
+                : format.amount(day.total, baseCurrency);
             const date = format.date(day.date);
             return (
               <View key={day.date}>
