@@ -3,7 +3,7 @@ import { AVATAR_MAX_DIMENSION } from '@split-pay/shared';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
-import { StyleSheet } from 'react-native-unistyles';
+import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { authClient } from '@/lib/auth-client';
 import { MemberAvatar } from './member-avatar';
 import { type PhotoProblem, photoProblem } from './photo-draft';
@@ -18,6 +18,7 @@ import { type PhotoSource, pickPhoto } from './pick-photo';
  */
 export function AvatarSection() {
   const { t } = useLingui();
+  const { theme } = useUnistyles();
   const messages = usePhotoProblemMessages();
   const { data: session } = authClient.useSession();
   const avatar = useQuery(myAvatarQuery());
@@ -42,7 +43,7 @@ export function AvatarSection() {
 
   return (
     <View style={styles.container}>
-      <MemberAvatar name={name} url={avatar.data?.url} size={72} />
+      <MemberAvatar name={name} url={avatar.data?.url} size={72} filled initialSize={theme.font.sizeXl} />
       <View style={styles.actions}>
         <Action label={hasAvatar ? t`Zmień zdjęcie` : t`Dodaj zdjęcie`} disabled={busy} onPress={() => void choose('library')} />
         <Action label={t`Zrób zdjęcie`} disabled={busy} onPress={() => void choose('camera')} />

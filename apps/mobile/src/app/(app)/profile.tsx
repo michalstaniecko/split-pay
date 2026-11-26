@@ -73,7 +73,7 @@ export default function ProfileScreen() {
   return (
     // Scrolls: Profile is taller than a small phone screen ("Usuń konto" is last).
     <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-      <PlaceholderScreen title={t`Profil`}>
+      <PlaceholderScreen title={t`Profil`} paddingBottom={56}>
         <AvatarSection />
         <View style={styles.account}>
           <Text style={styles.label}>{t`Zalogowano jako`}</Text>

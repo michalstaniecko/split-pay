@@ -2,9 +2,9 @@ import { useLingui } from '@lingui/react/macro';
 import { Image } from 'expo-image';
 import { Pressable, Text, View } from 'react-native';
 import { StyleSheet } from 'react-native-unistyles';
-import { useLocale } from '@/i18n/locale-provider';
-import { MemberAvatar, photoCacheKey } from '@/features/photos/member-avatar';
-import { useFormatters } from '@/i18n/use-formatters';
+import { useLocale } from '../../i18n/locale-provider';
+import { MemberAvatar, photoCacheKey } from '../photos/member-avatar';
+import { useFormatters } from '../../i18n/use-formatters';
 import { entryBubbleLabel } from './bubble-label';
 import { type DayItem, type EntryItem, separatorTotal } from './conversation';
 import { CATEGORY_ICONS } from './entries-query';
@@ -21,11 +21,13 @@ import type { EntryAction } from './entry-edit';
  * amount small ("≈ 86,43 zł").
  * Long-press opens the entry actions (#11); screen readers get the same
  * actions as accessibility actions. Edited entries say "edytowano"; a change
- * rejected as a version conflict shows a red "!" that opens the conflict sheet.
+ * rejected as a version conflict gets the accent border and a red "!" that
+ * opens the conflict sheet.
  * Outbox state (#22): 🕓 while queued, nothing once synced, a red "!" when
  * the server refused it (opens the retry sheet via the same `onConflictPress`).
  * A receipt photo shows as a small thumbnail at the bubble's end edge; the
- * payer's avatar photo replaces the initial when they set one (#26).
+ * payer's avatar photo replaces the initial when they set one (#26); without
+ * one, others' bubbles show it filled with the primary colour.
  */
 export function EntryBubble({
   item,
@@ -115,12 +117,12 @@ export function EntryBubble({
             styles.bubble,
             mine ? styles.mine : styles.theirs,
             income && styles.income,
-            highlighted && styles.highlighted,
+            (highlighted || conflict) && styles.highlighted,
             pressed && styles.pressed,
           ]}>
           <View style={styles.authorRow}>
             {/* Avatar of the largest payer: their photo, else the initial. */}
-            <MemberAvatar name={payerName} url={payerAvatarUrl} size={20} inverted={mine} />
+            <MemberAvatar name={payerName} url={payerAvatarUrl} size={20} filled={!mine} inverted={mine} initialSize={11} />
             <Text style={[styles.author, mine && styles.mineMuted]} numberOfLines={1}>
               {author}
             </Text>
