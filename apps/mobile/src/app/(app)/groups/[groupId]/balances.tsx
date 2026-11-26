@@ -86,7 +86,8 @@ const styles = StyleSheet.create((theme) => ({
   },
   content: {
     gap: theme.space(3),
-    padding: theme.space(4),
+    paddingHorizontal: theme.space(4),
+    paddingTop: theme.space(5),
     paddingBottom: theme.space(10),
   },
 }));
