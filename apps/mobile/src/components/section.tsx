@@ -8,18 +8,19 @@ import { StyleSheet } from 'react-native-unistyles';
  * the content. `plain` drops the card and uses a small muted title, for
  * sections inside a sheet (entry detail).
  */
-export function Section({
-  title,
-  trailing,
-  variant = 'card',
-  children,
-}: {
-  title?: string;
-  /** At the end of the header row, e.g. a count or a link. Needs `title`. */
-  trailing?: ReactNode;
+type SectionProps = {
   variant?: 'card' | 'plain';
   children?: ReactNode;
-}) {
+} & (
+  | {
+      title: string;
+      /** At the end of the header row, e.g. a count or a link. */
+      trailing?: ReactNode;
+    }
+  | { title?: undefined; trailing?: never }
+);
+
+export function Section({ title, trailing, variant = 'card', children }: SectionProps) {
   const plain = variant === 'plain';
   return (
     <View style={plain ? styles.plain : styles.card}>
