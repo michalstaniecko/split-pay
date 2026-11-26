@@ -71,11 +71,15 @@ The screen with a group's members, group link, stats, change history and setting
 _Avoid_: Group settings, group details
 
 **Group link** (PL: Link grupy):
-A secret, revocable link that leads to joining the group (in the app) or previewing it (on the web).
+A secret, revocable link that leads to joining the group (in the app) or to its group preview (on the web).
 _Avoid_: Email invitation, group code
 
+**Group preview** (PL: Podgląd grupy):
+The read-only view of a group that a group link opens without the app: a formal statement of the settle-up, every member's balance and the list of entries. Anyone holding the link can read it without saying who they are.
+_Avoid_: Web Conversation, web view
+
 **Personal claim link** (PL: Osobisty link przejęcia):
-A link pointing to a specific member without account to be claimed. Without the app it opens the same web view as the group link, with that member highlighted.
+A link pointing to a specific member without account to be claimed. Without the app it opens the same group preview as the group link, with that member highlighted.
 
 ## Money
 

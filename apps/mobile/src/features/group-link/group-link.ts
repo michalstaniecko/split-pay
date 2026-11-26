@@ -4,10 +4,11 @@ import qrcode from 'qrcode-generator';
 const APP_SCHEME = 'kwitz';
 
 /**
- * The shareable URL of a group link (ADR-0009). Until the domain is chosen
- * (SPEC open task) it uses the app's custom scheme; with a web base URL
- * (`EXPO_PUBLIC_WEB_URL`) it becomes `<base>/g/<token>`, ready for universal /
- * app links and the web preview. Both resolve to the `g/[token]` route.
+ * The shareable URL of a group link (ADR-0009): `<base>/g/<token>` with the web
+ * base URL (`EXPO_PUBLIC_WEB_URL`), which opens the installed app (universal /
+ * App Links) or else the web view. Without one (dev only, see `webUrlFrom` in
+ * `app.config.ts`) it uses the app's custom scheme. Both resolve to the
+ * `g/[token]` route.
  */
 export function groupLinkUrl(token: string, webBaseUrl: string | undefined): string {
   const path = `g/${encodeURIComponent(token)}`;
