@@ -5,7 +5,7 @@ import type { ReactElement, ReactNode } from 'react';
 /**
  * Server-rendering stand-ins for `react-native` and `react-native-unistyles`
  * in component tests: views become DOM elements carrying their flattened
- * style and accessibility role, stylesheets resolve against the Fresh light
+ * style and accessibility role (a `Pressable` unpressed), stylesheets resolve against the Fresh light
  * theme, and every `Switch` records its props in `switches`.
  *
  *   vi.mock('react-native', async () => (await import('../test/native-stub')).reactNative);
@@ -15,6 +15,7 @@ export const theme = themes.freshLight;
 
 type Style = Record<string, unknown> | false | null | undefined | Style[];
 type Props = { children?: ReactNode; style?: Style; accessibilityRole?: string };
+type PressableProps = Omit<Props, 'style'> & { style?: Style | ((state: { pressed: boolean }) => Style) };
 
 function flatten(style: Style): Record<string, unknown> {
   if (Array.isArray(style)) return Object.assign({}, ...style.map(flatten));
@@ -33,6 +34,11 @@ export const reactNative = {
     <span role={accessibilityRole} style={flatten(style)}>
       {children}
     </span>
+  ),
+  Pressable: ({ children, style, accessibilityRole }: PressableProps) => (
+    <div role={accessibilityRole} style={flatten(typeof style === 'function' ? style({ pressed: false }) : style)}>
+      {children}
+    </div>
   ),
   Switch: (props: Record<string, unknown>) => {
     switches.push(props);
