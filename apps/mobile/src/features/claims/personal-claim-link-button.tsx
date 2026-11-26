@@ -2,8 +2,8 @@ import { useLingui } from '@lingui/react/macro';
 import { useMutation } from '@tanstack/react-query';
 import { ActivityIndicator, Alert, Pressable, Share, Text } from 'react-native';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
-import { groupLinkUrl } from '../group-link/group-link';
-import { webUrl } from '../../lib/web-url';
+import { groupLinkUrl } from '@/features/group-link/group-link';
+import { webUrl } from '@/lib/web-url';
 import { fetchClaimLink } from './claims-query';
 
 /**
