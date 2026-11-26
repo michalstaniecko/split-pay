@@ -116,9 +116,9 @@ A fixed, translated list with icons (food, transport, accommodation, alcohol, fu
 - A **group link** (secret token) sent via the system share sheet (WhatsApp, Messenger, SMS…) + a **QR code** to show in person. No sending emails/SMS from the server in the MVP ([ADR-0009](./adr/0009-sharing-via-link.md)).
 - The link is a universal link / app link:
   - app installed → join screen: "Jesteś jednym z nich?" ("Are you one of them?" — a list of members without an account) or "Dołącz jako nowa osoba" ("Join as a new person");
-  - no app → **web preview** + a "download the app" button.
+  - no app → **group preview** (see Web interface) + a "download the app" button.
 - **Claiming** a member without an account: assigns the whole history to the account. The other members get a notification ("Przejęcie profilu Tomek: Tomek" — "Tomek profile claimed by Tomek"), and anyone can undo it — from the long-press menu on that system message or from the change history.
-- Optionally a **personal claim link** for a specific member without an account ("Send Tomek his link"). Without the app it opens the same read-only web view of the whole group as the group link (it reveals nothing more), with that member highlighted: "To Twój profil — przejmij go w aplikacji".
+- Optionally a **personal claim link** for a specific member without an account ("Send Tomek his link"). Without the app it opens the same group preview of the whole group as the group link (it reveals nothing more), with that member highlighted: "To Twój profil — przejmij go w aplikacji".
 - The group link can be **revoked** and a new one generated.
 
 ## Local groups (without an account)
@@ -138,9 +138,12 @@ A fixed, translated list with icons (food, transport, accommodation, alcohol, fu
 ## Web interface
 
 - The same Expo app with a web target (Expo Router), in SPA mode (`web.output: "single"`) — Unistyles does not work with static rendering without additional SSR configuration, and SEO is not needed.
-- Access via the group link, without logging in. The same layout as the app, read-only: the **Conversation** with the balance banner and drawer (no composer, no edit menu; the drawer shows transfers without "Oddaj", "Przypomnij" or "Inna spłata").
-- The header opens a limited **Group info**: members and Stats only (no group link, settings or change history).
-- A "this is me" option — choosing a member, remembered in the browser. It decides which bubbles sit on the end edge and drives the balance banner ("how much I owe").
+- Access via the group link, without logging in. The web does **not** show the Conversation: a chat reads poorly on a wide screen and depends on knowing who "me" is, which a visitor from a link has not said. It shows the **group preview** — a formal, read-only statement in one centred column of limited width, the same layout at every width (on a narrow screen table rows wrap to two lines):
+  1. **Header**: group name, emoji, date range, number of members, total of expenses; a "Statystyki" link opens Stats.
+  2. **Settle-up**, on the page (no drawer): the suggested transfers ("Ania → Bartek 412,30 zł"), respecting the group's debt simplification setting, and every member's balance in the base currency. No payout details (the link is anonymous and can be forwarded) and no actions ("Oddaj", "Przypomnij", "Inna spłata").
+  3. **Entries**: one table of all entries ordered by entry date ascending, with a header per day carrying that day's total. A row shows the title with its category, the payer ("Ania + 1" for several payers) and the amount in the base currency, with the original amount below it for a foreign currency. A settlement is a distinct row ("Spłata: Tomek → Ania"); an income is marked as such and lists its recipients instead of a payer. Clicking a row opens the entry detail.
+- An optional "this is me" — choosing a member from the balances list, remembered in the browser. It only highlights: that member's balance row and transfers, plus a "Twój udział" column in the entries table. Nothing asks for it up front and nothing depends on it. A personal claim link highlights its member the same way.
+- No Group info, day strip or balance drawer on the web: members are in the balances, and the table scrolls.
 - **Entry detail** on the web: the same sheet without the receipt photo, the change history link and "Edytuj".
 - **No photos and no editing.**
 - Link previews (Open Graph) for messengers — a simple API endpoint.
