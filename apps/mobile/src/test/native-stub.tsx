@@ -57,8 +57,13 @@ export const reactNative = {
   },
 };
 
+/** The slice of the Unistyles runtime style factories read: no safe-area insets. */
+export const runtime = { insets: { top: 0, bottom: 0, left: 0, right: 0 } };
+
 export const unistyles = {
-  StyleSheet: { create: (factory: (t: typeof theme) => unknown) => factory(theme) },
+  StyleSheet: {
+    create: <T,>(factory: (t: typeof theme, rt: typeof runtime) => T) => factory(theme, runtime),
+  },
   useUnistyles: () => ({ theme }),
 };
 
