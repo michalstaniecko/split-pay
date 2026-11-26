@@ -1,8 +1,8 @@
 import { useLingui } from '@lingui/react/macro';
 import type { GroupStats } from '@split-pay/shared';
-import type { ReactNode } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { StyleSheet } from 'react-native-unistyles';
+import { Section } from '@/components/section';
 import { CATEGORY_ICONS } from '@/features/entries/entries-query';
 import { useEntryLabels } from '@/features/entries/use-entry-labels';
 import { useFormatters } from '@/i18n/use-formatters';
@@ -26,7 +26,8 @@ export function StatsView({
   }
   return (
     <View style={styles.container}>
-      <Section title={t`Dni × osoby`} subtitle={t`Górna kwota: zapłacone, dolna: zużyte.`}>
+      <Section title={t`Dni × osoby`}>
+        <Text style={styles.mutedText}>{t`Górna kwota: zapłacone, dolna: zużyte.`}</Text>
         <DaysTable stats={stats} members={members} />
       </Section>
       <Section title={t`Kategorie`}>
@@ -115,18 +116,6 @@ function Categories({ stats }: { stats: GroupStats }) {
   );
 }
 
-function Section({ title, subtitle, children }: { title: string; subtitle?: string; children: ReactNode }) {
-  return (
-    <View style={styles.section}>
-      <Text style={styles.sectionTitle} accessibilityRole="header">
-        {title}
-      </Text>
-      {subtitle ? <Text style={styles.mutedText}>{subtitle}</Text> : null}
-      {children}
-    </View>
-  );
-}
-
 const CELL_WIDTH = 112;
 
 const styles = StyleSheet.create((theme) => ({
@@ -138,17 +127,6 @@ const styles = StyleSheet.create((theme) => ({
     textAlign: 'center',
     fontSize: theme.font.sizeMd,
     color: theme.colors.textMuted,
-  },
-  section: {
-    gap: theme.space(2),
-    padding: theme.space(4),
-    borderRadius: theme.radius.lg,
-    backgroundColor: theme.colors.surface,
-  },
-  sectionTitle: {
-    fontSize: theme.font.sizeMd,
-    fontWeight: theme.font.weightBold,
-    color: theme.colors.text,
   },
   table: {
     paddingBottom: theme.space(1),
