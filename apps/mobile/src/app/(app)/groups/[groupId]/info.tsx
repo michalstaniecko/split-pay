@@ -3,11 +3,11 @@ import { useLingui } from '@lingui/react/macro';
 import { availableGroupActions, type GroupActions } from '@split-pay/shared';
 import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
-import type { ReactNode } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { GroupAvatar } from '@/components/group-avatar';
 import { GroupNotFound } from '@/components/group-not-found';
+import { Section } from '@/components/section';
 import { PersonalClaimLinkButton } from '@/features/claims/personal-claim-link-button';
 import { canShareLinks } from '@/features/group-link/group-link';
 import { GroupLinkSection } from '@/features/group-link/group-link-section';
@@ -70,10 +70,10 @@ function GroupInfo({ group }: { group: GroupDetail }) {
 
       <Section
         title={t`Członkowie`}
-        subtitle={t`${plural(count, { one: '# osoba', few: '# osoby', many: '# osób', other: '# osoby' })}`}>
+        trailing={<Text style={styles.muted}>{t`${plural(count, { one: '# osoba', few: '# osoby', many: '# osób', other: '# osoby' })}`}</Text>}>
         {rows.map((row) => (
           <View key={row.id} style={styles.memberLine}>
-            <ReportableMemberAvatar groupId={group.id} member={row} url={avatars?.get(row.id)} size={32} />
+            <ReportableMemberAvatar groupId={group.id} member={row} url={avatars?.get(row.id)} size={32} filled initialSize={14} />
             <MemberItem row={row} accountBadge={actions.claiming} onPress={() => openMemberSheet(row.id)} />
             {!archived && actions.claiming && row.withoutAccount ? <PersonalClaimLinkButton groupId={group.id} groupName={group.name} member={row} /> : null}
           </View>
@@ -104,16 +104,7 @@ function OtherSections({ group, actions, archived }: { group: GroupDetail; actio
           <GroupLinkSection groupId={group.id} groupName={group.name} />
         </Section>
       ) : null}
-      {actions.stats ? (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityHint={t`Dni × osoby i kategorie`}
-          onPress={() => router.push({ pathname: '/groups/[groupId]/stats', params: { groupId: group.id } })}
-          style={({ pressed }) => [styles.section, styles.sectionHeader, pressed && styles.pressed]}>
-          <Text style={styles.sectionTitle}>{t`Statystyki`}</Text>
-          <Text style={styles.chevron}>{t`Pokaż`}</Text>
-        </Pressable>
-      ) : null}
+      {actions.stats ? <StatsSection groupId={group.id} /> : null}
       {actions.changeHistory ? (
         <Section title={t`Historia zmian`}>
           <HistorySection group={group} />
@@ -124,6 +115,34 @@ function OtherSections({ group, actions, archived }: { group: GroupDetail; actio
       </Section>
       <GroupLifecycleSection group={group} />
     </>
+  );
+}
+
+/**
+ * Stats: a card with the "Statystyki" header (a header for screen readers) and
+ * a "Pokaż" button. Tapping anywhere on the card opens Stats too; for screen
+ * readers that is the button alone.
+ */
+function StatsSection({ groupId }: { groupId: string }) {
+  const { t } = useLingui();
+  const open = () => router.push({ pathname: '/groups/[groupId]/stats', params: { groupId } });
+  return (
+    <Pressable accessible={false} onPress={open} style={({ pressed }) => pressed && styles.pressed}>
+      <Section
+        title={t`Statystyki`}
+        trailing={
+          <Pressable
+            accessibilityRole="button"
+            accessibilityHint={t`Dni × osoby i kategorie`}
+            // ~18 pt of text; 14 above and below make the target 44.
+            hitSlop={14}
+            onPress={open}
+            style={({ pressed }) => pressed && styles.pressed}>
+            <Text style={styles.chevron}>{t`Pokaż`}</Text>
+          </Pressable>
+        }
+      />
+    </Pressable>
   );
 }
 
@@ -167,18 +186,6 @@ function MemberItem({ row, accountBadge, onPress }: { row: MemberRow; accountBad
   );
 }
 
-function Section({ title, subtitle, children }: { title: string; subtitle?: string; children?: ReactNode }) {
-  return (
-    <View style={styles.section} accessibilityRole="summary">
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>{title}</Text>
-        {subtitle ? <Text style={styles.muted}>{subtitle}</Text> : null}
-      </View>
-      {children}
-    </View>
-  );
-}
-
 const styles = StyleSheet.create((theme) => ({
   loading: {
     flex: 1,
@@ -203,23 +210,6 @@ const styles = StyleSheet.create((theme) => ({
     fontWeight: theme.font.weightBold,
     color: theme.colors.text,
     textAlign: 'center',
-  },
-  section: {
-    gap: theme.space(2),
-    padding: theme.space(4),
-    borderRadius: theme.radius.lg,
-    backgroundColor: theme.colors.surface,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: theme.space(2),
-  },
-  sectionTitle: {
-    fontSize: theme.font.sizeMd,
-    fontWeight: theme.font.weightBold,
-    color: theme.colors.text,
   },
   memberLine: {
     flexDirection: 'row',

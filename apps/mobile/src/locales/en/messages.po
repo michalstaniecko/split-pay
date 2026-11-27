@@ -157,6 +157,7 @@ msgstr "Alcohol"
 #: src/features/groups/group-lifecycle-section.tsx
 #: src/features/history/change-row.tsx
 #: src/features/moderation/reportable-member-avatar.tsx
+#: src/features/photos/receipt-field.tsx
 #: src/features/profile/delete-account-section.tsx
 msgid "Anuluj"
 msgstr "Cancel"
@@ -339,6 +340,7 @@ msgid "Dodaj osobę bez konta"
 msgstr "Add a person without an account"
 
 #: src/features/photos/avatar-section.tsx
+#: src/features/photos/receipt-field.tsx
 msgid "Dodaj zdjęcie"
 msgstr "Add photo"
 
@@ -1112,7 +1114,6 @@ msgstr "Fuel"
 msgid "Panel administratora"
 msgstr "Admin panel"
 
-#: src/features/photos/receipt-field.tsx
 #: src/features/photos/receipt-photo.tsx
 msgid "Paragon"
 msgstr "Receipt"
@@ -1829,6 +1830,10 @@ msgstr "Back"
 #: src/features/entries/use-entry-labels.ts
 msgid "Wspólne + osobiste"
 msgstr "Common + personal"
+
+#: src/app/(app)/_layout.tsx
+msgid "Wstecz"
+msgstr "Back"
 
 #: src/features/groups/group-lifecycle-section.tsx
 msgid "Wszystkie wpisy i salda znikną dla wszystkich członków. Tego nie da się cofnąć."

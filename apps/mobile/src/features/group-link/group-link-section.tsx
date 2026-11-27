@@ -102,7 +102,7 @@ function QrCode({ value, label }: { value: string; label: string }) {
 
 const styles = StyleSheet.create((theme) => ({
   container: {
-    gap: theme.space(3),
+    gap: theme.space(2),
   },
   muted: {
     fontSize: theme.font.sizeSm,

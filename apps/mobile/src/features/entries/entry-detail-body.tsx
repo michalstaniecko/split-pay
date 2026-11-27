@@ -3,6 +3,7 @@ import { convert, type Entry, resolveSplit } from '@split-pay/shared';
 import type { ReactNode } from 'react';
 import { Text, View } from 'react-native';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
+import { Section } from '@/components/section';
 import { formatRate } from '@/features/rates/rate-format';
 import { useLocale } from '@/i18n/locale-provider';
 import { useFormatters } from '@/i18n/use-formatters';
@@ -57,14 +58,14 @@ export function EntryDetailBody({
       {currencyRows}
       <Row label={t`Kategoria`}>{labels.category[entry.category]}</Row>
       <Row label={t`Data`}>{format.date(entry.date)}</Row>
-      <Section title={entry.kind === 'expense' ? t`Kto zapłacił` : t`Kto otrzymuje`}>
+      <Section variant="plain" title={entry.kind === 'expense' ? t`Kto zapłacił` : t`Kto otrzymuje`}>
         {(entry.kind === 'expense' ? entry.payers : entry.recipients).map((h) => (
           <Row key={h.memberId} label={memberName(h.memberId)}>
             {amount(h.amount)}
           </Row>
         ))}
       </Section>
-      <Section title={t`Udziały · ${labels.splitMode[entry.split.mode]}`}>
+      <Section variant="plain" title={t`Udziały · ${labels.splitMode[entry.split.mode]}`}>
         {resolveSplit(entry.split, entry.amount).map((share) => (
           <Row key={share.memberId} label={memberName(share.memberId)}>
             {amount(share.amount)}
@@ -89,15 +90,6 @@ function CurrencyRows({ entry, baseCurrency }: { entry: Entry; baseCurrency: str
       <Row label={t`W walucie bazowej`}>≈ {format.amount(base, baseCurrency)}</Row>
       <Row label={t`Kurs`}>{rate}</Row>
     </>
-  );
-}
-
-function Section({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <View style={styles.section}>
-      <Text style={styles.sectionTitle}>{title}</Text>
-      {children}
-    </View>
   );
 }
 
@@ -126,15 +118,6 @@ const styles = StyleSheet.create((theme) => ({
     fontSize: theme.font.sizeXl,
     fontWeight: theme.font.weightBold,
     color: theme.colors.text,
-  },
-  section: {
-    gap: theme.space(2),
-    paddingTop: theme.space(2),
-  },
-  sectionTitle: {
-    fontSize: theme.font.sizeSm,
-    fontWeight: theme.font.weightBold,
-    color: theme.colors.textMuted,
   },
   row: {
     flexDirection: 'row',

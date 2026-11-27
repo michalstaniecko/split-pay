@@ -100,7 +100,6 @@ export default function ConversationScreen() {
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel={t`Informacje o grupie`}
-                hitSlop={8}
                 onPress={openInfo}
                 style={styles.more}>
                 <Icon name="Ellipsis" size={theme.font.sizeLg} />
@@ -404,8 +403,8 @@ const styles = StyleSheet.create((theme) => ({
     color: theme.colors.text,
   },
   more: {
-    minWidth: 32,
-    minHeight: 32,
+    width: 44,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
   },

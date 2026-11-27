@@ -289,7 +289,7 @@ function ExpenseFormView({ group, editing }: { group: GroupDetail; editing?: For
       {actions.foreignCurrencies ? (
         <View style={styles.field}>
           <Text style={styles.label}>{t`Waluta`}</Text>
-          <View style={styles.chips} accessibilityRole="radiogroup">
+          <View style={styles.chips} accessibilityRole="radiogroup" accessibilityLabel={t`Waluta`}>
             {entryCurrencies(group.baseCurrency).map((currency) => (
               <Pressable
                 key={currency}
@@ -338,7 +338,7 @@ function ExpenseFormView({ group, editing }: { group: GroupDetail; editing?: For
 
       <View style={styles.field}>
         <Text style={styles.label}>{t`Kategoria`}</Text>
-        <View style={styles.chips} accessibilityRole="radiogroup">
+        <View style={styles.chips} accessibilityRole="radiogroup" accessibilityLabel={t`Kategoria`}>
           {Category.options.map((category) => (
             <Pressable
               key={category}
@@ -480,6 +480,7 @@ const styles = StyleSheet.create((theme) => ({
   amountRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: theme.space(2),
     minHeight: 48,
     paddingHorizontal: theme.space(3),
     borderRadius: theme.radius.md,

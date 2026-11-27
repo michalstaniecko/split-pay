@@ -8,6 +8,7 @@ import { Button } from '@/components/button';
 import { flattenActivityPages } from '@/features/activity/activity';
 import { activityQuery, activitySeen } from '@/features/activity/activity-query';
 import { ActivityRow } from '@/features/activity/activity-row';
+import { usePullToRefresh } from '@/lib/use-pull-to-refresh';
 import { useRefreshOnFocus } from '@/lib/use-refresh-on-focus';
 
 /**
@@ -19,6 +20,7 @@ export default function ActivityScreen() {
   const { t } = useLingui();
   const { theme } = useUnistyles();
   const feed = useInfiniteQuery(activityQuery());
+  const pull = usePullToRefresh(feed.refetch);
   useRefreshOnFocus(feed.refetch);
   const { items, memberNames } = useMemo(() => flattenActivityPages(feed.data?.pages ?? []), [feed.data]);
 
@@ -63,8 +65,8 @@ export default function ActivityScreen() {
       }
       refreshControl={
         <RefreshControl
-          refreshing={feed.isRefetching && !feed.isFetchingNextPage}
-          onRefresh={() => void feed.refetch()}
+          refreshing={pull.refreshing}
+          onRefresh={pull.onRefresh}
           tintColor={theme.colors.primary}
         />
       }

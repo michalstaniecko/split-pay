@@ -1,6 +1,6 @@
 import { useLingui } from '@lingui/react/macro';
 import { useQuery } from '@tanstack/react-query';
-import { Link, router } from 'expo-router';
+import { router } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, RefreshControl, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -17,6 +17,7 @@ import { InboxSearchField } from '@/features/search/inbox-search-field';
 import { InboxSearchResults } from '@/features/search/inbox-search-results';
 import { useFormatters } from '@/i18n/use-formatters';
 import { authClient } from '@/lib/auth-client';
+import { usePullToRefresh } from '@/lib/use-pull-to-refresh';
 import { useRefreshOnFocus } from '@/lib/use-refresh-on-focus';
 
 /**
@@ -30,6 +31,7 @@ export default function InboxScreen() {
   const signedIn = !!authClient.useSession().data;
   const groups = useQuery(groupsQuery());
   useRefreshOnFocus(groups.refetch);
+  const pull = usePullToRefresh(groups.refetch);
   const [query, setQuery] = useState('');
 
   // Both options in "Nowy" work signed out too: each creates a local group (ADR-0021).
@@ -74,8 +76,8 @@ export default function InboxScreen() {
           ListFooterComponent={<ArchivedSection groups={inboxSections(groups.data).archived} />}
           refreshControl={
             <RefreshControl
-              refreshing={groups.isRefetching}
-              onRefresh={() => void groups.refetch()}
+              refreshing={pull.refreshing}
+              onRefresh={pull.onRefresh}
               tintColor={theme.colors.primary}
             />
           }
@@ -129,24 +131,25 @@ function InboxRow({ group }: { group: GroupListItem }) {
     ? `${last.title ?? t`Spłata`} · ${format.amount(last.amount, last.currency)}`
     : (dates ?? t`Brak wpisów`);
   return (
-    <Link href={{ pathname: '/groups/[groupId]', params: { groupId: group.id } }} asChild>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={unread ? t`${group.name}, nowe wpisy. ${preview}` : undefined}
-        style={({ pressed }) => [styles.row, pressed && styles.pressed]}>
-        <GroupAvatar emoji={group.emoji} color={group.color} />
-        <View style={styles.rowText}>
-          <Text style={[styles.name, unread && styles.unreadText]} numberOfLines={1}>
-            {group.name}
-          </Text>
-          <Text style={[styles.preview, unread && styles.unreadPreview]} numberOfLines={1}>
-            {preview}
-          </Text>
-          {group.local ? <LocalGroupBadge /> : null}
-        </View>
-        {unread ? <View style={styles.unreadDot} /> : null}
-      </Pressable>
-    </Link>
+    // Not `<Link asChild>`: its Slot spreads the child's style as an object, which drops this
+    // `({ pressed }) => …` style function and leaves the row unstyled.
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={unread ? t`${group.name}, nowe wpisy. ${preview}` : undefined}
+      onPress={() => router.push({ pathname: '/groups/[groupId]', params: { groupId: group.id } })}
+      style={({ pressed }) => [styles.row, pressed && styles.pressed]}>
+      <GroupAvatar emoji={group.emoji} color={group.color} />
+      <View style={styles.rowText}>
+        <Text style={[styles.name, unread && styles.unreadText]} numberOfLines={1}>
+          {group.name}
+        </Text>
+        <Text style={[styles.preview, unread && styles.unreadPreview]} numberOfLines={1}>
+          {preview}
+        </Text>
+        {group.local ? <LocalGroupBadge /> : null}
+      </View>
+      {unread ? <View style={styles.unreadDot} /> : null}
+    </Pressable>
   );
 }
 

@@ -59,11 +59,13 @@ function Option({
   );
 }
 
-const styles = StyleSheet.create((theme) => ({
+const styles = StyleSheet.create((theme, rt) => ({
   container: {
     gap: theme.space(3),
     padding: theme.space(4),
     paddingTop: theme.space(6),
+    // Clears the home indicator by 8.
+    paddingBottom: rt.insets.bottom + theme.space(2),
     backgroundColor: theme.colors.background,
   },
   option: {
@@ -81,6 +83,7 @@ const styles = StyleSheet.create((theme) => ({
   },
   emoji: {
     fontSize: theme.font.sizeXl,
+    lineHeight: theme.font.sizeXl,
   },
   optionText: {
     flex: 1,

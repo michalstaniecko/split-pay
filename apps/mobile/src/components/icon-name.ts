@@ -14,6 +14,7 @@ export const ICON_NAMES = [
   'Camera',
   'SendHorizontal',
   'Clock',
+  'Search',
   // Classic's category glyphs.
   'ShoppingCart',
   'Utensils',

@@ -9,6 +9,7 @@ export function InboxSearchField({ value, onChange }: { value: string; onChange:
   const { theme } = useUnistyles();
   return (
     <View style={styles.container}>
+      <Icon name="Search" size={16} color={theme.colors.textMuted} />
       <TextInput
         value={value}
         onChangeText={onChange}
@@ -38,6 +39,7 @@ const styles = StyleSheet.create((theme) => ({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: theme.space(2),
     marginHorizontal: theme.space(4),
     marginVertical: theme.space(2),
     paddingHorizontal: theme.space(3),
