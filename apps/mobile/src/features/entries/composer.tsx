@@ -5,6 +5,7 @@ import { type ComponentRef, useRef, useState } from 'react';
 import { Platform, Pressable, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
+import { Icon } from '@/components/icon';
 import { pendingReceipt } from '@/features/photos/pending-receipt';
 import { takeOrPickPhoto } from '@/features/photos/pick-photo';
 import { cleanAmountInput } from './amount-input';
@@ -17,7 +18,7 @@ import { canSendComposer, composerExpense, type ExpenseGroup, todayLocalDate } f
  * model, ADR-0017). Amount comes first — "next" moves to the title, whose
  * return key sends. Send creates an equal-split expense paid by me on the
  * default date (`composerExpense`). "+" opens the full form with these values;
- * 📷 takes the receipt photo first, then opens the same form with it (#26) —
+ * The camera button takes the receipt photo first, then opens the same form with it (#26) —
  * not in a local group, which has no receipt photos (ADR-0021).
  */
 export function Composer({
@@ -91,7 +92,7 @@ export function Composer({
             hitSlop={8}
             onPress={() => void takeReceipt()}
             style={({ pressed }) => [styles.iconButton, (pressed || takingPhoto) && styles.pressed]}>
-            <Text style={styles.camera}>📷</Text>
+            <Icon name="Camera" />
           </Pressable>
         ) : null}
         <View style={styles.amountField}>
@@ -130,7 +131,7 @@ export function Composer({
           disabled={!canSend}
           onPress={send}
           style={({ pressed }) => [styles.sendButton, (!canSend || pressed) && styles.dimmed]}>
-          <Text style={styles.sendLabel}>➤</Text>
+          <Icon name="SendHorizontal" color={theme.colors.onPrimary} />
         </Pressable>
       </View>
     </View>
@@ -162,9 +163,6 @@ const styles = StyleSheet.create((theme) => ({
   plus: {
     fontSize: theme.font.sizeXl,
     color: theme.colors.primary,
-  },
-  camera: {
-    fontSize: theme.font.sizeMd,
   },
   pressed: {
     opacity: 0.6,
@@ -213,10 +211,6 @@ const styles = StyleSheet.create((theme) => ({
   },
   dimmed: {
     opacity: 0.4,
-  },
-  sendLabel: {
-    fontSize: theme.font.sizeMd,
-    color: theme.colors.onPrimary,
   },
   error: {
     fontSize: theme.font.sizeSm,

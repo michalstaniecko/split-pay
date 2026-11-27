@@ -122,14 +122,6 @@ msgstr "+ Dodaj osobę"
 msgid "+ Dodaj osobę bez konta"
 msgstr "+ Dodaj osobę bez konta"
 
-#: src/features/photos/receipt-field.tsx
-msgid "📷 Zrób nowe"
-msgstr "📷 Zrób nowe"
-
-#: src/features/photos/receipt-field.tsx
-msgid "📷 Zrób zdjęcie"
-msgstr "📷 Zrób zdjęcie"
-
 #: src/app/(app)/report-photo.tsx
 msgid "Administrator sprawdzi to zdjęcie i w razie potrzeby je usunie."
 msgstr "Administrator sprawdzi to zdjęcie i w razie potrzeby je usunie."
@@ -2208,7 +2200,12 @@ msgstr "Zmieniono zdjęcie paragonu"
 msgid "Znowu członek bez konta: {memberName}"
 msgstr "Znowu członek bez konta: {memberName}"
 
+#: src/features/photos/receipt-field.tsx
+msgid "Zrób nowe"
+msgstr "Zrób nowe"
+
 #: src/features/photos/avatar-section.tsx
+#: src/features/photos/receipt-field.tsx
 msgid "Zrób zdjęcie"
 msgstr "Zrób zdjęcie"
 

@@ -1,7 +1,9 @@
 import { useLingui } from '@lingui/react/macro';
 import { isEdited, type Member, type Settlement } from '@split-pay/shared';
 import { Pressable, Text, View } from 'react-native';
-import { StyleSheet } from 'react-native-unistyles';
+import { StyleSheet, useUnistyles } from 'react-native-unistyles';
+import { Icon } from '@/components/icon';
+import { CategoryIcon } from '@/features/entries/category-icon-view';
 import { useEntryActionLabels } from '@/features/entries/entry-actions-menu';
 import type { EntryAction } from '@/features/entries/entry-edit';
 import { useLocale } from '@/i18n/locale-provider';
@@ -9,12 +11,12 @@ import { settlementMessage } from './settlement-message';
 
 /**
  * A settlement in the Conversation (ADR-0017): a centred system message
- * ("💸 Spłata: Bartek → Ania · 30,50 zł") instead of a bubble, so it can't be
+ * (settlement icon, "Spłata: Bartek → Ania · 30,50 zł") instead of a bubble, so it can't be
  * mistaken for an expense. Tap opens the entry detail.
  * Long-press opens the same entry actions as a bubble (#11; `entryActions`),
  * also offered as accessibility actions. Edited settlements say "edytowano";
  * a change rejected as a version conflict shows a red "!" after the pill.
- * Outbox state (#22): 🕓 while queued; a refused send also shows the red "!".
+ * Outbox state (#22): a clock icon while queued; a refused send also shows the red "!".
  */
 export function SettlementSystemMessage({
   entry,
@@ -43,12 +45,13 @@ export function SettlementSystemMessage({
   conflict?: boolean;
   /** Pressing the red "!" (conflict or failed send). */
   onConflictPress?: () => void;
-  /** Waiting in the outbox to be sent (🕓). */
+  /** Waiting in the outbox to be sent (clock icon). */
   queued?: boolean;
   /** The server refused it from the outbox (red "!" → retry sheet). */
   failed?: boolean;
 }) {
   const { t } = useLingui();
+  const { theme } = useUnistyles();
   const { locale } = useLocale();
   const actionLabels = useEntryActionLabels();
   const { text, label } = settlementMessage(entry, { members, myMemberId, locale });
@@ -64,11 +67,12 @@ export function SettlementSystemMessage({
         onPress={onPress}
         onLongPress={onLongPress}
         style={({ pressed }) => [styles.message, highlighted && styles.highlighted, pressed && styles.pressed]}>
+        <CategoryIcon category="settlement" size={theme.font.sizeSm} />
         <Text style={styles.text}>
-          💸 {text}
+          {text}
           {edited ? <Text style={styles.edited}> · {edited}</Text> : null}
-          {queued && !failed ? ' 🕓' : null}
         </Text>
+        {queued && !failed ? <Icon name="Clock" size={theme.font.sizeSm} color={theme.colors.textMuted} /> : null}
       </Pressable>
       {conflict || failed ? (
         <Pressable
@@ -93,6 +97,9 @@ const styles = StyleSheet.create((theme) => ({
     marginVertical: theme.space(1),
   },
   message: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.space(1.5),
     flexShrink: 1,
     maxWidth: '90%',
     paddingHorizontal: theme.space(3),
@@ -110,6 +117,7 @@ const styles = StyleSheet.create((theme) => ({
     fontWeight: theme.font.weightBold,
     color: theme.colors.text,
     textAlign: 'center',
+    flexShrink: 1,
   },
   edited: {
     fontWeight: 'normal',
