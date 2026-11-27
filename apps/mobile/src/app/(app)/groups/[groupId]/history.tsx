@@ -7,6 +7,7 @@ import { GroupNotFound } from '@/components/group-not-found';
 import { useGroup } from '@/features/groups/groups-query';
 import { ChangeRow } from '@/features/history/change-row';
 import { historyQuery } from '@/features/history/history-query';
+import { usePullToRefresh } from '@/lib/use-pull-to-refresh';
 import { useRefreshOnFocus } from '@/lib/use-refresh-on-focus';
 
 /**
@@ -20,6 +21,7 @@ export default function HistoryScreen() {
   const { groupId, entryId } = useLocalSearchParams<{ groupId: string; entryId?: string }>();
   const group = useGroup(groupId);
   const history = useQuery(historyQuery(groupId, entryId));
+  const pull = usePullToRefresh(history.refetch);
   useRefreshOnFocus(history.refetch);
   const title = entryId ? t`Historia wpisu` : t`Historia zmian`;
 
@@ -44,8 +46,8 @@ export default function HistoryScreen() {
         keyExtractor={(change) => change.id}
         renderItem={({ item }) => <ChangeRow group={group.data} change={item} />}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
-        refreshing={history.isRefetching}
-        onRefresh={() => void history.refetch()}
+        refreshing={pull.refreshing}
+        onRefresh={pull.onRefresh}
         ListEmptyComponent={<Text style={styles.empty}>{t`Brak zmian.`}</Text>}
       />
     </>

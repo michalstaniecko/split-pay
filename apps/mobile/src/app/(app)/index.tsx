@@ -16,6 +16,7 @@ import { InboxSearchField } from '@/features/search/inbox-search-field';
 import { InboxSearchResults } from '@/features/search/inbox-search-results';
 import { useFormatters } from '@/i18n/use-formatters';
 import { authClient } from '@/lib/auth-client';
+import { usePullToRefresh } from '@/lib/use-pull-to-refresh';
 import { useRefreshOnFocus } from '@/lib/use-refresh-on-focus';
 
 /**
@@ -29,6 +30,7 @@ export default function InboxScreen() {
   const signedIn = !!authClient.useSession().data;
   const groups = useQuery(groupsQuery());
   useRefreshOnFocus(groups.refetch);
+  const pull = usePullToRefresh(groups.refetch);
   const [query, setQuery] = useState('');
 
   // Both options in "Nowy" work signed out too: each creates a local group (ADR-0021).
@@ -73,8 +75,8 @@ export default function InboxScreen() {
           ListFooterComponent={<ArchivedSection groups={inboxSections(groups.data).archived} />}
           refreshControl={
             <RefreshControl
-              refreshing={groups.isRefetching}
-              onRefresh={() => void groups.refetch()}
+              refreshing={pull.refreshing}
+              onRefresh={pull.onRefresh}
               tintColor={theme.colors.primary}
             />
           }
