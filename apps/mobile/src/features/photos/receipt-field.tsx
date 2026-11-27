@@ -3,7 +3,8 @@ import { RECEIPT_MAX_DIMENSION } from '@split-pay/shared';
 import { Image } from 'expo-image';
 import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
-import { StyleSheet } from 'react-native-unistyles';
+import { StyleSheet, useUnistyles } from 'react-native-unistyles';
+import { Icon } from '@/components/icon';
 import { askPhotoSource } from './ask-photo-source';
 import { photoCacheKey } from './member-avatar';
 import { noReceipt, type PhotoProblem, type ReceiptDraft, receiptPreviewUri } from './photo-draft';
@@ -30,6 +31,7 @@ export function ReceiptField({
   onChange: (draft: ReceiptDraft) => void;
 }) {
   const { t } = useLingui();
+  const { theme } = useUnistyles();
   const messages = usePhotoProblemMessages();
   const [denied, setDenied] = useState(false);
   const preview = receiptPreviewUri(draft, storedUrl);
@@ -84,16 +86,18 @@ export function ReceiptField({
         <Pressable
           accessibilityRole="button"
           onPress={() => void add()}
-          style={({ pressed }) => [styles.add, pressed && styles.pressed]}>
-          <Text style={styles.addLabel}>{t`📷 Dodaj zdjęcie`}</Text>
+          style={({ pressed }) => [styles.add, styles.actionWithIcon, pressed && styles.pressed]}>
+          <Icon name="Camera" size={theme.font.sizeMd} color={theme.colors.primary} />
+          <Text style={styles.addLabel}>{t`Dodaj zdjęcie`}</Text>
         </Pressable>
       ) : (
         <View style={styles.actions}>
           <Pressable
             accessibilityRole="button"
             onPress={() => void pick('camera')}
-            style={({ pressed }) => [styles.action, pressed && styles.pressed]}>
-            <Text style={styles.actionLabel}>{t`📷 Zrób nowe`}</Text>
+            style={({ pressed }) => [styles.action, styles.actionWithIcon, pressed && styles.pressed]}>
+            <Icon name="Camera" size={theme.font.sizeSm} />
+            <Text style={styles.actionLabel}>{t`Zrób nowe`}</Text>
           </Pressable>
           <Pressable
             accessibilityRole="button"
@@ -165,6 +169,11 @@ const styles = StyleSheet.create((theme) => ({
     borderWidth: 1,
     borderColor: theme.colors.border,
     backgroundColor: theme.colors.surface,
+  },
+  actionWithIcon: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.space(1.5),
   },
   actionLabel: {
     fontSize: theme.font.sizeSm,

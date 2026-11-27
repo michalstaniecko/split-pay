@@ -4,8 +4,6 @@ import { describe, expect, it, vi } from 'vitest';
 import { i18n } from '../../i18n/i18n';
 import { render } from '../../test/native-stub';
 
-type SvgProps = { children?: ReactNode; width?: number; height?: number; stroke?: string; importantForAccessibility?: string };
-
 vi.mock('react-native', async () => {
   const { reactNative } = await import('../../test/native-stub');
   return {
@@ -19,19 +17,7 @@ vi.mock('react-native', async () => {
   };
 });
 vi.mock('react-native-unistyles', async () => (await import('../../test/native-stub')).unistyles);
-vi.mock('react-native-svg', () => ({
-  default: ({ children, width, height, stroke, importantForAccessibility }: SvgProps) => (
-    <svg
-      width={width}
-      height={height}
-      stroke={stroke}
-      aria-hidden={importantForAccessibility === 'no-hide-descendants' ? true : undefined}>
-      {children}
-    </svg>
-  ),
-  Circle: () => <circle />,
-  Path: () => <path />,
-}));
+vi.mock('@/components/icon', async () => (await import('../../test/native-stub')).icon);
 
 const { InboxSearchField } = await import('./inbox-search-field');
 
@@ -48,7 +34,7 @@ function renderField(value = '') {
 describe('InboxSearchField', () => {
   it('shows a muted 16 px magnifier before the input, hidden from accessibility', () => {
     const html = renderField();
-    expect(html).toMatch(/<svg width="16" height="16" stroke="#6B6385" aria-hidden="true">.*<\/svg><input aria-label="Szukaj grup i wydatków"/);
+    expect(html).toMatch(/<svg data-icon="Search" width="16" stroke="#6B6385" aria-hidden="true"><\/svg><input aria-label="Szukaj grup i wydatków"/);
   });
 
   it('keeps 8 px between the magnifier and the input', () => {

@@ -6,6 +6,7 @@ import type { GroupDetail } from './groups-query';
 
 vi.mock('react-native', async () => (await import('../../test/native-stub')).reactNative);
 vi.mock('react-native-unistyles', async () => (await import('../../test/native-stub')).unistyles);
+vi.mock('@/components/icon', async () => (await import('../../test/native-stub')).icon);
 vi.mock('../../i18n/locale-provider', () => ({ useLocale: () => ({ locale: 'pl' }) }));
 vi.mock('./attendance-query', () => ({ useSaveAttendance: () => ({ isPending: false, isError: false, mutate: vi.fn() }) }));
 

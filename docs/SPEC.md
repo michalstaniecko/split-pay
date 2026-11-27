@@ -195,7 +195,8 @@ A fixed, translated list with icons (food, transport, accommodation, alcohol, fu
 - Toggle per user. The same screen layout in both themes — they differ only in tokens.
 - Custom, minimalist components. RTL-safe styles (`start`/`end`, not `left`/`right`) from day one.
 - **Form fields mirror the data model** — one field per value, across the whole app. No free-text parsing into several fields ([ADR-0017](./adr/0017-chat-style-navigation.md)).
-- Own bubbles: Fresh — accent fill with on-accent text; Classic — tinted surface with a border. Category icons: emoji in Fresh, monochrome glyphs in Classic (token-mapped).
+- Own bubbles: Fresh — accent fill with on-accent text; Classic — tinted surface with a border. Category icons: emoji in Fresh, monochrome [Lucide](https://lucide.dev) glyphs in Classic, coloured by the theme.
+- Interface controls (bell, more, clear, expand, check, camera, send, queued clock) are Lucide icons in both families, coloured and sized by the theme; group emoji are user content and stay emoji.
 - All bubble text and pill colour pairs pass WCAG AA (4.5:1) in all 4 variants, checked by a test in `packages/ui`. Screen readers read a bubble as one element; Dynamic Type up to the largest size (amounts never truncate).
 
 ## Language

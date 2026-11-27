@@ -7,10 +7,9 @@ import type { EntryItem } from './conversation';
 
 vi.mock('react-native', async () => (await import('../../test/native-stub')).reactNative);
 vi.mock('react-native-unistyles', async () => (await import('../../test/native-stub')).unistyles);
+vi.mock('@/components/icon', async () => (await import('../../test/native-stub')).icon);
 vi.mock('expo-image', () => ({ Image: () => <img alt="" /> }));
 vi.mock('../../i18n/locale-provider', () => ({ useLocale: () => ({ locale: 'pl' }) }));
-// The query module pulls in the API client and offline store; the bubble only needs the icons.
-vi.mock('./entries-query', () => ({ CATEGORY_ICONS: { food: '🍕' } }));
 
 const { EntryBubble } = await import('./entry-bubble');
 

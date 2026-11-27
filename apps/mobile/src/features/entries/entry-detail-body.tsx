@@ -2,12 +2,12 @@ import { useLingui } from '@lingui/react/macro';
 import { convert, type Entry, resolveSplit } from '@split-pay/shared';
 import type { ReactNode } from 'react';
 import { Text, View } from 'react-native';
-import { StyleSheet } from 'react-native-unistyles';
+import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { Section } from '@/components/section';
 import { formatRate } from '@/features/rates/rate-format';
 import { useLocale } from '@/i18n/locale-provider';
 import { useFormatters } from '@/i18n/use-formatters';
-import { CATEGORY_ICONS } from './entries-query';
+import { CategoryIcon } from './category-icon-view';
 import { useEntryLabels } from './use-entry-labels';
 
 /**
@@ -30,6 +30,7 @@ export function EntryDetailBody({
   receiptPhoto?: ReactNode;
 }) {
   const { t } = useLingui();
+  const { theme } = useUnistyles();
   const labels = useEntryLabels();
   const format = useFormatters();
   const amount = (minor: number) => format.amount(minor, entry.currency);
@@ -37,7 +38,10 @@ export function EntryDetailBody({
 
   return entry.kind === 'settlement' ? (
     <>
-      <Text style={styles.heading}>💸 {t`Spłata`}</Text>
+      <View style={styles.headingRow}>
+        <CategoryIcon category="settlement" size={theme.font.sizeLg} />
+        <Text style={styles.heading}>{t`Spłata`}</Text>
+      </View>
       <Row label={t`Kwota`}>{amount(entry.amount)}</Row>
       {currencyRows}
       <Row label={t`Data`}>{format.date(entry.date)}</Row>
@@ -46,9 +50,10 @@ export function EntryDetailBody({
     </>
   ) : (
     <>
-      <Text style={styles.heading}>
-        {CATEGORY_ICONS[entry.category]} {entry.title}
-      </Text>
+      <View style={styles.headingRow}>
+        <CategoryIcon category={entry.category} size={theme.font.sizeLg} />
+        <Text style={styles.heading}>{entry.title}</Text>
+      </View>
       <Text style={styles.amount}>{amount(entry.amount)}</Text>
       {currencyRows}
       <Row label={t`Kategoria`}>{labels.category[entry.category]}</Row>
@@ -98,7 +103,13 @@ function Row({ label, children }: { label: string; children: ReactNode }) {
 }
 
 const styles = StyleSheet.create((theme) => ({
+  headingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.space(2),
+  },
   heading: {
+    flexShrink: 1,
     fontSize: theme.font.sizeLg,
     fontWeight: theme.font.weightBold,
     color: theme.colors.text,

@@ -2,6 +2,7 @@ import { useLingui } from '@lingui/react/macro';
 import { useLocalSearchParams } from 'expo-router';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
+import { Icon } from '@/components/icon';
 import { closePublicPage } from '@/features/web-view/navigation';
 import { PublicError } from '@/features/web-view/public-error';
 import { type PublicGroup, usePublicGroup } from '@/features/web-view/public-view-query';
@@ -20,6 +21,7 @@ export default function ThisIsMeScreen() {
 
 function Picker({ token, data }: { token: string; data: PublicGroup }) {
   const { t } = useLingui();
+  const { theme } = useUnistyles();
   const { me, setMe } = useThisIsMe(data);
   const choose = (memberId: string | null) => {
     setMe(memberId);
@@ -42,7 +44,7 @@ function Picker({ token, data }: { token: string; data: PublicGroup }) {
               onPress={() => choose(member.id)}
               style={({ pressed }) => [styles.row, pressed && styles.pressed]}>
               <Text style={[styles.name, selected && styles.bold]}>{member.displayName}</Text>
-              {selected ? <Text style={styles.check}>✓</Text> : null}
+              {selected ? <Icon name="Check" color={theme.colors.primary} /> : null}
             </Pressable>
           );
         })}
@@ -94,10 +96,6 @@ const styles = StyleSheet.create((theme) => ({
   },
   bold: {
     fontWeight: theme.font.weightBold,
-  },
-  check: {
-    fontSize: theme.font.sizeMd,
-    color: theme.colors.primary,
   },
   none: {
     minHeight: 44,

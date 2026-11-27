@@ -7,6 +7,7 @@ import { useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { GroupAvatar } from '@/components/group-avatar';
+import { Icon } from '@/components/icon';
 import { BalanceBannerView } from '@/features/balances/balance-banner';
 import { type ConversationItem, conversationItems } from '@/features/entries/conversation';
 import { dayStripDays } from '@/features/entries/day-strip';
@@ -78,7 +79,7 @@ function PublicConversation({ token, data }: { token: string; data: PublicGroup 
               hitSlop={8}
               onPress={openInfo}
               style={styles.more}>
-              <Text style={styles.moreText}>⋯</Text>
+              <Icon name="Ellipsis" size={theme.font.sizeLg} />
             </Pressable>
           ),
         }}
@@ -219,10 +220,6 @@ const styles = StyleSheet.create((theme) => ({
     minHeight: 32,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  moreText: {
-    fontSize: theme.font.sizeXl,
-    color: theme.colors.text,
   },
   choose: {
     paddingHorizontal: theme.space(4),

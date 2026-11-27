@@ -11,6 +11,7 @@ import type { ReactElement, ReactNode } from 'react';
  *
  *   vi.mock('react-native', async () => (await import('../test/native-stub')).reactNative);
  *   vi.mock('react-native-unistyles', async () => (await import('../test/native-stub')).unistyles);
+ *   vi.mock('@/components/icon', async () => (await import('../test/native-stub')).icon);
  */
 export const theme = themes.freshLight;
 
@@ -72,3 +73,10 @@ const { renderToString } = createRequire(import.meta.url)('react-dom/server') as
   renderToString: (element: ReactElement) => string;
 };
 export const render = renderToString;
+
+/** `@/components/icon` without Lucide and `react-native-svg`: an `<svg>` naming the icon. */
+export const icon = {
+  Icon: ({ name, size, color }: { name: string; size?: number; color?: string }) => (
+    <svg data-icon={name} width={size} stroke={color} aria-hidden />
+  ),
+};

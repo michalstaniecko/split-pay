@@ -2,7 +2,8 @@ import { useLingui } from '@lingui/react/macro';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
-import { StyleSheet } from 'react-native-unistyles';
+import { StyleSheet, useUnistyles } from 'react-native-unistyles';
+import { Icon } from '@/components/icon';
 import { activityLatestQuery, useActivityUnread } from '@/features/activity/activity-query';
 import { MemberAvatar } from '@/features/photos/member-avatar';
 import { myAvatarQuery } from '@/features/photos/photos-query';
@@ -21,6 +22,7 @@ export function InboxHeaderButtons() {
 
 function AccountButtons({ session }: { session: { user: { name: string; email: string } } }) {
   const { t } = useLingui();
+  const { theme } = useUnistyles();
   const name = session.user.name.trim() || session.user.email || '?';
   const avatar = useQuery(myAvatarQuery());
   const latest = useQuery(activityLatestQuery());
@@ -34,7 +36,7 @@ function AccountButtons({ session }: { session: { user: { name: string; email: s
           accessibilityLabel={unread ? t`Aktywność, nowe zmiany` : t`Aktywność`}
           hitSlop={8}
           style={styles.button}>
-          <Text style={styles.bell}>🔔</Text>
+          <Icon name="Bell" size={theme.font.sizeLg} />
           {unread ? <View style={styles.dot} /> : null}
         </Pressable>
       </Link>
@@ -62,9 +64,6 @@ const styles = StyleSheet.create((theme) => ({
     minHeight: 32,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  bell: {
-    fontSize: theme.font.sizeLg,
   },
   dot: {
     position: 'absolute',

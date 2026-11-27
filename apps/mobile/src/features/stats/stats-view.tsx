@@ -3,7 +3,7 @@ import type { GroupStats } from '@split-pay/shared';
 import { ScrollView, Text, View } from 'react-native';
 import { StyleSheet } from 'react-native-unistyles';
 import { Section } from '@/components/section';
-import { CATEGORY_ICONS } from '@/features/entries/entries-query';
+import { CategoryIcon } from '@/features/entries/category-icon-view';
 import { useEntryLabels } from '@/features/entries/use-entry-labels';
 import { useFormatters } from '@/i18n/use-formatters';
 import { categoryBars, type StatsCell, type StatsColumn, statsTable } from './stats-table';
@@ -98,9 +98,10 @@ function Categories({ stats }: { stats: GroupStats }) {
           accessible
           accessibilityLabel={`${labels.category[c.category]}: ${format.amount(c.amount, stats.baseCurrency)}`}>
           <View style={styles.categoryLine}>
-            <Text style={styles.cellText}>
-              {CATEGORY_ICONS[c.category]} {labels.category[c.category]}
-            </Text>
+            <View style={styles.categoryName}>
+              <CategoryIcon category={c.category} />
+              <Text style={styles.cellText}>{labels.category[c.category]}</Text>
+            </View>
             <Text style={[styles.cellText, styles.bold]}>{format.amount(c.amount, stats.baseCurrency)}</Text>
           </View>
           <View style={styles.track}>
@@ -173,6 +174,12 @@ const styles = StyleSheet.create((theme) => ({
   },
   category: {
     gap: theme.space(1),
+  },
+  categoryName: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.space(2),
+    flexShrink: 1,
   },
   categoryLine: {
     flexDirection: 'row',

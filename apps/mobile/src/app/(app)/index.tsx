@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { Button } from '@/components/button';
 import { GroupAvatar } from '@/components/group-avatar';
+import { Icon } from '@/components/icon';
 import { inboxSections } from '@/features/groups/group-lifecycle';
 import { useGroupUnread } from '@/features/groups/group-unread-store';
 import { type GroupListItem, groupsQuery } from '@/features/groups/groups-query';
@@ -95,6 +96,7 @@ export default function InboxScreen() {
 /** Archived groups at the bottom of the inbox, collapsed until tapped (SPEC "Inbox"). */
 function ArchivedSection({ groups }: { groups: GroupListItem[] }) {
   const { t } = useLingui();
+  const { theme } = useUnistyles();
   const [expanded, setExpanded] = useState(false);
   if (groups.length === 0) return null;
   const count = groups.length;
@@ -106,9 +108,10 @@ function ArchivedSection({ groups }: { groups: GroupListItem[] }) {
         onPress={() => setExpanded((e) => !e)}
         style={({ pressed }) => [styles.archivedHeader, pressed && styles.pressed]}>
         <Text style={styles.archivedTitle}>{t`Zarchiwizowane`}</Text>
-        <Text style={styles.preview}>
-          {count} {expanded ? '▾' : '▸'}
-        </Text>
+        <View style={styles.archivedCount}>
+          <Text style={styles.preview}>{count}</Text>
+          <Icon name={expanded ? 'ChevronDown' : 'ChevronRight'} size={theme.font.sizeSm} color={theme.colors.textMuted} />
+        </View>
       </Pressable>
       {expanded ? groups.map((group) => <InboxRow key={group.id} group={group} />) : null}
     </View>
@@ -220,6 +223,11 @@ const styles = StyleSheet.create((theme) => ({
   },
   pressed: {
     opacity: 0.6,
+  },
+  archivedCount: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.space(1),
   },
   archivedHeader: {
     flexDirection: 'row',

@@ -1,13 +1,14 @@
 import { useLingui } from '@lingui/react/macro';
 import { Image } from 'expo-image';
 import { Pressable, Text, View } from 'react-native';
-import { StyleSheet } from 'react-native-unistyles';
+import { StyleSheet, useUnistyles } from 'react-native-unistyles';
+import { Icon } from '@/components/icon';
 import { useLocale } from '@/i18n/locale-provider';
 import { MemberAvatar, photoCacheKey } from '@/features/photos/member-avatar';
 import { useFormatters } from '@/i18n/use-formatters';
 import { entryBubbleLabel } from './bubble-label';
 import { type DayItem, type EntryItem, separatorTotal } from './conversation';
-import { CATEGORY_ICONS } from './entries-query';
+import { CategoryIcon } from './category-icon-view';
 import { useEntryActionLabels } from './entry-actions-menu';
 import type { EntryAction } from './entry-edit';
 
@@ -23,7 +24,7 @@ import type { EntryAction } from './entry-edit';
  * actions as accessibility actions. Edited entries say "edytowano"; a change
  * rejected as a version conflict gets the accent border and a red "!" that
  * opens the conflict sheet.
- * Outbox state (#22): 🕓 while queued, nothing once synced, a red "!" when
+ * Outbox state (#22): a clock icon while queued, nothing once synced, a red "!" when
  * the server refused it (opens the retry sheet via the same `onConflictPress`).
  * A receipt photo shows as a small thumbnail at the bubble's end edge; the
  * payer's avatar photo replaces the initial when they set one (#26); without
@@ -56,7 +57,7 @@ export function EntryBubble({
   conflict?: boolean;
   /** Pressing the red "!" (conflict or failed send). */
   onConflictPress?: () => void;
-  /** Waiting in the outbox to be sent (🕓). */
+  /** Waiting in the outbox to be sent (clock icon). */
   queued?: boolean;
   /** The server refused it from the outbox (red "!" → retry sheet). */
   failed?: boolean;
@@ -66,6 +67,7 @@ export function EntryBubble({
   payerAvatarUrl?: string | undefined;
 }) {
   const { t } = useLingui();
+  const { theme } = useUnistyles();
   const format = useFormatters();
   const { locale } = useLocale();
   const actionLabels = useEntryActionLabels();
@@ -74,7 +76,6 @@ export function EntryBubble({
   // Income bubbles keep the surface background so the positive colour reads on both edges.
   const mine = side === 'end' && !income;
   const title = entry.kind === 'settlement' ? t`Spłata` : entry.title;
-  const icon = entry.kind === 'settlement' ? '💸' : CATEGORY_ICONS[entry.category];
   const author = otherPayers > 0 ? t`${payerName} + ${otherPayers}` : payerName;
   const amount = format.amount(entry.amount, entry.currency);
   // An income share is money that belongs to me — shown without the minus.
@@ -129,7 +130,9 @@ export function EntryBubble({
           </View>
           {income ? <Text style={styles.incomeLabel}>{t`↓ Wpływ`}</Text> : null}
           <View style={styles.main}>
-            <Text style={styles.icon}>{icon}</Text>
+            <View style={styles.icon}>
+              <CategoryIcon category={entry.kind === 'settlement' ? 'settlement' : entry.category} color={mine ? theme.colors.onPrimary : undefined} />
+            </View>
             <Text style={[styles.title, mine && styles.mineText]} numberOfLines={2}>
               {title}
             </Text>
@@ -147,7 +150,11 @@ export function EntryBubble({
           {approx ? <Text style={[styles.approx, mine && styles.mineMuted]}>{approx}</Text> : null}
           {share ? <Text style={[styles.share, mine && styles.mineMuted]}>{share}</Text> : null}
           {editedLabel ? <Text style={[styles.edited, mine && styles.mineMuted]}>{editedLabel}</Text> : null}
-          {queued && !failed ? <Text style={styles.queued}>🕓</Text> : null}
+          {queued && !failed ? (
+            <View style={styles.queued}>
+              <Icon name="Clock" size={theme.font.sizeSm} color={mine ? theme.colors.onPrimary : theme.colors.textMuted} />
+            </View>
+          ) : null}
         </Pressable>
         {side === 'end' ? null : badge}
       </View>
@@ -224,7 +231,6 @@ const styles = StyleSheet.create((theme) => ({
     color: theme.colors.onPrimary,
   },
   queued: {
-    fontSize: theme.font.sizeSm,
     alignSelf: 'flex-end',
   },
   edited: {
@@ -284,7 +290,8 @@ const styles = StyleSheet.create((theme) => ({
     gap: theme.space(2),
   },
   icon: {
-    fontSize: theme.font.sizeMd,
+    // Nudges a Lucide glyph level with the title's first line (an emoji sits there already).
+    paddingTop: theme.space(0.5),
   },
   receipt: {
     width: 36,
