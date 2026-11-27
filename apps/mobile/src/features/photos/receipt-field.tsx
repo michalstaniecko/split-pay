@@ -3,7 +3,8 @@ import { RECEIPT_MAX_DIMENSION } from '@split-pay/shared';
 import { Image } from 'expo-image';
 import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
-import { StyleSheet } from 'react-native-unistyles';
+import { StyleSheet, useUnistyles } from 'react-native-unistyles';
+import { Icon } from '@/components/icon';
 import { photoCacheKey } from './member-avatar';
 import { noReceipt, type PhotoProblem, type ReceiptDraft, receiptPreviewUri } from './photo-draft';
 import { usePhotoProblemMessages } from './photo-messages';
@@ -28,6 +29,7 @@ export function ReceiptField({
   onChange: (draft: ReceiptDraft) => void;
 }) {
   const { t } = useLingui();
+  const { theme } = useUnistyles();
   const messages = usePhotoProblemMessages();
   const [denied, setDenied] = useState(false);
   const preview = receiptPreviewUri(draft, storedUrl);
@@ -72,8 +74,9 @@ export function ReceiptField({
         <Pressable
           accessibilityRole="button"
           onPress={() => void pick('camera')}
-          style={({ pressed }) => [styles.action, pressed && styles.pressed]}>
-          <Text style={styles.actionLabel}>{draft.kind === 'none' ? t`📷 Zrób zdjęcie` : t`📷 Zrób nowe`}</Text>
+          style={({ pressed }) => [styles.action, styles.actionWithIcon, pressed && styles.pressed]}>
+          <Icon name="Camera" size={theme.font.sizeSm} />
+          <Text style={styles.actionLabel}>{draft.kind === 'none' ? t`Zrób zdjęcie` : t`Zrób nowe`}</Text>
         </Pressable>
         <Pressable
           accessibilityRole="button"
@@ -129,6 +132,11 @@ const styles = StyleSheet.create((theme) => ({
     borderWidth: 1,
     borderColor: theme.colors.border,
     backgroundColor: theme.colors.surface,
+  },
+  actionWithIcon: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.space(1.5),
   },
   actionLabel: {
     fontSize: theme.font.sizeSm,

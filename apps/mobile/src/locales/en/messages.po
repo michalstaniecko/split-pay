@@ -122,14 +122,6 @@ msgstr "+ Add person"
 msgid "+ Dodaj osobę bez konta"
 msgstr "+ Add a person without an account"
 
-#: src/features/photos/receipt-field.tsx
-msgid "📷 Zrób nowe"
-msgstr "📷 Take a new one"
-
-#: src/features/photos/receipt-field.tsx
-msgid "📷 Zrób zdjęcie"
-msgstr "📷 Take a photo"
-
 #: src/app/(app)/report-photo.tsx
 msgid "Administrator sprawdzi to zdjęcie i w razie potrzeby je usunie."
 msgstr "An administrator will review this photo and remove it if needed."
@@ -2208,7 +2200,12 @@ msgstr "Changed the receipt photo"
 msgid "Znowu członek bez konta: {memberName}"
 msgstr "Member without an account again: {memberName}"
 
+#: src/features/photos/receipt-field.tsx
+msgid "Zrób nowe"
+msgstr "Take a new one"
+
 #: src/features/photos/avatar-section.tsx
+#: src/features/photos/receipt-field.tsx
 msgid "Zrób zdjęcie"
 msgstr "Take a photo"
 
