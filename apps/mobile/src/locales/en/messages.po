@@ -2206,6 +2206,7 @@ msgid "Zmień imię"
 msgstr "Rename"
 
 #: src/features/photos/avatar-section.tsx
+#: src/features/photos/receipt-field.tsx
 msgid "Zmień zdjęcie"
 msgstr "Change photo"
 
@@ -2237,10 +2238,6 @@ msgstr "Changed the receipt photo"
 #: src/features/claims/claim-messages.tsx
 msgid "Znowu członek bez konta: {memberName}"
 msgstr "Member without an account again: {memberName}"
-
-#: src/features/photos/receipt-field.tsx
-msgid "Zrób nowe"
-msgstr "Take a new one"
 
 #: src/features/photos/avatar-section.tsx
 #: src/features/photos/receipt-field.tsx

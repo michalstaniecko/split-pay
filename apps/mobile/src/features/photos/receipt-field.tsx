@@ -13,8 +13,8 @@ import { type PhotoSource, pickPhoto } from './pick-photo';
 
 /**
  * The receipt field of the full expense form (add and edit). With no photo,
- * one "Dodaj zdjęcie" button that asks for the camera or the gallery; with
- * one, a preview with "Usuń" / "Zrób nowe" / "Z galerii". The photo is only
+ * one "Dodaj zdjęcie" button; with one, a preview with "Usuń zdjęcie" and
+ * "Zmień zdjęcie". Both ask for the camera or the gallery. The photo is only
  * prepared here (downscaled, EXIF dropped); the form uploads it on save.
  */
 export function ReceiptField({
@@ -47,7 +47,8 @@ export function ReceiptField({
     }
   };
 
-  const add = async () => {
+  /** Asks for the camera or the gallery, then takes or picks the photo. */
+  const choose = async () => {
     const source = await askPhotoSource({
       title: t`Zdjęcie paragonu`,
       camera: t`Zrób zdjęcie`,
@@ -85,7 +86,7 @@ export function ReceiptField({
       {draft.kind === 'none' ? (
         <Pressable
           accessibilityRole="button"
-          onPress={() => void add()}
+          onPress={() => void choose()}
           style={({ pressed }) => [styles.add, styles.actionWithIcon, pressed && styles.pressed]}>
           <Icon name="Camera" size={theme.font.sizeMd} color={theme.colors.primary} />
           <Text style={styles.addLabel}>{t`Dodaj zdjęcie`}</Text>
@@ -94,16 +95,10 @@ export function ReceiptField({
         <View style={styles.actions}>
           <Pressable
             accessibilityRole="button"
-            onPress={() => void pick('camera')}
+            onPress={() => void choose()}
             style={({ pressed }) => [styles.action, styles.actionWithIcon, pressed && styles.pressed]}>
             <Icon name="Camera" size={theme.font.sizeSm} />
-            <Text style={styles.actionLabel}>{t`Zrób nowe`}</Text>
-          </Pressable>
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => void pick('library')}
-            style={({ pressed }) => [styles.action, pressed && styles.pressed]}>
-            <Text style={styles.actionLabel}>{t`Z galerii`}</Text>
+            <Text style={styles.actionLabel}>{t`Zmień zdjęcie`}</Text>
           </Pressable>
         </View>
       )}
