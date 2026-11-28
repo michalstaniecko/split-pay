@@ -7,8 +7,8 @@ import { createThisIsMeStore, effectiveMe } from './web-view';
 export const thisIsMeStore = createThisIsMeStore(deviceStorage);
 
 /**
- * Who the visitor is in this group ("this is me"): decides which bubbles sit
- * on the end edge and drives the balance banner. `null` = nobody chosen.
+ * Who the visitor is in this group ("this is me"): highlights their balance,
+ * transfers and share in the group preview. `null` = nobody chosen.
  */
 export function useThisIsMe(data: Pick<PublicGroup, 'group' | 'members' | 'claimFor'>) {
   const groupId = data.group.id;
