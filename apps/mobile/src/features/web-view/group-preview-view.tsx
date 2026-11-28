@@ -5,7 +5,8 @@ import { StyleSheet } from 'react-native-unistyles';
 import { GroupAvatar } from '@/components/group-avatar';
 import { balanceRowLabel } from '@/features/balances/balance-label';
 import { type BalanceRow, drawerRows, type TransferRow } from '@/features/balances/balances';
-import { CATEGORY_ICONS } from '@/features/entries/entries-query';
+import type { CategoryIconKey } from '@/features/entries/category-icon';
+import { CategoryIcon } from '@/features/entries/category-icon-view';
 import { useEntryLabels } from '@/features/entries/use-entry-labels';
 import { useFormatters } from '@/i18n/use-formatters';
 import type { PreviewDay, PreviewRow } from './group-preview';
@@ -243,18 +244,18 @@ function EntryRow({
   const labels = useEntryLabels();
   const { entry, names } = row;
 
-  let icon: string;
+  let icon: CategoryIconKey;
   let title: string;
   let detail: string | null;
   let who: string;
   if (entry.kind === 'settlement') {
     const [from, to] = names;
-    icon = '💸';
+    icon = 'settlement';
     title = t`Spłata: ${from} → ${to}`;
     detail = null;
     who = '';
   } else {
-    icon = CATEGORY_ICONS[entry.category];
+    icon = entry.category;
     title = entry.title;
     const category = labels.category[entry.category];
     if (entry.kind === 'income') {
@@ -294,7 +295,7 @@ function EntryRow({
       style={({ pressed }) => [styles.tableRow, entry.kind === 'settlement' && styles.settlementRow, pressed && styles.pressed]}>
       <View style={styles.cellTitle}>
         <View style={styles.titleLine}>
-          <Text style={styles.icon}>{icon}</Text>
+          <CategoryIcon category={icon} />
           <Text style={[styles.rowTitle, entry.kind === 'settlement' && styles.settlementTitle]}>{title}</Text>
         </View>
         {detail ? <Text style={[styles.muted, entry.kind === 'income' && styles.positive]}>{detail}</Text> : null}
@@ -468,9 +469,6 @@ const styles = StyleSheet.create((theme) => ({
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: theme.space(2),
-  },
-  icon: {
-    fontSize: theme.font.sizeMd,
   },
   rowTitle: {
     flexShrink: 1,
