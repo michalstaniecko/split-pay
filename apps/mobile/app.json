@@ -12,7 +12,8 @@
       "infoPlist": {
         "CFBundleAllowMixedLocalizations": true
       },
-      "bundleIdentifier": "app.kwitz"
+      "bundleIdentifier": "app.kwitz",
+      "appleTeamId": "8A9ZJPAGY8"
     },
     "locales": {
       "pl": "./app-locales/pl.json",
