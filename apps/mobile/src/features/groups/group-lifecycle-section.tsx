@@ -85,7 +85,6 @@ export function GroupLifecycleSection({ group }: { group: GroupDetail }) {
         <View style={styles.block}>
           <Action
             label={t`Opuść grupę`}
-            destructive
             disabled={!canLeave || leave.isPending}
             onPress={confirmLeave}
           />

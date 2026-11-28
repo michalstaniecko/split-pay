@@ -1,8 +1,9 @@
 import { useLingui } from '@lingui/react/macro';
 import { useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
-import { StyleSheet } from 'react-native-unistyles';
+import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { Button } from '@/components/button';
+import { Icon } from '@/components/icon';
 import { useLocale } from '@/i18n/locale-provider';
 import { useFormatters } from '@/i18n/use-formatters';
 import { attendanceGrid, dayLabel, gridChanges, isTicked, toggleDay } from './attendance-grid';
@@ -23,6 +24,7 @@ export function AttendanceGridView({ group }: { group: GroupDetail }) {
 
 function Grid({ group }: { group: GroupDetail }) {
   const { t } = useLingui();
+  const { theme } = useUnistyles();
   const { locale } = useLocale();
   const format = useFormatters();
   const [grid, setGrid] = useState(() => attendanceGrid(group));
@@ -67,7 +69,7 @@ function Grid({ group }: { group: GroupDetail }) {
                       onPress={() => setGrid((g) => toggleDay(g, m.id, day))}
                       style={styles.cell}>
                       <View style={[styles.mark, checked && styles.markChecked]}>
-                        {checked ? <Text style={styles.check}>✓</Text> : null}
+                        {checked ? <Icon name="Check" size={theme.font.sizeSm} color={theme.colors.onPrimary} /> : null}
                       </View>
                     </Pressable>
                   );
@@ -106,15 +108,14 @@ function Grid({ group }: { group: GroupDetail }) {
 }
 
 const CELL = 44;
+const NAME_WIDTH = 96;
 
 const styles = StyleSheet.create((theme) => ({
   container: {
     gap: theme.space(2),
-    paddingTop: theme.space(2),
   },
   title: {
     fontSize: theme.font.sizeSm,
-    fontWeight: theme.font.weightBold,
     color: theme.colors.textMuted,
   },
   table: {
@@ -129,8 +130,8 @@ const styles = StyleSheet.create((theme) => ({
   nameCell: {
     height: CELL,
     justifyContent: 'center',
-    maxWidth: 120,
-    paddingEnd: theme.space(2),
+    // Fixed, so the day columns line up; long names end in an ellipsis.
+    width: NAME_WIDTH,
   },
   name: {
     fontSize: theme.font.sizeMd,
@@ -163,11 +164,6 @@ const styles = StyleSheet.create((theme) => ({
   markChecked: {
     borderColor: theme.colors.primary,
     backgroundColor: theme.colors.primary,
-  },
-  check: {
-    fontSize: theme.font.sizeSm,
-    fontWeight: theme.font.weightBold,
-    color: theme.colors.onPrimary,
   },
   error: {
     fontSize: theme.font.sizeSm,

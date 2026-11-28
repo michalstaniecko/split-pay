@@ -31,6 +31,10 @@ Run lint and typecheck before declaring any task done.
 
 Unistyles 3. On web, Unistyles compiles theme values inside `StyleSheet.create` into CSS variables, so a stylesheet cannot branch on them. Put theme-dependent choices (e.g. `theme.family === 'fresh'`) in the component, or express them as a theme token; keep stylesheets to plain token reads.
 
+## Icons
+
+Interface icons are [Lucide](https://lucide.dev) via the `Icon` component (`src/components/icon.tsx`), which applies the theme's colour and size and mirrors forward-pointing icons in RTL. Never import `lucide-react-native` directly: add the icon to `ICON_NAMES` (`src/components/icon-name.ts`) and to `Icon`'s map. Category icons go through `CategoryIcon` (emoji in Fresh, a Lucide glyph in Classic). Don't draw controls with emoji or Unicode characters.
+
 ## Translations
 
 Lingui, Polish source language, catalogs in `src/locales/{pl,en}/messages.po`. Write UI copy in Polish with the macros (`const { t } = useLingui()` from `@lingui/react/macro`, `plural` from `@lingui/core/macro`), then run `pnpm i18n:extract` from the repo root and fill in the English `msgstr`s. `pnpm test` fails while any message is untranslated. Format amounts and dates with `useFormatters()` (`src/i18n/use-formatters.ts`), never by hand.

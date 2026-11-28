@@ -53,7 +53,11 @@ export default function AppLayout() {
             headerShown: false,
           }}
         />
-        <Stack.Screen name="groups/[groupId]/index" options={{ title: '' }} />
+        {/* Chevron only (no "Kwitz" beside it); the back title stays as the accessible name. */}
+        <Stack.Screen
+          name="groups/[groupId]/index"
+          options={{ title: '', headerBackButtonDisplayMode: 'minimal', headerBackTitle: t`Wstecz` }}
+        />
         <Stack.Screen
           name="groups/[groupId]/expense-form"
           options={{
@@ -79,7 +83,7 @@ export default function AppLayout() {
           options={{
             title: t`Salda`,
             presentation: 'formSheet',
-            sheetAllowedDetents: [0.6, 1],
+            sheetAllowedDetents: [0.75, 1],
             sheetGrabberVisible: true,
             headerShown: false,
           }}

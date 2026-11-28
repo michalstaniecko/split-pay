@@ -15,16 +15,20 @@ export function ReportableMemberAvatar({
   member,
   url,
   size,
+  filled,
+  initialSize,
 }: {
   groupId: string;
   member: { id: string; displayName: string; isMe: boolean };
   url: string | undefined;
   size: number;
+  filled?: boolean;
+  initialSize?: number;
 }) {
   const { t } = useLingui();
   const avatars = useQuery(groupAvatarPhotosQuery(groupId)).data;
   const photoId = reportablePhoto(avatars, member);
-  const avatar = <MemberAvatar name={member.displayName} url={url} size={size} />;
+  const avatar = <MemberAvatar name={member.displayName} url={url} size={size} filled={filled} initialSize={initialSize} />;
   if (!photoId) return avatar;
 
   const report = () => router.push({ pathname: '/report-photo', params: { photoId } });

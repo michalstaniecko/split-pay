@@ -1,12 +1,13 @@
 import { useLingui } from '@lingui/react/macro';
 import { useQuery } from '@tanstack/react-query';
-import { Link, router } from 'expo-router';
+import { router } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, RefreshControl, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { Button } from '@/components/button';
 import { GroupAvatar } from '@/components/group-avatar';
+import { Icon } from '@/components/icon';
 import { inboxSections } from '@/features/groups/group-lifecycle';
 import { useGroupUnread } from '@/features/groups/group-unread-store';
 import { type GroupListItem, groupsQuery } from '@/features/groups/groups-query';
@@ -16,6 +17,7 @@ import { InboxSearchField } from '@/features/search/inbox-search-field';
 import { InboxSearchResults } from '@/features/search/inbox-search-results';
 import { useFormatters } from '@/i18n/use-formatters';
 import { authClient } from '@/lib/auth-client';
+import { usePullToRefresh } from '@/lib/use-pull-to-refresh';
 import { useRefreshOnFocus } from '@/lib/use-refresh-on-focus';
 
 /**
@@ -29,6 +31,7 @@ export default function InboxScreen() {
   const signedIn = !!authClient.useSession().data;
   const groups = useQuery(groupsQuery());
   useRefreshOnFocus(groups.refetch);
+  const pull = usePullToRefresh(groups.refetch);
   const [query, setQuery] = useState('');
 
   // Both options in "Nowy" work signed out too: each creates a local group (ADR-0021).
@@ -73,8 +76,8 @@ export default function InboxScreen() {
           ListFooterComponent={<ArchivedSection groups={inboxSections(groups.data).archived} />}
           refreshControl={
             <RefreshControl
-              refreshing={groups.isRefetching}
-              onRefresh={() => void groups.refetch()}
+              refreshing={pull.refreshing}
+              onRefresh={pull.onRefresh}
               tintColor={theme.colors.primary}
             />
           }
@@ -93,6 +96,7 @@ export default function InboxScreen() {
 /** Archived groups at the bottom of the inbox, collapsed until tapped (SPEC "Inbox"). */
 function ArchivedSection({ groups }: { groups: GroupListItem[] }) {
   const { t } = useLingui();
+  const { theme } = useUnistyles();
   const [expanded, setExpanded] = useState(false);
   if (groups.length === 0) return null;
   const count = groups.length;
@@ -104,9 +108,10 @@ function ArchivedSection({ groups }: { groups: GroupListItem[] }) {
         onPress={() => setExpanded((e) => !e)}
         style={({ pressed }) => [styles.archivedHeader, pressed && styles.pressed]}>
         <Text style={styles.archivedTitle}>{t`Zarchiwizowane`}</Text>
-        <Text style={styles.preview}>
-          {count} {expanded ? '▾' : '▸'}
-        </Text>
+        <View style={styles.archivedCount}>
+          <Text style={styles.preview}>{count}</Text>
+          <Icon name={expanded ? 'ChevronDown' : 'ChevronRight'} size={theme.font.sizeSm} color={theme.colors.textMuted} />
+        </View>
       </Pressable>
       {expanded ? groups.map((group) => <InboxRow key={group.id} group={group} />) : null}
     </View>
@@ -126,24 +131,25 @@ function InboxRow({ group }: { group: GroupListItem }) {
     ? `${last.title ?? t`Spłata`} · ${format.amount(last.amount, last.currency)}`
     : (dates ?? t`Brak wpisów`);
   return (
-    <Link href={{ pathname: '/groups/[groupId]', params: { groupId: group.id } }} asChild>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={unread ? t`${group.name}, nowe wpisy. ${preview}` : undefined}
-        style={({ pressed }) => [styles.row, pressed && styles.pressed]}>
-        <GroupAvatar emoji={group.emoji} color={group.color} />
-        <View style={styles.rowText}>
-          <Text style={[styles.name, unread && styles.unreadText]} numberOfLines={1}>
-            {group.name}
-          </Text>
-          <Text style={[styles.preview, unread && styles.unreadPreview]} numberOfLines={1}>
-            {preview}
-          </Text>
-          {group.local ? <LocalGroupBadge /> : null}
-        </View>
-        {unread ? <View style={styles.unreadDot} /> : null}
-      </Pressable>
-    </Link>
+    // Not `<Link asChild>`: its Slot spreads the child's style as an object, which drops this
+    // `({ pressed }) => …` style function and leaves the row unstyled.
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={unread ? t`${group.name}, nowe wpisy. ${preview}` : undefined}
+      onPress={() => router.push({ pathname: '/groups/[groupId]', params: { groupId: group.id } })}
+      style={({ pressed }) => [styles.row, pressed && styles.pressed]}>
+      <GroupAvatar emoji={group.emoji} color={group.color} />
+      <View style={styles.rowText}>
+        <Text style={[styles.name, unread && styles.unreadText]} numberOfLines={1}>
+          {group.name}
+        </Text>
+        <Text style={[styles.preview, unread && styles.unreadPreview]} numberOfLines={1}>
+          {preview}
+        </Text>
+        {group.local ? <LocalGroupBadge /> : null}
+      </View>
+      {unread ? <View style={styles.unreadDot} /> : null}
+    </Pressable>
   );
 }
 
@@ -217,6 +223,11 @@ const styles = StyleSheet.create((theme) => ({
   },
   pressed: {
     opacity: 0.6,
+  },
+  archivedCount: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.space(1),
   },
   archivedHeader: {
     flexDirection: 'row',

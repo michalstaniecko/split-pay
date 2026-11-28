@@ -14,6 +14,7 @@ msgstr "“{title}”"
 #. placeholder {0}: row.name
 #: src/features/balances/balance-label.ts
 #: src/features/balances/balances-view.tsx
+#: src/features/web-view/group-preview-view.tsx
 msgid "{0} (Ty)"
 msgstr "{0} (you)"
 
@@ -30,9 +31,7 @@ msgid "{0}, {label}: zapłacone {1}, zużyte {2}"
 msgstr "{0}, {label}: paid {1}, consumed {2}"
 
 #. placeholder {0}: group.data.name
-#. placeholder {0}: group.name
 #: src/app/(app)/groups/[groupId]/index.tsx
-#: src/app/g/[token]/index.web.tsx
 msgid "{0}, informacje o grupie"
 msgstr "{0}, group info"
 
@@ -47,7 +46,7 @@ msgid "{0}: przypomniano dziś"
 msgstr "{0}: reminded today"
 
 #: src/app/(app)/groups/[groupId]/info.tsx
-#: src/app/g/[token]/info.tsx
+#: src/features/web-view/group-preview-view.tsx
 msgid "{count, plural, one {# osoba} few {# osoby} many {# osób} other {# osoby}}"
 msgstr "{count, plural, one {# person} other {# people}}"
 
@@ -55,7 +54,16 @@ msgstr "{count, plural, one {# person} other {# people}}"
 msgid "{count, plural, one {# zmiana z tego telefonu nie została jeszcze wysłana i po wylogowaniu przepadnie.} few {# zmiany z tego telefonu nie zostały jeszcze wysłane i po wylogowaniu przepadną.} many {# zmian z tego telefonu nie zostało jeszcze wysłanych i po wylogowaniu przepadną.} other {# zmiany z tego telefonu nie zostały jeszcze wysłane i po wylogowaniu przepadną.}}"
 msgstr "{count, plural, one {# change from this phone hasn't been sent yet and will be lost when you sign out.} other {# changes from this phone haven't been sent yet and will be lost when you sign out.}}"
 
+#: src/features/web-view/group-preview-view.tsx
+msgid "{date}, razem {total}"
+msgstr "{date}, total {total}"
+
+#: src/features/web-view/group-preview-view.tsx
+msgid "{first} + {others}"
+msgstr "{first} + {others}"
+
 #: src/features/balances/balances-view.tsx
+#: src/features/web-view/group-preview-view.tsx
 msgid "{from} → {to}: {amount}"
 msgstr "{from} → {to}: {amount}"
 
@@ -92,6 +100,10 @@ msgstr "{name}: is owed {amount}"
 msgid "{name}: rozliczono"
 msgstr "{name}: settled up"
 
+#: src/features/web-view/group-preview-view.tsx
+msgid "{original}, czyli {amount}"
+msgstr "{original}, that is {amount}"
+
 #: src/features/entries/spoken-amount.ts
 msgid "{original}, czyli około {base}"
 msgstr "{original}, about {base}"
@@ -113,6 +125,10 @@ msgstr "{rest} and {last}"
 msgid "↓ Wpływ"
 msgstr "↓ Income"
 
+#: src/features/web-view/group-preview-view.tsx
+msgid "↓ Wpływ · {category}"
+msgstr "↓ Income · {category}"
+
 #: src/app/(app)/groups/[groupId]/info.tsx
 #: src/app/(app)/new-group.tsx
 msgid "+ Dodaj osobę"
@@ -121,14 +137,6 @@ msgstr "+ Add person"
 #: src/app/(app)/groups/[groupId]/info.tsx
 msgid "+ Dodaj osobę bez konta"
 msgstr "+ Add a person without an account"
-
-#: src/features/photos/receipt-field.tsx
-msgid "📷 Zrób nowe"
-msgstr "📷 Take a new one"
-
-#: src/features/photos/receipt-field.tsx
-msgid "📷 Zrób zdjęcie"
-msgstr "📷 Take a photo"
 
 #: src/app/(app)/report-photo.tsx
 msgid "Administrator sprawdzi to zdjęcie i w razie potrzeby je usunie."
@@ -165,6 +173,7 @@ msgstr "Alcohol"
 #: src/features/groups/group-lifecycle-section.tsx
 #: src/features/history/change-row.tsx
 #: src/features/moderation/reportable-member-avatar.tsx
+#: src/features/photos/receipt-field.tsx
 #: src/features/profile/delete-account-section.tsx
 msgid "Anuluj"
 msgstr "Cancel"
@@ -180,11 +189,15 @@ msgid "Bez internetu możesz edytować tylko wpisy dodane przez siebie."
 msgstr "Offline, you can only edit entries you added."
 
 #: src/app/(app)/groups/[groupId]/info.tsx
-#: src/app/g/[token]/info.tsx
 msgid "bez konta"
 msgstr "no account"
 
+#: src/features/web-view/group-preview-view.tsx
+msgid "Bez twojego udziału"
+msgstr "No share of yours"
+
 #: src/features/balances/balances-view.tsx
+#: src/features/web-view/group-preview-view.tsx
 msgid "Bez upraszczania długów"
 msgstr "Debts not simplified"
 
@@ -215,7 +228,7 @@ msgstr "No open reports."
 
 #: src/app/(app)/groups/[groupId]/index.tsx
 #: src/app/(app)/index.tsx
-#: src/app/g/[token]/index.web.tsx
+#: src/features/web-view/group-preview-view.tsx
 msgid "Brak wpisów"
 msgstr "No entries"
 
@@ -276,7 +289,6 @@ msgid "czeka na wysłanie"
 msgstr "waiting to be sent"
 
 #: src/app/(app)/groups/[groupId]/info.tsx
-#: src/app/g/[token]/info.tsx
 msgid "Członkowie"
 msgstr "Members"
 
@@ -302,12 +314,16 @@ msgstr "Date: {value}"
 msgid "Daty pozwalają dzielić koszty według obecności."
 msgstr "Dates let you split costs by attendance."
 
+#: src/features/web-view/group-preview-view.tsx
+msgid "Dla: {recipients}"
+msgstr "For: {recipients}"
+
 #: src/features/stats/stats-view.tsx
 msgid "Dni × osoby"
 msgstr "Days × people"
 
 #: src/app/(app)/groups/[groupId]/info.tsx
-#: src/app/g/[token]/info.tsx
+#: src/features/web-view/group-preview-view.tsx
 msgid "Dni × osoby i kategorie"
 msgstr "Days × people and categories"
 
@@ -347,6 +363,7 @@ msgid "Dodaj osobę bez konta"
 msgstr "Add a person without an account"
 
 #: src/features/photos/avatar-section.tsx
+#: src/features/photos/receipt-field.tsx
 msgid "Dodaj zdjęcie"
 msgstr "Add photo"
 
@@ -509,8 +526,6 @@ msgstr "Name, then Enter"
 
 #: src/app/(app)/_layout.tsx
 #: src/app/(app)/groups/[groupId]/index.tsx
-#: src/app/g/[token]/_layout.tsx
-#: src/app/g/[token]/index.web.tsx
 msgid "Informacje o grupie"
 msgstr "Group info"
 
@@ -597,10 +612,6 @@ msgstr "Several people received it"
 msgid "Kilka osób płaciło"
 msgstr "Several people paid"
 
-#: src/app/g/[token]/index.web.tsx
-msgid "Kim jesteś? Wybierz siebie, żeby zobaczyć swoje saldo ›"
-msgstr "Who are you? Pick yourself to see your balance ›"
-
 #: src/app/(auth)/sign-in.tsx
 msgid "Kod jednorazowy"
 msgstr "One-time code"
@@ -660,7 +671,12 @@ msgstr "Copy amount"
 msgid "Kopiuj: {label}"
 msgstr "Copy: {label}"
 
+#: src/features/web-view/group-preview-view.tsx
+msgid "Kto"
+msgstr "Who"
+
 #: src/features/balances/balances-view.tsx
+#: src/features/web-view/group-preview-view.tsx
 msgid "Kto komu oddaje"
 msgstr "Who pays whom"
 
@@ -714,6 +730,7 @@ msgstr "Kwitz, version {version}"
 #: src/app/(app)/quick-bill.tsx
 #: src/features/entries/composer.tsx
 #: src/features/entries/entry-detail-body.tsx
+#: src/features/web-view/group-preview-view.tsx
 msgid "Kwota"
 msgstr "Amount"
 
@@ -782,10 +799,6 @@ msgstr "Harassment or hate speech"
 #: src/app/(app)/activity.tsx
 msgid "Nic się jeszcze nie wydarzyło w Twoich grupach."
 msgstr "Nothing has happened in your groups yet."
-
-#: src/app/g/[token]/me.tsx
-msgid "Nie ma mnie na liście"
-msgstr "I'm not on the list"
 
 #: src/app/(app)/index.tsx
 msgid "Nie masz jeszcze grup"
@@ -1120,7 +1133,6 @@ msgstr "Fuel"
 msgid "Panel administratora"
 msgstr "Admin panel"
 
-#: src/features/photos/receipt-field.tsx
 #: src/features/photos/receipt-photo.tsx
 msgid "Paragon"
 msgstr "Receipt"
@@ -1195,7 +1207,6 @@ msgid "Podział: {value}"
 msgstr "Split: {value}"
 
 #: src/app/(app)/groups/[groupId]/info.tsx
-#: src/app/g/[token]/info.tsx
 msgid "Pokaż"
 msgstr "Show"
 
@@ -1272,6 +1283,10 @@ msgstr "Claim the profile of a member without an account, with their expense his
 msgid "Przemoc lub drastyczne treści"
 msgstr "Violence or graphic content"
 
+#: src/features/web-view/group-preview-view.tsx
+msgid "Przestań wyróżniać"
+msgstr "Stop highlighting"
+
 #: src/features/notifications/nudge-button.tsx
 msgid "przypomniano dziś"
 msgstr "reminded today"
@@ -1305,6 +1320,10 @@ msgstr "Unarchived the group"
 msgid "Razem"
 msgstr "Total"
 
+#: src/features/web-view/group-preview-view.tsx
+msgid "Razem: {totalText}"
+msgstr "Total: {totalText}"
+
 #: src/features/entries/split-fields.tsx
 msgid "Resztę dzielą po równo"
 msgstr "The rest is split equally between"
@@ -1327,8 +1346,8 @@ msgid "RRRR-MM-DD"
 msgstr "YYYY-MM-DD"
 
 #: src/app/(app)/_layout.tsx
-#: src/app/g/[token]/_layout.tsx
 #: src/features/balances/balances-view.tsx
+#: src/features/web-view/group-preview-view.tsx
 msgid "Salda"
 msgstr "Balances"
 
@@ -1384,6 +1403,10 @@ msgstr "Settlement {spoken}. From: {from}. To: {to}. {date}."
 msgid "Spłata dla: {recipient}"
 msgstr "Pay back {recipient}"
 
+#: src/features/web-view/group-preview-view.tsx
+msgid "Spłata: {from} → {to}"
+msgstr "Settlement: {from} → {to}"
+
 #: src/features/settlements/settlement-message.ts
 msgid "Spłata: {from} → {to} · {amount}"
 msgstr "Settlement: {from} → {to} · {amount}"
@@ -1413,7 +1436,7 @@ msgstr "The old link and QR code will stop working. Members stay in the group."
 #: src/app/(app)/_layout.tsx
 #: src/app/(app)/groups/[groupId]/info.tsx
 #: src/app/g/[token]/_layout.tsx
-#: src/app/g/[token]/info.tsx
+#: src/features/web-view/group-preview-view.tsx
 msgid "Statystyki"
 msgstr "Stats"
 
@@ -1492,13 +1515,9 @@ msgstr "Someone changed this entry in the meantime"
 msgid "Ten wpis został w międzyczasie usunięty. Twoje zmiany nie zostały zapisane."
 msgstr "Someone deleted this entry in the meantime. Your changes were not saved."
 
-#: src/app/g/[token]/_layout.tsx
+#: src/features/web-view/group-preview-view.tsx
 msgid "To ja"
 msgstr "This is me"
-
-#: src/app/g/[token]/info.tsx
-msgid "To ja… (wybierz siebie)"
-msgstr "This is me… (pick yourself)"
 
 #: src/app/blocked.tsx
 msgid "To konto zostało zablokowane za naruszenie zasad. Nie masz już dostępu do grup, ale możesz usunąć konto."
@@ -1545,10 +1564,18 @@ msgstr "Your email, sign-in methods, profile photo and payout details will be de
 msgid "Twój e-mail, sposoby logowania, zdjęcie profilowe i dane do przelewu zostaną usunięte. W grupach zostanie po Tobie członek bez konta pod obecną nazwą, a wydatki i salda się nie zmienią. Tego nie można cofnąć."
 msgstr "Your email, sign-in methods, profile photo and payout details will be deleted. In your groups you will stay as a member without an account under your current name; expenses and balances stay the same. This can't be undone."
 
+#: src/features/web-view/group-preview-view.tsx
+msgid "Twój udział"
+msgstr "Your share"
+
 #. placeholder {0}: format.amount(shareAmount, baseCurrency)
 #: src/features/entries/entry-bubble.tsx
 msgid "twój udział {0}"
 msgstr "your share {0}"
+
+#: src/features/web-view/group-preview-view.tsx
+msgid "Twój udział {share}"
+msgstr "Your share {share}"
 
 #: src/features/entries/bubble-label.ts
 #: src/features/entries/income-bubble-label.ts
@@ -1569,7 +1596,6 @@ msgid "Twoje zmiany nie zostały zapisane."
 msgstr "Your changes were not saved."
 
 #: src/app/(app)/groups/[groupId]/info.tsx
-#: src/app/g/[token]/info.tsx
 #: src/features/activity/activity-row.tsx
 #: src/features/balances/balances-view.tsx
 #: src/features/entries/split-fields.tsx
@@ -1629,6 +1655,7 @@ msgid "Upraszczaj długi"
 msgstr "Simplify debts"
 
 #: src/features/balances/balances-view.tsx
+#: src/features/web-view/group-preview-view.tsx
 msgid "Uproszczone długi"
 msgstr "Debts simplified"
 
@@ -1771,6 +1798,7 @@ msgstr "Debt simplification turned on"
 
 #: src/app/(app)/_layout.tsx
 #: src/app/g/[token]/_layout.tsx
+#: src/features/web-view/group-preview-view.tsx
 msgid "Wpis"
 msgstr "Entry"
 
@@ -1795,6 +1823,7 @@ msgid "Wpisujesz za nią wydatki. Później może przejąć swój profil."
 msgstr "You enter their expenses. They can claim their profile later."
 
 #: src/features/search/inbox-search-results.tsx
+#: src/features/web-view/group-preview-view.tsx
 msgid "Wpisy"
 msgstr "Entries"
 
@@ -1838,6 +1867,10 @@ msgstr "Back"
 msgid "Wspólne + osobiste"
 msgstr "Common + personal"
 
+#: src/app/(app)/_layout.tsx
+msgid "Wstecz"
+msgstr "Back"
+
 #: src/features/groups/group-lifecycle-section.tsx
 msgid "Wszystkie wpisy i salda znikną dla wszystkich członków. Tego nie da się cofnąć."
 msgstr "All entries and balances will be gone for every member. This can't be undone."
@@ -1848,6 +1881,7 @@ msgid "Wszystko rozliczone"
 msgstr "All settled up"
 
 #: src/features/balances/balances-view.tsx
+#: src/features/web-view/group-preview-view.tsx
 msgid "Wszystko rozliczone."
 msgstr "Everyone is settled up."
 
@@ -1863,9 +1897,9 @@ msgstr "Choose an emoji."
 msgid "Wybierz kolor."
 msgstr "Choose a colour."
 
-#: src/app/g/[token]/me.tsx
-msgid "Wybierz siebie, żeby zobaczyć, ile masz do oddania. Zapamiętamy to w tej przeglądarce."
-msgstr "Pick yourself to see how much you owe. This browser will remember it."
+#: src/features/web-view/group-preview-view.tsx
+msgid "Wybierz siebie, żeby wyróżnić swoje saldo i udział we wpisach."
+msgstr "Choose yourself to highlight your balance and your share of each entry."
 
 #: src/app/(app)/new-group.tsx
 msgid "Wybierz walutę."
@@ -2172,12 +2206,9 @@ msgid "Zmień imię"
 msgstr "Rename"
 
 #: src/features/photos/avatar-section.tsx
+#: src/features/photos/receipt-field.tsx
 msgid "Zmień zdjęcie"
 msgstr "Change photo"
-
-#: src/app/g/[token]/info.tsx
-msgid "Zmień, kim jestem"
-msgstr "Change who I am"
 
 #. placeholder {0}: format.dateTime(entry.updatedAt)
 #: src/app/(app)/groups/[groupId]/entry-conflict.tsx
@@ -2209,6 +2240,7 @@ msgid "Znowu członek bez konta: {memberName}"
 msgstr "Member without an account again: {memberName}"
 
 #: src/features/photos/avatar-section.tsx
+#: src/features/photos/receipt-field.tsx
 msgid "Zrób zdjęcie"
 msgstr "Take a photo"
 

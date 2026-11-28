@@ -91,10 +91,11 @@ export function PayersField({
   const name = (m: Named<Member>) => (m.id === myMemberId ? t`Ty` : m.displayName);
   const result = buildPayers(payerMemberId, payers, { amount, digits });
   const message = payers.multiple && !result.ok ? problemMessage(result.problem) : null;
+  const label = income ? t`Kto otrzymuje` : t`Kto zapłacił`;
 
   return (
     <View style={styles.field}>
-      <Text style={styles.label}>{income ? t`Kto otrzymuje` : t`Kto zapłacił`}</Text>
+      <Text style={styles.label}>{label}</Text>
       {payers.multiple ? (
         members.map((m) => (
           <AmountRow
@@ -108,7 +109,7 @@ export function PayersField({
           />
         ))
       ) : (
-        <View style={styles.chips} accessibilityRole="radiogroup">
+        <View style={styles.chips} accessibilityRole="radiogroup" accessibilityLabel={label}>
           {members.map((m) => (
             <Chip
               key={m.id}
@@ -129,6 +130,7 @@ export function PayersField({
             payers.multiple ? { ...payers, multiple: false } : withMultiplePayers(payers, payerMemberId, amountText),
           )
         }
+        hitSlop={{ top: 4, bottom: 4 }}
         style={styles.toggle}>
         <Text style={styles.toggleText}>{income
             ? payers.multiple
@@ -193,7 +195,7 @@ export function SplitField({
   return (
     <View style={styles.field}>
       <Text style={styles.label}>{t`Podział`}</Text>
-      <View style={styles.chips} accessibilityRole="radiogroup">
+      <View style={styles.chips} accessibilityRole="radiogroup" accessibilityLabel={t`Podział`}>
         {SPLIT_MODES.map((mode) => (
           <Chip
             key={mode}
@@ -365,7 +367,7 @@ const styles = StyleSheet.create((theme) => ({
   },
   toggleText: {
     fontSize: theme.font.sizeSm,
-    fontWeight: theme.font.weightBold,
+    fontWeight: 'normal',
     color: theme.colors.primary,
   },
   amountRow: {
@@ -395,23 +397,25 @@ const styles = StyleSheet.create((theme) => ({
     color: theme.colors.textMuted,
   },
   preview: {
-    gap: theme.space(1),
-    padding: theme.space(3),
+    paddingVertical: theme.space(1),
+    paddingHorizontal: theme.space(3),
     borderRadius: theme.radius.md,
     backgroundColor: theme.colors.surface,
   },
   previewRow: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    gap: theme.space(3),
+    minHeight: 32,
   },
   previewName: {
     flexShrink: 1,
     fontSize: theme.font.sizeSm,
-    color: theme.colors.textMuted,
+    color: theme.colors.text,
   },
   previewAmount: {
     fontSize: theme.font.sizeSm,
+    fontWeight: theme.font.weightBold,
     color: theme.colors.text,
   },
 }));
