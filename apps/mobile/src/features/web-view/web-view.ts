@@ -15,7 +15,7 @@ const keyOf = (groupId: string) => `web.this-is-me.${groupId}`;
 /**
  * "This is me": which member the visitor is, per group, remembered in the
  * given storage (localStorage on web). Subscribers hear every change, so all
- * open screens (Conversation, drawer, Group info) follow the choice.
+ * open screens follow the choice.
  */
 export function createThisIsMeStore(storage: KeyValueStorage) {
   const listeners = new Set<() => void>();

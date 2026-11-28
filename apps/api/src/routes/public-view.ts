@@ -89,7 +89,7 @@ export const publicViewRoutes = ({ db }: { db: Db }) => {
         );
         return c.json(entries.map(toPublicEntry), 200);
       })
-      /** Balances and suggested transfers (balance banner and drawer). */
+      /** Balances and suggested transfers (the group preview's settle-up). */
       .get('/:token/balances', async (c) => {
         const link = await groupOf(c.req.param('token'));
         if (!link) return c.json(notFound, 404);

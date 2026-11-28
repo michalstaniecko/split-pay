@@ -9,7 +9,7 @@ import { type BalanceRow, drawerRows, type TransferRow } from './balances';
 /**
  * The balance drawer's content: every member's balance and who pays whom
  * (simplified or pairwise per the group's setting). Data in, no fetching — the
- * signed-in drawer and the view-only web (#19) feed it from their own queries.
+ * signed-in drawer feeds it from its query.
  * Read-only unless the caller passes `payAction` ("Oddaj") or `nudge`
  * ("Przypomnij"). Rendered as siblings, to sit in the caller's ScrollView.
  */

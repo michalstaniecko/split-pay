@@ -29,7 +29,7 @@ export function BalanceBanner({ groupId, myMemberId }: { groupId: string; myMemb
   );
 }
 
-/** The banner itself, for given balances (also used by the view-only web). */
+/** The banner itself, for given balances. */
 export function BalanceBannerView({
   balances,
   myMemberId,

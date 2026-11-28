@@ -15,11 +15,13 @@ import {
   publicEntriesQuery,
   usePublicGroup,
 } from '@/features/web-view/public-view-query';
+import { WebFooter } from '@/features/web-view/web-footer';
 import { useFormatters } from '@/i18n/use-formatters';
 
 /**
  * Entry detail of the view-only web: the app's entry sheet without the
- * receipt photo, the change history link and "Edytuj" (SPEC "Web interface").
+ * receipt photo, the change history link and "Edytuj" (SPEC "Web interface"),
+ * in the group preview's centred column.
  */
 export default function PublicEntryDetailScreen() {
   const { t } = useLingui();
@@ -34,30 +36,39 @@ export default function PublicEntryDetailScreen() {
     return <ActivityIndicator style={styles.loading} color={theme.colors.primary} />;
   }
   const entry = entries.data.find((e) => e.id === entryId);
-  if (!entry) {
-    return (
-      <View style={styles.content}>
-        <Text style={styles.value}>{t`Tego wpisu już nie ma.`}</Text>
-        <Button variant="secondary" label={t`Zamknij`} onPress={() => closePublicPage(token)} />
-      </View>
-    );
-  }
-  return <EntryDetail token={token} data={group.data} entry={entry} />;
+  return (
+    <View style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scroll}>
+        <View style={styles.column}>
+          {entry ? (
+            <EntryDetail data={group.data} entry={entry} />
+          ) : (
+            <Text style={styles.value}>{t`Tego wpisu już nie ma.`}</Text>
+          )}
+          <Button variant="secondary" label={t`Zamknij`} onPress={() => closePublicPage(token)} />
+        </View>
+      </ScrollView>
+      <WebFooter token={token} />
+    </View>
+  );
 }
 
-function EntryDetail({ token, data, entry }: { token: string; data: PublicGroup; entry: PublicEntry }) {
+function EntryDetail({ data, entry }: { data: PublicGroup; entry: PublicEntry }) {
   const { t } = useLingui();
   const format = useFormatters();
   const name = (memberId: string | null) => data.members.find((m) => m.id === memberId)?.displayName;
   const addedBy = addedByName(entry, data.members) ?? t`nieznana osoba`;
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <EntryDetailBody entry={entry} baseCurrency={data.group.baseCurrency} memberName={(id) => name(id) ?? '?'} />
-      <Text style={styles.meta}>{t`Dodano: ${addedBy}, ${format.dateTime(entry.createdAt)}`}</Text>
-      {isEdited(entry) ? <Text style={styles.meta}>{t`edytowano ${format.dateTime(entry.updatedAt)}`}</Text> : null}
-      <Button variant="secondary" label={t`Zamknij`} onPress={() => closePublicPage(token)} />
-    </ScrollView>
+    <>
+      <View style={styles.card}>
+        <EntryDetailBody entry={entry} baseCurrency={data.group.baseCurrency} memberName={(id) => name(id) ?? '?'} />
+      </View>
+      <View style={styles.metaBlock}>
+        <Text style={styles.meta}>{t`Dodano: ${addedBy}, ${format.dateTime(entry.createdAt)}`}</Text>
+        {isEdited(entry) ? <Text style={styles.meta}>{t`edytowano ${format.dateTime(entry.updatedAt)}`}</Text> : null}
+      </View>
+    </>
   );
 }
 
@@ -69,19 +80,34 @@ const styles = StyleSheet.create((theme) => ({
     flex: 1,
     backgroundColor: theme.colors.background,
   },
-  content: {
+  scroll: {
+    paddingHorizontal: theme.space(4),
+    paddingVertical: theme.space(6),
+  },
+  // Narrower than the group preview's column: label and amount stay close enough to read as a pair.
+  column: {
+    width: '100%',
+    maxWidth: 560,
+    alignSelf: 'center',
+    gap: theme.space(4),
+  },
+  card: {
     gap: theme.space(3),
-    padding: theme.space(4),
-    paddingTop: theme.space(6),
-    paddingBottom: theme.space(10),
-    backgroundColor: theme.colors.background,
+    padding: theme.space(5),
+    borderRadius: theme.radius.lg,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.surface,
+  },
+  metaBlock: {
+    gap: theme.space(1),
+    paddingHorizontal: theme.space(1),
   },
   value: {
     fontSize: theme.font.sizeMd,
     color: theme.colors.text,
   },
   meta: {
-    paddingTop: theme.space(2),
     fontSize: theme.font.sizeSm,
     color: theme.colors.textMuted,
   },
